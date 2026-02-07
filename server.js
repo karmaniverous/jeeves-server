@@ -595,7 +595,15 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
         .layout { display: block !important; }
         body { background: #fff !important; }
         a.anchor { display: none !important; }
-        img { max-width: 100% !important; max-height: 250mm !important; object-fit: scale-down !important; page-break-inside: avoid !important; }
+        img, svg, .svg-container, .zoomable-svg { 
+          max-width: 190mm !important; 
+          max-height: 250mm !important; 
+          width: auto !important; 
+          height: auto !important;
+          display: block !important;
+          page-break-inside: avoid !important; 
+        }
+        img { object-fit: contain !important; }
       `});
       
       const pdfBuffer = await page.pdf({
