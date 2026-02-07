@@ -2031,7 +2031,11 @@ ${htmlContent}
     }
     
     const content = fs.readFileSync(resolved);
-    const isTextFile = looksLikeText(content);
+    
+    // Special case: SVG files are text but should be served as images for browser rendering
+    const serveAsImage = ['.svg'].includes(ext);
+    
+    const isTextFile = !serveAsImage && looksLikeText(content);
     
     if (req.query.raw === '1' || !isTextFile) {
       // Raw mode or binary file - serve with appropriate content-type
