@@ -1890,8 +1890,8 @@ app.get('/path/*', (req, res) => {
     .panzoom-container.active { display: flex; align-items: center; justify-content: center; }
     .panzoom-container:active { cursor: grabbing; }
     .panzoom-container img { max-width: none; max-height: none; }
-    .panzoom-svg-holder { display: none; align-items: center; justify-content: center; width: 100%; height: 100%; }
-    .panzoom-svg-holder svg { background: #fff; }
+    .panzoom-svg-holder { display: none; align-items: center; justify-content: center; width: 100%; height: 100%; overflow: auto; }
+    .panzoom-svg-holder svg { background: #fff; max-width: 95vw; max-height: 90vh; width: auto !important; height: auto !important; }
     .panzoom-close { 
       position: fixed; 
       top: 20px; right: 20px; 
@@ -1985,10 +1985,27 @@ ${htmlContent}
           pzImg.style.display = 'none';
           overlay.classList.add('active');
           const clonedSvg = pzSvgContainer.querySelector('svg');
-          clonedSvg.style.maxWidth = 'none';
-          clonedSvg.style.maxHeight = 'none';
-          clonedSvg.style.width = 'auto';
-          clonedSvg.style.height = '90vh';
+          // Strip all inline styles and width attribute to ensure our sizing works
+          clonedSvg.removeAttribute('style');
+          clonedSvg.removeAttribute('width');
+          // Set initial size to fit viewport, maintaining aspect ratio
+          const vb = clonedSvg.getAttribute('viewBox');
+          if (vb) {
+            const [, , w, h] = vb.split(/\\s+/).map(Number);
+            const aspectRatio = w / h;
+            if (aspectRatio > (window.innerWidth * 0.9) / (window.innerHeight * 0.85)) {
+              // Wide: constrain by width
+              clonedSvg.style.width = '90vw';
+              clonedSvg.style.height = 'auto';
+            } else {
+              // Tall: constrain by height
+              clonedSvg.style.height = '85vh';
+              clonedSvg.style.width = 'auto';
+            }
+          } else {
+            clonedSvg.style.maxWidth = '90vw';
+            clonedSvg.style.maxHeight = '85vh';
+          }
           pz = Panzoom(clonedSvg, { maxScale: 20, contain: 'outside' });
           pzSvgContainer.addEventListener('wheel', pz.zoomWithWheel);
         }
