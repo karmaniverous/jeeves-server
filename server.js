@@ -595,7 +595,7 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
         .layout { display: block !important; }
         body { background: #fff !important; }
         a.anchor { display: none !important; }
-        img { max-width: 190mm !important; max-height: 250mm !important; width: auto !important; height: auto !important; object-fit: contain !important; page-break-inside: avoid !important; }
+        img { max-width: 100% !important; max-height: 250mm !important; object-fit: scale-down !important; page-break-inside: avoid !important; }
       `});
       
       const pdfBuffer = await page.pdf({
@@ -690,10 +690,8 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
             const img = document.createElement('img');
             img.src = pngInfo.dataUrl;
             img.alt = 'Diagram';
-            img.style.maxWidth = '6in';
+            img.style.maxWidth = '100%';
             img.style.maxHeight = '8in';
-            img.style.width = 'auto';
-            img.style.height = 'auto';
             container.replaceWith(img);
           } else {
             const placeholder = document.createElement('p');
@@ -708,11 +706,9 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
           if (img.src && !img.src.startsWith('data:')) {
             img.src = new URL(img.src, window.location.origin).href;
           }
-          // Constrain images to fit within page (6x8 inches minus margins)
-          img.style.maxWidth = '6in';
+          // Constrain images to fit within page
+          img.style.maxWidth = '100%';
           img.style.maxHeight = '8in';
-          img.style.width = 'auto';
-          img.style.height = 'auto';
         });
         
         // Apply inline styles for tables (CSS classes may not work)
@@ -774,7 +770,7 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
     ul, ol { margin: 6pt 0; padding-left: 24pt; }
     li { margin: 4pt 0; }
     a { color: #0066cc; }
-    img, svg { max-width: 6in; max-height: 8in; width: auto; height: auto; margin: 12pt 0; object-fit: contain; }
+    img, svg { max-width: 100%; max-height: 8in; margin: 12pt 0; }
   </style>
 </head>
 <body>
