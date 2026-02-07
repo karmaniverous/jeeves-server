@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Local environment (contains secrets)
+*.local
+.env.local
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build output
+dist/
+build/
