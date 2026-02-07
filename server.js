@@ -1988,25 +1988,12 @@ ${htmlContent}
           // Strip all inline styles and width attribute to ensure our sizing works
           clonedSvg.removeAttribute('style');
           clonedSvg.removeAttribute('width');
-          // Set initial size to fit viewport, maintaining aspect ratio
-          const vb = clonedSvg.getAttribute('viewBox');
-          if (vb) {
-            const [, , w, h] = vb.split(/\\s+/).map(Number);
-            const aspectRatio = w / h;
-            if (aspectRatio > (window.innerWidth * 0.9) / (window.innerHeight * 0.85)) {
-              // Wide: constrain by width
-              clonedSvg.style.width = '90vw';
-              clonedSvg.style.height = 'auto';
-            } else {
-              // Tall: constrain by height
-              clonedSvg.style.height = '85vh';
-              clonedSvg.style.width = 'auto';
-            }
-          } else {
-            clonedSvg.style.maxWidth = '90vw';
-            clonedSvg.style.maxHeight = '85vh';
-          }
-          pz = Panzoom(clonedSvg, { maxScale: 20, contain: 'outside' });
+          // Constrain to viewport while maintaining aspect ratio
+          clonedSvg.style.maxWidth = '90vw';
+          clonedSvg.style.maxHeight = '85vh';
+          clonedSvg.style.width = 'auto';
+          clonedSvg.style.height = 'auto';
+          pz = Panzoom(clonedSvg, { maxScale: 20, contain: 'outside', startScale: 1 });
           pzSvgContainer.addEventListener('wheel', pz.zoomWithWheel);
         }
       }
