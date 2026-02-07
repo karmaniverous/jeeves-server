@@ -750,7 +750,7 @@ ${htmlContent}
   </style>
 </head>
 <body>
-  <div class="header">${resolved} &nbsp;|&nbsp; <a href="?raw=1">View Raw</a></div>
+  <div class="header">${resolved} &nbsp;|&nbsp; <a href="?key=${req.query.key}&amp;raw=1">View Raw</a></div>
   <pre><code class="hljs${lang ? ' language-' + lang : ''}">${highlighted}</code></pre>
 </body>
 </html>`;
