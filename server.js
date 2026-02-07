@@ -202,8 +202,9 @@ function renderHeaderStyles() {
     [data-theme="dark"] .header { box-shadow: none; }
     .header a { color: #79b8ff; text-decoration: none; }
     .header a:hover { text-decoration: underline; }
-    .breadcrumb { display: flex; align-items: center; }
-    .header-actions { display: flex; gap: 1rem; font-size: 13px; align-items: center; }
+    .breadcrumb { display: flex; align-items: center; overflow: hidden; flex: 1; min-width: 0; }
+    .breadcrumb a, .breadcrumb span:not(.home-icon) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; display: inline-block; vertical-align: middle; }
+    .header-actions { display: flex; gap: 1rem; font-size: 13px; align-items: center; flex-shrink: 0; white-space: nowrap; }
     .header-actions a { color: #8b949e; }
     .header-actions a:hover { color: #79b8ff; }
     .breadcrumb-tail { color: #e1e4e8; }
