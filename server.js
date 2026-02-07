@@ -260,9 +260,45 @@ app.get('/path/*', (req, res) => {
   try {
     if (ext === '.md') {
       const markdown = fs.readFileSync(resolved, 'utf8');
-      let htmlContent = marked(markdown);
       const fileName = path.basename(resolved);
       const fileDir = path.dirname(resolved);
+      
+      // Track headings for TOC
+      const headings = [];
+      
+      // Custom renderer for heading anchors
+      const renderer = new marked.Renderer();
+      renderer.heading = function(text, level, raw) {
+        // Handle both marked v4 (object) and v5+ (string) signatures
+        const headingText = typeof text === 'object' ? text.text : text;
+        const headingRaw = typeof text === 'object' ? text.raw : raw;
+        const headingLevel = typeof text === 'object' ? text.depth : level;
+        
+        const slug = (headingRaw || headingText)
+          .toLowerCase()
+          .replace(/<[^>]+>/g, '')     // strip HTML
+          .replace(/[^\w\s-]/g, '')    // remove special chars
+          .replace(/\s+/g, '-')        // spaces to dashes
+          .replace(/-+/g, '-')         // collapse dashes
+          .replace(/^-|-$/g, '');      // trim dashes
+        
+        headings.push({ level: headingLevel, text: headingText.replace(/<[^>]+>/g, ''), slug });
+        return `<h${headingLevel} id="${slug}"><a href="#${slug}" class="anchor">#</a> ${headingText}</h${headingLevel}>\n`;
+      };
+      
+      marked.setOptions({ renderer });
+      let htmlContent = marked(markdown);
+      
+      // Generate TOC if ?toc=1
+      let tocHtml = '';
+      if (req.query.toc === '1' && headings.length > 0) {
+        tocHtml = '<nav class="toc"><strong>Table of Contents</strong><ul>';
+        for (const h of headings) {
+          const indent = (h.level - 1) * 1.2;
+          tocHtml += `<li style="margin-left:${indent}em"><a href="#${h.slug}">${h.text}</a></li>`;
+        }
+        tocHtml += '</ul></nav><hr>';
+      }
       
       // Rewrite local links to use /path/ with computed keys
       htmlContent = htmlContent.replace(
@@ -286,6 +322,24 @@ app.get('/path/*', (req, res) => {
           return `${attr}="${urlPath}?key=${key}"`;
         }
       );
+      
+      // Convert Windows file paths to links (including inside <code> but not <pre>)
+      // Match patterns like D:\path\to\file.ext or C:\folder\file
+      const winPathRegex = /([A-Z]):\\(?:[^<>\s"'`\\]+\\)*[^<>\s"'`\\]+\.[a-zA-Z0-9]+/g;
+      
+      // Helper to create link for a Windows path
+      const linkifyPath = (winPath) => {
+        const urlPath = '/' + winPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
+        const key = computePathKey(API_KEY, urlPath);
+        return `<a href="/path${urlPath}?key=${key}">${winPath}</a>`;
+      };
+      
+      // Process outside of <pre> blocks (preserve code blocks)
+      const parts = htmlContent.split(/(<pre[\s\S]*?<\/pre>)/g);
+      htmlContent = parts.map((part, i) => {
+        if (part.startsWith('<pre')) return part; // leave code blocks alone
+        return part.replace(winPathRegex, linkifyPath);
+      }).join('');
       
       const html = `<!DOCTYPE html>
 <html lang="en">
@@ -315,6 +369,13 @@ app.get('/path/*', (req, res) => {
     th { background: #f6f8fa; }
     a { color: #0366d6; text-decoration: none; }
     a:hover { text-decoration: underline; }
+    a.anchor { color: #ccc; margin-right: 0.3em; font-weight: normal; }
+    a.anchor:hover { color: #0366d6; }
+    .toc { background: #f6f8fa; padding: 1em 1.5em; border-radius: 6px; margin-bottom: 1.5em; }
+    .toc ul { margin: 0.5em 0 0 0; padding-left: 1.5em; }
+    .toc li { margin: 0.3em 0; }
+    code a { color: inherit; text-decoration: underline; text-decoration-style: dotted; }
+    code a:hover { text-decoration-style: solid; }
     hr { border: none; border-top: 1px solid #e1e4e8; margin: 2em 0; }
     img { max-width: 100%; height: auto; }
     ul, ol { padding-left: 2em; }
@@ -322,7 +383,7 @@ app.get('/path/*', (req, res) => {
   </style>
 </head>
 <body>
-${htmlContent}
+${tocHtml}${htmlContent}
 </body>
 </html>`;
       
