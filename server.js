@@ -587,12 +587,15 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
       await page.goto(pageUrl, { waitUntil: 'networkidle0' });
       
       // Hide the header, panzoom overlay, and anchor links for PDF
+      // Constrain images to fit within A4 page (210x297mm minus 1cm margins = 190x277mm)
       await page.addStyleTag({ content: `
         .header, .header-actions, .panzoom-container, .panzoom-hint { display: none !important; }
         .toc { position: static !important; height: auto !important; page-break-after: always; }
+        .toc-spacer { display: none !important; }
         .layout { display: block !important; }
         body { background: #fff !important; }
         a.anchor { display: none !important; }
+        img { max-width: 190mm !important; max-height: 250mm !important; width: auto !important; height: auto !important; object-fit: contain !important; page-break-inside: avoid !important; }
       `});
       
       const pdfBuffer = await page.pdf({
@@ -687,7 +690,10 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
             const img = document.createElement('img');
             img.src = pngInfo.dataUrl;
             img.alt = 'Diagram';
-            img.style.maxWidth = '100%';
+            img.style.maxWidth = '6in';
+            img.style.maxHeight = '8in';
+            img.style.width = 'auto';
+            img.style.height = 'auto';
             container.replaceWith(img);
           } else {
             const placeholder = document.createElement('p');
@@ -697,11 +703,16 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
           }
         });
         
-        // Fix image URLs to be absolute
+        // Fix image URLs to be absolute and constrain size
         contentClone.querySelectorAll('img').forEach(img => {
           if (img.src && !img.src.startsWith('data:')) {
             img.src = new URL(img.src, window.location.origin).href;
           }
+          // Constrain images to fit within page (6x8 inches minus margins)
+          img.style.maxWidth = '6in';
+          img.style.maxHeight = '8in';
+          img.style.width = 'auto';
+          img.style.height = 'auto';
         });
         
         // Apply inline styles for tables (CSS classes may not work)
@@ -763,7 +774,7 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
     ul, ol { margin: 6pt 0; padding-left: 24pt; }
     li { margin: 4pt 0; }
     a { color: #0066cc; }
-    img, svg { max-width: 100%; height: auto; margin: 12pt 0; }
+    img, svg { max-width: 6in; max-height: 8in; width: auto; height: auto; margin: 12pt 0; object-fit: contain; }
   </style>
 </head>
 <body>
