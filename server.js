@@ -198,7 +198,7 @@ function renderThemeStyles() {
 
 function renderHeaderStyles() {
   return `
-    .header { background: #24292e; color: #fff; padding: 0.75rem 2rem; font-size: 14px; line-height: 1.4; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .header { background: #24292e; color: #fff; padding: 0.75rem 2rem; font-size: 14px; line-height: 1.4; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 12px rgba(255,255,255,0.4); }
     [data-theme="dark"] .header { box-shadow: none; }
     .header a { color: #79b8ff; text-decoration: none; }
     .header a:hover { text-decoration: underline; }
