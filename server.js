@@ -123,10 +123,11 @@ function formatSize(bytes) {
 function buildBreadcrumbs(resolvedPath, apiKey, mode) {
   const pathParts = resolvedPath.split('\\').filter(p => p);
   
-  // Outsiders see only the filename (tail)
+  // Outsiders see top hat branding + filename
   if (mode === 'outsider') {
     const fileName = pathParts[pathParts.length - 1] || '';
-    return `<span class="breadcrumb-tail">${fileName}</span>`;
+    // Top hat is branding (not a link), filename shown in full unless very long
+    return `<span class="home-icon" title="Jeeves Server">🎩</span> <span class="breadcrumb-tail">${fileName}</span>`;
   }
   
   // Insiders see full navigable breadcrumbs
@@ -203,7 +204,8 @@ function renderHeaderStyles() {
     .header a { color: #79b8ff; text-decoration: none; }
     .header a:hover { text-decoration: underline; }
     .breadcrumb { display: flex; align-items: center; overflow: hidden; flex: 1; min-width: 0; }
-    .breadcrumb a, .breadcrumb span:not(.home-icon) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; display: inline-block; vertical-align: middle; }
+    .breadcrumb a, .breadcrumb-current { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; display: inline-block; vertical-align: middle; }
+    .breadcrumb-tail { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100vw - 400px); display: inline-block; vertical-align: middle; }
     .header-actions { display: flex; gap: 1rem; font-size: 13px; align-items: center; flex-shrink: 0; white-space: nowrap; }
     .header-actions a { color: #8b949e; }
     .header-actions a:hover { color: #79b8ff; }
