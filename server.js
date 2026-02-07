@@ -202,6 +202,7 @@ function renderHeaderStyles() {
     [data-theme="dark"] .header { box-shadow: none; }
     .header a { color: #79b8ff; text-decoration: none; }
     .header a:hover { text-decoration: underline; }
+    .breadcrumb { display: flex; align-items: center; }
     .header-actions { display: flex; gap: 1rem; font-size: 13px; align-items: center; }
     .header-actions a { color: #8b949e; }
     .header-actions a:hover { color: #79b8ff; }
