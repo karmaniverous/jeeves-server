@@ -1890,8 +1890,8 @@ app.get('/path/*', (req, res) => {
     .panzoom-container.active { display: flex; align-items: center; justify-content: center; }
     .panzoom-container:active { cursor: grabbing; }
     .panzoom-container img { max-width: none; max-height: none; }
-    .panzoom-svg-holder { display: none; align-items: center; justify-content: center; width: 100%; height: 100%; overflow: hidden; }
-    .panzoom-svg-holder .pz-svg-inner { display: block; background: #fff; }
+    .panzoom-svg-holder { display: none; width: 100%; height: 100%; overflow: hidden; }
+    .panzoom-svg-holder .pz-svg-inner { display: block; background: #fff; position: relative; }
     .panzoom-svg-holder svg { display: block; background: #fff; }
     .panzoom-close { 
       position: fixed; 
@@ -1996,18 +1996,24 @@ ${htmlContent}
           const vb = clonedSvg.getAttribute('viewBox');
           const maxW = window.innerWidth * 0.9;
           const maxH = window.innerHeight * 0.85;
+          // Calculate size and center position manually (no flex centering)
+          const containerW = window.innerWidth;
+          const containerH = window.innerHeight;
+          let innerW = maxW, innerH = maxH;
           if (vb) {
             const parts = vb.split(/[\\s,]+/).map(Number);
             const svgW = parts[2], svgH = parts[3];
             const scale = Math.min(maxW / svgW, maxH / svgH);
-            inner.style.width = (svgW * scale) + 'px';
-            inner.style.height = (svgH * scale) + 'px';
-            clonedSvg.style.width = '100%';
-            clonedSvg.style.height = '100%';
-          } else {
-            inner.style.maxWidth = maxW + 'px';
-            inner.style.maxHeight = maxH + 'px';
+            innerW = svgW * scale;
+            innerH = svgH * scale;
           }
+          inner.style.width = innerW + 'px';
+          inner.style.height = innerH + 'px';
+          // Center via margin (no transform centering to avoid panzoom conflicts)
+          inner.style.marginLeft = ((containerW - innerW) / 2) + 'px';
+          inner.style.marginTop = ((containerH - innerH) / 2) + 'px';
+          clonedSvg.style.width = '100%';
+          clonedSvg.style.height = '100%';
           pz = Panzoom(inner, { maxScale: 20, overflow: 'visible' });
           pz.reset({ animate: false });
           // Attach wheel to inner element so focal point calculation matches panzoom target
