@@ -246,7 +246,7 @@ function renderHeader(options) {
   const { isInsider, breadcrumbs, fileName, queryKey, currentPath, insiderKey, actions = [], expiry = null, showRaw = true } = options;
   
   const defaultActions = showRaw && fileName ? [
-    `<a href="?key=${queryKey}&amp;raw=1" download="${fileName}">⬇ Raw</a>`
+    `<a href="?key=${queryKey}&amp;raw=1" download="${fileName}" title="Download raw file">⬇ Raw</a>`
   ] : [];
   const allActions = [...defaultActions, ...actions];
   
@@ -256,9 +256,9 @@ function renderHeader(options) {
     shareUi = `
       <div class="share-ui">
         <span style="color:#8b949e">Share:</span>
-        <button id="share-inside-btn" class="share-btn-inside" data-key="${queryKey}">Inside</button>
+        <button id="share-inside-btn" class="share-btn-inside" data-key="${queryKey}" title="Copy insider link to clipboard">Inside</button>
         <span style="color:#444">|</span>
-        <button id="share-outside-btn" class="share-btn-outside" data-path="${currentPath}" data-insider-key="${insiderKey}">Outside</button>
+        <button id="share-outside-btn" class="share-btn-outside" data-path="${currentPath}" data-insider-key="${insiderKey}" title="Generate outsider link with optional expiry">Outside</button>
         <input type="text" id="share-expiry" placeholder="1h" title="Expiry: 15m, 1h, 7d, or blank for never">
       </div>
     `;
@@ -267,7 +267,7 @@ function renderHeader(options) {
     const expiryHtml = expiry ? `<span class="expiry-countdown" data-expiry="${expiry}"></span>` : '';
     shareUi = `
       <div class="share-ui">
-        <button id="share-btn" data-key="${queryKey}">📋 Share</button>
+        <button id="share-btn" data-key="${queryKey}" title="Copy link to clipboard">📋 Share</button>
         ${expiryHtml}
       </div>
     `;
@@ -294,7 +294,7 @@ function renderHeader(options) {
         ${keyRotateGroup}
         ${allActions.join('\n        ')}
         ${shareUi}
-        <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light theme">🌙</button>
       </div>
     </div>
   `;
@@ -1454,8 +1454,8 @@ app.get('/path/*', (req, res) => {
         insiderKey,
         expiry,
         actions: [
-          `<a href="?key=${req.query.key}&amp;export=pdf">📄 PDF</a>`,
-          `<a href="?key=${req.query.key}&amp;export=docx">📝 DOCX</a>`
+          `<a href="?key=${req.query.key}&amp;export=pdf" title="Export as PDF">📄 PDF</a>`,
+          `<a href="?key=${req.query.key}&amp;export=docx" title="Export as Word document">📝 DOCX</a>`
         ]
       });
       
