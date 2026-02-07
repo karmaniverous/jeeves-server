@@ -1985,15 +1985,25 @@ ${htmlContent}
           pzImg.style.display = 'none';
           overlay.classList.add('active');
           const clonedSvg = pzSvgContainer.querySelector('svg');
-          // Strip all inline styles and width attribute to ensure our sizing works
+          // Strip all inline styles and size attributes
           clonedSvg.removeAttribute('style');
           clonedSvg.removeAttribute('width');
-          // Constrain to viewport while maintaining aspect ratio
-          clonedSvg.style.maxWidth = '90vw';
-          clonedSvg.style.maxHeight = '85vh';
-          clonedSvg.style.width = 'auto';
-          clonedSvg.style.height = 'auto';
-          pz = Panzoom(clonedSvg, { maxScale: 20, contain: 'outside', startScale: 1 });
+          clonedSvg.removeAttribute('height');
+          // Calculate size to fit viewport while maintaining aspect ratio
+          const vb = clonedSvg.getAttribute('viewBox');
+          const maxW = window.innerWidth * 0.9;
+          const maxH = window.innerHeight * 0.85;
+          if (vb) {
+            const parts = vb.split(/[\\s,]+/).map(Number);
+            const svgW = parts[2], svgH = parts[3];
+            const scale = Math.min(maxW / svgW, maxH / svgH);
+            clonedSvg.style.width = (svgW * scale) + 'px';
+            clonedSvg.style.height = (svgH * scale) + 'px';
+          } else {
+            clonedSvg.style.maxWidth = maxW + 'px';
+            clonedSvg.style.maxHeight = maxH + 'px';
+          }
+          pz = Panzoom(clonedSvg, { maxScale: 20, contain: 'outside' });
           pzSvgContainer.addEventListener('wheel', pz.zoomWithWheel);
         }
       }
