@@ -20,6 +20,11 @@ const crypto = require('crypto');
 const { marked } = require('marked');
 const hljs = require('highlight.js');
 
+// Export libraries (lazy-loaded)
+let puppeteer = null;
+let docx = null;
+const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+
 // ─────────────────────────────────────────────────────────────
 // Configuration
 // ─────────────────────────────────────────────────────────────
@@ -63,6 +68,51 @@ function appendJsonl(p, obj) {
 }
 function nowIso() { return new Date().toISOString(); }
 
+// State file for tracking metadata like key rotation
+const STATE_FILE = path.join(__dirname, 'state.json');
+
+function loadState() {
+  try {
+    if (fs.existsSync(STATE_FILE)) {
+      return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+    }
+  } catch {}
+  return {};
+}
+
+function saveState(state) {
+  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2), 'utf8');
+}
+
+function getKeyRotationTimestamp() {
+  const state = loadState();
+  return state.keyRotatedAt || null;
+}
+
+function setKeyRotationTimestamp(timestamp) {
+  const state = loadState();
+  state.keyRotatedAt = timestamp;
+  saveState(state);
+}
+
+function formatRelativeTime(isoTimestamp) {
+  if (!isoTimestamp) return null;
+  const then = new Date(isoTimestamp).getTime();
+  const now = Date.now();
+  const diffMs = now - then;
+  
+  if (diffMs < 0) return null;
+  
+  const mins = Math.floor(diffMs / 60000);
+  const hours = Math.floor(mins / 60);
+  const days = Math.floor(hours / 24);
+  
+  if (days > 0) return `${days}d ago`;
+  if (hours > 0) return `${hours}h ago`;
+  if (mins > 0) return `${mins}m ago`;
+  return 'just now';
+}
+
 function formatSize(bytes) {
   if (bytes === 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -70,9 +120,18 @@ function formatSize(bytes) {
   return (bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
 }
 
-function buildBreadcrumbs(resolvedPath, apiKey) {
+function buildBreadcrumbs(resolvedPath, apiKey, mode) {
   const pathParts = resolvedPath.split('\\').filter(p => p);
-  let breadcrumbs = '<a href="/path?key=' + computePathKey(apiKey, '/') + '">drives</a>';
+  
+  // Outsiders see only the filename (tail)
+  if (mode === 'outsider') {
+    const fileName = pathParts[pathParts.length - 1] || '';
+    return `<span class="breadcrumb-tail">${fileName}</span>`;
+  }
+  
+  // Insiders see full navigable breadcrumbs
+  const insiderKey = computeInsiderKey(apiKey);
+  let breadcrumbs = '<a href="/path?key=' + insiderKey + '" class="home-icon">🎩</a>';
   let accumPath = '';
   for (let i = 0; i < pathParts.length; i++) {
     const part = pathParts[i];
@@ -81,9 +140,15 @@ function buildBreadcrumbs(resolvedPath, apiKey) {
     } else {
       accumPath += '\\' + part;
     }
-    const urlPath = '/' + accumPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
-    const key = computePathKey(apiKey, urlPath);
-    breadcrumbs += ' / <a href="/path' + urlPath + '?key=' + key + '">' + part + '</a>';
+    const separator = i === 0 ? ' ' : ' / ';
+    const isLast = i === pathParts.length - 1;
+    if (isLast) {
+      // Last element: no link, just text
+      breadcrumbs += separator + '<span class="breadcrumb-current">' + part + '</span>';
+    } else {
+      const urlPath = '/' + accumPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
+      breadcrumbs += separator + '<a href="/path' + urlPath + '?key=' + insiderKey + '">' + part + '</a>';
+    }
   }
   return breadcrumbs;
 }
@@ -96,15 +161,332 @@ function computePathKey(apiKey, urlPath) {
   return hash.substring(0, 32);
 }
 
-// Verify a path-specific key
-function verifyPathKey(apiKey, urlPath, providedKey) {
-  if (!providedKey) return false;
-  const expected = computePathKey(apiKey, urlPath);
-  try {
-    return crypto.timingSafeEqual(Buffer.from(providedKey), Buffer.from(expected));
-  } catch {
-    return false;
+// ─────────────────────────────────────────────────────────────
+// Shared UI Components
+// ─────────────────────────────────────────────────────────────
+
+function renderThemeStyles() {
+  return `
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f6f8fa;
+      --bg-tertiary: #fafafa;
+      --text-primary: #24292e;
+      --text-secondary: #586069;
+      --text-muted: #6a737d;
+      --border-color: #e1e4e8;
+      --link-color: #0366d6;
+      --code-bg: #f6f8fa;
+      --table-header-bg: #f6f8fa;
+      --table-row-hover: #f6f8fa;
+    }
+    [data-theme="dark"] {
+      --bg-primary: #0d1117;
+      --bg-secondary: #161b22;
+      --bg-tertiary: #0d1117;
+      --text-primary: #c9d1d9;
+      --text-secondary: #8b949e;
+      --text-muted: #6e7681;
+      --border-color: #30363d;
+      --link-color: #58a6ff;
+      --code-bg: #161b22;
+      --table-header-bg: #161b22;
+      --table-row-hover: #161b22;
+    }
+  `;
+}
+
+function renderHeaderStyles() {
+  return `
+    .header { background: #24292e; color: #fff; padding: 0.75rem 2rem; font-size: 14px; line-height: 1.4; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #79b8ff; text-decoration: none; }
+    .header a:hover { text-decoration: underline; }
+    .header-actions { display: flex; gap: 1rem; font-size: 13px; align-items: center; }
+    .header-actions a { color: #8b949e; }
+    .header-actions a:hover { color: #79b8ff; }
+    .breadcrumb-tail { color: #e1e4e8; }
+    .breadcrumb-current { color: #e1e4e8; }
+    .home-icon { font-size: 2rem; text-shadow: 0 0 8px rgba(255,255,255,0.8), 0 0 16px rgba(255,255,255,0.5); text-decoration: none !important; padding-right: 1rem; }
+    .share-ui { display: flex; align-items: center; gap: 0.5rem; }
+    .share-ui input { width: 50px; padding: 2px 6px; border: 1px solid #444; border-radius: 3px; background: #333; color: #fff; font-size: 12px; }
+    .share-ui button { padding: 2px 8px; border: 1px solid #444; border-radius: 3px; background: #333; color: #8b949e; cursor: pointer; font-size: 12px; }
+    .share-ui button:hover { background: #444; color: #fff; }
+    .share-btn-inside, .share-btn-outside { min-width: 55px; }
+    .expiry-countdown { color: #8b949e; font-size: 12px; margin-left: 0.5rem; }
+    .expiry-countdown.expired { color: #f85149; }
+    .theme-toggle { background: none; border: 1px solid #444; border-radius: 3px; padding: 2px 8px; cursor: pointer; font-size: 14px; color: #8b949e; }
+    .theme-toggle:hover { background: #444; color: #fff; }
+    .key-rotation-group { display: flex; align-items: center; gap: 0.4rem; margin-right: 1rem; }
+    .key-rotation-age { color: #6e7681; font-size: 12px; }
+  `;
+}
+
+function renderThemeScript() {
+  return `
+    (function() {
+      const saved = localStorage.getItem('jeeves-theme') || 'light';
+      document.documentElement.setAttribute('data-theme', saved);
+      window.toggleTheme = function() {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('jeeves-theme', next);
+        const btn = document.getElementById('theme-toggle');
+        if (btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
+      };
+      document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('theme-toggle');
+        if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+      });
+    })();
+  `;
+}
+
+function renderHeader(options) {
+  const { isInsider, breadcrumbs, fileName, queryKey, currentPath, insiderKey, actions = [], expiry = null, showRaw = true } = options;
+  
+  const defaultActions = showRaw && fileName ? [
+    `<a href="?key=${queryKey}&amp;raw=1" download="${fileName}">⬇ Raw</a>`
+  ] : [];
+  const allActions = [...defaultActions, ...actions];
+  
+  let shareUi;
+  if (isInsider) {
+    // Insider: Inside | Outside buttons + expiry input
+    shareUi = `
+      <div class="share-ui">
+        <span style="color:#8b949e">Share:</span>
+        <button id="share-inside-btn" class="share-btn-inside" data-key="${queryKey}">Inside</button>
+        <span style="color:#444">|</span>
+        <button id="share-outside-btn" class="share-btn-outside" data-path="${currentPath}" data-insider-key="${insiderKey}">Outside</button>
+        <input type="text" id="share-expiry" placeholder="1h" title="Expiry: 15m, 1h, 7d, or blank for never">
+      </div>
+    `;
+  } else {
+    // Outsider: simple Share button + expiry countdown
+    const expiryHtml = expiry ? `<span class="expiry-countdown" data-expiry="${expiry}"></span>` : '';
+    shareUi = `
+      <div class="share-ui">
+        <button id="share-btn" data-key="${queryKey}">📋 Share</button>
+        ${expiryHtml}
+      </div>
+    `;
   }
+  
+  // Key rotation button with timestamp (insider only)
+  let keyRotateGroup = '';
+  if (isInsider) {
+    const rotationTs = getKeyRotationTimestamp();
+    const rotationAge = formatRelativeTime(rotationTs);
+    const ageHtml = rotationAge ? `<span class="key-rotation-age">${rotationAge}</span>` : '';
+    keyRotateGroup = `
+      <div class="key-rotation-group">
+        <button id="rotate-key-btn" class="theme-toggle" title="Rotate API Key" data-insider-key="${insiderKey}">🔑</button>
+        ${ageHtml}
+      </div>
+    `;
+  }
+  
+  return `
+    <div class="header">
+      <div class="breadcrumb">${breadcrumbs}</div>
+      <div class="header-actions">
+        ${keyRotateGroup}
+        ${allActions.join('\n        ')}
+        ${shareUi}
+        <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderShareScript(isInsider) {
+  if (isInsider) {
+    return `
+    const shareInsideBtn = document.getElementById('share-inside-btn');
+    const shareOutsideBtn = document.getElementById('share-outside-btn');
+    const shareExpiry = document.getElementById('share-expiry');
+    
+    // Load saved expiry
+    const savedExpiry = localStorage.getItem('jeeves-share-expiry') || '';
+    if (shareExpiry) shareExpiry.value = savedExpiry;
+    
+    // Inside button: copy current page URL
+    if (shareInsideBtn) {
+      shareInsideBtn.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(window.location.href);
+        shareInsideBtn.textContent = '✓';
+        setTimeout(() => { shareInsideBtn.textContent = 'Inside'; }, 1500);
+      });
+    }
+    
+    // Outside button: generate outsider link with expiry
+    if (shareOutsideBtn) {
+      shareOutsideBtn.addEventListener('click', async () => {
+        const expiryInput = shareExpiry ? shareExpiry.value.trim() : '';
+        const path = shareOutsideBtn.dataset.path;
+        const insiderKey = shareOutsideBtn.dataset.insiderKey;
+        
+        // Validate expiry format
+        let expParam = '';
+        if (expiryInput) {
+          const match = expiryInput.match(/^(\\d+)([mhd])$/i);
+          if (!match) {
+            shareExpiry.style.borderColor = '#f85149';
+            shareExpiry.title = 'Invalid format. Use: 15m, 1h, 7d';
+            setTimeout(() => { shareExpiry.style.borderColor = '#444'; }, 2000);
+            return;
+          }
+          const val = parseInt(match[1], 10);
+          const unit = match[2].toLowerCase();
+          if (val <= 0 || val > 365) {
+            shareExpiry.style.borderColor = '#f85149';
+            shareExpiry.title = 'Value must be 1-365';
+            setTimeout(() => { shareExpiry.style.borderColor = '#444'; }, 2000);
+            return;
+          }
+          const multiplier = { m: 60*1000, h: 60*60*1000, d: 24*60*60*1000 }[unit];
+          const expiry = Date.now() + val * multiplier;
+          expParam = '&exp=' + expiry;
+        }
+        
+        localStorage.setItem('jeeves-share-expiry', expiryInput);
+        
+        try {
+          const resp = await fetch('/share?path=' + encodeURIComponent(path) + '&key=' + insiderKey + expParam);
+          const data = await resp.json();
+          if (data.url) {
+            const fullUrl = window.location.origin + data.url;
+            await navigator.clipboard.writeText(fullUrl);
+            shareOutsideBtn.textContent = '✓';
+            setTimeout(() => { shareOutsideBtn.textContent = 'Outside'; }, 1500);
+          }
+        } catch (err) { console.error('Share failed:', err); }
+      });
+    }
+    
+    // Key rotation button
+    const rotateKeyBtn = document.getElementById('rotate-key-btn');
+    if (rotateKeyBtn) {
+      rotateKeyBtn.addEventListener('click', async () => {
+        const confirmed = confirm('⚠️ Rotate API Key?\\n\\nThis will INVALIDATE all existing links and shares.\\n\\nYou will be redirected to the new insider link for this page.');
+        if (!confirmed) return;
+        
+        const insiderKey = rotateKeyBtn.dataset.insiderKey;
+        try {
+          const resp = await fetch('/rotate-key?key=' + insiderKey, { method: 'POST' });
+          const data = await resp.json();
+          if (data.ok && data.insiderKey) {
+            // Navigate to same path with new insider key
+            const url = new URL(window.location.href);
+            url.searchParams.set('key', data.insiderKey);
+            window.location.href = url.toString();
+          } else {
+            alert('Key rotation failed: ' + (data.error || 'Unknown error'));
+          }
+        } catch (err) {
+          alert('Key rotation failed: ' + err.message);
+        }
+      });
+    }
+    `;
+  } else {
+    return `
+    const shareBtn = document.getElementById('share-btn');
+    const countdownEl = document.querySelector('.expiry-countdown');
+    
+    // Share button: copy current page URL
+    if (shareBtn) {
+      shareBtn.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(window.location.href);
+        shareBtn.textContent = '✓ Copied';
+        setTimeout(() => { shareBtn.textContent = '📋 Share'; }, 1500);
+      });
+    }
+    
+    // Expiry countdown
+    if (countdownEl) {
+      const expiry = parseInt(countdownEl.dataset.expiry, 10);
+      const update = () => {
+        const remaining = expiry - Date.now();
+        if (remaining <= 0) {
+          countdownEl.textContent = '(expired)';
+          countdownEl.classList.add('expired');
+          return;
+        }
+        const mins = Math.floor(remaining / 60000);
+        const hours = Math.floor(mins / 60);
+        const days = Math.floor(hours / 24);
+        let text;
+        if (days > 0) text = days + 'd ' + (hours % 24) + 'h';
+        else if (hours > 0) text = hours + 'h ' + (mins % 60) + 'm';
+        else text = mins + 'm';
+        countdownEl.textContent = '(expires in ' + text + ')';
+      };
+      update();
+      setInterval(update, 60000);
+    }
+    `;
+  }
+}
+
+// Compute insider key: HMAC-SHA256(apiKey, "insider")
+// Works for any path, grants full navigation
+function computeInsiderKey(apiKey) {
+  const hash = crypto.createHmac('sha256', apiKey).update('insider').digest('hex');
+  return hash.substring(0, 32);
+}
+
+// Compute outsider key with expiry: HMAC-SHA256(apiKey, path + "|" + expiry)
+function computeOutsiderKeyWithExpiry(apiKey, urlPath, expiry) {
+  const normalized = urlPath.toLowerCase().replace(/^\/+|\/+$/g, '');
+  const data = normalized + '|' + expiry;
+  const hash = crypto.createHmac('sha256', apiKey).update(data).digest('hex');
+  return hash.substring(0, 32);
+}
+
+// Verify key and determine access mode
+// Returns: { valid: boolean, mode: 'insider' | 'outsider' | null }
+function verifyKey(apiKey, urlPath, providedKey, expParam) {
+  if (!providedKey) return { valid: false, mode: null };
+  
+  // Check insider key first
+  const insiderKey = computeInsiderKey(apiKey);
+  try {
+    if (crypto.timingSafeEqual(Buffer.from(providedKey), Buffer.from(insiderKey))) {
+      return { valid: true, mode: 'insider' };
+    }
+  } catch {}
+  
+  // Check outsider key with expiry
+  if (expParam) {
+    const expiry = parseInt(expParam, 10);
+    if (isNaN(expiry) || expiry < Date.now()) {
+      return { valid: false, mode: null }; // Expired or invalid
+    }
+    const expectedKey = computeOutsiderKeyWithExpiry(apiKey, urlPath, expParam);
+    try {
+      if (crypto.timingSafeEqual(Buffer.from(providedKey), Buffer.from(expectedKey))) {
+        return { valid: true, mode: 'outsider' };
+      }
+    } catch {}
+  }
+  
+  // Check outsider key without expiry
+  const expectedKey = computePathKey(apiKey, urlPath);
+  try {
+    if (crypto.timingSafeEqual(Buffer.from(providedKey), Buffer.from(expectedKey))) {
+      return { valid: true, mode: 'outsider' };
+    }
+  } catch {}
+  
+  return { valid: false, mode: null };
+}
+
+// Legacy verify function for backward compatibility
+function verifyPathKey(apiKey, urlPath, providedKey) {
+  const result = verifyKey(apiKey, urlPath, providedKey, null);
+  return result.valid;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -167,6 +549,252 @@ const handlers = {
 };
 
 // ─────────────────────────────────────────────────────────────
+// Export Handler (PDF/DOCX)
+// ─────────────────────────────────────────────────────────────
+
+async function handleExport(req, res, filePath, markdown, fileName, fileDir, format) {
+  const baseName = fileName.replace(/\.md$/i, '');
+  
+  if (format === 'pdf') {
+    try {
+      // Lazy-load puppeteer
+      if (!puppeteer) {
+        puppeteer = require('puppeteer-core');
+      }
+      
+      // Build the HTML URL for this page (without export param)
+      const pageUrl = `http://localhost:${PORT}${req.path}?key=${req.query.key}&toc=1`;
+      
+      const browser = await puppeteer.launch({
+        executablePath: CHROME_PATH,
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+      
+      const page = await browser.newPage();
+      await page.goto(pageUrl, { waitUntil: 'networkidle0' });
+      
+      // Hide the header, panzoom overlay, and anchor links for PDF
+      await page.addStyleTag({ content: `
+        .header, .header-actions, .panzoom-container, .panzoom-hint { display: none !important; }
+        .toc { position: static !important; height: auto !important; page-break-after: always; }
+        .layout { display: block !important; }
+        body { background: #fff !important; }
+        a.anchor { display: none !important; }
+      `});
+      
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        margin: { top: '1cm', right: '1cm', bottom: '1cm', left: '1cm' },
+        printBackground: true
+      });
+      
+      await browser.close();
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${baseName}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.end(pdfBuffer);
+      return;
+    } catch (err) {
+      appendJsonl(EVENTS_LOG, { at: nowIso(), kind: 'pdf_export_error', error: String(err) });
+      res.status(500).json({ error: 'PDF export failed', details: String(err) });
+      return;
+    }
+  }
+  
+  if (format === 'docx') {
+    try {
+      // Lazy-load puppeteer and html-to-docx
+      if (!puppeteer) {
+        puppeteer = require('puppeteer-core');
+      }
+      const HtmlToDocx = require('@turbodocx/html-to-docx');
+      
+      // Build the HTML URL for this page (without export param, no TOC)
+      const pageUrl = `http://localhost:${PORT}${req.path}?key=${req.query.key}&toc=0`;
+      
+      const browser = await puppeteer.launch({
+        executablePath: CHROME_PATH,
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+      
+      const page = await browser.newPage();
+      await page.setViewport({ width: 1200, height: 800 });
+      await page.goto(pageUrl, { waitUntil: 'networkidle0' });
+      
+      // Get SVG bounding boxes for screenshots
+      const svgInfos = await page.evaluate(() => {
+        const svgContainers = document.querySelectorAll('.svg-container, .zoomable-svg');
+        return Array.from(svgContainers).map((container, i) => {
+          const svg = container.querySelector('svg');
+          if (!svg) return null;
+          const rect = svg.getBoundingClientRect();
+          return {
+            index: i,
+            x: Math.floor(rect.x),
+            y: Math.floor(rect.y),
+            width: Math.ceil(rect.width),
+            height: Math.ceil(rect.height)
+          };
+        }).filter(Boolean);
+      });
+      
+      // Screenshot each SVG as PNG
+      const svgPngDataUrls = [];
+      for (const info of svgInfos) {
+        if (info.width > 0 && info.height > 0) {
+          const pngBuffer = await page.screenshot({
+            clip: { x: info.x, y: info.y, width: info.width, height: info.height },
+            type: 'png'
+          });
+          svgPngDataUrls.push({
+            index: info.index,
+            dataUrl: 'data:image/png;base64,' + pngBuffer.toString('base64')
+          });
+        }
+      }
+      
+      // Get the HTML content and replace SVGs with PNG data URLs
+      const processedHtml = await page.evaluate((pngUrls) => {
+        const content = document.querySelector('.content');
+        if (!content) return '<p>No content</p>';
+        
+        // Clone content to avoid modifying the page
+        const contentClone = content.cloneNode(true);
+        
+        // Remove anchor links (the "#" symbols)
+        contentClone.querySelectorAll('a.anchor').forEach(el => el.remove());
+        
+        // Replace SVG containers with PNG images
+        const svgContainers = contentClone.querySelectorAll('.svg-container, .zoomable-svg');
+        svgContainers.forEach((container, i) => {
+          const pngInfo = pngUrls.find(p => p.index === i);
+          if (pngInfo) {
+            const img = document.createElement('img');
+            img.src = pngInfo.dataUrl;
+            img.alt = 'Diagram';
+            img.style.maxWidth = '100%';
+            container.replaceWith(img);
+          } else {
+            const placeholder = document.createElement('p');
+            placeholder.textContent = '[Diagram]';
+            placeholder.style.fontStyle = 'italic';
+            container.replaceWith(placeholder);
+          }
+        });
+        
+        // Fix image URLs to be absolute
+        contentClone.querySelectorAll('img').forEach(img => {
+          if (img.src && !img.src.startsWith('data:')) {
+            img.src = new URL(img.src, window.location.origin).href;
+          }
+        });
+        
+        // Apply inline styles for tables (CSS classes may not work)
+        contentClone.querySelectorAll('table').forEach(table => {
+          table.setAttribute('border', '1');
+          table.style.borderCollapse = 'collapse';
+          table.style.width = '100%';
+        });
+        contentClone.querySelectorAll('th').forEach(th => {
+          th.style.backgroundColor = '#f0f0f0';
+          th.style.fontWeight = 'bold';
+          th.style.padding = '8px';
+          th.style.border = '1px solid #999';
+        });
+        contentClone.querySelectorAll('td').forEach(td => {
+          td.style.padding = '8px';
+          td.style.border = '1px solid #999';
+        });
+        
+        // Apply inline styles for code blocks and preserve newlines
+        contentClone.querySelectorAll('pre').forEach(pre => {
+          pre.style.fontFamily = 'Consolas, monospace';
+          pre.style.fontSize = '9pt';
+          pre.style.backgroundColor = '#f5f5f5';
+          pre.style.padding = '12px';
+          pre.style.border = '1px solid #ddd';
+          // Convert newlines to <br> for DOCX compatibility
+          pre.innerHTML = pre.innerHTML.replace(/\n/g, '<br>');
+        });
+        contentClone.querySelectorAll('code').forEach(code => {
+          code.style.fontFamily = 'Consolas, monospace';
+        });
+        
+        return contentClone.innerHTML;
+      }, svgPngDataUrls);
+      
+      await browser.close();
+      
+      // Build clean HTML document with better styling
+      const fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.6; }
+    h1 { font-size: 20pt; font-weight: bold; color: #1a1a1a; margin-top: 24pt; margin-bottom: 12pt; }
+    h2 { font-size: 16pt; font-weight: bold; color: #2a2a2a; margin-top: 18pt; margin-bottom: 10pt; }
+    h3 { font-size: 13pt; font-weight: bold; color: #3a3a3a; margin-top: 14pt; margin-bottom: 8pt; }
+    h4 { font-size: 11pt; font-weight: bold; color: #4a4a4a; margin-top: 12pt; margin-bottom: 6pt; }
+    p { margin: 6pt 0; }
+    code { font-family: Consolas, 'Courier New', monospace; font-size: 10pt; background-color: #f4f4f4; padding: 2pt 4pt; }
+    pre { font-family: Consolas, 'Courier New', monospace; font-size: 9pt; background-color: #f8f8f8; border: 1pt solid #ddd; padding: 12pt; margin: 12pt 0; white-space: pre-wrap; word-wrap: break-word; }
+    pre code { background-color: transparent; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 12pt 0; }
+    th { background-color: #f0f0f0; font-weight: bold; border: 1pt solid #999; padding: 8pt; text-align: left; }
+    td { border: 1pt solid #999; padding: 8pt; text-align: left; }
+    tr:nth-child(even) td { background-color: #fafafa; }
+    blockquote { border-left: 4pt solid #ddd; margin: 12pt 0; padding: 6pt 12pt; color: #666; }
+    ul, ol { margin: 6pt 0; padding-left: 24pt; }
+    li { margin: 4pt 0; }
+    a { color: #0066cc; }
+    img, svg { max-width: 100%; height: auto; margin: 12pt 0; }
+  </style>
+</head>
+<body>
+${processedHtml}
+</body>
+</html>`;
+      
+      // Convert HTML to DOCX using TurboDocx
+      console.log(`[DOCX] Converting ${fileName}, SVGs converted via Puppeteer: ${svgPngDataUrls.length}`);
+      const docxBuffer = await HtmlToDocx(fullHtml, null, {
+        title: fileName.replace(/\.md$/i, ''),
+        creator: 'Jeeves Server',
+        table: {
+          row: {
+            cantSplit: true
+          }
+        },
+        imageProcessing: {
+          svgHandling: 'native',  // We've already converted SVGs to PNG
+          maxRetries: 2,
+          downloadTimeout: 15000
+        }
+      });
+      
+      // Handle ArrayBuffer or Buffer response
+      const buffer = Buffer.isBuffer(docxBuffer) ? docxBuffer : Buffer.from(docxBuffer);
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      res.setHeader('Content-Disposition', `attachment; filename="${baseName}.docx"`);
+      res.setHeader('Content-Length', buffer.length);
+      res.end(buffer);
+      return;
+    } catch (err) {
+      appendJsonl(EVENTS_LOG, { at: nowIso(), kind: 'docx_export_error', error: String(err) });
+      res.status(500).json({ error: 'DOCX export failed', details: String(err) });
+      return;
+    }
+  }
+  
+  res.status(400).json({ error: 'Invalid export format' });
+}
+
+// ─────────────────────────────────────────────────────────────
 // Express App
 // ─────────────────────────────────────────────────────────────
 
@@ -204,6 +832,108 @@ app.get('/key', (req, res) => {
   res.json({ path: targetPath, key });
 });
 
+// Generate insider key (requires raw API key)
+app.get('/insider-key', (req, res) => {
+  const provided = req.headers['x-api-key'];
+  if (!provided) {
+    return res.status(401).json({ error: 'X-API-Key header required' });
+  }
+  try {
+    if (!crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(API_KEY))) {
+      return res.status(401).json({ error: 'Invalid API key' });
+    }
+  } catch {
+    return res.status(401).json({ error: 'Invalid API key' });
+  }
+
+  const key = computeInsiderKey(API_KEY);
+  res.json({ key });
+});
+
+// Rotate API key (requires insider key)
+app.post('/rotate-key', (req, res) => {
+  const provided = req.query.key;
+  const insiderKey = computeInsiderKey(API_KEY);
+  
+  // Verify insider access
+  try {
+    if (!provided || !crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(insiderKey))) {
+      return res.status(401).json({ error: 'Insider key required' });
+    }
+  } catch {
+    return res.status(401).json({ error: 'Insider key required' });
+  }
+  
+  // Generate new API key
+  const newApiKey = crypto.randomBytes(32).toString('hex');
+  
+  // Write to .env.local
+  const envPath = path.join(__dirname, '.env.local');
+  let envContent = '';
+  try {
+    envContent = fs.readFileSync(envPath, 'utf8');
+  } catch {}
+  
+  // Replace or add API_KEY line
+  const lines = envContent.split('\n');
+  let found = false;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim().startsWith('API_KEY=')) {
+      lines[i] = 'API_KEY=' + newApiKey;
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    lines.push('API_KEY=' + newApiKey);
+  }
+  
+  fs.writeFileSync(envPath, lines.join('\n'), 'utf8');
+  
+  // Track rotation timestamp
+  const rotatedAt = nowIso();
+  setKeyRotationTimestamp(rotatedAt);
+  appendJsonl(EVENTS_LOG, { at: rotatedAt, kind: 'api_key_rotated' });
+  
+  // Compute new insider key
+  const newInsiderKey = computeInsiderKey(newApiKey);
+  
+  res.json({ ok: true, insiderKey: newInsiderKey });
+});
+
+// Share endpoint: generate outsider link (requires insider key)
+app.get('/share', (req, res) => {
+  const provided = req.query.key;
+  const insiderKey = computeInsiderKey(API_KEY);
+  
+  // Verify insider access
+  try {
+    if (!provided || !crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(insiderKey))) {
+      return res.status(401).json({ error: 'Insider key required' });
+    }
+  } catch {
+    return res.status(401).json({ error: 'Insider key required' });
+  }
+  
+  const targetPath = req.query.path;
+  if (!targetPath) {
+    return res.status(400).json({ error: 'path query param required' });
+  }
+  
+  const expiry = req.query.exp; // Optional expiry timestamp
+  let outsiderKey, shareUrl;
+  
+  if (expiry) {
+    outsiderKey = computeOutsiderKeyWithExpiry(API_KEY, targetPath, expiry);
+    shareUrl = `/path${targetPath}?key=${outsiderKey}&exp=${expiry}`;
+  } else {
+    outsiderKey = computePathKey(API_KEY, targetPath);
+    shareUrl = `/path${targetPath}?key=${outsiderKey}`;
+  }
+  
+  res.json({ path: targetPath, key: outsiderKey, exp: expiry || null, url: shareUrl });
+});
+
 // Webhook endpoint (path-specific key auth)
 app.use('/webhook', (req, res, next) => {
   const provided = req.headers['x-api-key'] || req.query.key;
@@ -230,11 +960,17 @@ app.post('/webhook', async (req, res) => {
 app.use('/path', (req, res, next) => {
   const urlPath = req.path;
   const provided = req.query.key;
+  const expParam = req.query.exp;
   
-  if (!verifyPathKey(API_KEY, urlPath, provided)) {
+  const authResult = verifyKey(API_KEY, urlPath, provided, expParam);
+  
+  if (!authResult.valid) {
     appendJsonl(EVENTS_LOG, { at: nowIso(), kind: 'auth_failed_path', ip: req.ip, path: urlPath });
     return res.status(401).json({ error: 'Unauthorized' });
   }
+  
+  // Store access mode on request for use in rendering
+  req.accessMode = authResult.mode; // 'insider' or 'outsider'
   next();
 });
 
@@ -253,17 +989,28 @@ app.get('/path', (req, res) => {
     drives = ['C', 'D', 'E']; // Fallback
   }
   
+  const isInsider = req.accessMode === 'insider';
+  const insiderKey = computeInsiderKey(API_KEY);
+  const linkKey = isInsider ? insiderKey : null;
+  
   let rows = '';
   for (const drive of drives) {
     const drivePath = drive + ':\\';
     const urlPath = '/' + drive.toLowerCase();
-    const key = computePathKey(API_KEY, urlPath);
-    let freeSpace = '-', totalSpace = '-';
-    try {
-      // This is a simple approach; we could use wmic for more detail
-    } catch {}
+    const key = linkKey || computePathKey(API_KEY, urlPath);
     rows += '<tr><td>💾 <a href="/path' + urlPath + '?key=' + key + '">' + drivePath + '</a></td><td>Drive</td></tr>';
   }
+  
+  const headerHtml = renderHeader({
+    isInsider: true,
+    breadcrumbs: '<span class="home-icon">🎩</span>',
+    fileName: null,
+    queryKey: req.query.key,
+    currentPath: '/',
+    insiderKey,
+    showRaw: false,
+    actions: []
+  });
   
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -272,30 +1019,32 @@ app.get('/path', (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>Drives</title>
+  <script>${renderThemeScript()}</script>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #fafafa; color: #333; }
-    .header { background: #24292e; color: #fff; padding: 1rem 2rem; }
-    .header a { color: #79b8ff; text-decoration: none; }
+    ${renderThemeStyles()}
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: var(--bg-tertiary); color: var(--text-primary); }
+    ${renderHeaderStyles()}
     .container { padding: 1.5rem 2rem; }
-    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #e1e4e8; }
-    th { background: #f6f8fa; font-weight: 600; font-size: 13px; color: #586069; }
+    table { width: 100%; border-collapse: collapse; background: var(--bg-primary); border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+    th { background: var(--table-header-bg); font-weight: 600; font-size: 13px; color: var(--text-secondary); }
     td { font-size: 14px; }
-    tr:hover { background: #f6f8fa; }
-    a { color: #0366d6; text-decoration: none; }
+    tr:hover { background: var(--table-row-hover); }
+    a { color: var(--link-color); text-decoration: none; }
     a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="breadcrumb">drives</div>
-  </div>
+  ${headerHtml}
   <div class="container">
     <table>
       <thead><tr><th>Drive</th><th>Type</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div>
+  <script>
+    ${renderShareScript(true)}
+  </script>
 </body>
 </html>`;
   
@@ -334,8 +1083,10 @@ app.get('/path/*', (req, res) => {
     // ─────────────────────────────────────────────────────────
     const binaryExts = ['.exe', '.dll', '.bin', '.so', '.dylib', '.obj', '.o', '.a', '.lib', '.msi', '.iso', '.img', '.dmg', '.deb', '.rpm', '.zip', '.tar', '.gz', '.7z', '.rar', '.cab'];
     
-    // Build breadcrumb trail
-    const breadcrumbs = buildBreadcrumbs(resolved, API_KEY);
+    // Build breadcrumb trail (hidden for outsiders)
+    const breadcrumbs = buildBreadcrumbs(resolved, API_KEY, req.accessMode);
+    const isInsider = req.accessMode === 'insider';
+    const insiderKey = computeInsiderKey(API_KEY);
     
     // Read directory contents
     const entries = fs.readdirSync(resolved, { withFileTypes: true });
@@ -351,7 +1102,8 @@ app.get('/path/*', (req, res) => {
     for (const entry of sorted) {
       const entryPath = path.join(resolved, entry.name);
       const entryUrlPath = '/' + entryPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
-      const entryKey = computePathKey(API_KEY, entryUrlPath);
+      // Insiders get insider key for all links, outsiders get path-specific keys
+      const entryKey = isInsider ? insiderKey : computePathKey(API_KEY, entryUrlPath);
       
       let type, size, mtime;
       try {
@@ -383,6 +1135,21 @@ app.get('/path/*', (req, res) => {
     }
     
     const dirName = path.basename(resolved) || resolved;
+    const currentPath = '/' + reqPath;
+    const expiry = req.query.exp ? parseInt(req.query.exp, 10) : null;
+    
+    const headerHtml = renderHeader({
+      isInsider,
+      breadcrumbs,
+      fileName: null,
+      queryKey: req.query.key,
+      currentPath,
+      insiderKey,
+      expiry,
+      showRaw: false,
+      actions: []
+    });
+    
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -390,27 +1157,24 @@ app.get('/path/*', (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>${dirName}</title>
+  <script>${renderThemeScript()}</script>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #fafafa; color: #333; }
-    .header { background: #24292e; color: #fff; padding: 1rem 2rem; }
-    .header a { color: #79b8ff; text-decoration: none; }
-    .header a:hover { text-decoration: underline; }
-    .breadcrumb { font-size: 14px; }
+    ${renderThemeStyles()}
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: var(--bg-tertiary); color: var(--text-primary); }
+    ${renderHeaderStyles()}
     .container { padding: 1.5rem 2rem; }
-    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #e1e4e8; }
-    th { background: #f6f8fa; font-weight: 600; font-size: 13px; color: #586069; }
+    table { width: 100%; border-collapse: collapse; background: var(--bg-primary); border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+    th { background: var(--table-header-bg); font-weight: 600; font-size: 13px; color: var(--text-secondary); }
     td { font-size: 14px; }
-    tr:hover { background: #f6f8fa; }
-    a { color: #0366d6; text-decoration: none; }
+    tr:hover { background: var(--table-row-hover); }
+    a { color: var(--link-color); text-decoration: none; }
     a:hover { text-decoration: underline; }
-    .count { color: #586069; font-size: 13px; margin-bottom: 1rem; }
+    .count { color: var(--text-secondary); font-size: 13px; margin-bottom: 1rem; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="breadcrumb">${breadcrumbs}</div>
-  </div>
+  ${headerHtml}
   <div class="container">
     <div class="count">${entries.length} items</div>
     <table>
@@ -418,6 +1182,9 @@ app.get('/path/*', (req, res) => {
       <tbody>${rows}</tbody>
     </table>
   </div>
+  <script>
+    ${renderShareScript(isInsider)}
+  </script>
 </body>
 </html>`;
     
@@ -454,6 +1221,13 @@ app.get('/path/*', (req, res) => {
       const fileDir = path.dirname(resolved);
       
       // ─────────────────────────────────────────────────────────
+      // EXPORT: Handle PDF/DOCX export requests
+      // ─────────────────────────────────────────────────────────
+      if (req.query.export === 'pdf' || req.query.export === 'docx') {
+        return handleExport(req, res, resolved, markdown, fileName, fileDir, req.query.export);
+      }
+      
+      // ─────────────────────────────────────────────────────────
       // PRE-PROCESS: Convert Windows paths to markdown links
       // (only outside of code blocks and inline code)
       // ─────────────────────────────────────────────────────────
@@ -484,8 +1258,8 @@ app.get('/path/*', (req, res) => {
         if (!resolved) return winPath; // Return original text, no link
         
         const urlPath = '/' + resolved.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
-        const key = computePathKey(API_KEY, urlPath);
-        return `[${winPath}](/path${urlPath}?key=${key})`;
+        // Don't add key here - post-processing will add appropriate key based on access mode
+        return `[${winPath}](/path${urlPath})`;
       };
       
       // Split by fenced code blocks AND inline code to avoid linkifying inside them
@@ -539,29 +1313,99 @@ app.get('/path/*', (req, res) => {
       
       // ─────────────────────────────────────────────────────────
       // POST-PROCESS: Fix relative links (images, hrefs)
+      // For insiders: all links use insider key
+      // For outsiders: src (images) get path-specific keys, href (navigation) get no key
       // ─────────────────────────────────────────────────────────
+      const isInsiderMode = req.accessMode === 'insider';
+      const linkInsiderKey = computeInsiderKey(API_KEY);
+      
       htmlContent = htmlContent.replace(
         /(href|src)="([^"]+)"/g,
         (match, attr, url) => {
+          // Skip external URLs and anchors
           if (url.startsWith('http://') || url.startsWith('https://') || 
-              url.startsWith('#') || url.startsWith('//') || url.startsWith('/path/')) {
+              url.startsWith('#') || url.startsWith('//')) {
             return match;
           }
           
-          let targetPath;
-          if (url.startsWith('/')) {
-            targetPath = 'D:' + url;
+          let urlPath;
+          
+          // Handle URLs that already start with /path/ (from linkifyPathMd)
+          if (url.startsWith('/path/')) {
+            // Strip any existing query params and use the path as-is
+            urlPath = url.split('?')[0];
           } else {
-            targetPath = path.resolve(fileDir, url);
+            // Convert relative/absolute paths to /path/ URLs
+            let targetPath;
+            if (url.startsWith('/')) {
+              targetPath = 'D:' + url;
+            } else {
+              targetPath = path.resolve(fileDir, url);
+            }
+            urlPath = '/path/' + targetPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
           }
           
-          const urlPath = '/path/' + targetPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
-          const key = computePathKey(API_KEY, urlPath.replace('/path', ''));
-          
-          return `${attr}="${urlPath}?key=${key}"`;
+          if (isInsiderMode) {
+            // Insiders get insider key for all links
+            return `${attr}="${urlPath}?key=${linkInsiderKey}"`;
+          } else {
+            // Outsiders: embedded resources (src) get path-specific keys
+            if (attr === 'src') {
+              const key = computePathKey(API_KEY, urlPath.replace('/path', ''));
+              return `${attr}="${urlPath}?key=${key}"`;
+            } else {
+              // href for outsiders: strip the link entirely (handled in second pass)
+              return `${attr}="__STRIP_LINK__"`;
+            }
+          }
         }
       );
       
+      // Second pass: strip internal links marked for removal (outsider mode)
+      if (!isInsiderMode) {
+        htmlContent = htmlContent.replace(
+          /<a\s+href="__STRIP_LINK__"[^>]*>([^<]*)<\/a>/g,
+          '$1'  // Just the link text, no anchor tag
+        );
+      }
+      
+      // ─────────────────────────────────────────────────────────
+      // POST-PROCESS: Inline SVG images for vector zoom
+      // ─────────────────────────────────────────────────────────
+      htmlContent = htmlContent.replace(
+        /<img[^>]*?src="([^"]+\.svg)(\?[^"]*)?"[^>]*>/gi,
+        (match, svgUrl, query) => {
+          try {
+            // Extract the file path from the URL
+            let svgPath;
+            if (svgUrl.startsWith('/path/')) {
+              // Convert /path/d/foo/bar.svg to D:\foo\bar.svg
+              const urlPath = svgUrl.replace('/path/', '');
+              svgPath = urlPath.replace(/^([a-z])\//, (m, d) => d.toUpperCase() + ':\\').replace(/\//g, '\\');
+            } else {
+              svgPath = path.resolve(fileDir, svgUrl);
+            }
+            
+            if (!fs.existsSync(svgPath)) {
+              return match; // Keep original if file not found
+            }
+            
+            let svgContent = fs.readFileSync(svgPath, 'utf8');
+            
+            // Remove XML declaration if present
+            svgContent = svgContent.replace(/<\?xml[^?]*\?>\s*/gi, '');
+            
+            // Add class for styling and ensure viewBox exists for proper scaling
+            svgContent = svgContent.replace(/<svg/, '<svg class="inline-svg"');
+            
+            // Wrap in a zoomable container
+            return `<div class="svg-container zoomable-svg" data-src="${svgUrl}">${svgContent}</div>`;
+          } catch (err) {
+            return match; // Keep original on error
+          }
+        }
+      );
+
       // ─────────────────────────────────────────────────────────
       // POST-PROCESS: Linkify Windows paths inside <code> tags
       // (but not inside <pre> blocks)
@@ -571,8 +1415,14 @@ app.get('/path/*', (req, res) => {
         if (!resolved) return winPath; // Return original text, no link
         
         const urlPath = '/' + resolved.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
-        const key = computePathKey(API_KEY, urlPath);
-        return `<a href="/path${urlPath}?key=${key}">${winPath}</a>`;
+        
+        if (isInsiderMode) {
+          // Insiders get insider key
+          return `<a href="/path${urlPath}?key=${linkInsiderKey}">${winPath}</a>`;
+        } else {
+          // Outsiders: no link, just plain text
+          return winPath;
+        }
       };
       
       // Split by <pre> blocks to preserve them
@@ -587,7 +1437,25 @@ app.get('/path/*', (req, res) => {
       }).join('');
       
       const hasToc = showToc && headings.length > 0;
-      const breadcrumbs = buildBreadcrumbs(resolved, API_KEY);
+      const isInsider = req.accessMode === 'insider';
+      const breadcrumbs = buildBreadcrumbs(resolved, API_KEY, req.accessMode);
+      const insiderKey = computeInsiderKey(API_KEY);
+      const currentPath = '/' + reqPath; // Use reqPath (params[0]) not req.path to avoid /path prefix duplication
+      const expiry = req.query.exp ? parseInt(req.query.exp, 10) : null;
+      const headerHtml = renderHeader({
+        isInsider,
+        breadcrumbs,
+        fileName,
+        queryKey: req.query.key,
+        currentPath,
+        insiderKey,
+        expiry,
+        actions: [
+          `<a href="?key=${req.query.key}&amp;export=pdf">📄 PDF</a>`,
+          `<a href="?key=${req.query.key}&amp;export=docx">📝 DOCX</a>`
+        ]
+      });
+      
       const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -595,60 +1463,99 @@ app.get('/path/*', (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>${fileName}</title>
+  <script>${renderThemeScript()}</script>
   <style>
+    ${renderThemeStyles()}
     * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       line-height: 1.6;
       margin: 0;
       padding: 0;
-      color: #333;
-      background: #fafafa;
+      color: var(--text-primary);
+      background: var(--bg-tertiary);
     }
-    .header { background: #24292e; color: #fff; padding: 0.75rem 2rem; font-size: 14px; }
-    .header a { color: #79b8ff; text-decoration: none; }
-    .header a:hover { text-decoration: underline; }
+    ${renderHeaderStyles()}
     .layout { display: flex; min-height: calc(100vh - 42px); }
     .toc {
       width: 260px;
       flex-shrink: 0;
-      background: #f6f8fa;
-      border-right: 1px solid #e1e4e8;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
       padding: 1.5rem 1rem;
       position: sticky;
       top: 0;
       height: 100vh;
       overflow-y: auto;
     }
-    .toc-title { font-weight: 600; margin-bottom: 0.8em; color: #1a1a1a; }
+    .toc-title { font-weight: 600; margin-bottom: 0.8em; color: var(--text-primary); }
     .toc ul { margin: 0; padding-left: 0; list-style: none; }
     .toc li { margin: 0.4em 0; font-size: 0.9em; }
-    .toc a { color: #555; }
-    .toc a:hover { color: #0366d6; }
+    .toc a { color: var(--text-secondary); }
+    .toc a:hover { color: var(--link-color); }
     .content {
       flex: 1;
       max-width: 900px;
       padding: 2rem 3rem;
     }
     .no-toc .content { margin: 0 auto; }
-    h1, h2, h3, h4, h5, h6 { color: #1a1a1a; margin-top: 1.5em; }
-    h1 { border-bottom: 2px solid #e1e4e8; padding-bottom: 0.3em; }
-    h2 { border-bottom: 1px solid #e1e4e8; padding-bottom: 0.3em; }
-    code { background: #f0f0f0; padding: 0.2em 0.4em; border-radius: 3px; font-family: 'SF Mono', Consolas, monospace; font-size: 0.9em; }
+    h1, h2, h3, h4, h5, h6 { color: var(--text-primary); margin-top: 1.5em; }
+    h1 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.3em; }
+    h2 { border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+    code { background: var(--code-bg); padding: 0.2em 0.4em; border-radius: 3px; font-family: 'SF Mono', Consolas, monospace; font-size: 0.9em; color: var(--text-primary); }
     pre { background: #282c34; color: #abb2bf; padding: 1rem; border-radius: 6px; overflow-x: auto; }
     pre code { background: none; color: inherit; padding: 0; }
-    blockquote { border-left: 4px solid #dfe2e5; margin: 1em 0; padding: 0.5em 1em; color: #6a737d; background: #fff; }
+    blockquote { border-left: 4px solid var(--border-color); margin: 1em 0; padding: 0.5em 1em; color: var(--text-muted); background: var(--bg-secondary); }
     table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-    th, td { border: 1px solid #dfe2e5; padding: 0.6em 1em; text-align: left; }
-    th { background: #f6f8fa; }
-    a { color: #0366d6; text-decoration: none; }
+    th, td { border: 1px solid var(--border-color); padding: 0.6em 1em; text-align: left; }
+    th { background: var(--table-header-bg); }
+    a { color: var(--link-color); text-decoration: none; }
     a:hover { text-decoration: underline; }
-    a.anchor { color: #ccc; margin-right: 0.3em; font-weight: normal; }
-    a.anchor:hover { color: #0366d6; }
+    a.anchor { color: var(--text-muted); margin-right: 0.3em; font-weight: normal; }
+    a.anchor:hover { color: var(--link-color); }
     code a { color: inherit; text-decoration: underline; text-decoration-style: dotted; }
     code a:hover { text-decoration-style: solid; }
-    hr { border: none; border-top: 1px solid #e1e4e8; margin: 2em 0; }
+    hr { border: none; border-top: 1px solid var(--border-color); margin: 2em 0; }
     img { max-width: 100%; height: auto; }
+    img.zoomable { cursor: zoom-in; }
+    .svg-container { max-width: 100%; overflow: hidden; }
+    .svg-container svg.inline-svg { max-width: 100%; height: auto; display: block; }
+    .zoomable-svg { cursor: zoom-in; }
+    .panzoom-container { 
+      position: fixed; 
+      top: 0; left: 0; right: 0; bottom: 0; 
+      background: rgba(0,0,0,0.9); 
+      z-index: 1000; 
+      display: none;
+      cursor: grab;
+    }
+    .panzoom-container.active { display: flex; align-items: center; justify-content: center; }
+    .panzoom-container:active { cursor: grabbing; }
+    .panzoom-container img { max-width: none; max-height: none; }
+    .panzoom-svg-holder { display: none; align-items: center; justify-content: center; width: 100%; height: 100%; }
+    .panzoom-svg-holder svg { background: #fff; }
+    .panzoom-close { 
+      position: fixed; 
+      top: 20px; right: 20px; 
+      color: #fff; 
+      font-size: 32px; 
+      cursor: pointer; 
+      z-index: 1001;
+      background: rgba(0,0,0,0.5);
+      width: 44px; height: 44px;
+      border-radius: 22px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .panzoom-close:hover { background: rgba(255,255,255,0.2); }
+    .panzoom-hint {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #aaa;
+      font-size: 13px;
+      z-index: 1001;
+    }
     ul, ol { padding-left: 2em; }
     li { margin: 0.25em 0; }
     @media (max-width: 900px) {
@@ -658,13 +1565,93 @@ app.get('/path/*', (req, res) => {
   </style>
 </head>
 <body>
-  <div class="header">${breadcrumbs}</div>
+  ${headerHtml}
   <div class="layout${hasToc ? '' : ' no-toc'}">
     ${tocHtml}
     <main class="content">
 ${htmlContent}
     </main>
   </div>
+  <div class="panzoom-container" id="panzoom-overlay">
+    <span class="panzoom-close" id="panzoom-close">×</span>
+    <img id="panzoom-img" src="" alt="">
+    <div id="panzoom-svg" class="panzoom-svg-holder"></div>
+    <div class="panzoom-hint">Scroll to zoom • Drag to pan • Click or Esc to close</div>
+  </div>
+  <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+  <script>
+    // Mark raster images as zoomable if rendered smaller than actual size
+    document.querySelectorAll('.content img').forEach(img => {
+      const check = () => {
+        if (img.naturalWidth > img.clientWidth || img.naturalHeight > img.clientHeight) {
+          img.classList.add('zoomable');
+          img.title = 'Click to zoom';
+        }
+      };
+      if (img.complete) check();
+      else img.onload = check;
+    });
+
+    // Mark inline SVGs as zoomable (they're always vector, so always benefit from zoom)
+    document.querySelectorAll('.zoomable-svg').forEach(container => {
+      container.title = 'Click to zoom (vector)';
+    });
+
+    // Panzoom overlay
+    const overlay = document.getElementById('panzoom-overlay');
+    const pzImg = document.getElementById('panzoom-img');
+    const pzSvgContainer = document.getElementById('panzoom-svg');
+    const closeBtn = document.getElementById('panzoom-close');
+    let pz = null;
+
+    document.addEventListener('click', e => {
+      // Handle raster images
+      if (e.target.classList.contains('zoomable')) {
+        pzImg.src = e.target.src;
+        pzImg.style.display = 'block';
+        pzSvgContainer.style.display = 'none';
+        overlay.classList.add('active');
+        pz = Panzoom(pzImg, { maxScale: 10, contain: 'outside' });
+        pzImg.parentElement.addEventListener('wheel', pz.zoomWithWheel);
+        return;
+      }
+      
+      // Handle inline SVGs (click on container or any child)
+      const svgContainer = e.target.closest('.zoomable-svg');
+      if (svgContainer) {
+        const svg = svgContainer.querySelector('svg');
+        if (svg) {
+          pzSvgContainer.innerHTML = svg.outerHTML;
+          pzSvgContainer.style.display = 'flex';
+          pzImg.style.display = 'none';
+          overlay.classList.add('active');
+          const clonedSvg = pzSvgContainer.querySelector('svg');
+          clonedSvg.style.maxWidth = 'none';
+          clonedSvg.style.maxHeight = 'none';
+          clonedSvg.style.width = 'auto';
+          clonedSvg.style.height = '90vh';
+          pz = Panzoom(clonedSvg, { maxScale: 20, contain: 'outside' });
+          pzSvgContainer.addEventListener('wheel', pz.zoomWithWheel);
+        }
+      }
+    });
+
+    function closePanzoom() {
+      overlay.classList.remove('active');
+      if (pz) { pz.destroy(); pz = null; }
+      pzImg.src = '';
+      pzImg.style.display = 'block';
+      pzSvgContainer.innerHTML = '';
+      pzSvgContainer.style.display = 'none';
+    }
+
+    closeBtn.addEventListener('click', closePanzoom);
+    overlay.addEventListener('click', e => { if (e.target === overlay || e.target === pzSvgContainer) closePanzoom(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('active')) closePanzoom(); });
+
+    // Share functionality
+    ${renderShareScript(isInsider)}
+  </script>
 </body>
 </html>`;
       
@@ -730,7 +1717,23 @@ ${htmlContent}
           .replace(/>/g, '&gt;');
       }
       
-      const breadcrumbs = buildBreadcrumbs(resolved, API_KEY);
+      const breadcrumbs = buildBreadcrumbs(resolved, API_KEY, req.accessMode);
+      const isInsider = req.accessMode === 'insider';
+      const insiderKey = computeInsiderKey(API_KEY);
+      const currentPath = '/' + reqPath;
+      const expiry = req.query.exp ? parseInt(req.query.exp, 10) : null;
+      
+      const headerHtml = renderHeader({
+        isInsider,
+        breadcrumbs,
+        fileName,
+        queryKey: req.query.key,
+        currentPath,
+        insiderKey,
+        expiry,
+        actions: []  // Just the default Raw download
+      });
+      
       const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -738,42 +1741,41 @@ ${htmlContent}
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>${fileName}</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script>${renderThemeScript()}</script>
+  <link id="hljs-theme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
   <style>
+    ${renderThemeStyles()}
     body {
       font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
       font-size: 13px;
       line-height: 1.5;
       margin: 0;
       padding: 0;
-      background: #0d1117;
-      color: #c9d1d9;
+      background: var(--bg-primary);
+      color: var(--text-primary);
     }
-    pre { margin: 0; padding: 1rem; overflow-x: auto; }
+    pre { margin: 0; padding: 1rem; overflow-x: auto; background: var(--code-bg); }
     code { font-family: inherit; }
-    .header {
-      background: #161b22;
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid #30363d;
-      color: #8b949e;
-      font-size: 13px;
-      position: sticky;
-      top: 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .header a { color: #58a6ff; text-decoration: none; }
-    .header a:hover { text-decoration: underline; }
-    .header .actions { font-size: 12px; }
+    ${renderHeaderStyles()}
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="breadcrumb">${breadcrumbs}</div>
-    <div class="actions"><a href="?key=${req.query.key}&amp;raw=1">View Raw</a></div>
-  </div>
+  ${headerHtml}
   <pre><code class="hljs${lang ? ' language-' + lang : ''}">${highlighted}</code></pre>
+  <script>
+    ${renderShareScript(isInsider)}
+    // Swap highlight.js theme based on current theme
+    function updateHljsTheme() {
+      const theme = document.documentElement.getAttribute('data-theme');
+      const link = document.getElementById('hljs-theme');
+      link.href = theme === 'dark' 
+        ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
+        : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
+    }
+    updateHljsTheme();
+    const origToggle = window.toggleTheme;
+    window.toggleTheme = function() { origToggle(); updateHljsTheme(); };
+  </script>
 </body>
 </html>`;
       

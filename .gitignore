@@ -5,6 +5,9 @@ node_modules/
 *.local
 .env.local
 
+# Runtime state
+state.json
+
 # Logs
 logs/
 *.log
