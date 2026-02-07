@@ -2010,7 +2010,8 @@ ${htmlContent}
           }
           pz = Panzoom(inner, { maxScale: 20, overflow: 'visible' });
           pz.reset({ animate: false });
-          pzSvgContainer.addEventListener('wheel', pz.zoomWithWheel);
+          // Attach wheel to inner element so focal point calculation matches panzoom target
+          inner.addEventListener('wheel', pz.zoomWithWheel);
         }
       }
     });
