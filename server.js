@@ -292,8 +292,12 @@ app.get('/path/*', (req, res) => {
   }
 
   // Convert URL path to Windows path: d/foo/bar.md -> D:\foo\bar.md
+  // Also handle bare drive letter: c -> C:\
   let filePath = reqPath;
-  if (/^[a-zA-Z]\//.test(filePath)) {
+  if (/^[a-zA-Z]$/.test(filePath)) {
+    // Bare drive letter
+    filePath = filePath.toUpperCase() + ':\\';
+  } else if (/^[a-zA-Z]\//.test(filePath)) {
     filePath = filePath[0].toUpperCase() + ':' + filePath.slice(1);
   }
   filePath = filePath.replace(/\//g, '\\');
