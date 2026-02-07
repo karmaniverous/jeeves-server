@@ -97,6 +97,47 @@ nssm install JeevesServer "node" "E:\jeeves-server\server.js"
 nssm start JeevesServer
 ```
 
+## Integration
+
+### Getting Keys
+
+```bash
+# Get insider key (full access)
+curl -H "X-API-Key: <api-key>" "http://localhost:3456/insider-key"
+
+# Get path-specific key
+curl -H "X-API-Key: <api-key>" "http://localhost:3456/key?path=/d/docs/readme.md"
+```
+
+### Generating Shareable Links
+
+```bash
+# Insider link (full navigation)
+https://localhost:3456/path/d/docs/readme.md?key=<insider-key>
+
+# Outsider link (path-restricted, with expiry)
+curl -X POST "http://localhost:3456/outsider-key" \
+  -H "Content-Type: application/json" \
+  -d '{"insiderKey":"<insider-key>","path":"/d/docs/readme.md","expiry":"7d"}'
+```
+
+### Export Options
+
+Append to any markdown URL:
+- `?export=pdf` — Download as PDF
+- `?export=docx` — Download as Word document
+- `?raw=1` — Download raw markdown file
+
+### Converting Windows Paths
+
+```javascript
+// D:\docs\readme.md → /path/d/docs/readme.md
+const urlPath = winPath
+  .replace(/\\/g, '/')
+  .replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
+const url = `http://localhost:3456/path${urlPath}?key=${key}`;
+```
+
 ## Development
 
 ```bash
