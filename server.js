@@ -1585,6 +1585,15 @@ app.get('/path/*', (req, res) => {
       }
       
       // ─────────────────────────────────────────────────────────
+      // RAW: Download raw markdown file
+      // ─────────────────────────────────────────────────────────
+      if (req.query.raw === '1') {
+        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        return res.send(markdown);
+      }
+      
+      // ─────────────────────────────────────────────────────────
       // PRE-PROCESS: Convert Windows paths to markdown links
       // (only outside of code blocks and inline code)
       // ─────────────────────────────────────────────────────────
