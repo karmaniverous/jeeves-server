@@ -249,6 +249,8 @@ app.get('/path/*', (req, res) => {
     '.ts': 'application/typescript; charset=utf-8',
     '.xml': 'application/xml; charset=utf-8',
     '.csv': 'text/csv; charset=utf-8',
+    '.jsonl': 'text/plain; charset=utf-8',
+    '.log': 'text/plain; charset=utf-8',
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',
@@ -259,28 +261,57 @@ app.get('/path/*', (req, res) => {
   
   try {
     if (ext === '.md') {
-      const markdown = fs.readFileSync(resolved, 'utf8');
+      let markdown = fs.readFileSync(resolved, 'utf8');
       const fileName = path.basename(resolved);
       const fileDir = path.dirname(resolved);
       
-      // Track headings for TOC
+      // ─────────────────────────────────────────────────────────
+      // PRE-PROCESS: Convert Windows paths to markdown links
+      // ─────────────────────────────────────────────────────────
+      // Match patterns like D:\path\to\file.ext or C:\folder\file (any drive A-Z)
+      // Handles paths with or without extensions, supports spaces in paths if quoted
+      const winPathRegex = /([A-Z]):\\(?:[^\s"'`<>\\]+\\)*[^\s"'`<>\\]+/g;
+      
+      // Helper to create markdown link for a Windows path
+      const linkifyPathMd = (winPath) => {
+        const urlPath = '/' + winPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
+        const key = computePathKey(API_KEY, urlPath);
+        return `[${winPath}](/path${urlPath}?key=${key})`;
+      };
+      
+      // Split by fenced code blocks to avoid linkifying inside them
+      const codeBlockRegex = /(```[\s\S]*?```|`[^`\n]+`)/g;
+      const parts = markdown.split(codeBlockRegex);
+      markdown = parts.map((part, i) => {
+        // Odd indices are code blocks/spans from the split
+        if (part.startsWith('```') || part.startsWith('`')) {
+          // For inline code, still linkify the path
+          if (part.startsWith('`') && !part.startsWith('```')) {
+            return part.replace(winPathRegex, linkifyPathMd);
+          }
+          return part; // leave fenced code blocks alone
+        }
+        return part.replace(winPathRegex, linkifyPathMd);
+      }).join('');
+      
+      // ─────────────────────────────────────────────────────────
+      // PARSE: Convert markdown to HTML with heading anchors
+      // ─────────────────────────────────────────────────────────
       const headings = [];
       
-      // Custom renderer for heading anchors
       const renderer = new marked.Renderer();
       renderer.heading = function(text, level, raw) {
-        // Handle both marked v4 (object) and v5+ (string) signatures
         const headingText = typeof text === 'object' ? text.text : text;
         const headingRaw = typeof text === 'object' ? text.raw : raw;
         const headingLevel = typeof text === 'object' ? text.depth : level;
         
         const slug = (headingRaw || headingText)
           .toLowerCase()
-          .replace(/<[^>]+>/g, '')     // strip HTML
-          .replace(/[^\w\s-]/g, '')    // remove special chars
-          .replace(/\s+/g, '-')        // spaces to dashes
-          .replace(/-+/g, '-')         // collapse dashes
-          .replace(/^-|-$/g, '');      // trim dashes
+          .replace(/<[^>]+>/g, '')
+          .replace(/[^\w\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
         
         headings.push({ level: headingLevel, text: headingText.replace(/<[^>]+>/g, ''), slug });
         return `<h${headingLevel} id="${slug}"><a href="#${slug}" class="anchor">#</a> ${headingText}</h${headingLevel}>\n`;
@@ -300,7 +331,9 @@ app.get('/path/*', (req, res) => {
         tocHtml += '</ul></nav><hr>';
       }
       
-      // Rewrite local links to use /path/ with computed keys
+      // ─────────────────────────────────────────────────────────
+      // POST-PROCESS: Fix relative links (images, hrefs)
+      // ─────────────────────────────────────────────────────────
       htmlContent = htmlContent.replace(
         /(href|src)="([^"]+)"/g,
         (match, attr, url) => {
@@ -322,24 +355,6 @@ app.get('/path/*', (req, res) => {
           return `${attr}="${urlPath}?key=${key}"`;
         }
       );
-      
-      // Convert Windows file paths to links (including inside <code> but not <pre>)
-      // Match patterns like D:\path\to\file.ext or C:\folder\file
-      const winPathRegex = /([A-Z]):\\(?:[^<>\s"'`\\]+\\)*[^<>\s"'`\\]+\.[a-zA-Z0-9]+/g;
-      
-      // Helper to create link for a Windows path
-      const linkifyPath = (winPath) => {
-        const urlPath = '/' + winPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
-        const key = computePathKey(API_KEY, urlPath);
-        return `<a href="/path${urlPath}?key=${key}">${winPath}</a>`;
-      };
-      
-      // Process outside of <pre> blocks (preserve code blocks)
-      const parts = htmlContent.split(/(<pre[\s\S]*?<\/pre>)/g);
-      htmlContent = parts.map((part, i) => {
-        if (part.startsWith('<pre')) return part; // leave code blocks alone
-        return part.replace(winPathRegex, linkifyPath);
-      }).join('');
       
       const html = `<!DOCTYPE html>
 <html lang="en">
