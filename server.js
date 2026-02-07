@@ -896,8 +896,9 @@ app.get('/about', (req, res) => {
       background: var(--bg-secondary);
       border-right: 1px solid var(--border-color);
       padding: 1.5rem 1rem;
-      position: sticky;
+      position: fixed;
       top: 42px;
+      left: 0;
       height: calc(100vh - 42px);
       overflow-y: auto;
     }
@@ -906,6 +907,7 @@ app.get('/about', (req, res) => {
     .toc li { margin: 0.4em 0; font-size: 0.9em; }
     .toc a { color: var(--text-secondary); }
     .toc a:hover { color: var(--link-color); }
+    .toc-spacer { width: 260px; flex-shrink: 0; }
     .content {
       flex: 1;
       max-width: 900px;
@@ -940,6 +942,7 @@ app.get('/about', (req, res) => {
   </div>
   <div class="layout">
     ${tocHtml}
+    <div class="toc-spacer"></div>
     <main class="content">
 ${htmlContent}
     </main>
@@ -1631,8 +1634,9 @@ app.get('/path/*', (req, res) => {
       background: var(--bg-secondary);
       border-right: 1px solid var(--border-color);
       padding: 1.5rem 1rem;
-      position: sticky;
+      position: fixed;
       top: 42px;
+      left: 0;
       height: calc(100vh - 42px);
       overflow-y: auto;
     }
@@ -1641,6 +1645,7 @@ app.get('/path/*', (req, res) => {
     .toc li { margin: 0.4em 0; font-size: 0.9em; }
     .toc a { color: var(--text-secondary); }
     .toc a:hover { color: var(--link-color); }
+    .toc-spacer { width: 260px; flex-shrink: 0; }
     .content {
       flex: 1;
       max-width: 900px;
@@ -1716,6 +1721,7 @@ app.get('/path/*', (req, res) => {
   ${headerHtml}
   <div class="layout${hasToc ? '' : ' no-toc'}">
     ${tocHtml}
+    ${hasToc ? '<div class="toc-spacer"></div>' : ''}
     <main class="content">
 ${htmlContent}
     </main>
