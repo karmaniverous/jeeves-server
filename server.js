@@ -63,6 +63,13 @@ function appendJsonl(p, obj) {
 }
 function nowIso() { return new Date().toISOString(); }
 
+function formatSize(bytes) {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return (bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
+}
+
 // Compute path-specific key: HMAC-SHA256(apiKey, normalizedPath)
 // Each path gets a unique key while only storing one secret
 function computePathKey(apiKey, urlPath) {
@@ -213,10 +220,75 @@ app.use('/path', (req, res, next) => {
   next();
 });
 
+// Root path: list all drives
+app.get('/path', (req, res) => {
+  const { execSync } = require('child_process');
+  let drives = [];
+  try {
+    // Get drives on Windows
+    const output = execSync('wmic logicaldisk get name', { encoding: 'utf8' });
+    drives = output.split('\n')
+      .map(line => line.trim())
+      .filter(line => /^[A-Z]:$/.test(line))
+      .map(d => d.replace(':', ''));
+  } catch {
+    drives = ['C', 'D', 'E']; // Fallback
+  }
+  
+  let rows = '';
+  for (const drive of drives) {
+    const drivePath = drive + ':\\';
+    const urlPath = '/' + drive.toLowerCase();
+    const key = computePathKey(API_KEY, urlPath);
+    let freeSpace = '-', totalSpace = '-';
+    try {
+      // This is a simple approach; we could use wmic for more detail
+    } catch {}
+    rows += '<tr><td>💾 <a href="/path' + urlPath + '?key=' + key + '">' + drivePath + '</a></td><td>Drive</td></tr>';
+  }
+  
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Drives</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #fafafa; color: #333; }
+    .header { background: #24292e; color: #fff; padding: 1rem 2rem; }
+    .header a { color: #79b8ff; text-decoration: none; }
+    .container { padding: 1.5rem 2rem; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #e1e4e8; }
+    th { background: #f6f8fa; font-weight: 600; font-size: 13px; color: #586069; }
+    td { font-size: 14px; }
+    tr:hover { background: #f6f8fa; }
+    a { color: #0366d6; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="breadcrumb">drives</div>
+  </div>
+  <div class="container">
+    <table>
+      <thead><tr><th>Drive</th><th>Type</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>
+</body>
+</html>`;
+  
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(html);
+});
+
 app.get('/path/*', (req, res) => {
   const reqPath = req.params[0];
   if (!reqPath) {
-    return res.status(400).json({ error: 'No path provided' });
+    return res.redirect('/path');
   }
 
   // Convert URL path to Windows path: d/foo/bar.md -> D:\foo\bar.md
@@ -235,7 +307,114 @@ app.get('/path/*', (req, res) => {
 
   const stats = fs.statSync(resolved);
   if (stats.isDirectory()) {
-    return res.status(400).json({ error: 'Path is a directory', path: resolved });
+    // ─────────────────────────────────────────────────────────
+    // Directory listing with breadcrumb navigation
+    // ─────────────────────────────────────────────────────────
+    const binaryExts = ['.exe', '.dll', '.bin', '.so', '.dylib', '.obj', '.o', '.a', '.lib', '.msi', '.iso', '.img', '.dmg', '.deb', '.rpm', '.zip', '.tar', '.gz', '.7z', '.rar', '.cab'];
+    
+    // Build breadcrumb trail
+    const pathParts = resolved.split('\\').filter(p => p);
+    let breadcrumbs = '<a href="/path?key=' + computePathKey(API_KEY, '/') + '">drives</a>';
+    let accumPath = '';
+    for (let i = 0; i < pathParts.length; i++) {
+      const part = pathParts[i];
+      if (i === 0) {
+        // Drive letter
+        accumPath = part;
+      } else {
+        accumPath += '\\' + part;
+      }
+      const urlPath = '/' + accumPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
+      const key = computePathKey(API_KEY, urlPath);
+      breadcrumbs += ' / <a href="/path' + urlPath + '?key=' + key + '">' + part + '</a>';
+    }
+    
+    // Read directory contents
+    const entries = fs.readdirSync(resolved, { withFileTypes: true });
+    let rows = '';
+    
+    // Sort: directories first, then files, alphabetically
+    const sorted = entries.sort((a, b) => {
+      if (a.isDirectory() && !b.isDirectory()) return -1;
+      if (!a.isDirectory() && b.isDirectory()) return 1;
+      return a.name.localeCompare(b.name);
+    });
+    
+    for (const entry of sorted) {
+      const entryPath = path.join(resolved, entry.name);
+      const entryUrlPath = '/' + entryPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
+      const entryKey = computePathKey(API_KEY, entryUrlPath);
+      
+      let type, size, mtime;
+      try {
+        const entryStats = fs.statSync(entryPath);
+        mtime = entryStats.mtime.toISOString().split('T')[0];
+        if (entry.isDirectory()) {
+          type = 'Directory';
+          size = '-';
+        } else {
+          const ext = path.extname(entry.name).toLowerCase();
+          type = ext ? ext.slice(1).toUpperCase() : 'File';
+          size = formatSize(entryStats.size);
+        }
+      } catch {
+        type = '?';
+        size = '-';
+        mtime = '-';
+      }
+      
+      // Check if we should link this entry
+      const ext = path.extname(entry.name).toLowerCase();
+      const isBinary = binaryExts.includes(ext);
+      const nameCell = (isBinary && !entry.isDirectory())
+        ? entry.name
+        : '<a href="/path' + entryUrlPath + '?key=' + entryKey + '">' + entry.name + '</a>';
+      
+      const icon = entry.isDirectory() ? '📁' : '📄';
+      rows += '<tr><td>' + icon + ' ' + nameCell + '</td><td>' + type + '</td><td>' + size + '</td><td>' + mtime + '</td></tr>';
+    }
+    
+    const dirName = path.basename(resolved) || resolved;
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>${dirName}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #fafafa; color: #333; }
+    .header { background: #24292e; color: #fff; padding: 1rem 2rem; }
+    .header a { color: #79b8ff; text-decoration: none; }
+    .header a:hover { text-decoration: underline; }
+    .breadcrumb { font-size: 14px; }
+    .container { padding: 1.5rem 2rem; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #e1e4e8; }
+    th { background: #f6f8fa; font-weight: 600; font-size: 13px; color: #586069; }
+    td { font-size: 14px; }
+    tr:hover { background: #f6f8fa; }
+    a { color: #0366d6; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .count { color: #586069; font-size: 13px; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="breadcrumb">${breadcrumbs}</div>
+  </div>
+  <div class="container">
+    <div class="count">${entries.length} items</div>
+    <table>
+      <thead><tr><th>Name</th><th>Type</th><th>Size</th><th>Modified</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>
+</body>
+</html>`;
+    
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(html);
   }
 
   const ext = path.extname(resolved).toLowerCase();
@@ -272,7 +451,10 @@ app.get('/path/*', (req, res) => {
       // ─────────────────────────────────────────────────────────
       const winPathRegex = /([A-Z]):\\(?:[^\s"'`<>\\]+\\)*[^\s"'`<>\\]+/g;
       
-      // Resolve a Windows path: check existence, handle directories
+      // Binary extensions that shouldn't be linked (can't render in browser)
+      const binaryExts = ['.exe', '.dll', '.bin', '.so', '.dylib', '.obj', '.o', '.a', '.lib', '.msi', '.iso', '.img', '.dmg', '.deb', '.rpm', '.zip', '.tar', '.gz', '.7z', '.rar', '.cab'];
+      
+      // Resolve a Windows path: check existence, skip binaries
       const resolvePathForLink = (winPath) => {
         // Skip templated paths
         if (winPath.includes('{') || winPath.includes('}')) return null;
@@ -280,15 +462,12 @@ app.get('/path/*', (req, res) => {
         if (!fs.existsSync(winPath)) return null;
         
         const stats = fs.statSync(winPath);
-        if (stats.isDirectory()) {
-          // Look for default files
-          const defaults = ['README.md', 'index.md', 'index.html', 'index.htm'];
-          for (const def of defaults) {
-            const defPath = path.join(winPath, def);
-            if (fs.existsSync(defPath)) return defPath;
-          }
-          return null; // Directory with no default file
+        if (stats.isFile()) {
+          // Skip binary files
+          const ext = path.extname(winPath).toLowerCase();
+          if (binaryExts.includes(ext)) return null;
         }
+        // Directories and viewable files are linkable
         return winPath;
       };
       
