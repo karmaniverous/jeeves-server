@@ -1890,8 +1890,9 @@ app.get('/path/*', (req, res) => {
     .panzoom-container.active { display: flex; align-items: center; justify-content: center; }
     .panzoom-container:active { cursor: grabbing; }
     .panzoom-container img { max-width: none; max-height: none; }
-    .panzoom-svg-holder { display: none; align-items: center; justify-content: center; width: 100%; height: 100%; overflow: auto; }
-    .panzoom-svg-holder svg { background: #fff; max-width: 95vw; max-height: 90vh; width: auto !important; height: auto !important; }
+    .panzoom-svg-holder { display: none; align-items: center; justify-content: center; width: 100%; height: 100%; overflow: hidden; }
+    .panzoom-svg-holder .pz-svg-inner { display: block; background: #fff; }
+    .panzoom-svg-holder svg { display: block; background: #fff; }
     .panzoom-close { 
       position: fixed; 
       top: 20px; right: 20px; 
@@ -1980,11 +1981,13 @@ ${htmlContent}
       if (svgContainer) {
         const svg = svgContainer.querySelector('svg');
         if (svg) {
-          pzSvgContainer.innerHTML = svg.outerHTML;
+          // Wrap SVG so Panzoom transforms a div (avoids SVG sizing quirks + stray centering)
+          pzSvgContainer.innerHTML = `<div class="pz-svg-inner">${svg.outerHTML}</div>`;
           pzSvgContainer.style.display = 'flex';
           pzImg.style.display = 'none';
           overlay.classList.add('active');
-          const clonedSvg = pzSvgContainer.querySelector('svg');
+          const inner = pzSvgContainer.querySelector('.pz-svg-inner');
+          const clonedSvg = inner.querySelector('svg');
           // Strip all inline styles and size attributes
           clonedSvg.removeAttribute('style');
           clonedSvg.removeAttribute('width');
@@ -1997,14 +2000,16 @@ ${htmlContent}
             const parts = vb.split(/[\\s,]+/).map(Number);
             const svgW = parts[2], svgH = parts[3];
             const scale = Math.min(maxW / svgW, maxH / svgH);
-            clonedSvg.style.width = (svgW * scale) + 'px';
-            clonedSvg.style.height = (svgH * scale) + 'px';
+            inner.style.width = (svgW * scale) + 'px';
+            inner.style.height = (svgH * scale) + 'px';
+            clonedSvg.style.width = '100%';
+            clonedSvg.style.height = '100%';
           } else {
-            clonedSvg.style.maxWidth = maxW + 'px';
-            clonedSvg.style.maxHeight = maxH + 'px';
+            inner.style.maxWidth = maxW + 'px';
+            inner.style.maxHeight = maxH + 'px';
           }
-          pz = Panzoom(clonedSvg, { maxScale: 20, contain: 'outside' });
-          pz.reset({ animate: false }); // Force reset to scale=1, translate=0
+          pz = Panzoom(inner, { maxScale: 20, overflow: 'visible' });
+          pz.reset({ animate: false });
           pzSvgContainer.addEventListener('wheel', pz.zoomWithWheel);
         }
       }
