@@ -1,9 +1,24 @@
 # Jeeves Server
 
-Express server for Jeeves providing:
-- **Webhook receiver** — single endpoint that derives source from request headers/body
-- **File server** — serves files with markdown rendering to HTML
-- **Path-specific authentication** — each path gets a unique key, only one secret stored
+A lightweight file browser and document viewer with secure, shareable links.
+
+## Why Markdown?
+
+**Markdown is the ideal format for authoring documents**, especially when working with AI assistants. It's simple, readable, version-controllable, and diff-friendly.
+
+But in the business world, you can't share `.md` files — people expect PDFs and Word documents.
+
+**Jeeves Server bridges this gap.** Author your documents in Markdown, review them beautifully rendered in the browser, then export to PDF or DOCX with one click when it's time to share with colleagues, clients, or stakeholders.
+
+## Features
+
+- **File Browser** — Navigate your filesystem through a web interface
+- **Markdown Rendering** — `.md` files render as styled HTML with table of contents
+- **PDF & DOCX Export** — One-click export for business-ready documents
+- **Code Highlighting** — Source files display with syntax highlighting
+- **Dark/Light Themes** — Toggle between themes; preference is saved
+- **Secure Sharing** — Generate expiring links for external recipients
+- **Path-specific Authentication** — Each path gets a unique key, only one secret stored
 
 ## Setup
 
@@ -23,54 +38,47 @@ npm start
 
 ## Authentication
 
-**Path-specific keys:** Each endpoint requires a unique key computed as `HMAC-SHA256(apiKey, normalizedPath)`.
+Jeeves uses **path-specific keys** for authentication. There are two access modes:
 
-Benefits:
-- Only one API key stored in config
-- Each path gets a unique access key
-- If one key is leaked, other paths remain protected
+### Insider Access
 
-**Computing keys:**
+Insider links use a single master key that works for any path. With insider access you can:
+
+- Navigate freely between directories and files
+- Generate shareable links for others
+- Rotate the API key (invalidates all existing links)
+
+### Outsider Access
+
+Outsider links are path-specific and can optionally expire. With outsider access you can:
+
+- View the specific file or directory shared with you
+- Download raw files
+- Share the same link with others
+
+Outsiders cannot navigate to parent directories or other paths.
+
+### Computing Keys
+
 ```bash
 # Use the /key endpoint (requires raw API key in X-API-Key header)
-curl -H "X-API-Key: <api-key>" "http://localhost:3456/key?path=/webhook"
 curl -H "X-API-Key: <api-key>" "http://localhost:3456/key?path=/d/projects/foo.md"
-```
 
-**Using keys:**
-```bash
-# Webhook
-curl -X POST "http://localhost:3456/webhook?key=<computed-key>" -d '{...}'
-
-# File
-curl "http://localhost:3456/path/d/projects/foo.md?key=<computed-key>"
+# Use the /insider-key endpoint
+curl -H "X-API-Key: <api-key>" "http://localhost:3456/insider-key"
 ```
 
 ## Endpoints
 
-| Method | Path       | Auth                | Description                          |
-|--------|------------|---------------------|--------------------------------------|
-| POST   | /webhook   | Path-key (`?key=`)  | Receive webhooks                     |
-| GET    | /path/*    | Path-key (`?key=`)  | Serve files (md rendered as HTML)    |
-| GET    | /key       | X-API-Key header    | Compute path-key for a given path    |
-| GET    | /health    | None                | Health check                         |
-
-## Markdown Rendering
-
-When serving `.md` files:
-- Rendered as styled HTML
-- Local links (`href`, `src`) rewritten to `/path/...?key=<computed-key>`
-- Navigation between related files works seamlessly
-
-## Source Detection (Webhooks)
-
-| Source  | Detection Method                           |
-|---------|-------------------------------------------|
-| Notion  | `X-Notion-Signature` header               |
-| GitHub  | `X-GitHub-Event` header                   |
-| Slack   | `body.type` + `body.team_id/api_app_id`   |
-| Stripe  | `body.type` + `body.data.object`          |
-| Custom  | `X-Webhook-Source` header or `body._source` |
+| Method | Path         | Auth                | Description                          |
+|--------|--------------|---------------------|--------------------------------------|
+| GET    | /path/*      | Path-key (`?key=`)  | Serve files (md rendered as HTML)    |
+| GET    | /about       | None (or key)       | About page with usage instructions   |
+| POST   | /webhook     | Path-key (`?key=`)  | Receive webhooks                     |
+| GET    | /key         | X-API-Key header    | Compute path-key for a given path    |
+| GET    | /insider-key | X-API-Key header    | Get the insider key                  |
+| POST   | /rotate-key  | Insider key (body)  | Rotate the API key                   |
+| GET    | /health      | None                | Health check                         |
 
 ## Running as Windows Service
 

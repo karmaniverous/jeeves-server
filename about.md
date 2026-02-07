@@ -2,13 +2,22 @@
 
 A lightweight file browser and document viewer with secure, shareable links.
 
+## Why Markdown?
+
+**Markdown is the ideal format for authoring documents**, especially when working with AI assistants. It's simple, readable, version-controllable, and diff-friendly.
+
+But in the business world, you can't share `.md` files — people expect PDFs and Word documents.
+
+**Jeeves Server bridges this gap.** Author your documents in Markdown, review them beautifully rendered in the browser, then export to PDF or DOCX with one click when it's time to share with colleagues, clients, or stakeholders.
+
 ## Features
 
 - **File Browser** — Navigate your filesystem through a web interface
 - **Markdown Rendering** — `.md` files render as styled HTML with table of contents
+- **PDF & DOCX Export** — One-click export for business-ready documents
 - **Code Highlighting** — Source files display with syntax highlighting
 - **Dark/Light Themes** — Toggle between themes; preference is saved
-- **PDF & DOCX Export** — Export markdown documents to PDF or Word
+- **Secure Sharing** — Generate expiring links for external recipients
 
 ## Authentication
 
@@ -37,7 +46,7 @@ Outsiders cannot navigate to parent directories or other paths.
 | Button | Description |
 |--------|-------------|
 | 🎩 | Home — return to drive list (insider only) |
-| ℹ️ | About — this page |
+| ? | About — this page |
 | 🔑 | Rotate API Key — generates a new master key, invalidating all existing links |
 | ⬇ Raw | Download the raw file |
 | 📄 PDF | Export markdown as PDF |
