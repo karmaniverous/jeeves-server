@@ -140,7 +140,7 @@ function buildBreadcrumbs(resolvedPath, apiKey, mode) {
     } else {
       accumPath += '\\' + part;
     }
-    const separator = i === 0 ? ' ' : ' / ';
+    const separator = i === 0 ? '' : ' &nbsp;/&nbsp; ';
     const isLast = i === pathParts.length - 1;
     if (isLast) {
       // Last element: no link, just text
