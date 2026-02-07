@@ -198,7 +198,7 @@ function renderThemeStyles() {
 
 function renderHeaderStyles() {
   return `
-    .header { background: #24292e; color: #fff; padding: 0.75rem 2rem; font-size: 14px; line-height: 1.4; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 12px rgba(255,255,255,0.4); }
+    .header { background: #24292e; color: #fff; padding: 0.75rem 2rem; font-size: 14px; line-height: 1.4; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 0 rgba(255,255,255,0.2); }
     [data-theme="dark"] .header { box-shadow: none; }
     .header a { color: #79b8ff; text-decoration: none; }
     .header a:hover { text-decoration: underline; }
@@ -219,6 +219,7 @@ function renderHeaderStyles() {
     .theme-toggle:hover { background: #444; color: #fff; }
     .key-rotation-group { display: flex; align-items: center; gap: 0.4rem; margin-right: 1rem; }
     .key-rotation-age { color: #6e7681; font-size: 12px; }
+    .info-btn-group { margin-right: 1rem; }
   `;
 }
 
@@ -274,6 +275,13 @@ function renderHeader(options) {
     `;
   }
   
+  // Info button (always shown)
+  const infoBtnGroup = `
+    <div class="info-btn-group">
+      <a href="/about" class="theme-toggle" title="About Jeeves Server" style="text-decoration:none;">ℹ️</a>
+    </div>
+  `;
+  
   // Key rotation button with timestamp (insider only)
   let keyRotateGroup = '';
   if (isInsider) {
@@ -292,6 +300,7 @@ function renderHeader(options) {
     <div class="header">
       <div class="breadcrumb">${breadcrumbs}</div>
       <div class="header-actions">
+        ${infoBtnGroup}
         ${keyRotateGroup}
         ${allActions.join('\n        ')}
         ${shareUi}
@@ -816,6 +825,129 @@ app.get('/favicon.svg', (req, res) => {
 });
 app.get('/favicon.ico', (req, res) => {
   res.sendFile(path.join(__dirname, 'favicon.svg'));
+});
+
+// About page (no auth) - renders about.md
+app.get('/about', (req, res) => {
+  const aboutPath = path.join(__dirname, 'about.md');
+  if (!fs.existsSync(aboutPath)) {
+    return res.status(404).send('About page not found');
+  }
+  
+  const markdown = fs.readFileSync(aboutPath, 'utf8');
+  
+  // Parse markdown with heading anchors
+  const headings = [];
+  const renderer = new marked.Renderer();
+  renderer.heading = function(text, level, raw) {
+    const headingText = typeof text === 'object' ? text.text : text;
+    const headingRaw = typeof text === 'object' ? text.raw : raw;
+    const headingLevel = typeof text === 'object' ? text.depth : level;
+    
+    const slug = (headingRaw || headingText)
+      .toLowerCase()
+      .replace(/<[^>]+>/g, '')
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    
+    headings.push({ level: headingLevel, text: headingText.replace(/<[^>]+>/g, ''), slug });
+    return `<h${headingLevel} id="${slug}"><a href="#${slug}" class="anchor">#</a> ${headingText}</h${headingLevel}>\n`;
+  };
+  
+  marked.setOptions({ renderer });
+  const htmlContent = marked(markdown);
+  
+  // Generate TOC
+  let tocHtml = '<nav class="toc"><div class="toc-title">Contents</div><ul>';
+  for (const h of headings) {
+    const indent = (h.level - 1) * 0.8;
+    tocHtml += `<li style="margin-left:${indent}em"><a href="#${h.slug}">${h.text}</a></li>`;
+  }
+  tocHtml += '</ul></nav>';
+  
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>About — Jeeves Server</title>
+  <script>${renderThemeScript()}</script>
+  <style>
+    ${renderThemeStyles()}
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+      color: var(--text-primary);
+      background: var(--bg-tertiary);
+    }
+    ${renderHeaderStyles()}
+    .layout { display: flex; min-height: calc(100vh - 42px); }
+    .toc {
+      width: 260px;
+      flex-shrink: 0;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      padding: 1.5rem 1rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .toc-title { font-weight: 600; margin-bottom: 0.8em; color: var(--text-primary); }
+    .toc ul { margin: 0; padding-left: 0; list-style: none; }
+    .toc li { margin: 0.4em 0; font-size: 0.9em; }
+    .toc a { color: var(--text-secondary); }
+    .toc a:hover { color: var(--link-color); }
+    .content {
+      flex: 1;
+      max-width: 900px;
+      padding: 2rem 3rem;
+    }
+    h1, h2, h3, h4, h5, h6 { color: var(--text-primary); margin-top: 1.5em; scroll-margin-top: 80px; }
+    h1 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.3em; }
+    h2 { border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+    code { background: var(--code-bg); padding: 0.2em 0.4em; border-radius: 3px; font-family: 'SF Mono', Consolas, monospace; font-size: 0.9em; color: var(--text-primary); }
+    pre { background: #282c34; color: #abb2bf; padding: 1rem; border-radius: 6px; overflow-x: auto; }
+    pre code { background: none; color: inherit; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+    th, td { border: 1px solid var(--border-color); padding: 0.6em 1em; text-align: left; }
+    th { background: var(--table-header-bg); }
+    a { color: var(--link-color); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    a.anchor { color: var(--text-muted); margin-right: 0.3em; font-weight: normal; }
+    a.anchor:hover { color: var(--link-color); }
+    hr { border: none; border-top: 1px solid var(--border-color); margin: 2em 0; }
+    @media (max-width: 900px) {
+      .toc { display: none; }
+      .content { padding: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="breadcrumb"><span class="home-icon">🎩</span> About</div>
+    <div class="header-actions">
+      <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light theme">🌙</button>
+    </div>
+  </div>
+  <div class="layout">
+    ${tocHtml}
+    <main class="content">
+${htmlContent}
+    </main>
+  </div>
+</body>
+</html>`;
+  
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(html);
 });
 
 // Key generator: compute key for a given path (requires raw API key)
