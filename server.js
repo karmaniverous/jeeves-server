@@ -664,7 +664,7 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
         }).filter(Boolean);
       });
       
-      // Screenshot each SVG as PNG
+      // Screenshot each SVG as PNG (include dimensions for aspect-ratio-aware sizing)
       const svgPngDataUrls = [];
       for (const info of svgInfos) {
         if (info.width > 0 && info.height > 0) {
@@ -674,13 +674,58 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
           });
           svgPngDataUrls.push({
             index: info.index,
-            dataUrl: 'data:image/png;base64,' + pngBuffer.toString('base64')
+            dataUrl: 'data:image/png;base64,' + pngBuffer.toString('base64'),
+            width: info.width,
+            height: info.height
           });
         }
       }
       
+      // Helper function to calculate aspect-ratio-aware dimensions
+      // Max bounds: 6 inches wide × 8 inches tall (576px × 768px at 96dpi)
+      const MAX_WIDTH_PX = 576;
+      const MAX_HEIGHT_PX = 768;
+      
+      function calcScaledDimensions(origWidth, origHeight) {
+        let w = origWidth;
+        let h = origHeight;
+        
+        // Scale down if wider than max
+        if (w > MAX_WIDTH_PX) {
+          const scale = MAX_WIDTH_PX / w;
+          w = MAX_WIDTH_PX;
+          h = Math.round(h * scale);
+        }
+        
+        // Scale down if still taller than max
+        if (h > MAX_HEIGHT_PX) {
+          const scale = MAX_HEIGHT_PX / h;
+          h = MAX_HEIGHT_PX;
+          w = Math.round(w * scale);
+        }
+        
+        return { width: w, height: h };
+      }
+      
       // Get the HTML content and replace SVGs with PNG data URLs
-      const processedHtml = await page.evaluate((pngUrls) => {
+      const processedHtml = await page.evaluate((pngUrls, maxW, maxH) => {
+        // Helper to calculate scaled dimensions (duplicated for browser context)
+        function calcScaled(origW, origH) {
+          let w = origW;
+          let h = origH;
+          if (w > maxW) {
+            const scale = maxW / w;
+            w = maxW;
+            h = Math.round(h * scale);
+          }
+          if (h > maxH) {
+            const scale = maxH / h;
+            h = maxH;
+            w = Math.round(w * scale);
+          }
+          return { width: w, height: h };
+        }
+        
         const content = document.querySelector('.content');
         if (!content) return '<p>No content</p>';
         
@@ -690,7 +735,7 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
         // Remove anchor links (the "#" symbols)
         contentClone.querySelectorAll('a.anchor').forEach(el => el.remove());
         
-        // Replace SVG containers with PNG images
+        // Replace SVG containers with PNG images (with proper dimensions)
         const svgContainers = contentClone.querySelectorAll('.svg-container, .zoomable-svg');
         svgContainers.forEach((container, i) => {
           const pngInfo = pngUrls.find(p => p.index === i);
@@ -698,8 +743,10 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
             const img = document.createElement('img');
             img.src = pngInfo.dataUrl;
             img.alt = 'Diagram';
-            img.style.maxWidth = '100%';
-            img.style.maxHeight = '8in';
+            // Calculate scaled dimensions preserving aspect ratio
+            const dims = calcScaled(pngInfo.width, pngInfo.height);
+            img.setAttribute('width', dims.width);
+            img.setAttribute('height', dims.height);
             container.replaceWith(img);
           } else {
             const placeholder = document.createElement('p');
@@ -709,14 +756,20 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
           }
         });
         
-        // Fix image URLs to be absolute and constrain size
+        // Fix image URLs and set explicit dimensions for proper DOCX sizing
         contentClone.querySelectorAll('img').forEach(img => {
           if (img.src && !img.src.startsWith('data:')) {
             img.src = new URL(img.src, window.location.origin).href;
           }
-          // Constrain images to fit within page
-          img.style.maxWidth = '100%';
-          img.style.maxHeight = '8in';
+          // Get natural dimensions if available, otherwise use rendered size
+          const origW = img.naturalWidth || img.width || 400;
+          const origH = img.naturalHeight || img.height || 300;
+          const dims = calcScaled(origW, origH);
+          img.setAttribute('width', dims.width);
+          img.setAttribute('height', dims.height);
+          // Remove CSS sizing - use explicit attributes for DOCX
+          img.style.maxWidth = '';
+          img.style.maxHeight = '';
         });
         
         // Apply inline styles for tables (CSS classes may not work)
@@ -751,7 +804,7 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
         });
         
         return contentClone.innerHTML;
-      }, svgPngDataUrls);
+      }, svgPngDataUrls, MAX_WIDTH_PX, MAX_HEIGHT_PX);
       
       await browser.close();
       
@@ -778,7 +831,7 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
     ul, ol { margin: 6pt 0; padding-left: 24pt; }
     li { margin: 4pt 0; }
     a { color: #0066cc; }
-    img, svg { max-width: 100%; max-height: 8in; margin: 12pt 0; }
+    img, svg { margin: 12pt 0; display: block; }
   </style>
 </head>
 <body>
