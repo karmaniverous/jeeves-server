@@ -70,6 +70,24 @@ function formatSize(bytes) {
   return (bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
 }
 
+function buildBreadcrumbs(resolvedPath, apiKey) {
+  const pathParts = resolvedPath.split('\\').filter(p => p);
+  let breadcrumbs = '<a href="/path?key=' + computePathKey(apiKey, '/') + '">drives</a>';
+  let accumPath = '';
+  for (let i = 0; i < pathParts.length; i++) {
+    const part = pathParts[i];
+    if (i === 0) {
+      accumPath = part;
+    } else {
+      accumPath += '\\' + part;
+    }
+    const urlPath = '/' + accumPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
+    const key = computePathKey(apiKey, urlPath);
+    breadcrumbs += ' / <a href="/path' + urlPath + '?key=' + key + '">' + part + '</a>';
+  }
+  return breadcrumbs;
+}
+
 // Compute path-specific key: HMAC-SHA256(apiKey, normalizedPath)
 // Each path gets a unique key while only storing one secret
 function computePathKey(apiKey, urlPath) {
@@ -317,21 +335,7 @@ app.get('/path/*', (req, res) => {
     const binaryExts = ['.exe', '.dll', '.bin', '.so', '.dylib', '.obj', '.o', '.a', '.lib', '.msi', '.iso', '.img', '.dmg', '.deb', '.rpm', '.zip', '.tar', '.gz', '.7z', '.rar', '.cab'];
     
     // Build breadcrumb trail
-    const pathParts = resolved.split('\\').filter(p => p);
-    let breadcrumbs = '<a href="/path?key=' + computePathKey(API_KEY, '/') + '">drives</a>';
-    let accumPath = '';
-    for (let i = 0; i < pathParts.length; i++) {
-      const part = pathParts[i];
-      if (i === 0) {
-        // Drive letter
-        accumPath = part;
-      } else {
-        accumPath += '\\' + part;
-      }
-      const urlPath = '/' + accumPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
-      const key = computePathKey(API_KEY, urlPath);
-      breadcrumbs += ' / <a href="/path' + urlPath + '?key=' + key + '">' + part + '</a>';
-    }
+    const breadcrumbs = buildBreadcrumbs(resolved, API_KEY);
     
     // Read directory contents
     const entries = fs.readdirSync(resolved, { withFileTypes: true });
@@ -583,6 +587,7 @@ app.get('/path/*', (req, res) => {
       }).join('');
       
       const hasToc = showToc && headings.length > 0;
+      const breadcrumbs = buildBreadcrumbs(resolved, API_KEY);
       const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -600,7 +605,10 @@ app.get('/path/*', (req, res) => {
       color: #333;
       background: #fafafa;
     }
-    .layout { display: flex; min-height: 100vh; }
+    .header { background: #24292e; color: #fff; padding: 0.75rem 2rem; font-size: 14px; }
+    .header a { color: #79b8ff; text-decoration: none; }
+    .header a:hover { text-decoration: underline; }
+    .layout { display: flex; min-height: calc(100vh - 42px); }
     .toc {
       width: 260px;
       flex-shrink: 0;
@@ -650,6 +658,7 @@ app.get('/path/*', (req, res) => {
   </style>
 </head>
 <body>
+  <div class="header">${breadcrumbs}</div>
   <div class="layout${hasToc ? '' : ' no-toc'}">
     ${tocHtml}
     <main class="content">
@@ -721,6 +730,7 @@ ${htmlContent}
           .replace(/>/g, '&gt;');
       }
       
+      const breadcrumbs = buildBreadcrumbs(resolved, API_KEY);
       const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -743,18 +753,26 @@ ${htmlContent}
     code { font-family: inherit; }
     .header {
       background: #161b22;
-      padding: 0.5rem 1rem;
+      padding: 0.75rem 1rem;
       border-bottom: 1px solid #30363d;
       color: #8b949e;
-      font-size: 12px;
+      font-size: 13px;
       position: sticky;
       top: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    .header a { color: #58a6ff; }
+    .header a { color: #58a6ff; text-decoration: none; }
+    .header a:hover { text-decoration: underline; }
+    .header .actions { font-size: 12px; }
   </style>
 </head>
 <body>
-  <div class="header">${resolved} &nbsp;|&nbsp; <a href="?key=${req.query.key}&amp;raw=1">View Raw</a></div>
+  <div class="header">
+    <div class="breadcrumb">${breadcrumbs}</div>
+    <div class="actions"><a href="?key=${req.query.key}&amp;raw=1">View Raw</a></div>
+  </div>
   <pre><code class="hljs${lang ? ' language-' + lang : ''}">${highlighted}</code></pre>
 </body>
 </html>`;
