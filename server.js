@@ -279,7 +279,7 @@ function renderHeader(options) {
   // Info button (always shown)
   const infoBtnGroup = `
     <div class="info-btn-group">
-      <a href="/about" class="theme-toggle" title="About Jeeves Server" style="text-decoration:none;font-weight:bold;">?</a>
+      <a href="/about${isInsider ? '?key=' + insiderKey : ''}" class="theme-toggle" title="About Jeeves Server" style="text-decoration:none;font-weight:bold;">?</a>
     </div>
   `;
   
