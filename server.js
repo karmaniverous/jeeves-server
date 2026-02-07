@@ -1399,9 +1399,9 @@ app.get('/path/*', (req, res) => {
     // ─────────────────────────────────────────────────────────
     // Directory listing with breadcrumb navigation
     // ─────────────────────────────────────────────────────────
-    // Known binary extensions - these files aren't linked (can't be viewed in browser)
-    const binaryExts = ['.exe', '.dll', '.bin', '.so', '.dylib', '.obj', '.o', '.a', '.lib', '.msi', '.iso', '.img', '.dmg', '.deb', '.rpm', '.zip', '.tar', '.gz', '.7z', '.rar', '.cab', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico', '.svg', '.mp3', '.mp4', '.wav', '.avi', '.mov', '.mkv', '.woff', '.woff2', '.ttf', '.eot'];
-    // Note: All other files are linked and rendered - text files show as code, true binaries download
+    // Dangerous executables - browsers might try to run these, so don't link them
+    const dangerousExts = ['.exe', '.msi', '.bat', '.cmd', '.com', '.scr', '.pif', '.vbs', '.vbe', '.jse', '.ws', '.wsf', '.wsc', '.wsh', '.ps1', '.reg', '.inf', '.hta', '.dll', '.so', '.dylib'];
+    // All other files (images, documents, archives, etc.) are linked - browser will download or display as appropriate
     
     // Build breadcrumb trail (hidden for outsiders)
     const breadcrumbs = buildBreadcrumbs(resolved, API_KEY, req.accessMode);
@@ -1444,11 +1444,11 @@ app.get('/path/*', (req, res) => {
       }
       
       // Check if we should link this entry
-      // Binary files aren't linked; all other files are viewable (text rendered as code, unknown binaries download)
+      // Only dangerous executables aren't linked; all other files are clickable (browser downloads or displays)
       const ext = path.extname(entry.name).toLowerCase();
-      const isBinary = binaryExts.includes(ext);
-      const nameCell = (isBinary && !entry.isDirectory())
-        ? entry.name + ' <span title="Binary file">📦</span>'
+      const isDangerous = dangerousExts.includes(ext);
+      const nameCell = (isDangerous && !entry.isDirectory())
+        ? entry.name + ' <span title="Executable file - not linked for security">⚠️</span>'
         : '<a href="/path' + entryUrlPath + '?key=' + entryKey + '">' + entry.name + '</a>';
       
       const icon = entry.isDirectory() ? '📁' : '📄';
@@ -1516,24 +1516,57 @@ app.get('/path/*', (req, res) => {
 
   const ext = path.extname(resolved).toLowerCase();
   const contentTypes = {
+    // Text files
     '.txt': 'text/plain; charset=utf-8',
     '.json': 'application/json; charset=utf-8',
     '.yaml': 'text/yaml; charset=utf-8',
     '.yml': 'text/yaml; charset=utf-8',
     '.html': 'text/html; charset=utf-8',
     '.css': 'text/css; charset=utf-8',
-    '.js': 'application/javascript; charset=utf-8',
-    '.ts': 'application/typescript; charset=utf-8',
+    '.js': 'text/javascript; charset=utf-8',  // text/javascript for display, not execution
+    '.ts': 'text/plain; charset=utf-8',
     '.xml': 'application/xml; charset=utf-8',
     '.csv': 'text/csv; charset=utf-8',
     '.jsonl': 'text/plain; charset=utf-8',
     '.log': 'text/plain; charset=utf-8',
+    '.mmd': 'text/plain; charset=utf-8',
+    // Images - browser displays inline
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',
     '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.bmp': 'image/bmp',
+    '.ico': 'image/x-icon',
     '.svg': 'image/svg+xml',
+    // Documents - browser may display or download
     '.pdf': 'application/pdf',
+    '.doc': 'application/msword',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.xls': 'application/vnd.ms-excel',
+    '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    '.ppt': 'application/vnd.ms-powerpoint',
+    '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    // Archives - browser downloads
+    '.zip': 'application/zip',
+    '.tar': 'application/x-tar',
+    '.gz': 'application/gzip',
+    '.7z': 'application/x-7z-compressed',
+    '.rar': 'application/vnd.rar',
+    // Audio/Video - browser may play inline
+    '.mp3': 'audio/mpeg',
+    '.wav': 'audio/wav',
+    '.ogg': 'audio/ogg',
+    '.mp4': 'video/mp4',
+    '.webm': 'video/webm',
+    '.avi': 'video/x-msvideo',
+    '.mov': 'video/quicktime',
+    '.mkv': 'video/x-matroska',
+    // Fonts
+    '.woff': 'font/woff',
+    '.woff2': 'font/woff2',
+    '.ttf': 'font/ttf',
+    '.eot': 'application/vnd.ms-fontobject',
   };
   
   try {
@@ -1555,10 +1588,10 @@ app.get('/path/*', (req, res) => {
       // ─────────────────────────────────────────────────────────
       const winPathRegex = /([A-Z]):\\(?:[^\s"'`<>\\]+\\)*[^\s"'`<>\\]+/g;
       
-      // Binary extensions that shouldn't be linked (can't render in browser)
-      const binaryExts = ['.exe', '.dll', '.bin', '.so', '.dylib', '.obj', '.o', '.a', '.lib', '.msi', '.iso', '.img', '.dmg', '.deb', '.rpm', '.zip', '.tar', '.gz', '.7z', '.rar', '.cab'];
+      // Dangerous executables that shouldn't be linked (security risk)
+      const dangerousExts = ['.exe', '.msi', '.bat', '.cmd', '.com', '.scr', '.pif', '.vbs', '.vbe', '.jse', '.ws', '.wsf', '.wsc', '.wsh', '.ps1', '.reg', '.inf', '.hta', '.dll', '.so', '.dylib'];
       
-      // Resolve a Windows path: check existence, skip binaries
+      // Resolve a Windows path: check existence, skip dangerous executables
       const resolvePathForLink = (winPath) => {
         // Skip templated paths
         if (winPath.includes('{') || winPath.includes('}')) return null;
@@ -1567,11 +1600,11 @@ app.get('/path/*', (req, res) => {
         
         const stats = fs.statSync(winPath);
         if (stats.isFile()) {
-          // Skip binary files
+          // Skip dangerous executables
           const ext = path.extname(winPath).toLowerCase();
-          if (binaryExts.includes(ext)) return null;
+          if (dangerousExts.includes(ext)) return null;
         }
-        // Directories and viewable files are linkable
+        // Directories and all other files are linkable
         return winPath;
       };
       
@@ -2001,9 +2034,17 @@ ${htmlContent}
     const isTextFile = looksLikeText(content);
     
     if (req.query.raw === '1' || !isTextFile) {
-      // Raw mode or binary file
+      // Raw mode or binary file - serve with appropriate content-type
       const contentType = contentTypes[ext] || 'application/octet-stream';
       res.setHeader('Content-Type', contentType);
+      
+      // For types browsers don't display inline, suggest download
+      const inlineTypes = ['image/', 'video/', 'audio/', 'text/', 'application/pdf', 'application/json', 'application/xml'];
+      const isInlineType = inlineTypes.some(t => contentType.startsWith(t));
+      if (!isInlineType) {
+        res.setHeader('Content-Disposition', `attachment; filename="${path.basename(resolved)}"`);
+      }
+      
       res.send(content);
     } else {
       // HTML viewer for text files with syntax highlighting
