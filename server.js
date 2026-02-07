@@ -1982,7 +1982,7 @@ ${htmlContent}
         const svg = svgContainer.querySelector('svg');
         if (svg) {
           // Wrap SVG so Panzoom transforms a div (avoids SVG sizing quirks + stray centering)
-          pzSvgContainer.innerHTML = `<div class="pz-svg-inner">${svg.outerHTML}</div>`;
+          pzSvgContainer.innerHTML = '<div class="pz-svg-inner">' + svg.outerHTML + '</div>';
           pzSvgContainer.style.display = 'flex';
           pzImg.style.display = 'none';
           overlay.classList.add('active');
