@@ -828,12 +828,17 @@ app.get('/favicon.ico', (req, res) => {
   res.sendFile(path.join(__dirname, 'favicon.svg'));
 });
 
-// About page (no auth) - renders about.md
+// About page (no auth, but insider features if key provided) - renders about.md
 app.get('/about', async (req, res) => {
   const aboutPath = path.join(__dirname, 'about.md');
   if (!fs.existsSync(aboutPath)) {
     return res.status(404).send('About page not found');
   }
+  
+  // Check for insider key
+  const queryKey = req.query.key || '';
+  const insiderKey = computeInsiderKey(API_KEY);
+  const isInsider = queryKey === insiderKey;
   
   const markdown = fs.readFileSync(aboutPath, 'utf8');
   
@@ -992,11 +997,20 @@ app.get('/about', async (req, res) => {
 </head>
 <body>
   <div class="header">
-    <div class="breadcrumb"><span class="home-icon">🎩</span> About</div>
+    <div class="breadcrumb">${isInsider ? '<a href="/path?key=' + insiderKey + '" class="home-icon">🎩</a>' : '<span class="home-icon">🎩</span>'} About</div>
     <div class="header-actions">
-      <a href="/about?raw=1" download="about.md" title="Download raw file">⬇ Raw</a>
-      <a href="/about?export=pdf" title="Export as PDF">📄 PDF</a>
-      <a href="/about?export=docx" title="Export as Word document">📝 DOCX</a>
+      ${isInsider ? `
+        <div class="info-btn-group">
+          <a href="/about?key=${insiderKey}" class="theme-toggle" title="About Jeeves Server" style="text-decoration:none;">ℹ️</a>
+        </div>
+        <div class="key-rotation-group">
+          <button id="rotate-key-btn" class="theme-toggle" title="Rotate API Key" data-insider-key="${insiderKey}">🔑</button>
+          ${(() => { const ts = getKeyRotationTimestamp(); const age = formatRelativeTime(ts); return age ? '<span class="key-rotation-age">' + age + '</span>' : ''; })()}
+        </div>
+      ` : ''}
+      <a href="/about${isInsider ? '?key=' + insiderKey + '&' : '?'}raw=1" download="about.md" title="Download raw file">⬇ Raw</a>
+      <a href="/about${isInsider ? '?key=' + insiderKey + '&' : '?'}export=pdf" title="Export as PDF">📄 PDF</a>
+      <a href="/about${isInsider ? '?key=' + insiderKey + '&' : '?'}export=docx" title="Export as Word document">📝 DOCX</a>
       <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light theme">🌙</button>
     </div>
   </div>
@@ -1007,6 +1021,27 @@ app.get('/about', async (req, res) => {
 ${htmlContent}
     </main>
   </div>
+  ${isInsider ? `<script>
+    document.getElementById('rotate-key-btn')?.addEventListener('click', async function() {
+      if (!confirm('Rotate API key? All existing links will be invalidated.')) return;
+      const insiderKey = this.getAttribute('data-insider-key');
+      try {
+        const res = await fetch('/rotate-key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ insiderKey })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          window.location.href = '/about?key=' + data.insiderKey;
+        } else {
+          alert('Rotation failed: ' + (data.error || 'Unknown error'));
+        }
+      } catch (e) {
+        alert('Rotation failed: ' + e.message);
+      }
+    });
+  </script>` : ''}
 </body>
 </html>`;
   
