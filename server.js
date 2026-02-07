@@ -810,6 +810,14 @@ app.get('/health', (req, res) => {
   res.json({ ok: true, uptime: process.uptime() });
 });
 
+// Favicon (no auth)
+app.get('/favicon.svg', (req, res) => {
+  res.sendFile(path.join(__dirname, 'favicon.svg'));
+});
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, 'favicon.svg'));
+});
+
 // Key generator: compute key for a given path (requires raw API key)
 app.get('/key', (req, res) => {
   const provided = req.headers['x-api-key'];
@@ -1022,6 +1030,7 @@ app.get('/path', (req, res) => {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <title>Drives</title>
   <script>${renderThemeScript()}</script>
   <style>
@@ -1160,6 +1169,7 @@ app.get('/path/*', (req, res) => {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <title>${dirName}</title>
   <script>${renderThemeScript()}</script>
   <style>
@@ -1466,6 +1476,7 @@ app.get('/path/*', (req, res) => {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <title>${fileName}</title>
   <script>${renderThemeScript()}</script>
   <style>
@@ -1744,6 +1755,7 @@ ${htmlContent}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <title>${fileName}</title>
   <script>${renderThemeScript()}</script>
   <link id="hljs-theme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
