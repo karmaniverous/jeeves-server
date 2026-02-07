@@ -2073,8 +2073,9 @@ ${htmlContent}
       min-height: calc(100vh - 50px);
     }
     .svg-wrapper svg {
-      max-width: 100%;
-      height: auto;
+      max-width: 100% !important;
+      width: auto !important;
+      height: auto !important;
       background: #fff;
       border-radius: 4px;
     }
