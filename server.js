@@ -267,29 +267,23 @@ app.get('/path/*', (req, res) => {
       
       // ─────────────────────────────────────────────────────────
       // PRE-PROCESS: Convert Windows paths to markdown links
+      // (only outside of code blocks and inline code)
       // ─────────────────────────────────────────────────────────
-      // Match patterns like D:\path\to\file.ext or C:\folder\file (any drive A-Z)
-      // Handles paths with or without extensions, supports spaces in paths if quoted
       const winPathRegex = /([A-Z]):\\(?:[^\s"'`<>\\]+\\)*[^\s"'`<>\\]+/g;
       
-      // Helper to create markdown link for a Windows path
       const linkifyPathMd = (winPath) => {
         const urlPath = '/' + winPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
         const key = computePathKey(API_KEY, urlPath);
         return `[${winPath}](/path${urlPath}?key=${key})`;
       };
       
-      // Split by fenced code blocks to avoid linkifying inside them
+      // Split by fenced code blocks AND inline code to avoid linkifying inside them
       const codeBlockRegex = /(```[\s\S]*?```|`[^`\n]+`)/g;
       const parts = markdown.split(codeBlockRegex);
-      markdown = parts.map((part, i) => {
-        // Odd indices are code blocks/spans from the split
+      markdown = parts.map((part) => {
+        // Code blocks and inline code - leave alone (will be post-processed in HTML)
         if (part.startsWith('```') || part.startsWith('`')) {
-          // For inline code, still linkify the path
-          if (part.startsWith('`') && !part.startsWith('```')) {
-            return part.replace(winPathRegex, linkifyPathMd);
-          }
-          return part; // leave fenced code blocks alone
+          return part;
         }
         return part.replace(winPathRegex, linkifyPathMd);
       }).join('');
@@ -357,12 +351,34 @@ app.get('/path/*', (req, res) => {
         }
       );
       
+      // ─────────────────────────────────────────────────────────
+      // POST-PROCESS: Linkify Windows paths inside <code> tags
+      // (but not inside <pre> blocks)
+      // ─────────────────────────────────────────────────────────
+      const linkifyPathHtml = (winPath) => {
+        const urlPath = '/' + winPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
+        const key = computePathKey(API_KEY, urlPath);
+        return `<a href="/path${urlPath}?key=${key}">${winPath}</a>`;
+      };
+      
+      // Split by <pre> blocks to preserve them
+      const preParts = htmlContent.split(/(<pre[\s\S]*?<\/pre>)/g);
+      htmlContent = preParts.map((part) => {
+        if (part.startsWith('<pre')) return part;
+        // Linkify paths inside <code> tags
+        return part.replace(/<code>([^<]*)<\/code>/g, (match, inner) => {
+          const linked = inner.replace(winPathRegex, linkifyPathHtml);
+          return `<code>${linked}</code>`;
+        });
+      }).join('');
+      
       const hasToc = showToc && headings.length > 0;
       const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <title>${fileName}</title>
   <style>
     * { box-sizing: border-box; }
@@ -462,6 +478,7 @@ ${htmlContent}
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <title>${fileName}</title>
   <style>
     body {
