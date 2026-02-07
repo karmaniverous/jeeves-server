@@ -896,8 +896,8 @@ app.get('/about', (req, res) => {
       border-right: 1px solid var(--border-color);
       padding: 1.5rem 1rem;
       position: sticky;
-      top: 0;
-      height: 100vh;
+      top: 42px;
+      height: calc(100vh - 42px);
       overflow-y: auto;
     }
     .toc-title { font-weight: 600; margin-bottom: 0.8em; color: var(--text-primary); }
@@ -1631,8 +1631,8 @@ app.get('/path/*', (req, res) => {
       border-right: 1px solid var(--border-color);
       padding: 1.5rem 1rem;
       position: sticky;
-      top: 0;
-      height: 100vh;
+      top: 42px;
+      height: calc(100vh - 42px);
       overflow-y: auto;
     }
     .toc-title { font-weight: 600; margin-bottom: 0.8em; color: var(--text-primary); }
