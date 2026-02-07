@@ -829,13 +829,70 @@ app.get('/favicon.ico', (req, res) => {
 });
 
 // About page (no auth) - renders about.md
-app.get('/about', (req, res) => {
+app.get('/about', async (req, res) => {
   const aboutPath = path.join(__dirname, 'about.md');
   if (!fs.existsSync(aboutPath)) {
     return res.status(404).send('About page not found');
   }
   
   const markdown = fs.readFileSync(aboutPath, 'utf8');
+  
+  // Raw download
+  if (req.query.raw === '1') {
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="about.md"');
+    return res.send(markdown);
+  }
+  
+  // PDF/DOCX export
+  if (req.query.export === 'pdf' || req.query.export === 'docx') {
+    const format = req.query.export;
+    try {
+      const puppeteer = require('puppeteer');
+      const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+      const page = await browser.newPage();
+      
+      // Render the about page HTML first
+      await page.goto(`http://localhost:${PORT}/about`, { waitUntil: 'networkidle0' });
+      
+      // Remove header for export
+      await page.addStyleTag({ content: `
+        .header, .header-actions { display: none !important; }
+        .toc { position: static !important; height: auto !important; page-break-after: always; }
+        .toc-spacer { display: none !important; }
+        .layout { display: block !important; }
+        body { background: #fff !important; }
+        a.anchor { display: none !important; }
+      `});
+      
+      if (format === 'pdf') {
+        const pdfBuffer = await page.pdf({
+          format: 'A4',
+          margin: { top: '1cm', right: '1cm', bottom: '1cm', left: '1cm' },
+          printBackground: true
+        });
+        await browser.close();
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="about.pdf"');
+        return res.send(pdfBuffer);
+      } else {
+        const htmlContent = await page.content();
+        await browser.close();
+        const HTMLtoDOCX = require('html-to-docx');
+        const docxBuffer = await HTMLtoDOCX(htmlContent, null, {
+          table: { row: { cantSplit: true } },
+          footer: true,
+          pageNumber: true
+        });
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        res.setHeader('Content-Disposition', 'attachment; filename="about.docx"');
+        return res.send(Buffer.from(docxBuffer));
+      }
+    } catch (err) {
+      console.error('Export error:', err);
+      return res.status(500).send('Export failed: ' + err.message);
+    }
+  }
   
   // Parse markdown with heading anchors
   const headings = [];
@@ -937,6 +994,9 @@ app.get('/about', (req, res) => {
   <div class="header">
     <div class="breadcrumb"><span class="home-icon">🎩</span> About</div>
     <div class="header-actions">
+      <a href="/about?raw=1" download="about.md" title="Download raw file">⬇ Raw</a>
+      <a href="/about?export=pdf" title="Export as PDF">📄 PDF</a>
+      <a href="/about?export=docx" title="Export as Word document">📝 DOCX</a>
       <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light theme">🌙</button>
     </div>
   </div>
