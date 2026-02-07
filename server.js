@@ -2003,7 +2003,7 @@ ${htmlContent}
             clonedSvg.style.maxWidth = maxW + 'px';
             clonedSvg.style.maxHeight = maxH + 'px';
           }
-          pz = Panzoom(clonedSvg, { maxScale: 20, contain: 'outside' });
+          pz = Panzoom(clonedSvg, { maxScale: 20, contain: 'outside', startX: 0, startY: 0, startScale: 1 });
           pzSvgContainer.addEventListener('wheel', pz.zoomWithWheel);
         }
       }
