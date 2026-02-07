@@ -18,6 +18,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { marked } = require('marked');
+const hljs = require('highlight.js');
 
 // ─────────────────────────────────────────────────────────────
 // Configuration
@@ -271,8 +272,31 @@ app.get('/path/*', (req, res) => {
       // ─────────────────────────────────────────────────────────
       const winPathRegex = /([A-Z]):\\(?:[^\s"'`<>\\]+\\)*[^\s"'`<>\\]+/g;
       
+      // Resolve a Windows path: check existence, handle directories
+      const resolvePathForLink = (winPath) => {
+        // Skip templated paths
+        if (winPath.includes('{') || winPath.includes('}')) return null;
+        
+        if (!fs.existsSync(winPath)) return null;
+        
+        const stats = fs.statSync(winPath);
+        if (stats.isDirectory()) {
+          // Look for default files
+          const defaults = ['README.md', 'index.md', 'index.html', 'index.htm'];
+          for (const def of defaults) {
+            const defPath = path.join(winPath, def);
+            if (fs.existsSync(defPath)) return defPath;
+          }
+          return null; // Directory with no default file
+        }
+        return winPath;
+      };
+      
       const linkifyPathMd = (winPath) => {
-        const urlPath = '/' + winPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
+        const resolved = resolvePathForLink(winPath);
+        if (!resolved) return winPath; // Return original text, no link
+        
+        const urlPath = '/' + resolved.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
         const key = computePathKey(API_KEY, urlPath);
         return `[${winPath}](/path${urlPath}?key=${key})`;
       };
@@ -356,7 +380,10 @@ app.get('/path/*', (req, res) => {
       // (but not inside <pre> blocks)
       // ─────────────────────────────────────────────────────────
       const linkifyPathHtml = (winPath) => {
-        const urlPath = '/' + winPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
+        const resolved = resolvePathForLink(winPath);
+        if (!resolved) return winPath; // Return original text, no link
+        
+        const urlPath = '/' + resolved.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
         const key = computePathKey(API_KEY, urlPath);
         return `<a href="/path${urlPath}?key=${key}">${winPath}</a>`;
       };
@@ -465,13 +492,51 @@ ${htmlContent}
       res.setHeader('Content-Type', contentType);
       res.send(content);
     } else {
-      // HTML viewer for text files
+      // HTML viewer for text files with syntax highlighting
       const content = fs.readFileSync(resolved, 'utf8');
       const fileName = path.basename(resolved);
-      const escaped = content
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+      
+      // Map extensions to highlight.js languages
+      const langMap = {
+        '.js': 'javascript', '.mjs': 'javascript', '.cjs': 'javascript',
+        '.ts': 'typescript', '.tsx': 'typescript',
+        '.json': 'json', '.jsonl': 'json',
+        '.yaml': 'yaml', '.yml': 'yaml',
+        '.xml': 'xml', '.html': 'xml', '.htm': 'xml',
+        '.css': 'css', '.scss': 'scss', '.less': 'less',
+        '.md': 'markdown',
+        '.py': 'python',
+        '.rb': 'ruby',
+        '.go': 'go',
+        '.rs': 'rust',
+        '.java': 'java',
+        '.c': 'c', '.h': 'c',
+        '.cpp': 'cpp', '.hpp': 'cpp', '.cc': 'cpp',
+        '.cs': 'csharp',
+        '.php': 'php',
+        '.sh': 'bash', '.bash': 'bash', '.zsh': 'bash',
+        '.ps1': 'powershell', '.psm1': 'powershell',
+        '.bat': 'dos', '.cmd': 'dos',
+        '.sql': 'sql',
+        '.ini': 'ini', '.conf': 'ini', '.cfg': 'ini',
+        '.dockerfile': 'dockerfile',
+        '.makefile': 'makefile',
+      };
+      
+      const lang = langMap[ext] || null;
+      let highlighted;
+      try {
+        if (lang) {
+          highlighted = hljs.highlight(content, { language: lang }).value;
+        } else {
+          highlighted = hljs.highlightAuto(content).value;
+        }
+      } catch {
+        highlighted = content
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
       
       const html = `<!DOCTYPE html>
 <html lang="en">
@@ -480,31 +545,34 @@ ${htmlContent}
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>${fileName}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
   <style>
     body {
       font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
       font-size: 13px;
       line-height: 1.5;
       margin: 0;
-      padding: 1rem;
-      background: #1e1e1e;
-      color: #d4d4d4;
+      padding: 0;
+      background: #0d1117;
+      color: #c9d1d9;
     }
-    pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
+    pre { margin: 0; padding: 1rem; overflow-x: auto; }
+    code { font-family: inherit; }
     .header {
-      background: #2d2d2d;
+      background: #161b22;
       padding: 0.5rem 1rem;
-      margin: -1rem -1rem 1rem -1rem;
-      border-bottom: 1px solid #404040;
-      color: #888;
+      border-bottom: 1px solid #30363d;
+      color: #8b949e;
       font-size: 12px;
+      position: sticky;
+      top: 0;
     }
-    .header a { color: #6a9955; }
+    .header a { color: #58a6ff; }
   </style>
 </head>
 <body>
   <div class="header">${resolved} &nbsp;|&nbsp; <a href="?raw=1">View Raw</a></div>
-  <pre>${escaped}</pre>
+  <pre><code class="hljs${lang ? ' language-' + lang : ''}">${highlighted}</code></pre>
 </body>
 </html>`;
       
