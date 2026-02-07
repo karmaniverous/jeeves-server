@@ -320,15 +320,16 @@ app.get('/path/*', (req, res) => {
       marked.setOptions({ renderer });
       let htmlContent = marked(markdown);
       
-      // Generate TOC if ?toc=1
+      // Generate TOC (on by default, disable with ?toc=0)
       let tocHtml = '';
-      if (req.query.toc === '1' && headings.length > 0) {
-        tocHtml = '<nav class="toc"><strong>Table of Contents</strong><ul>';
+      const showToc = req.query.toc !== '0' && headings.length > 0;
+      if (showToc) {
+        tocHtml = '<nav class="toc"><div class="toc-title">Contents</div><ul>';
         for (const h of headings) {
-          const indent = (h.level - 1) * 1.2;
+          const indent = (h.level - 1) * 0.8;
           tocHtml += `<li style="margin-left:${indent}em"><a href="#${h.slug}">${h.text}</a></li>`;
         }
-        tocHtml += '</ul></nav><hr>';
+        tocHtml += '</ul></nav>';
       }
       
       // ─────────────────────────────────────────────────────────
@@ -356,6 +357,7 @@ app.get('/path/*', (req, res) => {
         }
       );
       
+      const hasToc = showToc && headings.length > 0;
       const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -363,15 +365,38 @@ app.get('/path/*', (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${fileName}</title>
   <style>
+    * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       line-height: 1.6;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 2rem;
+      margin: 0;
+      padding: 0;
       color: #333;
       background: #fafafa;
     }
+    .layout { display: flex; min-height: 100vh; }
+    .toc {
+      width: 260px;
+      flex-shrink: 0;
+      background: #f6f8fa;
+      border-right: 1px solid #e1e4e8;
+      padding: 1.5rem 1rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .toc-title { font-weight: 600; margin-bottom: 0.8em; color: #1a1a1a; }
+    .toc ul { margin: 0; padding-left: 0; list-style: none; }
+    .toc li { margin: 0.4em 0; font-size: 0.9em; }
+    .toc a { color: #555; }
+    .toc a:hover { color: #0366d6; }
+    .content {
+      flex: 1;
+      max-width: 900px;
+      padding: 2rem 3rem;
+    }
+    .no-toc .content { margin: 0 auto; }
     h1, h2, h3, h4, h5, h6 { color: #1a1a1a; margin-top: 1.5em; }
     h1 { border-bottom: 2px solid #e1e4e8; padding-bottom: 0.3em; }
     h2 { border-bottom: 1px solid #e1e4e8; padding-bottom: 0.3em; }
@@ -386,19 +411,25 @@ app.get('/path/*', (req, res) => {
     a:hover { text-decoration: underline; }
     a.anchor { color: #ccc; margin-right: 0.3em; font-weight: normal; }
     a.anchor:hover { color: #0366d6; }
-    .toc { background: #f6f8fa; padding: 1em 1.5em; border-radius: 6px; margin-bottom: 1.5em; }
-    .toc ul { margin: 0.5em 0 0 0; padding-left: 1.5em; }
-    .toc li { margin: 0.3em 0; }
     code a { color: inherit; text-decoration: underline; text-decoration-style: dotted; }
     code a:hover { text-decoration-style: solid; }
     hr { border: none; border-top: 1px solid #e1e4e8; margin: 2em 0; }
     img { max-width: 100%; height: auto; }
     ul, ol { padding-left: 2em; }
     li { margin: 0.25em 0; }
+    @media (max-width: 900px) {
+      .toc { display: none; }
+      .content { padding: 1.5rem; }
+    }
   </style>
 </head>
 <body>
-${tocHtml}${htmlContent}
+  <div class="layout${hasToc ? '' : ' no-toc'}">
+    ${tocHtml}
+    <main class="content">
+${htmlContent}
+    </main>
+  </div>
 </body>
 </html>`;
       
@@ -407,10 +438,62 @@ ${tocHtml}${htmlContent}
       return;
     }
     
-    const contentType = contentTypes[ext] || 'application/octet-stream';
-    const content = fs.readFileSync(resolved);
-    res.setHeader('Content-Type', contentType);
-    res.send(content);
+    // For text-based files, wrap in HTML viewer by default (disable with ?raw=1)
+    const textExtensions = ['.txt', '.json', '.jsonl', '.yaml', '.yml', '.log', '.csv', '.xml', '.js', '.ts', '.css', '.html', '.md', '.ps1', '.sh', '.bat', '.cmd', '.ini', '.conf', '.cfg'];
+    const isTextFile = textExtensions.includes(ext) || (contentTypes[ext] || '').startsWith('text/');
+    
+    if (req.query.raw === '1' || !isTextFile) {
+      // Raw mode or binary file
+      const contentType = contentTypes[ext] || 'application/octet-stream';
+      const content = fs.readFileSync(resolved);
+      res.setHeader('Content-Type', contentType);
+      res.send(content);
+    } else {
+      // HTML viewer for text files
+      const content = fs.readFileSync(resolved, 'utf8');
+      const fileName = path.basename(resolved);
+      const escaped = content
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${fileName}</title>
+  <style>
+    body {
+      font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      margin: 0;
+      padding: 1rem;
+      background: #1e1e1e;
+      color: #d4d4d4;
+    }
+    pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
+    .header {
+      background: #2d2d2d;
+      padding: 0.5rem 1rem;
+      margin: -1rem -1rem 1rem -1rem;
+      border-bottom: 1px solid #404040;
+      color: #888;
+      font-size: 12px;
+    }
+    .header a { color: #6a9955; }
+  </style>
+</head>
+<body>
+  <div class="header">${resolved} &nbsp;|&nbsp; <a href="?raw=1">View Raw</a></div>
+  <pre>${escaped}</pre>
+</body>
+</html>`;
+      
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(html);
+    }
   } catch (err) {
     appendJsonl(EVENTS_LOG, { at: nowIso(), kind: 'path_error', path: resolved, error: String(err) });
     res.status(500).json({ error: 'Failed to read file', details: String(err) });
