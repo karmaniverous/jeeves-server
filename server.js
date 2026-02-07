@@ -1223,14 +1223,18 @@ app.get('/path', (req, res) => {
   const { execSync } = require('child_process');
   let drives = [];
   try {
-    // Get drives on Windows
-    const output = execSync('wmic logicaldisk get name', { encoding: 'utf8' });
-    drives = output.split('\n')
-      .map(line => line.trim())
-      .filter(line => /^[A-Z]:$/.test(line))
-      .map(d => d.replace(':', ''));
+    // Get drives with volume names on Windows
+    const output = execSync('wmic logicaldisk get name,volumename', { encoding: 'utf8' });
+    const lines = output.split('\n').map(line => line.trim()).filter(line => line);
+    // Skip header line, parse "C:  VolumeName" format
+    for (const line of lines.slice(1)) {
+      const match = line.match(/^([A-Z]:)\s*(.*)?$/);
+      if (match) {
+        drives.push({ letter: match[1].replace(':', ''), label: (match[2] || '').trim() });
+      }
+    }
   } catch {
-    drives = ['C', 'D', 'E']; // Fallback
+    drives = [{ letter: 'C', label: '' }, { letter: 'D', label: '' }, { letter: 'E', label: '' }]; // Fallback
   }
   
   const isInsider = req.accessMode === 'insider';
@@ -1239,10 +1243,11 @@ app.get('/path', (req, res) => {
   
   let rows = '';
   for (const drive of drives) {
-    const drivePath = drive + ':\\';
-    const urlPath = '/' + drive.toLowerCase();
+    const drivePath = drive.letter + ':\\';
+    const urlPath = '/' + drive.letter.toLowerCase();
     const key = linkKey || computePathKey(API_KEY, urlPath);
-    rows += '<tr><td>💾 <a href="/path' + urlPath + '?key=' + key + '">' + drivePath + '</a></td><td>Drive</td></tr>';
+    const labelText = drive.label ? ' (' + drive.label + ')' : '';
+    rows += '<tr><td>💾 <a href="/path' + urlPath + '?key=' + key + '">' + drivePath + '</a>' + labelText + '</td><td>Drive</td></tr>';
   }
   
   const headerHtml = renderHeader({
