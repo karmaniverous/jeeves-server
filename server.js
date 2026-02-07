@@ -959,7 +959,7 @@ app.get('/about', async (req, res) => {
       height: calc(100vh - 42px);
       overflow-y: auto;
     }
-    .toc-title { font-weight: 600; margin-bottom: 0.8em; color: var(--text-primary); }
+    .toc-title { font-weight: 600; margin-bottom: 0.8em; padding-top: 1rem; color: var(--text-primary); }
     .toc ul { margin: 0; padding-left: 0; list-style: none; }
     .toc li { margin: 0.4em 0; font-size: 0.9em; }
     .toc a { color: var(--text-secondary); }
@@ -1700,7 +1700,7 @@ app.get('/path/*', (req, res) => {
       height: calc(100vh - 42px);
       overflow-y: auto;
     }
-    .toc-title { font-weight: 600; margin-bottom: 0.8em; color: var(--text-primary); }
+    .toc-title { font-weight: 600; margin-bottom: 0.8em; padding-top: 1rem; color: var(--text-primary); }
     .toc ul { margin: 0; padding-left: 0; list-style: none; }
     .toc li { margin: 0.4em 0; font-size: 0.9em; }
     .toc a { color: var(--text-secondary); }
