@@ -132,7 +132,7 @@ function buildBreadcrumbs(resolvedPath, apiKey, mode) {
   
   // Insiders see full navigable breadcrumbs
   const insiderKey = computeInsiderKey(apiKey);
-  let breadcrumbs = '<a href="/path?key=' + insiderKey + '" class="home-icon">🎩</a>';
+  let breadcrumbs = '<a href="/path?key=' + insiderKey + '" class="home-icon" title="Jeeves Server">🎩</a>';
   let accumPath = '';
   for (let i = 0; i < pathParts.length; i++) {
     const part = pathParts[i];
@@ -1068,7 +1068,7 @@ app.get('/about', async (req, res) => {
 </head>
 <body>
   <div class="header">
-    <div class="breadcrumb">${isInsider ? '<a href="/path?key=' + insiderKey + '" class="home-icon">🎩</a>' : '<span class="home-icon">🎩</span>'} About</div>
+    <div class="breadcrumb">${isInsider ? '<a href="/path?key=' + insiderKey + '" class="home-icon" title="Jeeves Server">🎩</a>' : '<span class="home-icon" title="Jeeves Server">🎩</span>'} About</div>
     <div class="header-actions">
       ${isInsider ? `
         <div class="info-btn-group">
@@ -1322,7 +1322,7 @@ app.get('/path', (req, res) => {
   
   const headerHtml = renderHeader({
     isInsider: true,
-    breadcrumbs: '<span class="home-icon">🎩</span>',
+    breadcrumbs: '<span class="home-icon" title="Jeeves Server">🎩</span>',
     fileName: null,
     queryKey: req.query.key,
     currentPath: '/',
