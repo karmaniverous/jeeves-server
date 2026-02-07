@@ -2034,7 +2034,10 @@ ${htmlContent}
     
     // Special case: SVG files get their own HTML wrapper viewer
     if (ext === '.svg' && req.query.raw !== '1') {
-      const svgContent = content.toString('utf8');
+      // Remove width="100%" from SVG to prevent aspect ratio issues with tall diagrams
+      let svgContent = content.toString('utf8')
+        .replace(/<svg([^>]*)\s+width="100%"/, '<svg$1')
+        .replace(/<svg([^>]*)\s+style="[^"]*max-width:\s*[\d.]+px;?[^"]*"/, '<svg$1');
       const fileName = path.basename(resolved);
       const breadcrumbs = buildBreadcrumbs(resolved, API_KEY);
       
@@ -2067,17 +2070,16 @@ ${htmlContent}
     .svg-wrapper {
       padding: 1rem;
       overflow: auto;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: calc(100vh - 50px);
+      text-align: center;
     }
     .svg-wrapper svg {
       max-width: 100% !important;
+      max-height: calc(100vh - 80px);
       width: auto !important;
       height: auto !important;
       background: #fff;
       border-radius: 4px;
+      display: inline-block;
     }
   </style>
 </head>
