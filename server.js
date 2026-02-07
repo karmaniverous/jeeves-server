@@ -2032,10 +2032,70 @@ ${htmlContent}
     
     const content = fs.readFileSync(resolved);
     
-    // Special case: SVG files are text but should be served as images for browser rendering
-    const serveAsImage = ['.svg'].includes(ext);
+    // Special case: SVG files get their own HTML wrapper viewer
+    if (ext === '.svg' && req.query.raw !== '1') {
+      const svgContent = content.toString('utf8');
+      const fileName = path.basename(resolved);
+      const breadcrumbs = buildBreadcrumbs(resolved, API_KEY);
+      
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>${fileName}</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #1e1e1e; color: #ccc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .header {
+      background: #161b22;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #30363d;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header a { color: #58a6ff; text-decoration: none; }
+    .header a:hover { text-decoration: underline; }
+    .header .actions { font-size: 12px; color: #8b949e; }
+    .svg-wrapper {
+      padding: 1rem;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: calc(100vh - 50px);
+    }
+    .svg-wrapper svg {
+      max-width: 100%;
+      height: auto;
+      background: #fff;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="breadcrumb">${breadcrumbs}</div>
+    <div class="actions"><a href="?key=${req.query.key}&amp;raw=1">View Raw</a></div>
+  </div>
+  <div class="svg-wrapper">
+    ${svgContent}
+  </div>
+</body>
+</html>`;
+      
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.send(html);
+    }
     
-    const isTextFile = !serveAsImage && looksLikeText(content);
+    const isTextFile = looksLikeText(content);
     
     if (req.query.raw === '1' || !isTextFile) {
       // Raw mode or binary file - serve with appropriate content-type

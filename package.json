@@ -14,8 +14,11 @@
   "author": "Jeeves",
   "license": "MIT",
   "dependencies": {
+    "docx": "^9.5.1",
     "express": "^4.18.2",
     "highlight.js": "^11.11.1",
-    "marked": "^17.0.1"
+    "html-docx-js": "^0.3.1",
+    "marked": "^17.0.1",
+    "puppeteer-core": "^24.37.2"
   }
 }
