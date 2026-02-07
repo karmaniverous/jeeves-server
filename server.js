@@ -1327,6 +1327,7 @@ app.get('/path/*', (req, res) => {
     // Directory listing with breadcrumb navigation
     // ─────────────────────────────────────────────────────────
     const binaryExts = ['.exe', '.dll', '.bin', '.so', '.dylib', '.obj', '.o', '.a', '.lib', '.msi', '.iso', '.img', '.dmg', '.deb', '.rpm', '.zip', '.tar', '.gz', '.7z', '.rar', '.cab'];
+    const viewableExts = ['.md', '.txt', '.json', '.jsonl', '.yaml', '.yml', '.log', '.csv', '.xml', '.js', '.mjs', '.cjs', '.ts', '.tsx', '.css', '.scss', '.less', '.html', '.htm', '.ps1', '.psm1', '.sh', '.bash', '.zsh', '.bat', '.cmd', '.ini', '.conf', '.cfg', '.py', '.rb', '.go', '.rs', '.java', '.c', '.h', '.cpp', '.hpp', '.cc', '.cs', '.php', '.sql', '.dockerfile', '.makefile'];
     
     // Build breadcrumb trail (hidden for outsiders)
     const breadcrumbs = buildBreadcrumbs(resolved, API_KEY, req.accessMode);
@@ -1371,9 +1372,12 @@ app.get('/path/*', (req, res) => {
       // Check if we should link this entry
       const ext = path.extname(entry.name).toLowerCase();
       const isBinary = binaryExts.includes(ext);
+      const isViewable = viewableExts.includes(ext);
+      const willDownload = !entry.isDirectory() && !isBinary && !isViewable;
+      const downloadIcon = willDownload ? ' <span title="Will download">⬇</span>' : '';
       const nameCell = (isBinary && !entry.isDirectory())
         ? entry.name
-        : '<a href="/path' + entryUrlPath + '?key=' + entryKey + '">' + entry.name + '</a>';
+        : '<a href="/path' + entryUrlPath + '?key=' + entryKey + '">' + entry.name + '</a>' + downloadIcon;
       
       const icon = entry.isDirectory() ? '📁' : '📄';
       rows += '<tr><td>' + icon + ' ' + nameCell + '</td><td>' + type + '</td><td>' + size + '</td><td>' + mtime + '</td></tr>';
