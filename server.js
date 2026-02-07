@@ -1331,8 +1331,9 @@ app.get('/path/*', (req, res) => {
     // ─────────────────────────────────────────────────────────
     // Directory listing with breadcrumb navigation
     // ─────────────────────────────────────────────────────────
-    const binaryExts = ['.exe', '.dll', '.bin', '.so', '.dylib', '.obj', '.o', '.a', '.lib', '.msi', '.iso', '.img', '.dmg', '.deb', '.rpm', '.zip', '.tar', '.gz', '.7z', '.rar', '.cab'];
-    const viewableExts = ['.md', '.txt', '.json', '.jsonl', '.yaml', '.yml', '.log', '.csv', '.xml', '.js', '.mjs', '.cjs', '.ts', '.tsx', '.css', '.scss', '.less', '.html', '.htm', '.ps1', '.psm1', '.sh', '.bash', '.zsh', '.bat', '.cmd', '.ini', '.conf', '.cfg', '.py', '.rb', '.go', '.rs', '.java', '.c', '.h', '.cpp', '.hpp', '.cc', '.cs', '.php', '.sql', '.dockerfile', '.makefile'];
+    // Known binary extensions - these files aren't linked (can't be viewed in browser)
+    const binaryExts = ['.exe', '.dll', '.bin', '.so', '.dylib', '.obj', '.o', '.a', '.lib', '.msi', '.iso', '.img', '.dmg', '.deb', '.rpm', '.zip', '.tar', '.gz', '.7z', '.rar', '.cab', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico', '.svg', '.mp3', '.mp4', '.wav', '.avi', '.mov', '.mkv', '.woff', '.woff2', '.ttf', '.eot'];
+    // Note: All other files are linked and rendered - text files show as code, true binaries download
     
     // Build breadcrumb trail (hidden for outsiders)
     const breadcrumbs = buildBreadcrumbs(resolved, API_KEY, req.accessMode);
@@ -1375,14 +1376,12 @@ app.get('/path/*', (req, res) => {
       }
       
       // Check if we should link this entry
+      // Binary files aren't linked; all other files are viewable (text rendered as code, unknown binaries download)
       const ext = path.extname(entry.name).toLowerCase();
       const isBinary = binaryExts.includes(ext);
-      const isViewable = viewableExts.includes(ext);
-      const willDownload = !entry.isDirectory() && !isBinary && !isViewable;
-      const downloadIcon = willDownload ? ' <span title="Will download">⬇</span>' : '';
       const nameCell = (isBinary && !entry.isDirectory())
-        ? entry.name
-        : '<a href="/path' + entryUrlPath + '?key=' + entryKey + '">' + entry.name + '</a>' + downloadIcon;
+        ? entry.name + ' <span title="Binary file">📦</span>'
+        : '<a href="/path' + entryUrlPath + '?key=' + entryKey + '">' + entry.name + '</a>';
       
       const icon = entry.isDirectory() ? '📁' : '📄';
       rows += '<tr><td>' + icon + ' ' + nameCell + '</td><td>' + type + '</td><td>' + size + '</td><td>' + mtime + '</td></tr>';
@@ -1919,14 +1918,23 @@ ${htmlContent}
       return;
     }
     
-    // For text-based files, wrap in HTML viewer by default (disable with ?raw=1)
-    const textExtensions = ['.txt', '.json', '.jsonl', '.yaml', '.yml', '.log', '.csv', '.xml', '.js', '.ts', '.css', '.html', '.md', '.ps1', '.sh', '.bat', '.cmd', '.ini', '.conf', '.cfg'];
-    const isTextFile = textExtensions.includes(ext) || (contentTypes[ext] || '').startsWith('text/');
+    // Detect if file is text by checking for binary content (null bytes)
+    // This is more flexible than whitelisting extensions
+    function looksLikeText(buffer) {
+      // Check first 8KB for null bytes - a simple but effective binary detection
+      const checkSize = Math.min(buffer.length, 8192);
+      for (let i = 0; i < checkSize; i++) {
+        if (buffer[i] === 0) return false;
+      }
+      return true;
+    }
+    
+    const content = fs.readFileSync(resolved);
+    const isTextFile = looksLikeText(content);
     
     if (req.query.raw === '1' || !isTextFile) {
       // Raw mode or binary file
       const contentType = contentTypes[ext] || 'application/octet-stream';
-      const content = fs.readFileSync(resolved);
       res.setHeader('Content-Type', contentType);
       res.send(content);
     } else {
