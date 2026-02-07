@@ -198,7 +198,8 @@ function renderThemeStyles() {
 
 function renderHeaderStyles() {
   return `
-    .header { background: #24292e; color: #fff; padding: 0.75rem 2rem; font-size: 14px; line-height: 1.4; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+    .header { background: #24292e; color: #fff; padding: 0.75rem 2rem; font-size: 14px; line-height: 1.4; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    [data-theme="dark"] .header { box-shadow: none; }
     .header a { color: #79b8ff; text-decoration: none; }
     .header a:hover { text-decoration: underline; }
     .header-actions { display: flex; gap: 1rem; font-size: 13px; align-items: center; }
