@@ -279,7 +279,7 @@ function renderHeader(options) {
   // Info button (always shown)
   const infoBtnGroup = `
     <div class="info-btn-group">
-      <a href="/about" class="theme-toggle" title="About Jeeves Server" style="text-decoration:none;">ℹ️</a>
+      <a href="/about" class="theme-toggle" title="About Jeeves Server" style="text-decoration:none;font-weight:bold;">?</a>
     </div>
   `;
   
@@ -1001,7 +1001,7 @@ app.get('/about', async (req, res) => {
     <div class="header-actions">
       ${isInsider ? `
         <div class="info-btn-group">
-          <a href="/about?key=${insiderKey}" class="theme-toggle" title="About Jeeves Server" style="text-decoration:none;">ℹ️</a>
+          <a href="/about?key=${insiderKey}" class="theme-toggle" title="About Jeeves Server" style="text-decoration:none;font-weight:bold;">?</a>
         </div>
         <div class="key-rotation-group">
           <button id="rotate-key-btn" class="theme-toggle" title="Rotate API Key" data-insider-key="${insiderKey}">🔑</button>
