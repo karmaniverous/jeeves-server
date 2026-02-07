@@ -1499,7 +1499,7 @@ app.get('/path/*', (req, res) => {
       padding: 2rem 3rem;
     }
     .no-toc .content { margin: 0 auto; }
-    h1, h2, h3, h4, h5, h6 { color: var(--text-primary); margin-top: 1.5em; }
+    h1, h2, h3, h4, h5, h6 { color: var(--text-primary); margin-top: 1.5em; scroll-margin-top: 60px; }
     h1 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.3em; }
     h2 { border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
     code { background: var(--code-bg); padding: 0.2em 0.4em; border-radius: 3px; font-family: 'SF Mono', Consolas, monospace; font-size: 0.9em; color: var(--text-primary); }
