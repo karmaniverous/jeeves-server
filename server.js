@@ -48,7 +48,7 @@ function loadEnvLocal() {
 }
 
 const localEnv = loadEnvLocal();
-const API_KEY = localEnv.API_KEY || process.env.API_KEY;
+let API_KEY = localEnv.API_KEY || process.env.API_KEY;
 const PORT = parseInt(localEnv.PORT || process.env.PORT || '3456', 10);
 const EVENTS_LOG = path.join(__dirname, 'logs', 'webhook-events.jsonl');
 
@@ -889,6 +889,9 @@ app.post('/rotate-key', (req, res) => {
   }
   
   fs.writeFileSync(envPath, lines.join('\n'), 'utf8');
+  
+  // Update in-memory API_KEY so the server uses the new key immediately
+  API_KEY = newApiKey;
   
   // Track rotation timestamp
   const rotatedAt = nowIso();
