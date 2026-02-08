@@ -595,7 +595,15 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
         .toc { position: static !important; height: auto !important; page-break-after: always; }
         .toc-spacer { display: none !important; }
         .layout { display: block !important; }
-        body { background: #fff !important; }
+        body { background: #fff !important; font-size: 10pt !important; line-height: 1.5 !important; }
+        .content { font-size: 10pt !important; }
+        h1 { font-size: 18pt !important; }
+        h2 { font-size: 14pt !important; }
+        h3 { font-size: 12pt !important; }
+        h4, h5, h6 { font-size: 10pt !important; }
+        code { font-size: 9pt !important; }
+        pre, pre code { font-size: 8pt !important; }
+        table { font-size: 10pt !important; }
         a.anchor { display: none !important; }
         img, svg, .svg-container, .zoomable-svg { 
           max-width: 190mm !important; 
