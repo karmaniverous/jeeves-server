@@ -816,14 +816,14 @@ async function handleExport(req, res, filePath, markdown, fileName, fileDir, for
 <head>
   <meta charset="UTF-8">
   <style>
-    body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.6; }
-    h1 { font-size: 20pt; font-weight: bold; color: #1a1a1a; margin-top: 24pt; margin-bottom: 12pt; }
-    h2 { font-size: 16pt; font-weight: bold; color: #2a2a2a; margin-top: 18pt; margin-bottom: 10pt; }
-    h3 { font-size: 13pt; font-weight: bold; color: #3a3a3a; margin-top: 14pt; margin-bottom: 8pt; }
-    h4 { font-size: 11pt; font-weight: bold; color: #4a4a4a; margin-top: 12pt; margin-bottom: 6pt; }
-    p { margin: 6pt 0; }
-    code { font-family: Consolas, 'Courier New', monospace; font-size: 10pt; background-color: #f4f4f4; padding: 2pt 4pt; }
-    pre { font-family: Consolas, 'Courier New', monospace; font-size: 9pt; background-color: #f8f8f8; border: 1pt solid #ddd; padding: 12pt; margin: 12pt 0; white-space: pre-wrap; word-wrap: break-word; }
+    body { font-family: Calibri, Arial, sans-serif; font-size: 10pt; line-height: 1.6; }
+    h1 { font-size: 18pt; font-weight: bold; color: #1a1a1a; margin-top: 20pt; margin-bottom: 10pt; }
+    h2 { font-size: 14pt; font-weight: bold; color: #2a2a2a; margin-top: 16pt; margin-bottom: 8pt; }
+    h3 { font-size: 12pt; font-weight: bold; color: #3a3a3a; margin-top: 12pt; margin-bottom: 6pt; }
+    h4 { font-size: 10pt; font-weight: bold; color: #4a4a4a; margin-top: 10pt; margin-bottom: 5pt; }
+    p { margin: 5pt 0; }
+    code { font-family: Consolas, 'Courier New', monospace; font-size: 9pt; background-color: #f4f4f4; padding: 2pt 4pt; }
+    pre { font-family: Consolas, 'Courier New', monospace; font-size: 8pt; background-color: #f8f8f8; border: 1pt solid #ddd; padding: 10pt; margin: 10pt 0; white-space: pre-wrap; word-wrap: break-word; }
     pre code { background-color: transparent; padding: 0; }
     table { border-collapse: collapse; width: 100%; margin: 12pt 0; }
     th { background-color: #f0f0f0; font-weight: bold; border: 1pt solid #999; padding: 8pt; text-align: left; }
