@@ -25,6 +25,12 @@ async function start() {
   // Register plugins
   await fastify.register(cookie);
 
+  // Favicon
+  fastify.get('/favicon.svg', async (_request, reply) => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="0.9em" font-size="90">🎩</text></svg>`;
+    reply.type('image/svg+xml').send(svg);
+  });
+
   // Register routes
   await fastify.register(healthRoute);
   await fastify.register(aboutRoute);
