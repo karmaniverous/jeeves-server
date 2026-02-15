@@ -41,6 +41,7 @@ export function renderThemeStyles(): string {
  */
 export function renderHeaderStyles(): string {
   return `
+    body { min-width: fit-content; }
     .header { background: #24292e; color: #fff; padding: 0.75rem 2rem; font-size: 14px; line-height: 1.4; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; box-shadow: 0 1px 0 rgba(255,255,255,0.2); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     [data-theme="dark"] .header { box-shadow: none; }
     .header a { color: #79b8ff; text-decoration: none; }
