@@ -99,7 +99,7 @@ export const eventRoute: FastifyPluginAsync = async (fastify) => {
       logEvent({
         event: null,
         matched: false,
-        bodyPreview: JSON.stringify(body).slice(0, 200),
+        bodyPreview: JSON.stringify(body),
       });
 
       // Always return 200 for unmatched events (prevents webhook retry/disable)
