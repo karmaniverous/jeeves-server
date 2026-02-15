@@ -16,33 +16,33 @@ import { pathRoute } from './routes/path/index.js';
 import { startQueueProcessor } from './services/eventQueue.js';
 
 async function start() {
-  const config = getConfig();
-
-  const fastify = Fastify({
-    logger: true,
-  });
-
-  // Register plugins
-  await fastify.register(cookie);
-
-  // Favicon
-  fastify.get('/favicon.svg', async (_request, reply) => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="0.9em" font-size="90">🎩</text></svg>`;
-    reply.type('image/svg+xml').send(svg);
-  });
-
-  // Register routes
-  await fastify.register(healthRoute);
-  await fastify.register(aboutRoute);
-  await fastify.register(authRoute);
-  await fastify.register(keysRoute);
-  await fastify.register(eventRoute);
-  await fastify.register(pathRoute);
-
-  // Start queue processor
-  startQueueProcessor();
-
   try {
+    const config = getConfig();
+
+    const fastify = Fastify({
+      logger: true,
+    });
+
+    // Register plugins
+    await fastify.register(cookie);
+
+    // Favicon
+    fastify.get('/favicon.svg', async (_request, reply) => {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="0.9em" font-size="90">🎩</text></svg>`;
+      reply.type('image/svg+xml').send(svg);
+    });
+
+    // Register routes
+    await fastify.register(healthRoute);
+    await fastify.register(aboutRoute);
+    await fastify.register(authRoute);
+    await fastify.register(keysRoute);
+    await fastify.register(eventRoute);
+    await fastify.register(pathRoute);
+
+    // Start queue processor
+    startQueueProcessor();
+
     await fastify.listen({ port: config.port, host: '0.0.0.0' });
     console.log(`Jeeves server listening on port ${String(config.port)}`);
     console.log(`Endpoints:`);
@@ -51,9 +51,12 @@ async function start() {
     console.log(`  GET  /key      - Compute path key (X-API-Key auth)`);
     console.log(`  GET  /health   - Health check (no auth)`);
   } catch (err) {
-    fastify.log.error(err);
+    console.error('Fatal startup error:', err);
     process.exit(1);
   }
 }
 
-void start();
+start().catch((err: unknown) => {
+  console.error('Unhandled startup error:', err);
+  process.exit(1);
+});
