@@ -180,6 +180,7 @@ export async function handleMarkdown(
     ],
     eventInScope: (request as { eventInScope?: boolean }).eventInScope,
     keyAge: (request as { keyAge?: string | null }).keyAge,
+    hasRaw: true,
   });
 
   const html = `<!DOCTYPE html>

@@ -18,6 +18,7 @@ export interface HeaderOptions {
   actions?: string[];
   eventInScope?: boolean;
   keyAge?: string | null;
+  hasRaw?: boolean;
 }
 
 /**
@@ -62,7 +63,8 @@ export function renderShareScript(isInsider: boolean): string {
     if (copyLinkBtn) {
       copyLinkBtn.addEventListener('click', async () => {
         const type = linkType ? linkType.value : 'page';
-        const targetPath = type === 'event' ? '/event' : copyLinkBtn.dataset.path;
+        const basePath = copyLinkBtn.dataset.path;
+        const targetPath = type === 'event' ? '/event' : basePath;
         const insiderKey = copyLinkBtn.dataset.insiderKey;
         const expiryInput = shareExpiry ? shareExpiry.value.trim() : '';
         
@@ -95,7 +97,8 @@ export function renderShareScript(isInsider: boolean): string {
           const resp = await fetch('/share?path=' + encodeURIComponent(targetPath) + '&key=' + insiderKey + expParam);
           const data = await resp.json();
           if (data.url) {
-            const fullUrl = window.location.origin + data.url;
+            let fullUrl = window.location.origin + data.url;
+            if (type === 'raw') fullUrl += (fullUrl.includes('?') ? '&' : '?') + 'raw=1';
             await navigator.clipboard.writeText(fullUrl);
             copyLinkBtn.textContent = '✓';
             setTimeout(() => { copyLinkBtn.textContent = '📋'; }, 1500);
@@ -241,10 +244,11 @@ export function renderHeader(options: HeaderOptions): string {
       : [];
   const allActions = [...defaultActions, ...actions];
 
-  const { eventInScope = false, keyAge = null } = options;
+  const { eventInScope = false, keyAge = null, hasRaw = false } = options;
 
   let shareUi;
   if (isInsider) {
+    const rawOption = hasRaw ? '<option value="raw">Raw</option>' : '';
     const eventOption = eventInScope
       ? '<option value="event">Event</option>'
       : '';
@@ -253,6 +257,7 @@ export function renderHeader(options: HeaderOptions): string {
         <span style="color:#8b949e">Link:</span>
         <select id="link-type" title="Link type">
           <option value="page">Page</option>
+          ${rawOption}
           ${eventOption}
         </select>
         <input type="text" id="share-expiry" placeholder="1h" title="Expiry: 15m, 1h, 7d, or blank for never">
