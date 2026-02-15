@@ -31,9 +31,36 @@ export interface Config {
 export type KeyEntry = string | { key: string; scopes?: string | string[] };
 
 /**
+ * Google OAuth configuration
+ */
+export interface GoogleAuthConfig {
+  clientId: string;
+  clientSecret: string;
+}
+
+/**
+ * Auth configuration block
+ */
+export interface AuthConfig {
+  google?: GoogleAuthConfig;
+  sessionSecret?: string;
+}
+
+/**
+ * Insider entry: a Google-authenticated human user.
+ * `key` is auto-generated on first login and persisted.
+ */
+export interface InsiderEntry {
+  scopes?: string | string[];
+  key?: string;
+}
+
+/**
  * Local secrets configuration from config.json.local
  */
 export interface LocalConfig {
+  auth?: AuthConfig;
+  insiders?: Record<string, InsiderEntry>;
   keys: Record<string, KeyEntry>;
 }
 
@@ -47,10 +74,22 @@ export interface ResolvedKey {
 }
 
 /**
+ * Resolved insider with normalized scopes
+ */
+export interface ResolvedInsider {
+  email: string;
+  seed: string;
+  scopes: string[] | null;
+}
+
+/**
  * Combined runtime configuration
  */
 export interface RuntimeConfig extends Config {
   resolvedKeys: ResolvedKey[];
+  resolvedInsiders: ResolvedInsider[];
+  auth: AuthConfig | null;
+  localConfigPath: string;
   eventsLog: string;
   stateFile: string;
   eventQueuePath: string;

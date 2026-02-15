@@ -7,6 +7,8 @@ import path from 'node:path';
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
+import { _pathMatchesScopes } from '../../auth/keys.js';
+import { getConfig } from '../../config/index.js';
 import type { AccessMode } from '../../config/types.js';
 import {
   buildBreadcrumbs,
@@ -43,7 +45,35 @@ export function handleDirectory(
     (request as { accessMode?: AccessMode }).accessMode === 'insider';
   const insiderKey = computeInsiderKey(apiKey);
 
-  const entries = fs.readdirSync(resolved, { withFileTypes: true });
+  const allEntries = fs.readdirSync(resolved, { withFileTypes: true });
+
+  // Filter by insider scopes if session-based auth
+  const insiderEmail = (request as { insiderEmail?: string }).insiderEmail;
+  const config = getConfig();
+  const insiderScopes = insiderEmail
+    ? (config.resolvedInsiders.find(
+        (i) => i.email.toLowerCase() === insiderEmail.toLowerCase(),
+      )?.scopes ?? null)
+    : null;
+
+  const entries = insiderScopes
+    ? allEntries.filter((entry) => {
+        const entryPath = path.join(resolved, entry.name);
+        const entryUrlPath = `/${entryPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (_m: string, d: string) => d.toLowerCase())}`;
+        // For directories, check if any scoped path starts with this dir
+        if (entry.isDirectory()) {
+          return insiderScopes.some((scope) => {
+            const s = scope.toLowerCase().replace(/\/+$/, '');
+            const p = entryUrlPath.toLowerCase();
+            return (
+              p.startsWith(s.replace(/\/\*$/, '')) ||
+              s.replace(/\/\*$/, '').startsWith(p)
+            );
+          });
+        }
+        return _pathMatchesScopes(entryUrlPath, insiderScopes);
+      })
+    : allEntries;
 
   // Sort: directories first, then files, alphabetically
   const sorted = entries.sort((a, b) => {

@@ -7,7 +7,8 @@ import path from 'node:path';
 
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 
-import { verifyKey } from '../../auth/keys.js';
+import { _pathMatchesScopes, verifyKey } from '../../auth/keys.js';
+import { COOKIE_NAME, verifySessionCookie } from '../../auth/session.js';
 import { getConfig } from '../../config/index.js';
 import type { AccessMode } from '../../config/types.js';
 import { appendEvent } from '../../services/eventQueue.js';
@@ -28,6 +29,7 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
     const expParam = (request.query as { exp?: string }).exp;
     const config = getConfig();
 
+    // Try API key auth first
     const authResult = verifyKey(
       config.resolvedKeys,
       urlPath,
@@ -35,15 +37,50 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
       expParam,
     );
 
-    if (!authResult.valid) {
-      appendEvent({ kind: 'auth_failed_path', ip: request.ip, path: urlPath });
-      reply.code(401).send({ error: 'Unauthorized' });
+    if (authResult.valid) {
+      (request as { accessMode?: AccessMode }).accessMode =
+        authResult.mode ?? undefined;
+      (request as { authSeed?: string }).authSeed =
+        authResult.seed ?? undefined;
       return;
     }
 
-    (request as { accessMode?: AccessMode }).accessMode =
-      authResult.mode ?? undefined;
-    (request as { authSeed?: string }).authSeed = authResult.seed ?? undefined;
+    // Try session cookie auth (Google OAuth insiders)
+    const sessionSecret = config.auth?.sessionSecret;
+    if (sessionSecret) {
+      const cookieValue = (
+        request.cookies as Record<string, string> | undefined
+      )?.[COOKIE_NAME];
+      if (cookieValue) {
+        const session = verifySessionCookie(cookieValue, sessionSecret);
+        if (session) {
+          const insider = config.resolvedInsiders.find(
+            (i) => i.email.toLowerCase() === session.email.toLowerCase(),
+          );
+          if (
+            insider?.seed &&
+            (!insider.scopes || _pathMatchesScopes(urlPath, insider.scopes))
+          ) {
+            (request as { accessMode?: AccessMode }).accessMode = 'insider';
+            (request as { authSeed?: string }).authSeed = insider.seed;
+            (request as { insiderEmail?: string }).insiderEmail = insider.email;
+            return;
+          }
+        }
+      }
+    }
+
+    // No valid auth — if Google auth is configured, redirect to login
+    if (config.auth?.google) {
+      const returnTo = request.url;
+      const loginUrl = `/auth/login?returnTo=${encodeURIComponent(returnTo)}`;
+      reply.redirect(loginUrl);
+      return;
+    }
+
+    appendEvent({ kind: 'auth_failed_path', ip: request.ip, path: urlPath });
+    reply.code(401).send({ error: 'Unauthorized' });
+    return;
   });
 
   // Root path: list all drives

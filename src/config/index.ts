@@ -8,8 +8,10 @@ import { fileURLToPath } from 'node:url';
 
 import type {
   Config,
+  InsiderEntry,
   KeyEntry,
   LocalConfig,
+  ResolvedInsider,
   ResolvedKey,
   RuntimeConfig,
 } from './types.js';
@@ -62,10 +64,25 @@ export function loadConfig(): RuntimeConfig {
     },
   );
 
+  // Resolve insiders into normalized form
+  const resolvedInsiders: ResolvedInsider[] = Object.entries(
+    localConfig.insiders ?? {},
+  ).map(([email, entry]: [string, InsiderEntry]) => {
+    const scopes = entry.scopes
+      ? Array.isArray(entry.scopes)
+        ? entry.scopes
+        : [entry.scopes]
+      : null;
+    return { email, seed: entry.key ?? '', scopes };
+  });
+
   // Build runtime config
   const runtimeConfig: RuntimeConfig = {
     ...config,
     resolvedKeys,
+    resolvedInsiders,
+    auth: localConfig.auth ?? null,
+    localConfigPath,
     eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),
     stateFile: path.join(rootDir, 'state.json'),
     eventQueuePath: path.join(rootDir, 'logs', 'event-queue.jsonl'),

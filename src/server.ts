@@ -3,10 +3,12 @@
  * Fastify server for webhooks, file serving, and markdown rendering
  */
 
+import cookie from '@fastify/cookie';
 import Fastify from 'fastify';
 
 import { getConfig } from './config/index.js';
 import { aboutRoute } from './routes/about.js';
+import { authRoute } from './routes/auth.js';
 import { eventRoute } from './routes/event.js';
 import { healthRoute } from './routes/health.js';
 import { keysRoute } from './routes/keys.js';
@@ -20,9 +22,13 @@ async function start() {
     logger: true,
   });
 
+  // Register plugins
+  await fastify.register(cookie);
+
   // Register routes
   await fastify.register(healthRoute);
   await fastify.register(aboutRoute);
+  await fastify.register(authRoute);
   await fastify.register(keysRoute);
   await fastify.register(eventRoute);
   await fastify.register(pathRoute);
