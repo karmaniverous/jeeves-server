@@ -7,7 +7,11 @@
  * a seed grants access to.
  */
 
-import type { KeyVerificationResult, ResolvedKey } from '../config/types.js';
+import type {
+  KeyVerificationResult,
+  ResolvedInsider,
+  ResolvedKey,
+} from '../config/types.js';
 import {
   computeInsiderKey,
   computeOutsiderKeyWithExpiry,
@@ -37,12 +41,18 @@ function pathMatchesScopes(requestPath: string, scopes: string[]): boolean {
 
 /**
  * Verify a provided key against all configured seeds and determine access mode.
+ *
+ * Machine API keys can grant both insider and outsider access.
+ * Insider (Google OAuth) seeds can only grant outsider access — they are
+ * never valid as insider URL keys. This prevents leaked insider seeds from
+ * granting browsing access.
  */
 export function verifyKey(
   resolvedKeys: ResolvedKey[],
   urlPath: string,
   providedKey: string | undefined,
   expParam: string | undefined,
+  resolvedInsiders: ResolvedInsider[] = [],
 ): KeyVerificationResult {
   const fail: KeyVerificationResult = {
     valid: false,
@@ -97,6 +107,48 @@ export function verifyKey(
         mode: 'outsider',
         keyName: rk.name,
         seed: rk.seed,
+      };
+    }
+  }
+
+  // Check insider seeds for outsider access ONLY (never insider access)
+  for (const ri of resolvedInsiders) {
+    if (!ri.seed) continue;
+
+    // Check outsider key with expiry
+    if (expParam) {
+      const expiry = parseInt(expParam, 10);
+      if (!isNaN(expiry) && expiry >= Date.now()) {
+        const expectedKey = computeOutsiderKeyWithExpiry(
+          ri.seed,
+          urlPath,
+          expParam,
+        );
+        if (timingSafeEqual(providedKey, expectedKey)) {
+          if (ri.scopes && !pathMatchesScopes(urlPath, ri.scopes)) {
+            continue;
+          }
+          return {
+            valid: true,
+            mode: 'outsider',
+            keyName: ri.email,
+            seed: ri.seed,
+          };
+        }
+      }
+    }
+
+    // Check outsider key without expiry
+    const expectedKey = computePathKey(ri.seed, urlPath);
+    if (timingSafeEqual(providedKey, expectedKey)) {
+      if (ri.scopes && !pathMatchesScopes(urlPath, ri.scopes)) {
+        continue;
+      }
+      return {
+        valid: true,
+        mode: 'outsider',
+        keyName: ri.email,
+        seed: ri.seed,
       };
     }
   }

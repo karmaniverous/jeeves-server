@@ -29,12 +29,13 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
     const expParam = (request.query as { exp?: string }).exp;
     const config = getConfig();
 
-    // Try API key auth first
+    // Try API key auth (machine keys + insider seeds for outsider access)
     const authResult = verifyKey(
       config.resolvedKeys,
       urlPath,
       provided,
       expParam,
+      config.resolvedInsiders,
     );
 
     if (authResult.valid) {

@@ -110,6 +110,17 @@ export function renderShareScript(isInsider: boolean): string {
       });
     }
     
+    // Copy key button
+    const copyKeyBtn = document.getElementById('copy-key-btn');
+    if (copyKeyBtn) {
+      copyKeyBtn.addEventListener('click', async () => {
+        const insiderKey = copyKeyBtn.dataset.insiderKey;
+        await navigator.clipboard.writeText(insiderKey);
+        copyKeyBtn.textContent = '✓';
+        setTimeout(() => { copyKeyBtn.textContent = '📋'; }, 1500);
+      });
+    }
+    
     // Key rotation button
     const rotateKeyBtn = document.getElementById('rotate-key-btn');
     if (rotateKeyBtn) {
@@ -281,6 +292,7 @@ export function renderHeader(options: HeaderOptions): string {
       : '';
     keyRotateGroup = `
       <div class="key-rotation-group">
+        <button id="copy-key-btn" class="theme-toggle" title="Copy your API key" data-insider-key="${insiderKey}">📋</button>
         <button id="rotate-key-btn" class="theme-toggle" title="Rotate API Key" data-insider-key="${insiderKey}">🔑</button>
         ${ageHtml}
       </div>
