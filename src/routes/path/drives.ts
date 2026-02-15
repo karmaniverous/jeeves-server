@@ -91,6 +91,8 @@ export function renderDriveListing(
     insiderKey,
     showRaw: false,
     actions: [],
+    eventInScope: (request as { eventInScope?: boolean }).eventInScope,
+    keyAge: (request as { keyAge?: string | null }).keyAge,
   });
 
   const html = `<!DOCTYPE html>

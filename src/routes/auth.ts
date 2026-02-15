@@ -108,6 +108,7 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
       const insiderEntry = fullConfig.insiders?.[insider.email];
       if (insiderEntry) {
         insiderEntry.key = newSeed;
+        insiderEntry.keyCreatedAt = new Date().toISOString();
         fs.writeFileSync(
           config.configPath,
           JSON.stringify(fullConfig, null, 2),

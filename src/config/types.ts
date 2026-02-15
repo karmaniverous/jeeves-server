@@ -42,6 +42,7 @@ export interface AuthConfig {
 export interface InsiderEntry {
   scopes?: string | string[];
   key?: string;
+  keyCreatedAt?: string;
 }
 
 /**
@@ -74,6 +75,7 @@ export interface ResolvedInsider {
   email: string;
   seed: string;
   scopes: string[] | null;
+  keyCreatedAt: string | null;
 }
 
 /**

@@ -12,6 +12,7 @@ import { COOKIE_NAME, verifySessionCookie } from '../../auth/session.js';
 import { getConfig } from '../../config/index.js';
 import type { AccessMode } from '../../config/types.js';
 import { appendEvent } from '../../services/eventQueue.js';
+import { formatRelativeTime } from '../../util/formatters.js';
 import { handleDirectory } from './directory.js';
 import { renderDriveListing } from './drives.js';
 import { handleGenericFile } from './file.js';
@@ -65,6 +66,12 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
             (request as { accessMode?: AccessMode }).accessMode = 'insider';
             (request as { authSeed?: string }).authSeed = insider.seed;
             (request as { insiderEmail?: string }).insiderEmail = insider.email;
+            (request as { eventInScope?: boolean }).eventInScope =
+              !insider.scopes || _pathMatchesScopes('/event', insider.scopes);
+            (request as { keyAge?: string | null }).keyAge =
+              insider.keyCreatedAt
+                ? formatRelativeTime(insider.keyCreatedAt)
+                : null;
             return;
           }
         }

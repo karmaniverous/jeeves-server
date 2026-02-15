@@ -7,6 +7,7 @@ import fs from 'node:fs';
 
 import type { FastifyPluginAsync } from 'fastify';
 
+import { COOKIE_NAME, verifySessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
 import type { JeevesConfig } from '../config/types.js';
 import { appendEvent } from '../services/eventQueue.js';
@@ -81,15 +82,55 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
         return reply.code(401).send({ error: 'Insider key required' });
       }
 
-      // Find which seed's insider key matches
+      // Try machine key match first
       const matched = config.resolvedKeys.find((rk) =>
         timingSafeEqual(provided, computeInsiderKey(rk.seed)),
       );
+
+      // Try session-based insider rotation
       if (!matched) {
+        const sessionSecret = config.auth?.sessionSecret;
+        const cookieValue = sessionSecret
+          ? ((request.cookies as Record<string, string> | undefined)?.[
+              COOKIE_NAME
+            ] ?? '')
+          : '';
+        const session =
+          sessionSecret && cookieValue
+            ? verifySessionCookie(cookieValue, sessionSecret)
+            : null;
+        if (session) {
+          const insider = config.resolvedInsiders.find(
+            (i) => i.email.toLowerCase() === session.email.toLowerCase(),
+          );
+          if (insider?.seed) {
+            const rotatedSeed = crypto.randomBytes(32).toString('hex');
+            const rotateConfig = JSON.parse(
+              fs.readFileSync(config.configPath, 'utf8'),
+            ) as JeevesConfig;
+            const insiderEntry = rotateConfig.insiders?.[insider.email];
+            if (insiderEntry) {
+              insiderEntry.key = rotatedSeed;
+              insiderEntry.keyCreatedAt = new Date().toISOString();
+              fs.writeFileSync(
+                config.configPath,
+                JSON.stringify(rotateConfig, null, 2),
+                'utf8',
+              );
+              appendEvent({
+                kind: 'insider_key_rotated',
+                email: insider.email,
+                at: new Date().toISOString(),
+              });
+              resetConfig();
+              return { ok: true, keyName: insider.email };
+            }
+          }
+        }
         return reply.code(401).send({ error: 'Invalid insider key' });
       }
 
-      // Generate new API key seed
+      // Generate new machine API key seed
       const newSeed = crypto.randomBytes(32).toString('hex');
 
       // Update jeeves.config.json

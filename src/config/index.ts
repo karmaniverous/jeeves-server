@@ -65,7 +65,12 @@ export function loadConfig(): RuntimeConfig {
         ? entry.scopes
         : [entry.scopes]
       : null;
-    return { email, seed: entry.key ?? '', scopes };
+    return {
+      email,
+      seed: entry.key ?? '',
+      scopes,
+      keyCreatedAt: entry.keyCreatedAt ?? null,
+    };
   });
 
   // Build runtime config

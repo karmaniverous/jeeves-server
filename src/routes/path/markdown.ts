@@ -178,6 +178,8 @@ export async function handleMarkdown(
       `<a href="?key=${query.key}&amp;export=pdf" title="Export as PDF">📄 PDF</a>`,
       `<a href="?key=${query.key}&amp;export=docx" title="Export as Word document">📝 DOCX</a>`,
     ],
+    eventInScope: (request as { eventInScope?: boolean }).eventInScope,
+    keyAge: (request as { keyAge?: string | null }).keyAge,
   });
 
   const html = `<!DOCTYPE html>
