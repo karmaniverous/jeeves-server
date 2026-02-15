@@ -82,6 +82,38 @@ export function handleDirectory(
     return a.name.localeCompare(b.name);
   });
 
+  // Extensions that render a page view (not just raw file serving)
+  const pageExtensions = new Set([
+    '.md',
+    '.svg',
+    '.txt',
+    '.json',
+    '.yaml',
+    '.yml',
+    '.html',
+    '.css',
+    '.js',
+    '.ts',
+    '.xml',
+    '.csv',
+    '.jsonl',
+    '.log',
+    '.mmd',
+    '.ps1',
+    '.bat',
+    '.cmd',
+    '.sh',
+    '.py',
+    '.rb',
+    '.go',
+    '.rs',
+    '.java',
+    '.c',
+    '.cpp',
+    '.h',
+    '.hpp',
+  ]);
+
   let rows = '';
   for (const entry of sorted) {
     const entryPath = path.join(resolved, entry.name);
@@ -113,7 +145,25 @@ export function handleDirectory(
       : `<a href="/path${entryUrlPath}">${entry.name}</a>`;
 
     const icon = entry.isDirectory() ? '📁' : '📄';
-    rows += `<tr><td>${icon} ${nameCell}</td><td>${type}</td><td>${size}</td><td>${mtime}</td></tr>`;
+
+    // Share icons for insiders
+    let shareCell = '';
+    if (isInsider) {
+      const ext = path.extname(entry.name).toLowerCase();
+      const hasPage = entry.isDirectory() || pageExtensions.has(ext);
+      const hasRaw = !entry.isDirectory();
+
+      const pageBtn = hasPage
+        ? `<button class="share-icon" data-path="${entryUrlPath}" data-type="page" title="Copy page link">🔗</button>`
+        : '';
+      const rawBtn = hasRaw
+        ? `<button class="share-icon" data-path="${entryUrlPath}" data-type="raw" title="Copy raw link">⬇</button>`
+        : '';
+
+      shareCell = `<td class="share-cell">${pageBtn}${rawBtn}</td>`;
+    }
+
+    rows += `<tr><td>${icon} ${nameCell}</td><td>${type}</td><td>${size}</td><td>${mtime}</td>${shareCell}</tr>`;
   }
 
   const dirName = path.basename(resolved) || resolved;
@@ -156,6 +206,11 @@ export function handleDirectory(
     a { color: var(--link-color); text-decoration: none; }
     a:hover { text-decoration: underline; }
     .count { color: var(--text-secondary); font-size: 13px; margin-bottom: 1rem; }
+    .share-cell { white-space: nowrap; text-align: center; }
+    .share-icon { background: none; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; padding: 2px 6px; margin: 0 2px; font-size: 13px; color: var(--text-secondary); transition: border-color 0.2s; }
+    .share-icon:hover { border-color: var(--link-color); }
+    .share-icon.copied { border-color: #3fb950; }
+    .share-expiry-input { width: 50px; padding: 2px 4px; font-size: 11px; border: 1px solid var(--border-color); border-radius: 3px; background: var(--bg-primary); color: var(--text-primary); text-align: center; }
   </style>
 </head>
 <body>
@@ -163,15 +218,76 @@ export function handleDirectory(
   <div class="container">
     <div class="count">${String(entries.length)} items</div>
     <table>
-      <thead><tr><th>Name</th><th>Type</th><th>Size</th><th>Modified</th></tr></thead>
+      <thead><tr><th>Name</th><th>Type</th><th>Size</th><th>Modified</th>${isInsider ? '<th>Share <input type="text" id="dir-share-expiry" class="share-expiry-input" placeholder="1h" title="Expiry for share links: 15m, 1h, 7d"></th>' : ''}</tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div>
   <script>
     ${renderShareScript(isInsider)}
+    ${isInsider ? renderDirectoryShareScript(insiderKey) : ''}
   </script>
 </body>
 </html>`;
 
   reply.type('text/html').send(html);
+}
+
+/**
+ * Client-side JS for per-row share icon buttons in directory listings
+ */
+function renderDirectoryShareScript(insiderKey: string): string {
+  return `
+    (function() {
+      const expiryInput = document.getElementById('dir-share-expiry');
+      const savedExpiry = localStorage.getItem('jeeves-dir-share-expiry') || '';
+      if (expiryInput && savedExpiry) expiryInput.value = savedExpiry;
+
+      function parseExpiry() {
+        if (!expiryInput) return '';
+        const val = expiryInput.value.trim();
+        if (!val) return '';
+        const match = val.match(/^(\\d+)([mhd])$/i);
+        if (!match) {
+          expiryInput.style.borderColor = '#f85149';
+          setTimeout(() => { expiryInput.style.borderColor = ''; }, 2000);
+          return null;
+        }
+        const num = parseInt(match[1], 10);
+        const unit = match[2].toLowerCase();
+        if (num <= 0 || num > 365) {
+          expiryInput.style.borderColor = '#f85149';
+          setTimeout(() => { expiryInput.style.borderColor = ''; }, 2000);
+          return null;
+        }
+        const multiplier = { m: 60*1000, h: 60*60*1000, d: 24*60*60*1000 }[unit];
+        localStorage.setItem('jeeves-dir-share-expiry', val);
+        return '&exp=' + (Date.now() + num * multiplier);
+      }
+
+      document.querySelectorAll('.share-icon').forEach(btn => {
+        btn.addEventListener('click', async function() {
+          const expParam = parseExpiry();
+          if (expParam === null) return;
+
+          const targetPath = this.dataset.path;
+          const linkType = this.dataset.type;
+          const insiderKey = '${insiderKey}';
+
+          try {
+            const resp = await fetch('/share?path=' + encodeURIComponent(targetPath) + '&key=' + insiderKey + expParam);
+            const data = await resp.json();
+            if (data.url) {
+              let fullUrl = window.location.origin + data.url;
+              if (linkType === 'raw') fullUrl += (fullUrl.includes('?') ? '&' : '?') + 'raw=1';
+              await navigator.clipboard.writeText(fullUrl);
+              this.classList.add('copied');
+              const orig = this.textContent;
+              this.textContent = '✓';
+              setTimeout(() => { this.textContent = orig; this.classList.remove('copied'); }, 1500);
+            }
+          } catch (err) { console.error('Share failed:', err); }
+        });
+      });
+    })();
+  `;
 }
