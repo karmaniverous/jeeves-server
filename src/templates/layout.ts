@@ -16,6 +16,9 @@ export interface HeaderOptions {
   expiry?: number | null;
   showRaw?: boolean;
   actions?: string[];
+  eventInScope?: boolean;
+  keyAge?: string | null;
+  hasRaw?: boolean;
 }
 
 /**
@@ -48,29 +51,22 @@ export function renderThemeScript(): string {
 export function renderShareScript(isInsider: boolean): string {
   if (isInsider) {
     return `
-    const shareInsideBtn = document.getElementById('share-inside-btn');
-    const shareOutsideBtn = document.getElementById('share-outside-btn');
+    const copyLinkBtn = document.getElementById('copy-link-btn');
+    const linkType = document.getElementById('link-type');
     const shareExpiry = document.getElementById('share-expiry');
     
     // Load saved expiry
     const savedExpiry = localStorage.getItem('jeeves-share-expiry') || '';
     if (shareExpiry) shareExpiry.value = savedExpiry;
     
-    // Inside button: copy current page URL
-    if (shareInsideBtn) {
-      shareInsideBtn.addEventListener('click', async () => {
-        await navigator.clipboard.writeText(window.location.href);
-        shareInsideBtn.textContent = '✓';
-        setTimeout(() => { shareInsideBtn.textContent = 'Inside'; }, 1500);
-      });
-    }
-    
-    // Outside button: generate outsider link with expiry
-    if (shareOutsideBtn) {
-      shareOutsideBtn.addEventListener('click', async () => {
+    // Copy link button: generate outsider link for selected type
+    if (copyLinkBtn) {
+      copyLinkBtn.addEventListener('click', async () => {
+        const type = linkType ? linkType.value : 'page';
+        const basePath = copyLinkBtn.dataset.path;
+        const targetPath = type === 'event' ? '/event' : basePath;
+        const insiderKey = copyLinkBtn.dataset.insiderKey;
         const expiryInput = shareExpiry ? shareExpiry.value.trim() : '';
-        const path = shareOutsideBtn.dataset.path;
-        const insiderKey = shareOutsideBtn.dataset.insiderKey;
         
         // Validate expiry format
         let expParam = '';
@@ -98,13 +94,14 @@ export function renderShareScript(isInsider: boolean): string {
         localStorage.setItem('jeeves-share-expiry', expiryInput);
         
         try {
-          const resp = await fetch('/share?path=' + encodeURIComponent(path) + '&key=' + insiderKey + expParam);
+          const resp = await fetch('/share?path=' + encodeURIComponent(targetPath) + '&key=' + insiderKey + expParam);
           const data = await resp.json();
           if (data.url) {
-            const fullUrl = window.location.origin + data.url;
+            let fullUrl = window.location.origin + data.url;
+            if (type === 'raw') fullUrl += (fullUrl.includes('?') ? '&' : '?') + 'raw=1';
             await navigator.clipboard.writeText(fullUrl);
-            shareOutsideBtn.textContent = '✓';
-            setTimeout(() => { shareOutsideBtn.textContent = 'Outside'; }, 1500);
+            copyLinkBtn.textContent = '✓';
+            setTimeout(() => { copyLinkBtn.textContent = '📋'; }, 1500);
           }
         } catch (err) { console.error('Share failed:', err); }
       });
@@ -119,13 +116,19 @@ export function renderShareScript(isInsider: boolean): string {
         
         const insiderKey = rotateKeyBtn.dataset.insiderKey;
         try {
-          const resp = await fetch('/rotate-key?key=' + insiderKey, { method: 'POST' });
+          // Try with insider key first (machine keys), fall back to cookie auth
+          const resp = await fetch('/rotate-key?key=' + insiderKey, { method: 'POST', credentials: 'same-origin' });
           const data = await resp.json();
-          if (data.ok && data.insiderKey) {
-            // Navigate to same path with new insider key
-            const url = new URL(window.location.href);
-            url.searchParams.set('key', data.insiderKey);
-            window.location.href = url.toString();
+          if (data.ok) {
+            if (data.insiderKey) {
+              // Machine key rotation: navigate with new key
+              const url = new URL(window.location.href);
+              url.searchParams.set('key', data.insiderKey);
+              window.location.href = url.toString();
+            } else {
+              // Session-based rotation: just reload
+              window.location.reload();
+            }
           } else {
             alert('Key rotation failed: ' + (data.error || 'Unknown error'));
           }
@@ -183,17 +186,56 @@ export function buildBreadcrumbs(
   apiKey: string,
   mode: AccessMode,
   insiderKey: string,
+  shareRoot?: string | null,
 ): string {
   const pathParts = resolvedPath.split('\\').filter((p) => p);
 
-  // Outsiders see top hat branding + filename
+  // Outsiders with a directory share see navigable breadcrumbs from share root
+  if (mode === 'outsider' && shareRoot) {
+    // Convert shareRoot (URL path like "/d/projects/foo") to Windows path parts
+    const shareRootParts = shareRoot
+      .replace(/^\//, '')
+      .split('/')
+      .filter((p) => p);
+    // Find the index where the share root ends in the full path
+    const startIdx = shareRootParts.length > 0 ? shareRootParts.length - 1 : 0;
+
+    let breadcrumbs = `<span class="home-icon" title="Jeeves Server">🎩</span>`;
+    let accumPath = '';
+
+    for (let i = startIdx; i < pathParts.length; i++) {
+      const part = pathParts[i];
+      if (i === 0) {
+        accumPath = part;
+      } else if (accumPath === '') {
+        accumPath = part;
+      } else {
+        accumPath += '\\' + part;
+      }
+      // Build accumPath from start
+      const fullAccum = pathParts.slice(0, i + 1).join('\\');
+      const separator = i === startIdx ? '' : ' &nbsp;/&nbsp; ';
+      const isLast = i === pathParts.length - 1;
+      const urlPath = `/${fullAccum.replace(/\\/g, '/').replace(/^([A-Z]):/, (_m: string, d: string) => d.toLowerCase())}`;
+      const queryKey = apiKey;
+
+      if (isLast) {
+        breadcrumbs += `${separator}<span class="breadcrumb-current">${part}</span>`;
+      } else {
+        breadcrumbs += `${separator}<a href="/path${urlPath}?key=${queryKey}">${part}</a>`;
+      }
+    }
+    return breadcrumbs;
+  }
+
+  // Outsiders without directory share see top hat + filename only
   if (mode === 'outsider') {
     const fileName = pathParts[pathParts.length - 1] || '';
     return `<span class="home-icon" title="Jeeves Server">🎩</span> <span class="breadcrumb-tail">${fileName}</span>`;
   }
 
-  // Insiders see full navigable breadcrumbs
-  let breadcrumbs = `<a href="/path?key=${insiderKey}" class="home-icon" title="Jeeves Server">🎩</a>`;
+  // Insiders see full navigable breadcrumbs (no key params — cookie auth)
+  let breadcrumbs = `<a href="/path" class="home-icon" title="Jeeves Server">🎩</a>`;
   let accumPath = '';
 
   for (let i = 0; i < pathParts.length; i++) {
@@ -210,7 +252,7 @@ export function buildBreadcrumbs(
       breadcrumbs += `${separator}<span class="breadcrumb-current">${part}</span>`;
     } else {
       const urlPath = `/${accumPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m: string, d: string) => d.toLowerCase())}`;
-      breadcrumbs += `${separator}<a href="/path${urlPath}?key=${insiderKey}">${part}</a>`;
+      breadcrumbs += `${separator}<a href="/path${urlPath}">${part}</a>`;
     }
   }
 
@@ -236,20 +278,31 @@ export function renderHeader(options: HeaderOptions): string {
   const defaultActions =
     showRaw && fileName
       ? [
-          `<a href="?key=${queryKey}&amp;raw=1" download="${fileName}" title="Download raw file">⬇ Raw</a>`,
+          isInsider
+            ? `<a href="?raw=1" download="${fileName}" title="Download raw file">⬇ Raw</a>`
+            : `<a href="?key=${queryKey}&amp;raw=1" download="${fileName}" title="Download raw file">⬇ Raw</a>`,
         ]
       : [];
   const allActions = [...defaultActions, ...actions];
 
+  const { eventInScope = false, keyAge = null, hasRaw = false } = options;
+
   let shareUi;
   if (isInsider) {
+    const rawOption = hasRaw ? '<option value="raw">Raw</option>' : '';
+    const eventOption = eventInScope
+      ? '<option value="event">Event</option>'
+      : '';
     shareUi = `
       <div class="share-ui">
-        <span style="color:#8b949e">Share:</span>
-        <button id="share-inside-btn" class="share-btn-inside" data-key="${queryKey}" title="Copy insider link to clipboard">Inside</button>
-        <span style="color:#444">|</span>
-        <button id="share-outside-btn" class="share-btn-outside" data-path="${currentPath}" data-insider-key="${insiderKey}" title="Generate outsider link with optional expiry">Outside</button>
+        <span style="color:#8b949e">Link:</span>
+        <select id="link-type" title="Link type">
+          <option value="page">Page</option>
+          ${rawOption}
+          ${eventOption}
+        </select>
         <input type="text" id="share-expiry" placeholder="1h" title="Expiry: 15m, 1h, 7d, or blank for never">
+        <button id="copy-link-btn" class="share-btn-outside" data-path="${currentPath}" data-insider-key="${insiderKey}" title="Copy outsider link to clipboard">📋</button>
       </div>
     `;
   } else {
@@ -267,21 +320,20 @@ export function renderHeader(options: HeaderOptions): string {
   // Info button
   const infoBtnGroup = `
     <div class="info-btn-group">
-      <a href="/about${isInsider ? '?key=' + insiderKey : ''}" class="theme-toggle" title="About Jeeves Server" style="text-decoration:none;font-weight:bold;">?</a>
+      <a href="/about" class="theme-toggle" title="About Jeeves Server" style="text-decoration:none;font-weight:bold;">?</a>
     </div>
   `;
 
   // Key rotation button (insider only)
   let keyRotateGroup = '';
   if (isInsider) {
-    const rotationTs = getKeyRotationTimestamp();
-    const rotationAge = formatRelativeTime(rotationTs);
-    const ageHtml = rotationAge
-      ? `<span class="key-rotation-age">${rotationAge}</span>`
+    const ageText = keyAge ?? formatRelativeTime(getKeyRotationTimestamp());
+    const ageHtml = ageText
+      ? `<span class="key-rotation-age">${ageText}</span>`
       : '';
     keyRotateGroup = `
       <div class="key-rotation-group">
-        <button id="rotate-key-btn" class="theme-toggle" title="Rotate API Key" data-insider-key="${insiderKey}">🔑</button>
+        <button id="rotate-key-btn" class="theme-toggle" title="Rotate key (invalidates all your shares)" data-insider-key="${insiderKey}">🔑</button>
         ${ageHtml}
       </div>
     `;

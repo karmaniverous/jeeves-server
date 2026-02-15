@@ -7,9 +7,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type {
-  Config,
+  InsiderEntry,
+  JeevesConfig,
   KeyEntry,
-  LocalConfig,
+  ResolvedInsider,
   ResolvedKey,
   RuntimeConfig,
 } from './types.js';
@@ -17,38 +18,31 @@ import type {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '../..');
 
+const CONFIG_FILENAME = 'jeeves.config.json';
+
 /**
- * Load configuration from config.json and config.json.local
+ * Load configuration from jeeves.config.json
  */
 export function loadConfig(): RuntimeConfig {
-  // Load main config
-  const configPath = path.join(rootDir, 'config.json');
+  const configPath = path.join(rootDir, CONFIG_FILENAME);
   if (!fs.existsSync(configPath)) {
-    throw new Error('config.json not found');
-  }
-
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf8')) as Config;
-
-  // Load local config (secrets)
-  const localConfigPath = path.join(rootDir, 'config.json.local');
-  if (!fs.existsSync(localConfigPath)) {
     throw new Error(
-      'config.json.local not found. Copy config.json.local.template and configure your keys.',
+      `${CONFIG_FILENAME} not found. Copy jeeves.config.template.json and configure.`,
     );
   }
 
-  const localConfig = JSON.parse(
-    fs.readFileSync(localConfigPath, 'utf8'),
-  ) as LocalConfig;
+  const config = JSON.parse(
+    fs.readFileSync(configPath, 'utf8'),
+  ) as JeevesConfig;
 
-  if (Object.keys(localConfig.keys).length === 0) {
+  if (Object.keys(config.keys).length === 0) {
     throw new Error(
-      'No keys configured in config.json.local. At least one key is required.',
+      `No keys configured in ${CONFIG_FILENAME}. At least one key is required.`,
     );
   }
 
   // Resolve keys into normalized form
-  const resolvedKeys: ResolvedKey[] = Object.entries(localConfig.keys).map(
+  const resolvedKeys: ResolvedKey[] = Object.entries(config.keys).map(
     ([name, entry]: [string, KeyEntry]) => {
       if (typeof entry === 'string') {
         return { name, seed: entry, scopes: null };
@@ -62,10 +56,34 @@ export function loadConfig(): RuntimeConfig {
     },
   );
 
+  // Resolve insiders into normalized form
+  const resolvedInsiders: ResolvedInsider[] = Object.entries(
+    config.insiders ?? {},
+  ).map(([email, entry]: [string, InsiderEntry]) => {
+    const scopes = entry.scopes
+      ? Array.isArray(entry.scopes)
+        ? entry.scopes
+        : [entry.scopes]
+      : null;
+    return {
+      email,
+      seed: entry.key ?? '',
+      scopes,
+      keyCreatedAt: entry.keyCreatedAt ?? null,
+    };
+  });
+
   // Build runtime config
   const runtimeConfig: RuntimeConfig = {
-    ...config,
+    port: config.port,
+    eventTimeoutMs: config.eventTimeoutMs,
+    eventLogPurgeMs: config.eventLogPurgeMs,
+    chromePath: config.chromePath,
+    events: config.events,
     resolvedKeys,
+    resolvedInsiders,
+    auth: config.auth ?? null,
+    configPath,
     eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),
     stateFile: path.join(rootDir, 'state.json'),
     eventQueuePath: path.join(rootDir, 'logs', 'event-queue.jsonl'),

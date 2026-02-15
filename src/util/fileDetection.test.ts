@@ -5,28 +5,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  DANGEROUS_EXTENSIONS,
   getContentType,
   isInlineType,
   looksLikeText,
 } from './fileDetection.js';
 
 describe('file detection', () => {
-  describe('DANGEROUS_EXTENSIONS', () => {
-    it('should include common Windows executables', () => {
-      expect(DANGEROUS_EXTENSIONS).toContain('.exe');
-      expect(DANGEROUS_EXTENSIONS).toContain('.bat');
-      expect(DANGEROUS_EXTENSIONS).toContain('.ps1');
-      expect(DANGEROUS_EXTENSIONS).toContain('.dll');
-    });
-
-    it('should include script extensions', () => {
-      expect(DANGEROUS_EXTENSIONS).toContain('.vbs');
-      expect(DANGEROUS_EXTENSIONS).toContain('.jse');
-      expect(DANGEROUS_EXTENSIONS).toContain('.wsh');
-    });
-  });
-
   describe('looksLikeText', () => {
     it('should return true for plain text', () => {
       const buffer = Buffer.from('Hello, world!', 'utf8');

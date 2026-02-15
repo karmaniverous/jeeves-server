@@ -3,11 +3,8 @@
  */
 
 import fs from 'node:fs';
-import path from 'node:path';
 
 import { marked } from 'marked';
-
-import { DANGEROUS_EXTENSIONS } from '../util/fileDetection.js';
 
 export interface Heading {
   level: number;
@@ -16,19 +13,13 @@ export interface Heading {
 }
 
 /**
- * Resolve Windows path for linking (skip dangerous executables and non-existent paths)
+ * Resolve Windows path for linking (skip non-existent and templated paths)
  */
 function resolvePathForLink(winPath: string): string | null {
   // Skip templated paths
   if (winPath.includes('{') || winPath.includes('}')) return null;
 
   if (!fs.existsSync(winPath)) return null;
-
-  const stats = fs.statSync(winPath);
-  if (stats.isFile()) {
-    const ext = path.extname(winPath).toLowerCase();
-    if (DANGEROUS_EXTENSIONS.includes(ext)) return null;
-  }
 
   return winPath;
 }

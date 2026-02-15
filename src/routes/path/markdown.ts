@@ -45,7 +45,9 @@ export async function handleMarkdown(
 
   // Handle exports
   if (query.export === 'pdf' || query.export === 'docx') {
-    const exportUrl = `http://localhost:${String(serverPort)}${request.url.split('?')[0]}?key=${query.key}&toc=${query.export === 'pdf' ? '1' : '0'}`;
+    const insiderKeyForExport = computeInsiderKey(apiKey);
+    const exportKey = query.key || insiderKeyForExport;
+    const exportUrl = `http://localhost:${String(serverPort)}${request.url.split('?')[0]}?key=${exportKey}&toc=${query.export === 'pdf' ? '1' : '0'}`;
     const baseName = fileName.replace(/\.md$/i, '');
 
     try {
@@ -130,7 +132,7 @@ export async function handleMarkdown(
       }
 
       if (isInsider) {
-        return `${attr}="${urlPath}?key=${insiderKey}"`;
+        return `${attr}="${urlPath}"`;
       } else {
         if (attr === 'src') {
           const key = computePathKey(apiKey, urlPath.replace('/path', ''));
@@ -159,9 +161,10 @@ export async function handleMarkdown(
 
   const breadcrumbs = buildBreadcrumbs(
     resolved,
-    apiKey,
+    query.key,
     (request as { accessMode?: AccessMode }).accessMode!,
     insiderKey,
+    (request as { shareRoot?: string | null }).shareRoot,
   );
   const currentPath = `/${reqPath}`;
   const expiry = query.exp ? parseInt(query.exp, 10) : null;
@@ -174,10 +177,18 @@ export async function handleMarkdown(
     currentPath,
     insiderKey,
     expiry,
-    actions: [
-      `<a href="?key=${query.key}&amp;export=pdf" title="Export as PDF">📄 PDF</a>`,
-      `<a href="?key=${query.key}&amp;export=docx" title="Export as Word document">📝 DOCX</a>`,
-    ],
+    actions: isInsider
+      ? [
+          `<a href="?export=pdf" title="Export as PDF">📄 PDF</a>`,
+          `<a href="?export=docx" title="Export as Word document">📝 DOCX</a>`,
+        ]
+      : [
+          `<a href="?key=${query.key}&amp;export=pdf" title="Export as PDF">📄 PDF</a>`,
+          `<a href="?key=${query.key}&amp;export=docx" title="Export as Word document">📝 DOCX</a>`,
+        ],
+    eventInScope: (request as { eventInScope?: boolean }).eventInScope,
+    keyAge: (request as { keyAge?: string | null }).keyAge,
+    hasRaw: true,
   });
 
   const html = `<!DOCTYPE html>

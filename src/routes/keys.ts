@@ -4,13 +4,12 @@
 
 import crypto from 'node:crypto';
 import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import type { FastifyPluginAsync } from 'fastify';
 
+import { COOKIE_NAME, verifySessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
-import type { LocalConfig } from '../config/types.js';
+import type { JeevesConfig } from '../config/types.js';
 import { appendEvent } from '../services/eventQueue.js';
 import {
   computeInsiderKey,
@@ -20,9 +19,6 @@ import {
 } from '../util/crypto.js';
 import { nowIso } from '../util/formatters.js';
 import { setKeyRotationTimestamp } from '../util/state.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.resolve(__dirname, '../..');
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const keysRoute: FastifyPluginAsync = async (fastify) => {
@@ -86,33 +82,72 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
         return reply.code(401).send({ error: 'Insider key required' });
       }
 
-      // Find which seed's insider key matches
+      // Try machine key match first
       const matched = config.resolvedKeys.find((rk) =>
         timingSafeEqual(provided, computeInsiderKey(rk.seed)),
       );
+
+      // Try session-based insider rotation
       if (!matched) {
+        const sessionSecret = config.auth?.sessionSecret;
+        const cookieValue = sessionSecret
+          ? ((request.cookies as Record<string, string> | undefined)?.[
+              COOKIE_NAME
+            ] ?? '')
+          : '';
+        const session =
+          sessionSecret && cookieValue
+            ? verifySessionCookie(cookieValue, sessionSecret)
+            : null;
+        if (session) {
+          const insider = config.resolvedInsiders.find(
+            (i) => i.email.toLowerCase() === session.email.toLowerCase(),
+          );
+          if (insider?.seed) {
+            const rotatedSeed = crypto.randomBytes(32).toString('hex');
+            const rotateConfig = JSON.parse(
+              fs.readFileSync(config.configPath, 'utf8'),
+            ) as JeevesConfig;
+            const insiderEntry = rotateConfig.insiders?.[insider.email];
+            if (insiderEntry) {
+              insiderEntry.key = rotatedSeed;
+              insiderEntry.keyCreatedAt = new Date().toISOString();
+              fs.writeFileSync(
+                config.configPath,
+                JSON.stringify(rotateConfig, null, 2),
+                'utf8',
+              );
+              appendEvent({
+                kind: 'insider_key_rotated',
+                email: insider.email,
+                at: new Date().toISOString(),
+              });
+              resetConfig();
+              return { ok: true, keyName: insider.email };
+            }
+          }
+        }
         return reply.code(401).send({ error: 'Invalid insider key' });
       }
 
-      // Generate new API key seed
+      // Generate new machine API key seed
       const newSeed = crypto.randomBytes(32).toString('hex');
 
-      // Update config.json.local
-      const localConfigPath = path.join(rootDir, 'config.json.local');
-      const localConfig = JSON.parse(
-        fs.readFileSync(localConfigPath, 'utf8'),
-      ) as LocalConfig;
+      // Update jeeves.config.json
+      const fullConfig = JSON.parse(
+        fs.readFileSync(config.configPath, 'utf8'),
+      ) as JeevesConfig;
 
-      const entry = localConfig.keys[matched.name];
+      const entry = fullConfig.keys[matched.name];
       if (typeof entry === 'string') {
-        localConfig.keys[matched.name] = newSeed;
+        fullConfig.keys[matched.name] = newSeed;
       } else {
         entry.key = newSeed;
       }
 
       fs.writeFileSync(
-        localConfigPath,
-        JSON.stringify(localConfig, null, 2),
+        config.configPath,
+        JSON.stringify(fullConfig, null, 2),
         'utf8',
       );
 
@@ -146,11 +181,66 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
         return reply.code(401).send({ error: 'Insider key required' });
       }
 
-      // Find which seed's insider key matches
-      const matched = config.resolvedKeys.find((rk) =>
+      // Find which seed's insider key matches (machine keys + insider seeds)
+      const matchedMachine = config.resolvedKeys.find((rk) =>
         timingSafeEqual(provided, computeInsiderKey(rk.seed)),
       );
+      const matchedInsider = matchedMachine
+        ? null
+        : config.resolvedInsiders.find(
+            (ri) =>
+              ri.seed && timingSafeEqual(provided, computeInsiderKey(ri.seed)),
+          );
+      const matched =
+        matchedMachine ??
+        (matchedInsider
+          ? { name: matchedInsider.email, seed: matchedInsider.seed }
+          : null);
       if (!matched) {
+        // Also try session cookie auth for share
+        const sessionSecret = config.auth?.sessionSecret;
+        const cookieValue = sessionSecret
+          ? ((request.cookies as Record<string, string> | undefined)?.[
+              COOKIE_NAME
+            ] ?? '')
+          : '';
+        const session =
+          sessionSecret && cookieValue
+            ? verifySessionCookie(cookieValue, sessionSecret)
+            : null;
+        if (session) {
+          const insider = config.resolvedInsiders.find(
+            (i) => i.email.toLowerCase() === session.email.toLowerCase(),
+          );
+          if (insider?.seed) {
+            const targetPath = request.query.path;
+            if (!targetPath) {
+              return reply
+                .code(400)
+                .send({ error: 'path query param required' });
+            }
+            const expiry = request.query.exp;
+            let outsiderKey: string;
+            let shareUrl: string;
+            if (expiry) {
+              outsiderKey = computeOutsiderKeyWithExpiry(
+                insider.seed,
+                targetPath,
+                expiry,
+              );
+              shareUrl = `/path${targetPath}?key=${outsiderKey}&exp=${expiry}`;
+            } else {
+              outsiderKey = computePathKey(insider.seed, targetPath);
+              shareUrl = `/path${targetPath}?key=${outsiderKey}`;
+            }
+            return {
+              path: targetPath,
+              key: outsiderKey,
+              exp: expiry ?? null,
+              url: shareUrl,
+            };
+          }
+        }
         return reply.code(401).send({ error: 'Invalid insider key' });
       }
 

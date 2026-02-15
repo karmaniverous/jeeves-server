@@ -13,17 +13,6 @@ export interface EventConfig {
 }
 
 /**
- * Main configuration from config.json
- */
-export interface Config {
-  port: number;
-  eventTimeoutMs: number;
-  eventLogPurgeMs: number;
-  chromePath: string;
-  events: Record<string, EventConfig>;
-}
-
-/**
  * A named API key seed entry.
  * Plain string = seed value, no scope restrictions.
  * Object = seed value + optional path scope restrictions.
@@ -31,9 +20,42 @@ export interface Config {
 export type KeyEntry = string | { key: string; scopes?: string | string[] };
 
 /**
- * Local secrets configuration from config.json.local
+ * Google OAuth configuration
  */
-export interface LocalConfig {
+export interface GoogleAuthConfig {
+  clientId: string;
+  clientSecret: string;
+}
+
+/**
+ * Auth configuration block
+ */
+export interface AuthConfig {
+  google?: GoogleAuthConfig;
+  sessionSecret?: string;
+}
+
+/**
+ * Insider entry: a Google-authenticated human user.
+ * `key` is auto-generated on first login and persisted.
+ */
+export interface InsiderEntry {
+  scopes?: string | string[];
+  key?: string;
+  keyCreatedAt?: string;
+}
+
+/**
+ * Unified configuration from jeeves.config.json
+ */
+export interface JeevesConfig {
+  port: number;
+  eventTimeoutMs: number;
+  eventLogPurgeMs: number;
+  chromePath: string;
+  events: Record<string, EventConfig>;
+  auth?: AuthConfig;
+  insiders?: Record<string, InsiderEntry>;
   keys: Record<string, KeyEntry>;
 }
 
@@ -47,10 +69,31 @@ export interface ResolvedKey {
 }
 
 /**
+ * Resolved insider with normalized scopes
+ */
+export interface ResolvedInsider {
+  email: string;
+  seed: string;
+  scopes: string[] | null;
+  keyCreatedAt: string | null;
+}
+
+/**
  * Combined runtime configuration
  */
-export interface RuntimeConfig extends Config {
+/**
+ * Combined runtime configuration
+ */
+export interface RuntimeConfig {
+  port: number;
+  eventTimeoutMs: number;
+  eventLogPurgeMs: number;
+  chromePath: string;
+  events: Record<string, EventConfig>;
   resolvedKeys: ResolvedKey[];
+  resolvedInsiders: ResolvedInsider[];
+  auth: AuthConfig | null;
+  configPath: string;
   eventsLog: string;
   stateFile: string;
   eventQueuePath: string;
@@ -78,6 +121,8 @@ export interface KeyVerificationResult {
   mode: AccessMode | null;
   keyName: string | null;
   seed: string | null;
+  /** For directory outsider links, the ancestor path the key matched against */
+  matchedPath: string | null;
 }
 
 /**

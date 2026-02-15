@@ -33,9 +33,10 @@ export function handleSVGFile(
   const fileName = path.basename(resolved);
   const breadcrumbs = buildBreadcrumbs(
     resolved,
-    apiKey,
+    query.key,
     (request as { accessMode?: AccessMode }).accessMode!,
     computeInsiderKey(apiKey),
+    (request as { shareRoot?: string | null }).shareRoot,
   );
 
   const html = `<!DOCTYPE html>
@@ -83,7 +84,7 @@ export function handleSVGFile(
 <body>
   <div class="header">
     <div class="breadcrumb">${breadcrumbs}</div>
-    <div class="actions"><a href="?key=${query.key}&amp;raw=1">View Raw</a></div>
+    <div class="actions"><a href="?${query.key ? `key=${query.key}&amp;` : ''}raw=1">View Raw</a></div>
   </div>
   <div class="svg-wrapper">
     ${svgContent}

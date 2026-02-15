@@ -62,9 +62,10 @@ export function handleGenericFile(
 
     const breadcrumbs = buildBreadcrumbs(
       resolved,
-      apiKey,
+      query.key,
       (request as { accessMode?: AccessMode }).accessMode!,
       computeInsiderKey(apiKey),
+      (request as { shareRoot?: string | null }).shareRoot,
     );
     const isInsider =
       (request as { accessMode?: AccessMode }).accessMode === 'insider';
@@ -81,6 +82,9 @@ export function handleGenericFile(
       insiderKey,
       expiry,
       actions: [],
+      eventInScope: (request as { eventInScope?: boolean }).eventInScope,
+      keyAge: (request as { keyAge?: string | null }).keyAge,
+      hasRaw: true,
     });
 
     const html = `<!DOCTYPE html>
