@@ -3,17 +3,25 @@
  * Fastify server for webhooks, file serving, and markdown rendering
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import cookie from '@fastify/cookie';
+import fastifyStatic from '@fastify/static';
 import Fastify from 'fastify';
 
 import { getConfig } from './config/index.js';
 import { aboutRoute } from './routes/about.js';
+import { apiRoute } from './routes/api.js';
 import { authRoute } from './routes/auth.js';
 import { eventRoute } from './routes/event.js';
 import { healthRoute } from './routes/health.js';
 import { keysRoute } from './routes/keys.js';
 import { pathRoute } from './routes/path/index.js';
 import { startQueueProcessor } from './services/eventQueue.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function start() {
   try {
@@ -38,7 +46,25 @@ async function start() {
     await fastify.register(authRoute);
     await fastify.register(keysRoute);
     await fastify.register(eventRoute);
+    await fastify.register(apiRoute);
     await fastify.register(pathRoute);
+
+    // Serve React SPA (if built)
+    const clientDir = path.join(__dirname, 'client');
+    if (fs.existsSync(clientDir)) {
+      await fastify.register(fastifyStatic, {
+        root: clientDir,
+        prefix: '/app/',
+      });
+
+      // SPA fallback for /browse/* routes
+      fastify.get('/browse', async (_request, reply) => {
+        return reply.sendFile('index.html', clientDir);
+      });
+      fastify.get('/browse/*', async (_request, reply) => {
+        return reply.sendFile('index.html', clientDir);
+      });
+    }
 
     // Start queue processor
     startQueueProcessor();

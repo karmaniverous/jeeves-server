@@ -1,0 +1,20 @@
+
+> @karmaniverous/jeeves-server@1.1.0 test
+> vitest run --no-color
+
+
+ RUN  v4.0.18 E:/dev/karmaniverous/jeeves-server
+
+ ✓ src/routes/event.test.ts (13 tests) 62ms
+ ✓ src/services/eventQueue.test.ts (4 tests) 55ms
+ ✓ src/services/eventLog.test.ts (4 tests) 51ms
+ ✓ src/util/formatters.test.ts (15 tests) 14ms
+ ✓ src/util/crypto.test.ts (17 tests) 13ms
+ ✓ src/util/fileDetection.test.ts (17 tests) 9ms
+ ✓ src/config.test.ts (1 test) 3ms
+
+ Test Files  7 passed (7)
+      Tests  71 passed (71)
+   Start at  23:12:31
+   Duration  9.45s (transform 239ms, setup 0ms, import 1.26s, tests 207ms, environment 5.52s)
+
