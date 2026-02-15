@@ -1,0 +1,4 @@
+
+> @karmaniverous/jeeves-server@1.0.1 lint:fix
+> eslint --fix .
+
