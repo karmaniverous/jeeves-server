@@ -71,15 +71,17 @@ export function renderDriveListing(
     (request as { accessMode?: AccessMode }).accessMode === 'insider';
   const insiderKey = computeInsiderKey(apiKey);
   const query = request.query as { key: string };
-  const linkKey = isInsider ? insiderKey : null;
-
   let rows = '';
   for (const drive of drives) {
     const drivePath = `${drive.letter}:\\`;
     const urlPath = `/${drive.letter.toLowerCase()}`;
-    const key = linkKey || computePathKey(apiKey, urlPath);
     const labelText = drive.label ? ` (${drive.label})` : '';
-    rows += `<tr><td>💾 <a href="/path${urlPath}?key=${key}">${drivePath}</a>${labelText}</td><td>Drive</td></tr>`;
+    if (isInsider) {
+      rows += `<tr><td>💾 <a href="/path${urlPath}">${drivePath}</a>${labelText}</td><td>Drive</td></tr>`;
+    } else {
+      const key = computePathKey(apiKey, urlPath);
+      rows += `<tr><td>💾 <a href="/path${urlPath}?key=${key}">${drivePath}</a>${labelText}</td><td>Drive</td></tr>`;
+    }
   }
 
   const headerHtml = renderHeader({

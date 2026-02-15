@@ -234,8 +234,8 @@ export function buildBreadcrumbs(
     return `<span class="home-icon" title="Jeeves Server">🎩</span> <span class="breadcrumb-tail">${fileName}</span>`;
   }
 
-  // Insiders see full navigable breadcrumbs
-  let breadcrumbs = `<a href="/path?key=${insiderKey}" class="home-icon" title="Jeeves Server">🎩</a>`;
+  // Insiders see full navigable breadcrumbs (no key params — cookie auth)
+  let breadcrumbs = `<a href="/path" class="home-icon" title="Jeeves Server">🎩</a>`;
   let accumPath = '';
 
   for (let i = 0; i < pathParts.length; i++) {
@@ -252,7 +252,7 @@ export function buildBreadcrumbs(
       breadcrumbs += `${separator}<span class="breadcrumb-current">${part}</span>`;
     } else {
       const urlPath = `/${accumPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m: string, d: string) => d.toLowerCase())}`;
-      breadcrumbs += `${separator}<a href="/path${urlPath}?key=${insiderKey}">${part}</a>`;
+      breadcrumbs += `${separator}<a href="/path${urlPath}">${part}</a>`;
     }
   }
 
@@ -278,7 +278,9 @@ export function renderHeader(options: HeaderOptions): string {
   const defaultActions =
     showRaw && fileName
       ? [
-          `<a href="?key=${queryKey}&amp;raw=1" download="${fileName}" title="Download raw file">⬇ Raw</a>`,
+          isInsider
+            ? `<a href="?raw=1" download="${fileName}" title="Download raw file">⬇ Raw</a>`
+            : `<a href="?key=${queryKey}&amp;raw=1" download="${fileName}" title="Download raw file">⬇ Raw</a>`,
         ]
       : [];
   const allActions = [...defaultActions, ...actions];
@@ -318,7 +320,7 @@ export function renderHeader(options: HeaderOptions): string {
   // Info button
   const infoBtnGroup = `
     <div class="info-btn-group">
-      <a href="/about${isInsider ? '?key=' + insiderKey : ''}" class="theme-toggle" title="About Jeeves Server" style="text-decoration:none;font-weight:bold;">?</a>
+      <a href="/about" class="theme-toggle" title="About Jeeves Server" style="text-decoration:none;font-weight:bold;">?</a>
     </div>
   `;
 

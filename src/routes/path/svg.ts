@@ -84,7 +84,7 @@ export function handleSVGFile(
 <body>
   <div class="header">
     <div class="breadcrumb">${breadcrumbs}</div>
-    <div class="actions"><a href="?key=${query.key}&amp;raw=1">View Raw</a></div>
+    <div class="actions"><a href="?${query.key ? `key=${query.key}&amp;` : ''}raw=1">View Raw</a></div>
   </div>
   <div class="svg-wrapper">
     ${svgContent}

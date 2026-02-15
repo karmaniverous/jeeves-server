@@ -86,9 +86,7 @@ export function handleDirectory(
   for (const entry of sorted) {
     const entryPath = path.join(resolved, entry.name);
     const entryUrlPath = `/${entryPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (m: string, d: string) => d.toLowerCase())}`;
-    const entryKey = isInsider
-      ? insiderKey
-      : computePathKey(apiKey, entryUrlPath);
+    const entryKey = isInsider ? null : computePathKey(apiKey, entryUrlPath);
 
     let type: string;
     let size: string;
@@ -110,7 +108,9 @@ export function handleDirectory(
       mtime = '-';
     }
 
-    const nameCell = `<a href="/path${entryUrlPath}?key=${entryKey}">${entry.name}</a>`;
+    const nameCell = entryKey
+      ? `<a href="/path${entryUrlPath}?key=${entryKey}">${entry.name}</a>`
+      : `<a href="/path${entryUrlPath}">${entry.name}</a>`;
 
     const icon = entry.isDirectory() ? '📁' : '📄';
     rows += `<tr><td>${icon} ${nameCell}</td><td>${type}</td><td>${size}</td><td>${mtime}</td></tr>`;
