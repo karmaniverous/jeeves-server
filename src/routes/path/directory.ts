@@ -182,7 +182,7 @@ export function handleDirectory(
     actions: [],
     eventInScope: (request as { eventInScope?: boolean }).eventInScope,
     keyAge: (request as { keyAge?: string | null }).keyAge,
-    showShareUi: !isInsider,
+    showShareUi: true,
   });
 
   const html = `<!DOCTYPE html>
