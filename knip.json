@@ -1,9 +1,20 @@
 {
-  "entry": ["src/server.ts"],
   "project": ["src/**/*.ts"],
+  "ignore": ["server.js"],
+  "ignoreDependencies": [
+    "@fastify/static",
+    "@karmaniverous/jsonmap",
+    "@panzoom/panzoom",
+    "@types/lodash-es",
+    "ajv",
+    "lodash-es",
+    "cross-env",
+    "tslib"
+  ],
   "rules": {
     "exports": "off",
-    "types": "off"
+    "types": "off",
+    "unlisted": "off"
   },
   "vitest": {
     "entry": ["src/**/*.test.ts"]
