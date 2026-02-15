@@ -43,7 +43,7 @@ function linkifyWindowsPaths(markdown: string): string {
     const resolved = resolvePathForLink(winPath);
     if (!resolved) return winPath;
 
-    const urlPath = `/${resolved.replace(/\\/g, '/').replace(/^([A-Z]):/, (m, d) => d.toLowerCase())}`;
+    const urlPath = `/${resolved.replace(/\\/g, '/').replace(/^([A-Z]):/, (_m: string, d: string) => d.toLowerCase())}`;
     return `[${winPath}](/path${urlPath})`;
   };
 
@@ -79,7 +79,6 @@ export function parseMarkdown(
 
   // Custom renderer to extract headings and add anchors
   const renderer = new marked.Renderer();
-  const originalHeading = renderer.heading.bind(renderer);
 
   renderer.heading = function (
     args: string | { text: string; raw?: string; depth: number },
@@ -88,7 +87,7 @@ export function parseMarkdown(
     const raw = typeof args === 'object' && args.raw ? args.raw : text;
     const level = typeof args === 'object' ? args.depth : 1;
 
-    const slug = String(raw)
+    const slug = raw
       .toLowerCase()
       .replace(/<[^>]+>/g, '')
       .replace(/[^\w\s-]/g, '')
@@ -96,7 +95,6 @@ export function parseMarkdown(
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
     headings.push({ level, text: text.replace(/<[^>]+>/g, ''), slug });
 
     return `<h${String(level)} id="${slug}"><a href="#${slug}" class="anchor">#</a> ${text}</h${String(level)}>\n`;

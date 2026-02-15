@@ -4,26 +4,19 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import type { FastifyPluginAsync } from 'fastify';
 
 import { getConfig } from '../config/index.js';
-import { exportPage, type ExportFormat } from '../services/export.js';
-import { parseMarkdown, generateTOC } from '../services/markdown.js';
-import {
-  renderHeader,
-  renderShareScript,
-  renderThemeScript,
-} from '../templates/layout.js';
+import { type ExportFormat, exportPage } from '../services/export.js';
+import { generateTOC, parseMarkdown } from '../services/markdown.js';
+import { renderThemeScript } from '../templates/layout.js';
 import { renderHeaderStyles, renderThemeStyles } from '../templates/styles.js';
 import { computeInsiderKey } from '../util/crypto.js';
 import { formatRelativeTime } from '../util/formatters.js';
 import { getKeyRotationTimestamp } from '../util/state.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+// eslint-disable-next-line @typescript-eslint/require-await
 export const aboutRoute: FastifyPluginAsync = async (fastify) => {
   fastify.get('/about', async (request, reply) => {
     const query = request.query as {
@@ -81,12 +74,10 @@ export const aboutRoute: FastifyPluginAsync = async (fastify) => {
           .send(buffer);
         return;
       } catch (err) {
-        reply
-          .code(500)
-          .send({
-            error: `${query.export.toUpperCase()} export failed`,
-            details: String(err),
-          });
+        reply.code(500).send({
+          error: `${query.export.toUpperCase()} export failed`,
+          details: String(err),
+        });
         return;
       }
     }

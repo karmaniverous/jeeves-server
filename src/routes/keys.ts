@@ -9,7 +9,6 @@ import { fileURLToPath } from 'node:url';
 
 import type { FastifyPluginAsync } from 'fastify';
 
-import { verifyKey } from '../auth/keys.js';
 import { getConfig } from '../config/index.js';
 import type { LocalConfig } from '../config/types.js';
 import { appendEvent } from '../services/eventQueue.js';
@@ -25,6 +24,7 @@ import { setKeyRotationTimestamp } from '../util/state.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '../..');
 
+// eslint-disable-next-line @typescript-eslint/require-await
 export const keysRoute: FastifyPluginAsync = async (fastify) => {
   // GET /key - Compute path-specific key (requires raw API key)
   fastify.get<{ Querystring: { path?: string } }>(

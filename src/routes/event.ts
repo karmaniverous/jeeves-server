@@ -55,6 +55,7 @@ function detectSource(req: FastifyRequest<{ Body: WebhookRequest }>) {
   return { source: 'unknown', event: 'unknown' };
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await
 export const eventRoute: FastifyPluginAsync = async (fastify) => {
   // Webhook authentication middleware
   fastify.addHook('preHandler', async (request, reply) => {
@@ -74,6 +75,7 @@ export const eventRoute: FastifyPluginAsync = async (fastify) => {
   });
 
   // Webhook endpoint
+  // eslint-disable-next-line @typescript-eslint/require-await
   fastify.post<{ Body: WebhookRequest }>('/webhook', async (request) => {
     const ctx = detectSource(request);
 

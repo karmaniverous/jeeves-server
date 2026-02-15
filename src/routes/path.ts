@@ -12,9 +12,9 @@ import { verifyKey } from '../auth/keys.js';
 import { getConfig } from '../config/index.js';
 import type { AccessMode } from '../config/types.js';
 import { appendEvent } from '../services/eventQueue.js';
-import { exportPage, type ExportFormat } from '../services/export.js';
+import { type ExportFormat, exportPage } from '../services/export.js';
 import { highlightCode } from '../services/highlighting.js';
-import { parseMarkdown, generateTOC } from '../services/markdown.js';
+import { generateTOC, parseMarkdown } from '../services/markdown.js';
 import { inlineSVGs } from '../services/svg.js';
 import {
   buildBreadcrumbs,
@@ -25,13 +25,12 @@ import {
 import { renderHeaderStyles, renderThemeStyles } from '../templates/styles.js';
 import { computeInsiderKey, computePathKey } from '../util/crypto.js';
 import {
-  CONTENT_TYPES,
   DANGEROUS_EXTENSIONS,
   getContentType,
   isInlineType,
   looksLikeText,
 } from '../util/fileDetection.js';
-import { formatSize, nowIso } from '../util/formatters.js';
+import { formatSize } from '../util/formatters.js';
 
 interface DriveInfo {
   letter: string;
@@ -73,6 +72,7 @@ function getDrives(): DriveInfo[] {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await
 export const pathRoute: FastifyPluginAsync = async (fastify) => {
   // Path authentication middleware
   fastify.addHook('preHandler', async (request, reply) => {
@@ -91,13 +91,15 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
       return;
     }
 
-    (request as { accessMode?: AccessMode }).accessMode = authResult.mode ?? undefined;
+    (request as { accessMode?: AccessMode }).accessMode =
+      authResult.mode ?? undefined;
   });
 
   // Root path: list all drives
   fastify.get('/path', async (request: FastifyRequest, reply) => {
     const drives = getDrives();
-    const isInsider = (request as { accessMode?: AccessMode }).accessMode === 'insider';
+    const isInsider =
+      (request as { accessMode?: AccessMode }).accessMode === 'insider';
     const config = getConfig();
     const insiderKey = computeInsiderKey(config.apiKey);
     const query = request.query as { key: string };
@@ -114,8 +116,7 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
 
     const headerHtml = renderHeader({
       isInsider: true,
-      breadcrumbs:
-        '<span class="home-icon" title="Jeeves Server">🎩</span>',
+      breadcrumbs: '<span class="home-icon" title="Jeeves Server">🎩</span>',
       fileName: null,
       queryKey: query.key,
       currentPath: '/',
@@ -165,61 +166,66 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
   });
 
   // File/directory serving
-  fastify.get<{ Params: { '*': string } }>('/path/*', async (request, reply) => {
-    const reqPath = request.params['*'];
-    if (!reqPath) {
-      return reply.redirect('/path');
-    }
+  fastify.get<{ Params: { '*': string } }>(
+    '/path/*',
+    async (request, reply) => {
+      const reqPath = request.params['*'];
+      if (!reqPath) {
+        return reply.redirect('/path');
+      }
 
-    // Convert URL path to Windows path: d/foo/bar.md -> D:\foo\bar.md
-    let filePath = reqPath;
-    if (/^[a-zA-Z]$/.test(filePath)) {
-      // Bare drive letter
-      filePath = `${filePath.toUpperCase()}:\\`;
-    } else if (/^[a-zA-Z]\//.test(filePath)) {
-      filePath = `${filePath[0].toUpperCase()}:${filePath.slice(1)}`;
-    }
-    filePath = filePath.replace(/\//g, '\\');
+      // Convert URL path to Windows path: d/foo/bar.md -> D:\foo\bar.md
+      let filePath = reqPath;
+      if (/^[a-zA-Z]$/.test(filePath)) {
+        // Bare drive letter
+        filePath = `${filePath.toUpperCase()}:\\`;
+      } else if (/^[a-zA-Z]\//.test(filePath)) {
+        filePath = `${filePath[0].toUpperCase()}:${filePath.slice(1)}`;
+      }
+      filePath = filePath.replace(/\//g, '\\');
 
-    const resolved = path.resolve(filePath);
-    const config = getConfig();
-    appendEvent({
-      kind: 'path_access',
-      ip: request.ip,
-      requested: reqPath,
-      resolved,
-    });
+      const resolved = path.resolve(filePath);
+      appendEvent({
+        kind: 'path_access',
+        ip: request.ip,
+        requested: reqPath,
+        resolved,
+      });
 
-    if (!fs.existsSync(resolved)) {
-      return reply.code(404).send({ error: 'File not found', path: resolved });
-    }
+      if (!fs.existsSync(resolved)) {
+        return reply
+          .code(404)
+          .send({ error: 'File not found', path: resolved });
+      }
 
-    const stats = fs.statSync(resolved);
-    const query = request.query as {
-      key: string;
-      raw?: string;
-      export?: string;
-      exp?: string;
-      toc?: string;
-    };
+      const stats = fs.statSync(resolved);
+      const query = request.query as {
+        key: string;
+        raw?: string;
+        export?: string;
+        exp?: string;
+        toc?: string;
+      };
 
-    if (stats.isDirectory()) {
-      return handleDirectory(request, reply, resolved, reqPath, query);
-    } else {
-      return handleFile(request, reply, resolved, reqPath, query);
-    }
-  });
+      if (stats.isDirectory()) {
+        handleDirectory(request, reply, resolved, reqPath, query);
+        return;
+      } else {
+        return handleFile(request, reply, resolved, reqPath, query);
+      }
+    },
+  );
 
   /**
    * Handle directory listing
    */
-  async function handleDirectory(
+  function handleDirectory(
     request: FastifyRequest,
     reply: FastifyReply,
     resolved: string,
     reqPath: string,
     query: { key: string; exp?: string },
-  ): Promise<void> {
+  ): void {
     const config = getConfig();
     const breadcrumbs = buildBreadcrumbs(
       resolved,
@@ -227,7 +233,8 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
       (request as { accessMode?: AccessMode }).accessMode!,
       computeInsiderKey(config.apiKey),
     );
-    const isInsider = (request as { accessMode?: AccessMode }).accessMode === 'insider';
+    const isInsider =
+      (request as { accessMode?: AccessMode }).accessMode === 'insider';
     const insiderKey = computeInsiderKey(config.apiKey);
 
     const entries = fs.readdirSync(resolved, { withFileTypes: true });
@@ -353,14 +360,13 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
     },
   ): Promise<void> {
     const ext = path.extname(resolved).toLowerCase();
-    const config = getConfig();
 
     if (ext === '.md') {
       return handleMarkdownFile(request, reply, resolved, reqPath, query);
     } else if (ext === '.svg' && query.raw !== '1') {
-      return handleSVGFile(request, reply, resolved, reqPath, query);
+      handleSVGFile(request, reply, resolved, reqPath, query);
     } else {
-      return handleGenericFile(request, reply, resolved, reqPath, query);
+      handleGenericFile(request, reply, resolved, reqPath, query);
     }
   }
 
@@ -417,12 +423,10 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
           kind: `${query.export}_export_error`,
           error: String(err),
         });
-        reply
-          .code(500)
-          .send({
-            error: `${query.export.toUpperCase()} export failed`,
-            details: String(err),
-          });
+        reply.code(500).send({
+          error: `${query.export.toUpperCase()} export failed`,
+          details: String(err),
+        });
         return;
       }
     }
@@ -442,7 +446,8 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
     });
 
     // Post-process: fix relative links and inline SVGs
-    const isInsider = (request as { accessMode?: AccessMode }).accessMode === 'insider';
+    const isInsider =
+      (request as { accessMode?: AccessMode }).accessMode === 'insider';
     const insiderKey = computeInsiderKey(config.apiKey);
     let processedHtml = htmlContent;
 
@@ -751,17 +756,20 @@ ${processedHtml}
   /**
    * Handle SVG file rendering
    */
-  async function handleSVGFile(
+  function handleSVGFile(
     request: FastifyRequest,
     reply: FastifyReply,
     resolved: string,
     reqPath: string,
     query: { key: string },
-  ): Promise<void> {
+  ): void {
     const svgContent = fs
       .readFileSync(resolved, 'utf8')
       .replace(/<svg([^>]*)\s+width="100%"/, '<svg$1')
-      .replace(/<svg([^>]*)\s+style="[^"]*max-width:\s*[\d.]+px;?[^"]*"/, '<svg$1');
+      .replace(
+        /<svg([^>]*)\s+style="[^"]*max-width:\s*[\d.]+px;?[^"]*"/,
+        '<svg$1',
+      );
 
     const fileName = path.basename(resolved);
     const config = getConfig();
@@ -831,13 +839,13 @@ ${processedHtml}
   /**
    * Handle generic file serving (text with highlighting or binary)
    */
-  async function handleGenericFile(
+  function handleGenericFile(
     request: FastifyRequest,
     reply: FastifyReply,
     resolved: string,
     reqPath: string,
     query: { key: string; raw?: string; exp?: string },
-  ): Promise<void> {
+  ): void {
     const ext = path.extname(resolved).toLowerCase();
     const content = fs.readFileSync(resolved);
     const isTextFile = looksLikeText(content);
@@ -868,7 +876,8 @@ ${processedHtml}
         (request as { accessMode?: AccessMode }).accessMode!,
         computeInsiderKey(config.apiKey),
       );
-      const isInsider = (request as { accessMode?: AccessMode }).accessMode === 'insider';
+      const isInsider =
+        (request as { accessMode?: AccessMode }).accessMode === 'insider';
       const insiderKey = computeInsiderKey(config.apiKey);
       const currentPath = `/${reqPath}`;
       const expiry = query.exp ? parseInt(query.exp, 10) : null;
@@ -933,4 +942,3 @@ ${processedHtml}
     }
   }
 };
-

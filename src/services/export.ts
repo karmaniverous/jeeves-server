@@ -2,8 +2,6 @@
  * Export service for PDF and DOCX generation
  */
 
-import fs from 'node:fs';
-
 import HtmlToDocx from '@turbodocx/html-to-docx';
 import type { Browser, Page } from 'puppeteer-core';
 import puppeteer from 'puppeteer-core';
@@ -185,7 +183,9 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
         const contentClone = content.cloneNode(true) as HTMLElement;
 
         // Remove anchor links
-        contentClone.querySelectorAll('a.anchor').forEach((el) => el.remove());
+        contentClone.querySelectorAll('a.anchor').forEach((el) => {
+          el.remove();
+        });
 
         // Replace SVG containers with PNG images
         const svgContainers = contentClone.querySelectorAll(
@@ -250,7 +250,7 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
           pre.innerHTML = pre.innerHTML.replace(/\n/g, '<br>');
         });
         contentClone.querySelectorAll('code').forEach((code) => {
-          (code as HTMLElement).style.fontFamily = 'Consolas, monospace';
+          code.style.fontFamily = 'Consolas, monospace';
         });
 
         return contentClone.innerHTML;
@@ -321,9 +321,7 @@ ${processedHtml}
 /**
  * Export page based on format
  */
-export async function exportPage(
-  options: ExportOptions,
-): Promise<Buffer> {
+export async function exportPage(options: ExportOptions): Promise<Buffer> {
   if (options.format === 'pdf') {
     return await exportPDF(options);
   } else {
