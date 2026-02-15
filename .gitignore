@@ -26,3 +26,7 @@ desktop.ini
 # Build output
 dist/
 build/
+.tsbuildinfo
+
+# Coverage
+coverage/

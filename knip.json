@@ -1,0 +1,11 @@
+{
+  "entry": ["src/server.ts"],
+  "project": ["src/**/*.ts"],
+  "rules": {
+    "exports": "off",
+    "types": "off"
+  },
+  "vitest": {
+    "entry": ["src/**/*.test.ts"]
+  }
+}

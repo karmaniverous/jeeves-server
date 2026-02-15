@@ -1,0 +1,7 @@
+{
+  "port": 3456,
+  "eventTimeoutMs": 30000,
+  "eventLogPurgeMs": 2592000000,
+  "chromePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "events": {}
+}
