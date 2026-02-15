@@ -24,18 +24,33 @@ export interface Config {
 }
 
 /**
+ * A named API key seed entry.
+ * Plain string = seed value, no scope restrictions.
+ * Object = seed value + optional path scope restrictions.
+ */
+export type KeyEntry = string | { key: string; scopes?: string | string[] };
+
+/**
  * Local secrets configuration from config.json.local
  */
 export interface LocalConfig {
-  apiKey: string;
-  keys: Record<string, string>;
+  keys: Record<string, KeyEntry>;
+}
+
+/**
+ * Resolved key seed with normalized scopes
+ */
+export interface ResolvedKey {
+  name: string;
+  seed: string;
+  scopes: string[] | null; // null = unscoped (all paths)
 }
 
 /**
  * Combined runtime configuration
  */
 export interface RuntimeConfig extends Config {
-  apiKey: string;
+  resolvedKeys: ResolvedKey[];
   eventsLog: string;
   stateFile: string;
   eventQueuePath: string;
@@ -61,6 +76,8 @@ export type AccessMode = 'insider' | 'outsider';
 export interface KeyVerificationResult {
   valid: boolean;
   mode: AccessMode | null;
+  keyName: string | null;
+  seed: string | null;
 }
 
 /**

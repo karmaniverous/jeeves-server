@@ -67,7 +67,12 @@ export const eventRoute: FastifyPluginAsync = async (fastify) => {
     const provided = (request.query as { key?: string }).key;
     const config = getConfig();
 
-    const result = verifyKey(config.apiKey, '/event', provided, undefined);
+    const result = verifyKey(
+      config.resolvedKeys,
+      '/event',
+      provided,
+      undefined,
+    );
 
     if (!result.valid) {
       reply.code(401).send({ error: 'Unauthorized' });

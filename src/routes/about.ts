@@ -28,8 +28,22 @@ export const aboutRoute: FastifyPluginAsync = async (fastify) => {
 
     // Determine if insider (no auth required for about page, but features enabled if key provided)
     const queryKey = query.key || '';
-    const insiderKey = computeInsiderKey(config.apiKey);
-    const isInsider = queryKey === insiderKey;
+    let isInsider = false;
+    let insiderKey = '';
+
+    // Check if provided key matches any seed's insider key
+    for (const rk of config.resolvedKeys) {
+      const seedInsiderKey = computeInsiderKey(rk.seed);
+      if (queryKey && queryKey === seedInsiderKey) {
+        isInsider = true;
+        insiderKey = seedInsiderKey;
+        break;
+      }
+      // Use the first seed's insider key for links (if not authenticated)
+      if (!insiderKey) {
+        insiderKey = seedInsiderKey;
+      }
+    }
 
     // Find about.md in the server directory (E:\jeeves-server or E:\dev\karmaniverous\jeeves-server)
     const aboutPath = path.join(process.cwd(), 'about.md');

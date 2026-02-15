@@ -28,7 +28,12 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
     const expParam = (request.query as { exp?: string }).exp;
     const config = getConfig();
 
-    const authResult = verifyKey(config.apiKey, urlPath, provided, expParam);
+    const authResult = verifyKey(
+      config.resolvedKeys,
+      urlPath,
+      provided,
+      expParam,
+    );
 
     if (!authResult.valid) {
       appendEvent({ kind: 'auth_failed_path', ip: request.ip, path: urlPath });
@@ -38,12 +43,13 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
 
     (request as { accessMode?: AccessMode }).accessMode =
       authResult.mode ?? undefined;
+    (request as { authSeed?: string }).authSeed = authResult.seed ?? undefined;
   });
 
   // Root path: list all drives
   fastify.get('/path', async (request: FastifyRequest, reply: FastifyReply) => {
-    const config = getConfig();
-    renderDriveListing(request, reply, config.apiKey);
+    const seed = (request as { authSeed?: string }).authSeed!;
+    renderDriveListing(request, reply, seed);
   });
 
   // File/directory serving
@@ -88,28 +94,14 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
         toc?: string;
       };
 
-      const config = getConfig();
+      const seed = (request as { authSeed?: string }).authSeed!;
+      const { port } = getConfig();
 
       if (stats.isDirectory()) {
-        handleDirectory(
-          request,
-          reply,
-          resolved,
-          reqPath,
-          query,
-          config.apiKey,
-        );
+        handleDirectory(request, reply, resolved, reqPath, query, seed);
         return;
       } else {
-        return handleFile(
-          request,
-          reply,
-          resolved,
-          reqPath,
-          query,
-          config.apiKey,
-          config.port,
-        );
+        return handleFile(request, reply, resolved, reqPath, query, seed, port);
       }
     },
   );
