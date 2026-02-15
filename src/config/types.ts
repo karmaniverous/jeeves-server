@@ -121,6 +121,8 @@ export interface KeyVerificationResult {
   mode: AccessMode | null;
   keyName: string | null;
   seed: string | null;
+  /** For directory outsider links, the ancestor path the key matched against */
+  matchedPath: string | null;
 }
 
 /**

@@ -62,9 +62,10 @@ export function handleGenericFile(
 
     const breadcrumbs = buildBreadcrumbs(
       resolved,
-      apiKey,
+      query.key,
       (request as { accessMode?: AccessMode }).accessMode!,
       computeInsiderKey(apiKey),
+      (request as { shareRoot?: string | null }).shareRoot,
     );
     const isInsider =
       (request as { accessMode?: AccessMode }).accessMode === 'insider';

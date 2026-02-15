@@ -33,9 +33,10 @@ export function handleSVGFile(
   const fileName = path.basename(resolved);
   const breadcrumbs = buildBreadcrumbs(
     resolved,
-    apiKey,
+    query.key,
     (request as { accessMode?: AccessMode }).accessMode!,
     computeInsiderKey(apiKey),
+    (request as { shareRoot?: string | null }).shareRoot,
   );
 
   const html = `<!DOCTYPE html>

@@ -59,14 +59,14 @@ function getPathAndAncestors(urlPath: string): string[] {
 
 /**
  * Check an outsider key against a seed for exact path or any ancestor (directory links).
- * Returns true if the key matches the exact path or any ancestor path.
+ * Returns the matched path if found, or null.
  */
 function checkOutsiderKey(
   seed: string,
   urlPath: string,
   providedKey: string,
   expParam: string | undefined,
-): boolean {
+): string | null {
   const pathsToCheck = getPathAndAncestors(urlPath);
 
   for (const checkPath of pathsToCheck) {
@@ -79,16 +79,16 @@ function checkOutsiderKey(
           checkPath,
           expParam,
         );
-        if (timingSafeEqual(providedKey, expectedKey)) return true;
+        if (timingSafeEqual(providedKey, expectedKey)) return checkPath;
       }
     }
 
     // Check without expiry
     const expectedKey = computePathKey(seed, checkPath);
-    if (timingSafeEqual(providedKey, expectedKey)) return true;
+    if (timingSafeEqual(providedKey, expectedKey)) return checkPath;
   }
 
-  return false;
+  return null;
 }
 
 /**
@@ -113,6 +113,7 @@ export function verifyKey(
     mode: null,
     keyName: null,
     seed: null,
+    matchedPath: null,
   };
 
   if (!providedKey) return fail;
@@ -125,11 +126,23 @@ export function verifyKey(
       if (rk.scopes && !pathMatchesScopes(urlPath, rk.scopes)) {
         continue;
       }
-      return { valid: true, mode: 'insider', keyName: rk.name, seed: rk.seed };
+      return {
+        valid: true,
+        mode: 'insider',
+        keyName: rk.name,
+        seed: rk.seed,
+        matchedPath: null,
+      };
     }
 
     // Check outsider key (exact path + ancestors for directory links)
-    if (checkOutsiderKey(rk.seed, urlPath, providedKey, expParam)) {
+    const machineMatch = checkOutsiderKey(
+      rk.seed,
+      urlPath,
+      providedKey,
+      expParam,
+    );
+    if (machineMatch !== null) {
       if (rk.scopes && !pathMatchesScopes(urlPath, rk.scopes)) {
         continue;
       }
@@ -138,6 +151,7 @@ export function verifyKey(
         mode: 'outsider',
         keyName: rk.name,
         seed: rk.seed,
+        matchedPath: machineMatch,
       };
     }
   }
@@ -146,7 +160,13 @@ export function verifyKey(
   for (const ri of resolvedInsiders) {
     if (!ri.seed) continue;
 
-    if (checkOutsiderKey(ri.seed, urlPath, providedKey, expParam)) {
+    const insiderMatch = checkOutsiderKey(
+      ri.seed,
+      urlPath,
+      providedKey,
+      expParam,
+    );
+    if (insiderMatch !== null) {
       if (ri.scopes && !pathMatchesScopes(urlPath, ri.scopes)) {
         continue;
       }
@@ -155,6 +175,7 @@ export function verifyKey(
         mode: 'outsider',
         keyName: ri.email,
         seed: ri.seed,
+        matchedPath: insiderMatch,
       };
     }
   }

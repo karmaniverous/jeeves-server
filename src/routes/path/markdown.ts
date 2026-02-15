@@ -159,9 +159,10 @@ export async function handleMarkdown(
 
   const breadcrumbs = buildBreadcrumbs(
     resolved,
-    apiKey,
+    query.key,
     (request as { accessMode?: AccessMode }).accessMode!,
     insiderKey,
+    (request as { shareRoot?: string | null }).shareRoot,
   );
   const currentPath = `/${reqPath}`;
   const expiry = query.exp ? parseInt(query.exp, 10) : null;

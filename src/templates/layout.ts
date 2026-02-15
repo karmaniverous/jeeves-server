@@ -186,10 +186,49 @@ export function buildBreadcrumbs(
   apiKey: string,
   mode: AccessMode,
   insiderKey: string,
+  shareRoot?: string | null,
 ): string {
   const pathParts = resolvedPath.split('\\').filter((p) => p);
 
-  // Outsiders see top hat branding + filename
+  // Outsiders with a directory share see navigable breadcrumbs from share root
+  if (mode === 'outsider' && shareRoot) {
+    // Convert shareRoot (URL path like "/d/projects/foo") to Windows path parts
+    const shareRootParts = shareRoot
+      .replace(/^\//, '')
+      .split('/')
+      .filter((p) => p);
+    // Find the index where the share root ends in the full path
+    const startIdx = shareRootParts.length > 0 ? shareRootParts.length - 1 : 0;
+
+    let breadcrumbs = `<span class="home-icon" title="Jeeves Server">🎩</span>`;
+    let accumPath = '';
+
+    for (let i = startIdx; i < pathParts.length; i++) {
+      const part = pathParts[i];
+      if (i === 0) {
+        accumPath = part;
+      } else if (accumPath === '') {
+        accumPath = part;
+      } else {
+        accumPath += '\\' + part;
+      }
+      // Build accumPath from start
+      const fullAccum = pathParts.slice(0, i + 1).join('\\');
+      const separator = i === startIdx ? '' : ' &nbsp;/&nbsp; ';
+      const isLast = i === pathParts.length - 1;
+      const urlPath = `/${fullAccum.replace(/\\/g, '/').replace(/^([A-Z]):/, (_m: string, d: string) => d.toLowerCase())}`;
+      const queryKey = apiKey;
+
+      if (isLast) {
+        breadcrumbs += `${separator}<span class="breadcrumb-current">${part}</span>`;
+      } else {
+        breadcrumbs += `${separator}<a href="/path${urlPath}?key=${queryKey}">${part}</a>`;
+      }
+    }
+    return breadcrumbs;
+  }
+
+  // Outsiders without directory share see top hat + filename only
   if (mode === 'outsider') {
     const fileName = pathParts[pathParts.length - 1] || '';
     return `<span class="home-icon" title="Jeeves Server">🎩</span> <span class="breadcrumb-tail">${fileName}</span>`;

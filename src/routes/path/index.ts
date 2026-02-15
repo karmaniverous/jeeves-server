@@ -44,6 +44,8 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
         authResult.mode ?? undefined;
       (request as { authSeed?: string }).authSeed =
         authResult.seed ?? undefined;
+      (request as { shareRoot?: string | null }).shareRoot =
+        authResult.matchedPath;
       return;
     }
 
