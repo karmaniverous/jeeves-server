@@ -4,13 +4,11 @@
 
 import crypto from 'node:crypto';
 import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import type { FastifyPluginAsync } from 'fastify';
 
 import { getConfig, resetConfig } from '../config/index.js';
-import type { LocalConfig } from '../config/types.js';
+import type { JeevesConfig } from '../config/types.js';
 import { appendEvent } from '../services/eventQueue.js';
 import {
   computeInsiderKey,
@@ -20,9 +18,6 @@ import {
 } from '../util/crypto.js';
 import { nowIso } from '../util/formatters.js';
 import { setKeyRotationTimestamp } from '../util/state.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.resolve(__dirname, '../..');
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const keysRoute: FastifyPluginAsync = async (fastify) => {
@@ -97,22 +92,21 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
       // Generate new API key seed
       const newSeed = crypto.randomBytes(32).toString('hex');
 
-      // Update config.json.local
-      const localConfigPath = path.join(rootDir, 'config.json.local');
-      const localConfig = JSON.parse(
-        fs.readFileSync(localConfigPath, 'utf8'),
-      ) as LocalConfig;
+      // Update jeeves.config.json
+      const fullConfig = JSON.parse(
+        fs.readFileSync(config.configPath, 'utf8'),
+      ) as JeevesConfig;
 
-      const entry = localConfig.keys[matched.name];
+      const entry = fullConfig.keys[matched.name];
       if (typeof entry === 'string') {
-        localConfig.keys[matched.name] = newSeed;
+        fullConfig.keys[matched.name] = newSeed;
       } else {
         entry.key = newSeed;
       }
 
       fs.writeFileSync(
-        localConfigPath,
-        JSON.stringify(localConfig, null, 2),
+        config.configPath,
+        JSON.stringify(fullConfig, null, 2),
         'utf8',
       );
 

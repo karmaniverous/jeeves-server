@@ -14,7 +14,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { buildAuthUrl, exchangeCode, getUserInfo } from '../auth/google.js';
 import { COOKIE_NAME, createSessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
-import type { LocalConfig } from '../config/types.js';
+import type { JeevesConfig } from '../config/types.js';
 
 /**
  * Build the redirect URI from the request.
@@ -101,16 +101,16 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
       const newSeed = crypto.randomBytes(32).toString('hex');
       insider.seed = newSeed;
 
-      // Persist to config.json.local
-      const localConfig = JSON.parse(
-        fs.readFileSync(config.localConfigPath, 'utf8'),
-      ) as LocalConfig;
-      const insiderEntry = localConfig.insiders?.[insider.email];
+      // Persist to jeeves.config.json
+      const fullConfig = JSON.parse(
+        fs.readFileSync(config.configPath, 'utf8'),
+      ) as JeevesConfig;
+      const insiderEntry = fullConfig.insiders?.[insider.email];
       if (insiderEntry) {
         insiderEntry.key = newSeed;
         fs.writeFileSync(
-          config.localConfigPath,
-          JSON.stringify(localConfig, null, 2),
+          config.configPath,
+          JSON.stringify(fullConfig, null, 2),
           'utf8',
         );
         resetConfig();

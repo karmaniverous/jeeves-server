@@ -13,17 +13,6 @@ export interface EventConfig {
 }
 
 /**
- * Main configuration from config.json
- */
-export interface Config {
-  port: number;
-  eventTimeoutMs: number;
-  eventLogPurgeMs: number;
-  chromePath: string;
-  events: Record<string, EventConfig>;
-}
-
-/**
  * A named API key seed entry.
  * Plain string = seed value, no scope restrictions.
  * Object = seed value + optional path scope restrictions.
@@ -56,9 +45,14 @@ export interface InsiderEntry {
 }
 
 /**
- * Local secrets configuration from config.json.local
+ * Unified configuration from jeeves.config.json
  */
-export interface LocalConfig {
+export interface JeevesConfig {
+  port: number;
+  eventTimeoutMs: number;
+  eventLogPurgeMs: number;
+  chromePath: string;
+  events: Record<string, EventConfig>;
   auth?: AuthConfig;
   insiders?: Record<string, InsiderEntry>;
   keys: Record<string, KeyEntry>;
@@ -85,11 +79,19 @@ export interface ResolvedInsider {
 /**
  * Combined runtime configuration
  */
-export interface RuntimeConfig extends Config {
+/**
+ * Combined runtime configuration
+ */
+export interface RuntimeConfig {
+  port: number;
+  eventTimeoutMs: number;
+  eventLogPurgeMs: number;
+  chromePath: string;
+  events: Record<string, EventConfig>;
   resolvedKeys: ResolvedKey[];
   resolvedInsiders: ResolvedInsider[];
   auth: AuthConfig | null;
-  localConfigPath: string;
+  configPath: string;
   eventsLog: string;
   stateFile: string;
   eventQueuePath: string;

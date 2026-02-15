@@ -1,9 +1,0 @@
-{
-  "keys": {
-    "insider": "your-secret-api-key-here",
-    "webhook-notion": {
-      "key": "your-webhook-key-here",
-      "scopes": ["/event"]
-    }
-  }
-}
