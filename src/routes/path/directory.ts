@@ -21,7 +21,6 @@ import {
   renderThemeStyles,
 } from '../../templates/styles.js';
 import { computeInsiderKey, computePathKey } from '../../util/crypto.js';
-import { DANGEROUS_EXTENSIONS } from '../../util/fileDetection.js';
 import { formatSize } from '../../util/formatters.js';
 
 /**
@@ -111,12 +110,7 @@ export function handleDirectory(
       mtime = '-';
     }
 
-    const ext = path.extname(entry.name).toLowerCase();
-    const isDangerous = DANGEROUS_EXTENSIONS.includes(ext);
-    const nameCell =
-      isDangerous && !entry.isDirectory()
-        ? `${entry.name} <span title="Executable file - not linked for security">⚠️</span>`
-        : `<a href="/path${entryUrlPath}?key=${entryKey}">${entry.name}</a>`;
+    const nameCell = `<a href="/path${entryUrlPath}?key=${entryKey}">${entry.name}</a>`;
 
     const icon = entry.isDirectory() ? '📁' : '📄';
     rows += `<tr><td>${icon} ${nameCell}</td><td>${type}</td><td>${size}</td><td>${mtime}</td></tr>`;

@@ -3,33 +3,6 @@
  */
 
 /**
- * Dangerous executable extensions that should not be linked
- */
-export const DANGEROUS_EXTENSIONS = [
-  '.exe',
-  '.msi',
-  '.bat',
-  '.cmd',
-  '.com',
-  '.scr',
-  '.pif',
-  '.vbs',
-  '.vbe',
-  '.jse',
-  '.ws',
-  '.wsf',
-  '.wsc',
-  '.wsh',
-  '.ps1',
-  '.reg',
-  '.inf',
-  '.hta',
-  '.dll',
-  '.so',
-  '.dylib',
-];
-
-/**
  * Content type mapping by file extension
  */
 export const CONTENT_TYPES: Record<string, string> = {
