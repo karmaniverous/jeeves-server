@@ -18,12 +18,17 @@ import type { JeevesConfig } from '../config/types.js';
 
 /**
  * Build the redirect URI from the request.
+ * Uses the Host header to include port, and X-Forwarded-Proto for scheme.
  */
 function getRedirectUri(request: {
-  protocol: string;
+  headers: Record<string, string | string[] | undefined>;
   hostname: string;
 }): string {
-  return `${request.protocol}://${request.hostname}/auth/callback`;
+  const proto =
+    (request.headers['x-forwarded-proto'] as string | undefined) ?? 'http';
+  const host =
+    (request.headers['host'] as string | undefined) ?? request.hostname;
+  return `${proto}://${host}/auth/callback`;
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
@@ -123,7 +128,9 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
     void reply.setCookie(COOKIE_NAME, cookieValue, {
       path: '/',
       httpOnly: true,
-      secure: request.protocol === 'https',
+      secure:
+        (request.headers['x-forwarded-proto'] as string | undefined) ===
+        'https',
       sameSite: 'lax',
       maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
     });
