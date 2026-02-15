@@ -10,7 +10,7 @@ import { aboutRoute } from './routes/about.js';
 import { eventRoute } from './routes/event.js';
 import { healthRoute } from './routes/health.js';
 import { keysRoute } from './routes/keys.js';
-import { pathRoute } from './routes/path.js';
+import { pathRoute } from './routes/path/index.js';
 
 async function start() {
   const config = getConfig();
