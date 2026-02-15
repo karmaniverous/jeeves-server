@@ -181,11 +181,66 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
         return reply.code(401).send({ error: 'Insider key required' });
       }
 
-      // Find which seed's insider key matches
-      const matched = config.resolvedKeys.find((rk) =>
+      // Find which seed's insider key matches (machine keys + insider seeds)
+      const matchedMachine = config.resolvedKeys.find((rk) =>
         timingSafeEqual(provided, computeInsiderKey(rk.seed)),
       );
+      const matchedInsider = matchedMachine
+        ? null
+        : config.resolvedInsiders.find(
+            (ri) =>
+              ri.seed && timingSafeEqual(provided, computeInsiderKey(ri.seed)),
+          );
+      const matched =
+        matchedMachine ??
+        (matchedInsider
+          ? { name: matchedInsider.email, seed: matchedInsider.seed }
+          : null);
       if (!matched) {
+        // Also try session cookie auth for share
+        const sessionSecret = config.auth?.sessionSecret;
+        const cookieValue = sessionSecret
+          ? ((request.cookies as Record<string, string> | undefined)?.[
+              COOKIE_NAME
+            ] ?? '')
+          : '';
+        const session =
+          sessionSecret && cookieValue
+            ? verifySessionCookie(cookieValue, sessionSecret)
+            : null;
+        if (session) {
+          const insider = config.resolvedInsiders.find(
+            (i) => i.email.toLowerCase() === session.email.toLowerCase(),
+          );
+          if (insider?.seed) {
+            const targetPath = request.query.path;
+            if (!targetPath) {
+              return reply
+                .code(400)
+                .send({ error: 'path query param required' });
+            }
+            const expiry = request.query.exp;
+            let outsiderKey: string;
+            let shareUrl: string;
+            if (expiry) {
+              outsiderKey = computeOutsiderKeyWithExpiry(
+                insider.seed,
+                targetPath,
+                expiry,
+              );
+              shareUrl = `/path${targetPath}?key=${outsiderKey}&exp=${expiry}`;
+            } else {
+              outsiderKey = computePathKey(insider.seed, targetPath);
+              shareUrl = `/path${targetPath}?key=${outsiderKey}`;
+            }
+            return {
+              path: targetPath,
+              key: outsiderKey,
+              exp: expiry ?? null,
+              url: shareUrl,
+            };
+          }
+        }
         return reply.code(401).send({ error: 'Invalid insider key' });
       }
 

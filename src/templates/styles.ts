@@ -55,10 +55,11 @@ export function renderHeaderStyles(): string {
     .breadcrumb-current { color: #e1e4e8; }
     .home-icon { font-size: 2rem; text-shadow: 0 0 8px rgba(255,255,255,0.8), 0 0 16px rgba(255,255,255,0.5); text-decoration: none !important; padding-right: 1rem; }
     .share-ui { display: flex; align-items: center; gap: 0.5rem; }
+    .share-ui select { padding: 2px 6px; border: 1px solid #444; border-radius: 3px; background: #333; color: #fff; font-size: 12px; cursor: pointer; }
+    .share-ui select:hover { background: #444; }
     .share-ui input { width: 50px; padding: 2px 6px; border: 1px solid #444; border-radius: 3px; background: #333; color: #fff; font-size: 12px; }
     .share-ui button { padding: 2px 8px; border: 1px solid #444; border-radius: 3px; background: #333; color: #8b949e; cursor: pointer; font-size: 12px; }
     .share-ui button:hover { background: #444; color: #fff; }
-    .share-btn-inside, .share-btn-outside { min-width: 55px; }
     .expiry-countdown { color: #8b949e; font-size: 12px; margin-left: 0.5rem; }
     .expiry-countdown.expired { color: #f85149; }
     .theme-toggle { background: none; border: 1px solid #444; border-radius: 3px; padding: 2px 8px; cursor: pointer; font-size: 14px; color: #8b949e; }
