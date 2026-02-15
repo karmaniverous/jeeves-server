@@ -122,7 +122,7 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
     void reply.setCookie(COOKIE_NAME, cookieValue, {
       path: '/',
       httpOnly: true,
-      secure: true,
+      secure: request.protocol === 'https',
       sameSite: 'lax',
       maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
     });
