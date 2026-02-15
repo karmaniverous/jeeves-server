@@ -16,5 +16,5 @@
     "types": ["node", "vitest/globals"]
   },
   "exclude": ["coverage", "dist", "node_modules", "logs", "server.js"],
-  "include": ["src/**/*", "*.config.ts"]
+  "include": ["src/**/*"]
 }
