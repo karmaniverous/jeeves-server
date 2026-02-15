@@ -19,6 +19,7 @@ export interface HeaderOptions {
   eventInScope?: boolean;
   keyAge?: string | null;
   hasRaw?: boolean;
+  showShareUi?: boolean;
 }
 
 /**
@@ -285,10 +286,15 @@ export function renderHeader(options: HeaderOptions): string {
       : [];
   const allActions = [...defaultActions, ...actions];
 
-  const { eventInScope = false, keyAge = null, hasRaw = false } = options;
+  const {
+    eventInScope = false,
+    keyAge = null,
+    hasRaw = false,
+    showShareUi = true,
+  } = options;
 
-  let shareUi;
-  if (isInsider) {
+  let shareUi = '';
+  if (showShareUi && isInsider) {
     const rawOption = hasRaw ? '<option value="raw">Raw</option>' : '';
     const eventOption = eventInScope
       ? '<option value="event">Event</option>'
@@ -305,7 +311,7 @@ export function renderHeader(options: HeaderOptions): string {
         <button id="copy-link-btn" class="share-btn-outside" data-path="${currentPath}" data-insider-key="${insiderKey}" title="Copy outsider link to clipboard">📋</button>
       </div>
     `;
-  } else {
+  } else if (showShareUi) {
     const expiryHtml = expiry
       ? `<span class="expiry-countdown" data-expiry="${String(expiry)}"></span>`
       : '';

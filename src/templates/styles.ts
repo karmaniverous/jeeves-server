@@ -41,14 +41,14 @@ export function renderThemeStyles(): string {
  */
 export function renderHeaderStyles(): string {
   return `
-    .header { background: #24292e; color: #fff; padding: 0.75rem 2rem; font-size: 14px; line-height: 1.4; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 0 rgba(255,255,255,0.2); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .header { background: #24292e; color: #fff; padding: 0.75rem 2rem; font-size: 14px; line-height: 1.4; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; box-shadow: 0 1px 0 rgba(255,255,255,0.2); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     [data-theme="dark"] .header { box-shadow: none; }
     .header a { color: #79b8ff; text-decoration: none; }
     .header a:hover { text-decoration: underline; }
     .breadcrumb { display: flex; align-items: center; overflow: hidden; flex: 1; min-width: 0; }
     .breadcrumb a, .breadcrumb-current { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; display: inline-block; vertical-align: middle; }
     .breadcrumb-tail { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100vw - 400px); display: inline-block; vertical-align: middle; }
-    .header-actions { display: flex; gap: 1rem; font-size: 13px; align-items: center; flex-shrink: 0; white-space: nowrap; }
+    .header-actions { display: flex; gap: 0.75rem; font-size: 13px; align-items: center; flex-wrap: wrap; }
     .header-actions a { color: #8b949e; }
     .header-actions a:hover { color: #79b8ff; }
     .breadcrumb-tail { color: #e1e4e8; }
