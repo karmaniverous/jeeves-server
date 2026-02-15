@@ -3,10 +3,13 @@
  */
 
 /**
- * Event configuration (for future webhook customization)
+ * Event configuration for webhook event processing
  */
 export interface EventConfig {
-  [key: string]: unknown;
+  schema: object; // JSON Schema for ajv validation
+  cmd: string; // Command to execute when schema matches
+  map?: object; // Optional JsonMap transform
+  timeoutMs?: number; // Override default timeout
 }
 
 /**
@@ -35,6 +38,9 @@ export interface RuntimeConfig extends Config {
   apiKey: string;
   eventsLog: string;
   stateFile: string;
+  eventQueuePath: string;
+  eventQueueCursorPath: string;
+  eventLogPath: string;
 }
 
 /**
@@ -55,4 +61,27 @@ export type AccessMode = 'insider' | 'outsider';
 export interface KeyVerificationResult {
   valid: boolean;
   mode: AccessMode | null;
+}
+
+/**
+ * Queue entry for event processing
+ */
+export interface QueueEntry {
+  ts: string;
+  event: string;
+  cmd: string;
+  body: Record<string, unknown>;
+  timeoutMs: number;
+}
+
+/**
+ * Event log entry
+ */
+export interface EventLogEntry {
+  ts: string;
+  event: string | null;
+  matched: boolean;
+  exitCode?: number;
+  durationMs?: number;
+  bodyPreview?: string;
 }

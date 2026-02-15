@@ -11,6 +11,7 @@ import { eventRoute } from './routes/event.js';
 import { healthRoute } from './routes/health.js';
 import { keysRoute } from './routes/keys.js';
 import { pathRoute } from './routes/path/index.js';
+import { startQueueProcessor } from './services/eventQueue.js';
 
 async function start() {
   const config = getConfig();
@@ -26,12 +27,15 @@ async function start() {
   await fastify.register(eventRoute);
   await fastify.register(pathRoute);
 
+  // Start queue processor
+  startQueueProcessor();
+
   try {
     await fastify.listen({ port: config.port, host: '0.0.0.0' });
     console.log(`Jeeves server listening on port ${String(config.port)}`);
     console.log(`Endpoints:`);
-    console.log(`  POST /webhook  - Receive webhooks (path-key auth)`);
-    console.log(`  GET  /path/*   - Serve files (path-key auth)`);
+    console.log(`  POST /event    - Event Gateway (key auth)`);
+    console.log(`  GET  /path/*   - Serve files (key auth)`);
     console.log(`  GET  /key      - Compute path key (X-API-Key auth)`);
     console.log(`  GET  /health   - Health check (no auth)`);
   } catch (err) {

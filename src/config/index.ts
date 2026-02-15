@@ -48,6 +48,9 @@ export function loadConfig(): RuntimeConfig {
     apiKey: localConfig.apiKey,
     eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),
     stateFile: path.join(rootDir, 'state.json'),
+    eventQueuePath: path.join(rootDir, 'logs', 'event-queue.jsonl'),
+    eventQueueCursorPath: path.join(rootDir, 'logs', 'event-queue.cursor'),
+    eventLogPath: path.join(rootDir, 'logs', 'event-log.jsonl'),
   };
 
   return runtimeConfig;
