@@ -45,8 +45,12 @@ The gap has always been the last mile: getting Markdown into the hands of people
 
 ## Guides
 
-- [Setup & Configuration](guides/setup.md) — Installation, auth modes, keys, event gateway
-- [Insiders, Outsiders & Sharing](guides/sharing.md) — Access model, share links, key rotation
+- [Setup & Configuration](guides/setup.md) — Installation, auth modes (Google OAuth & key-based), config structure, and getting running
+- [Insiders, Outsiders & Sharing](guides/sharing.md) — The access model, how share links work, key derivation, expiry, and rotation
+- [Exporting & Downloads](guides/exports.md) — PDF, DOCX, and ZIP export, Puppeteer setup, troubleshooting, and what affects rendered output
+- [Event Gateway](guides/event-gateway.md) — Webhook receiving, JSON Schema matching, body mapping, durable queue processing, and monitoring
+- [Deployment](guides/deployment.md) — Running as a service (Windows & Linux), reverse proxy setup, HTTPS, Google OAuth for production, and updates
+- [API & Integration](guides/api-integration.md) — Programmatic access, endpoint reference, Windows path conversion, generating share links, and notes for AI assistants
 
 ## Quick Start
 
