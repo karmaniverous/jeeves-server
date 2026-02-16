@@ -21,6 +21,19 @@ Jeeves Server gives you a secure, polished window into the machine where your AI
 
 You don't author documents here. That's what your AI assistant is for. Jeeves Server is the publishing layer — the bridge between the laboratory and the boardroom.
 
+## Event Gateway
+
+Jeeves Server also includes a **webhook gateway** — a durable, schema-validated event processing pipeline. External services (Notion, GitHub, CI/CD systems, anything that sends webhooks) can POST to your server, and Jeeves will:
+
+- **Validate** the payload against JSON Schema rules
+- **Transform** the body using JsonMap (extract just the fields you need)
+- **Queue** matched events in a durable JSONL queue that survives restarts
+- **Dispatch** to shell commands with the transformed payload on stdin
+
+This makes Jeeves Server a natural integration hub for the same AI-assisted workflow: your assistant writes automation scripts, Jeeves Server receives the triggers, and the scripts execute on the same machine where everything else lives. No Lambda functions, no cloud queues — just a webhook URL and a command.
+
+See the [Event Gateway guide](guides/event-gateway.md) for setup and configuration.
+
 ## Why Markdown?
 
 Markdown is **the** native document format for AI collaboration:

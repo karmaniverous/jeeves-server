@@ -85,9 +85,23 @@ export function initInlineSvgPanzoom(article: HTMLElement): () => void {
           hint.className = 'text-zinc-400 text-xs text-center py-2 pointer-events-none';
           fsBtn.title = 'Exit fullscreen';
           fsBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
-          // Reinit panzoom for new container size
+          // Reinit panzoom — fit SVG to viewport
           pz.destroy();
-          pz = Panzoom(inner, { maxScale: 20, contain: 'outside' });
+          requestAnimationFrame(() => {
+            const svg = inner.querySelector('svg');
+            if (svg && container.clientWidth && container.clientHeight) {
+              const svgW = svg.getBoundingClientRect().width || svg.clientWidth || 1000;
+              const svgH = svg.getBoundingClientRect().height || svg.clientHeight || 800;
+              const fitScale = Math.min(
+                container.clientWidth / svgW,
+                container.clientHeight / svgH,
+                1 // Don't upscale beyond 1x
+              );
+              pz = Panzoom(inner, { maxScale: 20, minScale: fitScale * 0.5, startScale: fitScale });
+            } else {
+              pz = Panzoom(inner, { maxScale: 20, minScale: 0.1 });
+            }
+          });
         };
 
         const exitFullscreen = () => {
@@ -99,9 +113,9 @@ export function initInlineSvgPanzoom(article: HTMLElement): () => void {
           hint.className = 'text-xs text-muted-foreground text-center py-1 opacity-60';
           fsBtn.title = 'Fullscreen';
           fsBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
-          // Reinit panzoom for original size
+          // Reinit panzoom for original inline size
           pz.destroy();
-          pz = Panzoom(inner, { maxScale: 20, contain: 'outside' });
+          pz = Panzoom(inner, { maxScale: 20, contain: 'outside', startScale: 1 });
         };
 
         fsBtn.addEventListener('click', () => {
