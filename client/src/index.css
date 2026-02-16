@@ -1,12 +1,8 @@
 @import 'tailwindcss';
 
-html {
-  scroll-behavior: smooth;
+html, body, #root {
   height: 100%;
-}
-
-#root {
-  min-height: 100%;
+  overflow: hidden;
 }
 @plugin '@tailwindcss/typography';
 
@@ -147,7 +143,7 @@ pre:hover .code-copy-btn {
 /* TOC sidebar */
 .toc-sidebar {
   position: sticky;
-  /* top and max-height set via inline style from JS (depends on fixed header height) */
+  top: 1rem;
   overflow-y: auto;
 }
 

@@ -14,11 +14,11 @@ import { useAuth } from '@/lib/auth';
 import { injectCopyButtons } from '@/lib/codeBlockCopy';
 import { useTheme } from '@/lib/theme';
 
-const HEADER_OFFSET = 110; // approximate; covers header + tabs
 const SCROLL_DURATION = 600; // ms
 
-function smoothScrollTo(targetY: number) {
-  const startY = window.scrollY;
+function smoothScrollTo(container: HTMLElement | Window, targetY: number) {
+  const isWindow = container === window;
+  const startY = isWindow ? window.scrollY : (container as HTMLElement).scrollTop;
   const diff = targetY - startY;
   if (Math.abs(diff) < 2) return;
   const startTime = performance.now();
@@ -26,22 +26,25 @@ function smoothScrollTo(targetY: number) {
   function step(currentTime: number) {
     const elapsed = currentTime - startTime;
     const progress = Math.min(elapsed / SCROLL_DURATION, 1);
-    // easeInOutCubic
     const ease = progress < 0.5
       ? 4 * progress * progress * progress
       : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-    window.scrollTo(0, startY + diff * ease);
+    if (isWindow) {
+      window.scrollTo(0, startY + diff * ease);
+    } else {
+      (container as HTMLElement).scrollTop = startY + diff * ease;
+    }
     if (progress < 1) requestAnimationFrame(step);
   }
 
   requestAnimationFrame(step);
 }
 
-function scrollToId(id: string) {
+function scrollToIdInContainer(container: HTMLElement | null, id: string) {
   const el = document.getElementById(id);
-  if (el) {
-    const top = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
-    smoothScrollTo(top);
+  if (el && container) {
+    const top = el.offsetTop - 16; // small padding
+    smoothScrollTo(container, top);
     window.history.replaceState(null, '', `#${id}`);
   }
 }
@@ -152,7 +155,7 @@ export function FileBrowser() {
     const hash = window.location.hash.slice(1);
     if (hash && file) {
       // Small delay to let the DOM render
-      const timer = setTimeout(() => scrollToId(hash), 100);
+      const timer = setTimeout(() => scrollToIdInContainer(mainRef.current, hash), 100);
       return () => clearTimeout(timer);
     }
   }, [file]);
@@ -174,6 +177,7 @@ export function FileBrowser() {
 
   // Measure the fixed top bar (header + tabs) to set content padding
   const topBarRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
   const [topBarHeight, setTopBarHeight] = useState(96); // sensible default
   const measureTopBar = useCallback(() => {
     if (topBarRef.current) {
@@ -264,7 +268,11 @@ export function FileBrowser() {
           })()}
         </div>
 
-        <main className={file || (loading && reqPath) ? 'px-0 pb-4 md:pb-6' : 'p-4 md:p-6'} style={{ paddingTop: `${topBarHeight}px` }}>
+        <main
+          ref={mainRef}
+          className={file || (loading && reqPath) ? 'px-0 pb-4 md:pb-6 overflow-y-auto' : 'p-4 md:p-6 overflow-y-auto'}
+          style={{ marginTop: `${topBarHeight}px`, height: `calc(100vh - ${topBarHeight}px)` }}
+        >
           {loading && !reqPath && (
             <div className="text-muted-foreground text-sm">Loading...</div>
           )}
@@ -367,7 +375,7 @@ export function FileBrowser() {
                         <button
                           key={h.slug}
                           type="button"
-                          onClick={() => { scrollToId(h.slug); setMobileTocOpen(false); }}
+                          onClick={() => { scrollToIdInContainer(mainRef.current, h.slug); setMobileTocOpen(false); }}
                           className="block text-left text-sm text-muted-foreground hover:text-foreground cursor-pointer py-1 transition-colors w-full"
                           style={{ paddingLeft: `${(h.level - 1) * 0.75}rem` }}
                         >
@@ -409,14 +417,14 @@ export function FileBrowser() {
               {fileRendered?.type === 'markdown' && fileRendered.html && activeTab === 'rendered' && (
                 <div className="flex gap-6">
                   {fileRendered.headings && fileRendered.headings.length > 2 && (
-                    <aside className="toc-sidebar hidden lg:block w-56 shrink-0" style={{ top: `${topBarHeight + 16}px`, maxHeight: `calc(100vh - ${topBarHeight + 32}px)` }}>
+                    <aside className="toc-sidebar hidden lg:block w-56 shrink-0" style={{ maxHeight: `calc(100vh - ${topBarHeight + 32}px)` }}>
                       <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Contents</div>
                       <nav className="border-l border-border pl-3">
                         {fileRendered.headings!.map((h) => (
                           <button
                             key={h.slug}
                             type="button"
-                            onClick={() => scrollToId(h.slug)}
+                            onClick={() => scrollToIdInContainer(mainRef.current, h.slug)}
                             className="block text-left text-sm text-muted-foreground hover:text-foreground cursor-pointer py-0.5 transition-colors"
                             style={{ paddingLeft: `${(h.level - 1) * 0.75}rem` }}
                           >
@@ -437,7 +445,7 @@ export function FileBrowser() {
                       const href = anchor?.getAttribute('href');
                       if (href?.startsWith('#')) {
                         e.preventDefault();
-                        scrollToId(href.slice(1));
+                        scrollToIdInContainer(mainRef.current, href.slice(1));
                       }
                     }}
                   />
