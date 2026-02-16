@@ -90,7 +90,7 @@ export function FileBrowser() {
   const [expiry, setExpiry] = useState(() => localStorage.getItem('jeeves-share-expiry') ?? '');
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const [proseWidth, setProseWidth] = useState<'narrow' | 'medium' | 'wide'>(
-    () => (localStorage.getItem('jeeves-prose-width') as 'narrow' | 'medium' | 'wide') ?? 'narrow'
+    () => (localStorage.getItem('jeeves-prose-width') as 'narrow' | 'medium' | 'wide') ?? 'medium'
   );
   const toggleProseWidth = (w: 'narrow' | 'medium' | 'wide') => {
     setProseWidth(w);
