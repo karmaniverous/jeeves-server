@@ -14,7 +14,7 @@ import { useAuth } from '@/lib/auth';
 import { injectCopyButtons } from '@/lib/codeBlockCopy';
 import { useTheme } from '@/lib/theme';
 
-const HEADER_OFFSET = 80;
+const HEADER_OFFSET = 104;
 const SCROLL_DURATION = 600; // ms
 
 function smoothScrollTo(targetY: number) {
