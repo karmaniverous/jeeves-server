@@ -4,6 +4,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 
@@ -336,7 +337,8 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
 
   // GET /api/about — about page content (no auth required)
   fastify.get('/api/about', async (_request, reply) => {
-    const aboutPath = path.join(process.cwd(), 'about.md');
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const aboutPath = path.join(__dirname, '..', '..', 'about.md');
     if (!fs.existsSync(aboutPath)) {
       return reply.code(404).send({ error: 'About page not found' });
     }

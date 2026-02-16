@@ -4,6 +4,12 @@
 
 const API_BASE = '/api';
 
+/** Extract API key from URL query params (for key-based auth) */
+function getApiKey(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('key');
+}
+
 export interface DirectoryEntry {
   name: string;
   type: 'directory' | 'file';
@@ -54,7 +60,10 @@ export interface AuthStatus {
 }
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
+  const apiKey = getApiKey();
+  const sep = url.includes('?') ? '&' : '?';
+  const finalUrl = apiKey ? `${url}${sep}key=${apiKey}` : url;
+  const res = await fetch(finalUrl, {
     ...init,
     credentials: 'same-origin',
   });

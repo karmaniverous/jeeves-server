@@ -5,16 +5,16 @@
 
  RUN  v4.0.18 E:/dev/karmaniverous/jeeves-server
 
- ✓ src/routes/event.test.ts (13 tests) 130ms
- ✓ src/services/eventQueue.test.ts (4 tests) 55ms
- ✓ src/services/eventLog.test.ts (4 tests) 61ms
- ✓ src/util/formatters.test.ts (15 tests) 17ms
- ✓ src/util/crypto.test.ts (17 tests) 14ms
- ✓ src/util/fileDetection.test.ts (17 tests) 11ms
- ✓ src/config.test.ts (1 test) 5ms
+ ✓ src/routes/event.test.ts (13 tests) 67ms
+ ✓ src/services/eventLog.test.ts (4 tests) 47ms
+ ✓ src/services/eventQueue.test.ts (4 tests) 64ms
+ ✓ src/util/formatters.test.ts (15 tests) 15ms
+ ✓ src/util/crypto.test.ts (17 tests) 11ms
+ ✓ src/util/fileDetection.test.ts (17 tests) 14ms
+ ✓ src/config.test.ts (1 test) 6ms
 
  Test Files  7 passed (7)
       Tests  71 passed (71)
-   Start at  00:17:41
-   Duration  17.74s (transform 481ms, setup 0ms, import 3.07s, tests 292ms, environment 10.71s)
+   Start at  00:22:06
+   Duration  13.97s (transform 313ms, setup 0ms, import 2.15s, tests 224ms, environment 8.34s)
 

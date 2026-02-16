@@ -211,7 +211,7 @@ export function handleDirectory(
     .share-icon { background: none; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; padding: 2px 6px; margin: 0 2px; font-size: 13px; color: var(--text-secondary); transition: border-color 0.2s; }
     .share-icon:hover { border-color: var(--link-color); }
     .share-icon.copied { border-color: #3fb950; }
-    .share-expiry-input { width: 50px; padding: 2px 4px; font-size: 11px; border: 1px solid var(--border-color); border-radius: 3px; background: var(--bg-primary); color: var(--text-primary); text-align: center; }
+    .share-expiry-select { padding: 2px 4px; font-size: 11px; border: 1px solid var(--border-color); border-radius: 3px; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; }
   </style>
 </head>
 <body>
@@ -219,7 +219,7 @@ export function handleDirectory(
   <div class="container">
     <div class="count">${String(entries.length)} items</div>
     <table>
-      <thead><tr><th>Name</th><th>Type</th><th>Size</th><th>Modified</th>${isInsider ? '<th>Share <input type="text" id="dir-share-expiry" class="share-expiry-input" placeholder="1h" title="Expiry for share links: 15m, 1h, 7d"></th>' : ''}</tr></thead>
+      <thead><tr><th>Name</th><th>Type</th><th>Size</th><th>Modified</th>${isInsider ? `<th>Share <select id="dir-share-expiry" class="share-expiry-select" title="Link expiry"><option value="">never</option><option value="1h">1h</option><option value="1d">1d</option><option value="7d">1w</option><option value="30d">1m</option><option value="365d">1y</option></select></th>` : ''}</tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div>
@@ -239,29 +239,20 @@ export function handleDirectory(
 function renderDirectoryShareScript(insiderKey: string): string {
   return `
     (function() {
-      const expiryInput = document.getElementById('dir-share-expiry');
+      const expirySelect = document.getElementById('dir-share-expiry');
       const savedExpiry = localStorage.getItem('jeeves-dir-share-expiry') || '';
-      if (expiryInput && savedExpiry) expiryInput.value = savedExpiry;
+      if (expirySelect && savedExpiry) expirySelect.value = savedExpiry;
+      if (expirySelect) expirySelect.addEventListener('change', () => localStorage.setItem('jeeves-dir-share-expiry', expirySelect.value));
 
       function parseExpiry() {
-        if (!expiryInput) return '';
-        const val = expiryInput.value.trim();
+        if (!expirySelect) return '';
+        const val = expirySelect.value;
         if (!val) return '';
         const match = val.match(/^(\\d+)([mhd])$/i);
-        if (!match) {
-          expiryInput.style.borderColor = '#f85149';
-          setTimeout(() => { expiryInput.style.borderColor = ''; }, 2000);
-          return null;
-        }
+        if (!match) return '';
         const num = parseInt(match[1], 10);
         const unit = match[2].toLowerCase();
-        if (num <= 0 || num > 365) {
-          expiryInput.style.borderColor = '#f85149';
-          setTimeout(() => { expiryInput.style.borderColor = ''; }, 2000);
-          return null;
-        }
         const multiplier = { m: 60*1000, h: 60*60*1000, d: 24*60*60*1000 }[unit];
-        localStorage.setItem('jeeves-dir-share-expiry', val);
         return '&exp=' + (Date.now() + num * multiplier);
       }
 
