@@ -1,9 +1,18 @@
-import { LogOut, User } from 'lucide-react';
+import { Info, LogOut, Moon, Sun, User } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { useAuth } from '@/lib/auth';
 
-export function AccountMenu() {
+interface AccountMenuProps {
+  /** Extra items to show in the menu (e.g. info/theme at narrow widths) */
+  theme?: 'light' | 'dark';
+  onToggleTheme?: () => void;
+  /** Show info/theme inside menu (collapsed mode) */
+  collapsed?: boolean;
+}
+
+export function AccountMenu({ theme, onToggleTheme, collapsed }: AccountMenuProps) {
   const { authenticated, email, picture } = useAuth();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -26,7 +35,7 @@ export function AccountMenu() {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-accent transition-colors"
+        className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-zinc-700 transition-colors"
         title={email ?? 'Account'}
       >
         {picture ? (
@@ -36,9 +45,6 @@ export function AccountMenu() {
             {initial}
           </div>
         )}
-        <span className="text-xs text-muted-foreground hidden sm:inline max-w-[140px] truncate">
-          {email}
-        </span>
       </button>
 
       {open && (
@@ -49,6 +55,28 @@ export function AccountMenu() {
               <span className="text-sm text-foreground truncate">{email}</span>
             </div>
           </div>
+          {collapsed && (
+            <>
+              <Link
+                to="/about"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
+              >
+                <Info className="h-4 w-4" />
+                About Jeeves Server
+              </Link>
+              {onToggleTheme && (
+                <button
+                  onClick={() => { onToggleTheme(); setOpen(false); }}
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors w-full text-left"
+                >
+                  {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                </button>
+              )}
+              <div className="border-b border-border" />
+            </>
+          )}
           <a
             href="/auth/logout"
             className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"

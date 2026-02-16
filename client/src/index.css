@@ -140,6 +140,22 @@ pre:hover .code-copy-btn {
   font-weight: 500;
 }
 
+/* Thin scrollbar for breadcrumb nav */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.2) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  height: 3px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 /* TOC sidebar */
 .toc-sidebar {
   position: sticky;
