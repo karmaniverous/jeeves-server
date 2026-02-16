@@ -140,6 +140,11 @@ pre:hover .code-copy-btn {
   font-weight: 500;
 }
 
+.prose :not(pre) > code::before,
+.prose :not(pre) > code::after {
+  content: none;
+}
+
 /* Thin scrollbar for breadcrumb nav */
 .scrollbar-thin {
   scrollbar-width: thin;
