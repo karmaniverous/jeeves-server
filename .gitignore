@@ -31,3 +31,5 @@ build/
 
 # Coverage
 coverage/
+
+puppeteer.json

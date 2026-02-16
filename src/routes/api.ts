@@ -310,7 +310,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
             `.${path.basename(resolved, '.mmd')}.tmp.svg`,
           );
           execSync(
-            `npx --prefix E:\\tools\\mermaid-cli mmdc -i "${resolved}" -o "${tmpOut}" -w 1600 -s 2 -b white`,
+            `npx --prefix E:\\tools\\mermaid-cli mmdc -i "${resolved}" -o "${tmpOut}" -w 1600 -s 2 -b white -p puppeteer.json`,
             { timeout: 30_000, stdio: 'pipe' },
           );
           if (fs.existsSync(tmpOut)) {
@@ -501,7 +501,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       // Render using mermaid CLI
       try {
         execSync(
-          `npx --prefix E:\\tools\\mermaid-cli mmdc -i "${resolved}" -o "${outFile}" -w 1600 -s 2 -b white`,
+          `npx --prefix E:\\tools\\mermaid-cli mmdc -i "${resolved}" -o "${outFile}" -w 1600 -s 2 -b white -p puppeteer.json`,
           { timeout: 30_000, stdio: 'pipe' },
         );
       } catch (err) {
