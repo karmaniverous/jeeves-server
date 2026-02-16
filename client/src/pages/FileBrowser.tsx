@@ -1,5 +1,5 @@
 import { FileText, FolderOpen, Loader2, Menu, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 
 import { CodeBlock } from '@/components/CodeBlock';
@@ -14,7 +14,7 @@ import { useAuth } from '@/lib/auth';
 import { injectCopyButtons } from '@/lib/codeBlockCopy';
 import { useTheme } from '@/lib/theme';
 
-const HEADER_OFFSET = 120;
+const HEADER_OFFSET = 110; // approximate; covers header + tabs
 const SCROLL_DURATION = 600; // ms
 
 function smoothScrollTo(targetY: number) {
@@ -172,39 +172,99 @@ export function FileBrowser() {
     await rotateKey();
   };
 
+  // Measure the fixed top bar (header + tabs) to set content padding
+  const topBarRef = useRef<HTMLDivElement>(null);
+  const [topBarHeight, setTopBarHeight] = useState(96); // sensible default
+  const measureTopBar = useCallback(() => {
+    if (topBarRef.current) {
+      setTopBarHeight(topBarRef.current.offsetHeight);
+    }
+  }, []);
+  useEffect(() => {
+    measureTopBar();
+    window.addEventListener('resize', measureTopBar);
+    return () => window.removeEventListener('resize', measureTopBar);
+  }, [measureTopBar]);
+  // Re-measure when file/directory changes (tabs may appear/disappear)
+  useEffect(() => { measureTopBar(); }, [file, directory, drives, measureTopBar]);
+
   return (
       <div className="min-h-screen bg-background text-foreground">
-        <Header
-          breadcrumbs={breadcrumbs}
-          isInsider={isInsider}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-          keyAge={keyAge}
-          onRotateKey={handleRotateKey}
-          downloadDropdown={
-            file ? (
-              <DownloadDropdown reqPath={reqPath} file={file} variant="header" />
-            ) : directory ? (
-              <DownloadDropdown reqPath={reqPath} file={null} isDirectory variant="header" />
-            ) : undefined
-          }
-          linkControls={isInsider ? (
-            <>
-              <LinkDropdown path={`/${reqPath}`} expiry={expiry} showEvent showRaw={!!file} variant="header" />
-              <span className="text-xs text-zinc-500">expires:</span>
-              <select value={expiry} onChange={(e) => setExpiry(e.target.value)} className="h-7 text-xs bg-zinc-700 border border-zinc-600 text-white px-1.5 rounded">
-                <option value="">never</option>
-                <option value="1h">1 hour</option>
-                <option value="1d">1 day</option>
-                <option value="1w">1 week</option>
-                <option value="30d">1 month</option>
-                <option value="365d">1 year</option>
-              </select>
-            </>
-          ) : undefined}
-        />
+        {/* Fixed top bar: header + optional tabs */}
+        <div ref={topBarRef} className="fixed top-0 left-0 right-0 z-50">
+          <Header
+            breadcrumbs={breadcrumbs}
+            isInsider={isInsider}
+            theme={theme}
+            onToggleTheme={toggleTheme}
+            keyAge={keyAge}
+            onRotateKey={handleRotateKey}
+            downloadDropdown={
+              file ? (
+                <DownloadDropdown reqPath={reqPath} file={file} variant="header" />
+              ) : directory ? (
+                <DownloadDropdown reqPath={reqPath} file={null} isDirectory variant="header" />
+              ) : undefined
+            }
+            linkControls={isInsider ? (
+              <>
+                <LinkDropdown path={`/${reqPath}`} expiry={expiry} showEvent showRaw={!!file} variant="header" />
+                <span className="text-xs text-zinc-500">expires:</span>
+                <select value={expiry} onChange={(e) => setExpiry(e.target.value)} className="h-7 text-xs bg-zinc-700 border border-zinc-600 text-white px-1.5 rounded">
+                  <option value="">never</option>
+                  <option value="1h">1 hour</option>
+                  <option value="1d">1 day</option>
+                  <option value="1w">1 week</option>
+                  <option value="30d">1 month</option>
+                  <option value="365d">1 year</option>
+                </select>
+              </>
+            ) : undefined}
+          />
+          {/* Tabs — shown for file views */}
+          {(file || (loading && reqPath)) && (() => {
+            const ext = reqPath ? `.${reqPath.split('.').pop()?.toLowerCase()}` : '';
+            const renderable = file ? isRenderable(file) : RENDERABLE_EXTENSIONS.has(ext);
+            const activeTab = renderable ? viewTab : 'raw';
+            return (
+              <div className="flex items-center gap-1 border-b border-border bg-background px-4 md:px-6">
+                {fileRendered?.headings && fileRendered.headings.length > 2 && (
+                  <button
+                    onClick={() => setMobileTocOpen(!mobileTocOpen)}
+                    className="lg:hidden p-1.5 mr-1 text-muted-foreground hover:text-foreground transition-colors"
+                    title="Table of contents"
+                  >
+                    {mobileTocOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                  </button>
+                )}
+                {renderable && (
+                  <button
+                    onClick={() => setViewTab('rendered')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                      activeTab === 'rendered'
+                        ? 'border-blue-500 text-blue-500'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Rendered
+                  </button>
+                )}
+                <button
+                  onClick={() => setViewTab('raw')}
+                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === 'raw'
+                      ? 'border-blue-500 text-blue-500'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Raw
+                </button>
+              </div>
+            );
+          })()}
+        </div>
 
-        <main className={file || (loading && reqPath) ? 'px-0 pb-4 md:pb-6 pt-14' : 'p-4 md:p-6 pt-14'}>
+        <main className={file || (loading && reqPath) ? 'px-0 pb-4 md:pb-6' : 'p-4 md:p-6'} style={{ paddingTop: `${topBarHeight}px` }}>
           {loading && !reqPath && (
             <div className="text-muted-foreground text-sm">Loading...</div>
           )}
@@ -295,49 +355,13 @@ export function FileBrowser() {
 
             return (
             <div>
-              {/* Tabs — always shown */}
-              <div className="fixed top-14 left-0 right-0 z-40 flex items-center gap-1 border-b border-border bg-background px-4 md:px-6">
-                {/* Mobile TOC hamburger — only when headings exist */}
-                {fileRendered?.headings && fileRendered.headings.length > 2 && (
-                  <button
-                    onClick={() => setMobileTocOpen(!mobileTocOpen)}
-                    className="lg:hidden p-1.5 mr-1 text-muted-foreground hover:text-foreground transition-colors"
-                    title="Table of contents"
-                  >
-                    {mobileTocOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-                  </button>
-                )}
-                {renderable && (
-                  <button
-                    onClick={() => setViewTab('rendered')}
-                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                      activeTab === 'rendered'
-                        ? 'border-blue-500 text-blue-500'
-                        : 'border-transparent text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    Rendered
-                  </button>
-                )}
-                <button
-                  onClick={() => setViewTab('raw')}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === 'raw'
-                      ? 'border-blue-500 text-blue-500'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  Raw
-                </button>
-              </div>
-
               {/* Mobile TOC floating panel */}
               {mobileTocOpen && fileRendered?.headings && fileRendered.headings.length > 2 && (
                 <>
                   {/* Backdrop */}
                   <div className="lg:hidden fixed inset-0 z-40" onClick={() => setMobileTocOpen(false)} />
                   {/* Floating menu anchored below sticky tabs */}
-                  <div className="lg:hidden fixed top-[7.25rem] left-2 right-2 z-50 bg-popover text-popover-foreground border border-border rounded-lg shadow-lg max-h-[60vh] overflow-y-auto px-4 py-3">
+                  <div className="lg:hidden fixed left-2 right-2 z-50 bg-popover text-popover-foreground border border-border rounded-lg shadow-lg max-h-[60vh] overflow-y-auto px-4 py-3" style={{ top: `${topBarHeight + 4}px` }}>
                     <nav>
                       {fileRendered.headings.map((h) => (
                         <button
@@ -355,7 +379,7 @@ export function FileBrowser() {
                 </>
               )}
 
-              <div className="px-4 md:px-6 pt-12">
+              <div className="px-4 md:px-6 pt-4">
               {/* Loading spinner */}
               {fileLoading && (
                 <div className="flex items-center gap-2 text-muted-foreground text-sm py-8 justify-center">
@@ -385,7 +409,7 @@ export function FileBrowser() {
               {fileRendered?.type === 'markdown' && fileRendered.html && activeTab === 'rendered' && (
                 <div className="flex gap-6">
                   {fileRendered.headings && fileRendered.headings.length > 2 && (
-                    <aside className="toc-sidebar hidden lg:block w-56 shrink-0">
+                    <aside className="toc-sidebar hidden lg:block w-56 shrink-0" style={{ top: `${topBarHeight + 16}px`, maxHeight: `calc(100vh - ${topBarHeight + 32}px)` }}>
                       <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Contents</div>
                       <nav className="border-l border-border pl-3">
                         {fileRendered.headings!.map((h) => (

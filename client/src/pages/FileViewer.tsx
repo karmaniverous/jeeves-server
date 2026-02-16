@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { Header } from '@/components/layout/Header';
@@ -14,6 +14,13 @@ export function FileViewer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const topBarRef = useRef<HTMLDivElement>(null);
+  const [topBarHeight, setTopBarHeight] = useState(56);
+  const measure = useCallback(() => {
+    if (topBarRef.current) setTopBarHeight(topBarRef.current.offsetHeight);
+  }, []);
+  useEffect(() => { measure(); window.addEventListener('resize', measure); return () => window.removeEventListener('resize', measure); }, [measure]);
+
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -27,20 +34,23 @@ export function FileViewer() {
 
   return (
       <div className="min-h-screen bg-background text-foreground">
-        <Header
-          breadcrumbs={breadcrumbs}
-          isInsider={file?.isInsider ?? true}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-        />
+        <div ref={topBarRef} className="fixed top-0 left-0 right-0 z-50">
+          <Header
+            breadcrumbs={breadcrumbs}
+            isInsider={file?.isInsider ?? true}
+            theme={theme}
+            onToggleTheme={toggleTheme}
+          />
+        </div>
 
-        <main className="p-4 md:p-6 pt-16">
+        <main className="p-4 md:p-6" style={{ paddingTop: `${topBarHeight + 16}px` }}>
           {loading && <div className="text-muted-foreground text-sm">Loading...</div>}
           {error && <div className="text-destructive text-sm">Error: {error}</div>}
 
           {file?.type === 'markdown' && file.html && (
             <article
-              className="prose prose-zinc dark:prose-invert max-w-none"
+              className="prose max-w-none bg-background p-6 rounded-lg border border-border"
+              style={{ '--tw-prose-body': 'var(--foreground)', '--tw-prose-headings': 'var(--foreground)', '--tw-prose-bold': 'var(--foreground)', '--tw-prose-links': '#3b82f6', '--tw-prose-code': 'var(--foreground)', '--tw-prose-pre-bg': 'var(--muted)', '--tw-prose-pre-code': 'var(--foreground)', '--tw-prose-hr': 'var(--border)', '--tw-prose-quotes': 'var(--muted-foreground)', '--tw-prose-quote-borders': 'var(--border)', '--tw-prose-th-borders': 'var(--border)', '--tw-prose-td-borders': 'var(--border)' } as React.CSSProperties}
               dangerouslySetInnerHTML={{ __html: file.html }}
             />
           )}

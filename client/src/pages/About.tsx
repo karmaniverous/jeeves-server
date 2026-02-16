@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Header } from '@/components/layout/Header';
 import type { FileContent } from '@/lib/api';
@@ -10,8 +10,14 @@ export function About() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const topBarRef = useRef<HTMLDivElement>(null);
+  const [topBarHeight, setTopBarHeight] = useState(56);
+  const measure = useCallback(() => {
+    if (topBarRef.current) setTopBarHeight(topBarRef.current.offsetHeight);
+  }, []);
+  useEffect(() => { measure(); window.addEventListener('resize', measure); return () => window.removeEventListener('resize', measure); }, [measure]);
+
   useEffect(() => {
-    // The about.md lives at the repo root — we use a dedicated API endpoint
     fetch('/api/about')
       .then(async (res) => {
         if (!res.ok) throw new Error(`${String(res.status)}`);
@@ -24,14 +30,16 @@ export function About() {
 
   return (
       <div className="min-h-screen bg-background text-foreground">
-        <Header
-          breadcrumbs={[{ label: 'About', path: 'about' }]}
-          isInsider={false}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-        />
+        <div ref={topBarRef} className="fixed top-0 left-0 right-0 z-50">
+          <Header
+            breadcrumbs={[{ label: 'About', path: 'about' }]}
+            isInsider={false}
+            theme={theme}
+            onToggleTheme={toggleTheme}
+          />
+        </div>
 
-        <main className="p-4 md:p-6 pt-16 max-w-4xl mx-auto">
+        <main className="p-4 md:p-6 max-w-4xl mx-auto" style={{ paddingTop: `${topBarHeight + 16}px` }}>
           {loading && <div className="text-muted-foreground text-sm">Loading...</div>}
           {error && <div className="text-muted-foreground text-sm">About page not available.</div>}
 
