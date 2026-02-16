@@ -76,8 +76,11 @@ export function renderDriveListing(
     const drivePath = `${drive.letter}:\\`;
     const urlPath = `/${drive.letter.toLowerCase()}`;
     const labelText = drive.label ? ` (${drive.label})` : '';
+
+    let shareCell = '';
     if (isInsider) {
-      rows += `<tr><td>💾 <a href="/path${urlPath}">${drivePath}</a>${labelText}</td><td>Drive</td></tr>`;
+      shareCell = `<td class="share-cell"><button class="share-icon" data-path="${urlPath}" data-type="page" title="Copy page link">🔗</button></td>`;
+      rows += `<tr><td>💾 <a href="/path${urlPath}">${drivePath}</a>${labelText}</td><td>Drive</td>${shareCell}</tr>`;
     } else {
       const key = computePathKey(apiKey, urlPath);
       rows += `<tr><td>💾 <a href="/path${urlPath}?key=${key}">${drivePath}</a>${labelText}</td><td>Drive</td></tr>`;
@@ -118,21 +121,82 @@ export function renderDriveListing(
     tr:hover { background: var(--table-row-hover); }
     a { color: var(--link-color); text-decoration: none; }
     a:hover { text-decoration: underline; }
+    .share-cell { white-space: nowrap; text-align: center; }
+    .share-icon { background: none; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; padding: 2px 6px; margin: 0 2px; font-size: 13px; color: var(--text-secondary); transition: border-color 0.2s; }
+    .share-icon:hover { border-color: var(--link-color); }
+    .share-icon.copied { border-color: #3fb950; }
+    .share-expiry-input { width: 50px; padding: 2px 4px; font-size: 11px; border: 1px solid var(--border-color); border-radius: 3px; background: var(--bg-primary); color: var(--text-primary); text-align: center; }
   </style>
 </head>
 <body>
   ${headerHtml}
   <div class="container">
     <table>
-      <thead><tr><th>Drive</th><th>Type</th></tr></thead>
+      <thead><tr><th>Drive</th><th>Type</th>${isInsider ? '<th>Share <input type="text" id="dir-share-expiry" class="share-expiry-input" placeholder="1h" title="Expiry: 15m, 1h, 7d"></th>' : ''}</tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div>
   <script>
     ${renderShareScript(true)}
-  </script>
+    ${isInsider ? renderDriveShareScript(insiderKey) : ''}
 </body>
 </html>`;
 
   reply.type('text/html').send(html);
+}
+
+/**
+ * Client-side JS for per-row share icon buttons on drive listing
+ */
+function renderDriveShareScript(insiderKey: string): string {
+  return `
+    (function() {
+      const expiryInput = document.getElementById('dir-share-expiry');
+      const savedExpiry = localStorage.getItem('jeeves-dir-share-expiry') || '';
+      if (expiryInput && savedExpiry) expiryInput.value = savedExpiry;
+
+      function parseExpiry() {
+        if (!expiryInput) return '';
+        const val = expiryInput.value.trim();
+        if (!val) return '';
+        const match = val.match(/^(\\d+)([mhd])$/i);
+        if (!match) {
+          expiryInput.style.borderColor = '#f85149';
+          setTimeout(() => { expiryInput.style.borderColor = ''; }, 2000);
+          return null;
+        }
+        const num = parseInt(match[1], 10);
+        const unit = match[2].toLowerCase();
+        if (num <= 0 || num > 365) {
+          expiryInput.style.borderColor = '#f85149';
+          setTimeout(() => { expiryInput.style.borderColor = ''; }, 2000);
+          return null;
+        }
+        const multiplier = { m: 60*1000, h: 60*60*1000, d: 24*60*60*1000 }[unit];
+        localStorage.setItem('jeeves-dir-share-expiry', val);
+        return '&exp=' + (Date.now() + num * multiplier);
+      }
+
+      document.querySelectorAll('.share-icon').forEach(btn => {
+        btn.addEventListener('click', async function() {
+          const expParam = parseExpiry();
+          if (expParam === null) return;
+          const targetPath = this.dataset.path;
+          const insiderKey = '${insiderKey}';
+          try {
+            const resp = await fetch('/share?path=' + encodeURIComponent(targetPath) + '&key=' + insiderKey + expParam);
+            const data = await resp.json();
+            if (data.url) {
+              const fullUrl = window.location.origin + data.url;
+              await navigator.clipboard.writeText(fullUrl);
+              this.classList.add('copied');
+              const orig = this.textContent;
+              this.textContent = '✓';
+              setTimeout(() => { this.textContent = orig; this.classList.remove('copied'); }, 1500);
+            }
+          } catch (err) { console.error('Share failed:', err); }
+        });
+      });
+    })();
+  `;
 }

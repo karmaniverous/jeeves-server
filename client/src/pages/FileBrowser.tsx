@@ -204,28 +204,100 @@ export function FileBrowser() {
           {!loading && !error && file && (
             <div>
               {file.type === 'markdown' && file.html && (
-                <article
-                  className="prose prose-zinc dark:prose-invert max-w-none bg-background p-6 rounded-lg border border-border"
-                  dangerouslySetInnerHTML={{ __html: file.html }}
-                />
+                <div className="flex gap-6">
+                  {/* TOC sidebar */}
+                  {file.headings && file.headings.length > 2 && (
+                    <aside className="toc-sidebar hidden lg:block w-56 shrink-0">
+                      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Contents</div>
+                      <nav className="border-l border-border pl-3">
+                        {file.headings.map((h) => (
+                          <a
+                            key={h.slug}
+                            href={`#${h.slug}`}
+                            style={{ paddingLeft: `${(h.level - 1) * 0.75}rem` }}
+                          >
+                            {h.text}
+                          </a>
+                        ))}
+                      </nav>
+                    </aside>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    {/* Export buttons */}
+                    <div className="flex gap-2 mb-4">
+                      <a
+                        href={`/path/${reqPath}?export=pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted hover:bg-accent border border-border rounded-md transition-colors"
+                      >
+                        📄 PDF
+                      </a>
+                      <a
+                        href={`/path/${reqPath}?export=docx`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted hover:bg-accent border border-border rounded-md transition-colors"
+                      >
+                        📝 DOCX
+                      </a>
+                      <a
+                        href={`/path/${reqPath}?raw=1`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted hover:bg-accent border border-border rounded-md transition-colors"
+                      >
+                        📋 Raw
+                      </a>
+                    </div>
+                    <article
+                      className="prose prose-zinc dark:prose-invert max-w-none bg-background p-6 rounded-lg border border-border"
+                      dangerouslySetInnerHTML={{ __html: file.html }}
+                    />
+                  </div>
+                </div>
               )}
 
               {file.type === 'text' && file.content && (
-                <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm border border-border">
-                  <code>{file.content}</code>
-                </pre>
+                <div>
+                  <div className="flex gap-2 mb-4">
+                    <a
+                      href={`/path/${reqPath}?raw=1`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted hover:bg-accent border border-border rounded-md transition-colors"
+                    >
+                      📋 Raw
+                    </a>
+                  </div>
+                  <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm border border-border">
+                    <code>{file.content}</code>
+                  </pre>
+                </div>
               )}
 
               {file.type === 'svg' && file.content && (
-                <div
-                  className="flex justify-center p-4 bg-white rounded-lg border border-border"
-                  dangerouslySetInnerHTML={{ __html: file.content }}
-                />
+                <div>
+                  <div className="flex gap-2 mb-4">
+                    <a
+                      href={`/path/${reqPath}?raw=1`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted hover:bg-accent border border-border rounded-md transition-colors"
+                    >
+                      🔗 Open SVG
+                    </a>
+                  </div>
+                  <div
+                    className="flex justify-center p-4 bg-white rounded-lg border border-border overflow-auto [&>svg]:max-w-full [&>svg]:h-auto"
+                    dangerouslySetInnerHTML={{ __html: file.content }}
+                  />
+                </div>
               )}
 
               {file.type === 'image' && (
                 <div className="flex justify-center p-4">
-                  <img src={`/path/${reqPath}?raw=1`} alt={file.fileName} className="max-w-full rounded-lg" />
+                  <img src={`/path/${reqPath}?raw=1`} alt={file.fileName} className="max-w-full rounded-lg shadow-md" />
                 </div>
               )}
 

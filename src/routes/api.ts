@@ -40,6 +40,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
   // API authentication middleware
   fastify.addHook('preHandler', async (request, reply) => {
     if (!request.url.startsWith('/api')) return;
+    if (request.url.startsWith('/api/about')) return;
 
     const config = getConfig();
     const provided = (request.query as { key?: string }).key;
@@ -332,6 +333,26 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       });
     },
   );
+
+  // GET /api/about — about page content (no auth required)
+  fastify.get('/api/about', async (_request, reply) => {
+    const aboutPath = path.join(process.cwd(), 'about.md');
+    if (!fs.existsSync(aboutPath)) {
+      return reply.code(404).send({ error: 'About page not found' });
+    }
+    const markdown = fs.readFileSync(aboutPath, 'utf8');
+    const { html, headings } = parseMarkdown(markdown, {
+      linkWindowsPaths: false,
+    });
+    return reply.send({
+      type: 'markdown',
+      html,
+      headings,
+      fileName: 'about.md',
+      breadcrumbs: [{ label: 'About', path: 'about' }],
+      isInsider: false,
+    });
+  });
 
   // GET /api/auth/status — check auth
   fastify.get(
