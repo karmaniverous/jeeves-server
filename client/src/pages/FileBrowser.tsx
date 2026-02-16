@@ -1,4 +1,4 @@
-import { FileText, FolderOpen, Loader2, Menu, Minimize2, Maximize2, X } from 'lucide-react';
+import { FileText, FolderOpen, Loader2, Menu, Minus, Minimize2, Maximize2, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 
@@ -89,10 +89,10 @@ export function FileBrowser() {
   const [theme, toggleTheme] = useTheme();
   const [expiry, setExpiry] = useState(() => localStorage.getItem('jeeves-share-expiry') ?? '');
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
-  const [proseWidth, setProseWidth] = useState<'narrow' | 'wide'>(
-    () => (localStorage.getItem('jeeves-prose-width') as 'narrow' | 'wide') ?? 'narrow'
+  const [proseWidth, setProseWidth] = useState<'narrow' | 'medium' | 'wide'>(
+    () => (localStorage.getItem('jeeves-prose-width') as 'narrow' | 'medium' | 'wide') ?? 'narrow'
   );
-  const toggleProseWidth = (w: 'narrow' | 'wide') => {
+  const toggleProseWidth = (w: 'narrow' | 'medium' | 'wide') => {
     setProseWidth(w);
     localStorage.setItem('jeeves-prose-width', w);
   };
@@ -279,9 +279,20 @@ export function FileBrowser() {
                           ? 'bg-muted text-foreground'
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
-                      title="Readable width"
+                      title="Narrow width"
                     >
                       <Minimize2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => toggleProseWidth('medium')}
+                      className={`p-1.5 transition-colors ${
+                        proseWidth === 'medium'
+                          ? 'bg-muted text-foreground'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                      title="Medium width"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => toggleProseWidth('wide')}
@@ -469,7 +480,7 @@ export function FileBrowser() {
                   )}
                   <article
                     ref={(el) => { if (el) injectCopyButtons(el); }}
-                    className={`prose bg-background p-6 rounded-lg border border-border min-w-0 flex-1 ${proseWidth === 'narrow' ? 'max-w-prose' : 'max-w-none'}`}
+                    className={`prose bg-background p-6 rounded-lg border border-border min-w-0 flex-1 ${proseWidth === 'narrow' ? 'max-w-prose' : proseWidth === 'medium' ? 'max-w-5xl' : 'max-w-none'}`}
                     style={{ '--tw-prose-body': 'var(--foreground)', '--tw-prose-headings': 'var(--foreground)', '--tw-prose-bold': 'var(--foreground)', '--tw-prose-links': '#3b82f6', '--tw-prose-code': 'var(--foreground)', '--tw-prose-pre-bg': 'var(--muted)', '--tw-prose-pre-code': 'var(--foreground)', '--tw-prose-hr': 'var(--border)', '--tw-prose-quotes': 'var(--muted-foreground)', '--tw-prose-quote-borders': 'var(--border)', '--tw-prose-th-borders': 'var(--border)', '--tw-prose-td-borders': 'var(--border)' } as React.CSSProperties}
                     dangerouslySetInnerHTML={{ __html: fileRendered.html! }}
                     onClick={(e) => {
