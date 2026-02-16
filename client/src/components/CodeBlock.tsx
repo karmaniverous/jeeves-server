@@ -29,18 +29,18 @@ export function CodeBlock({ content, html, language }: CodeBlockProps) {
         )}
         <button
           onClick={() => void handleCopy()}
-          className="p-1.5 rounded bg-zinc-700/80 hover:bg-zinc-600 text-zinc-400 hover:text-white opacity-0 group-hover:opacity-100 transition-all"
+          className="p-1.5 rounded bg-accent hover:bg-accent/80 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-all"
           title="Copy to clipboard"
         >
           {copied ? <Check className="h-3.5 w-3.5 text-green-400" /> : <Copy className="h-3.5 w-3.5" />}
         </button>
       </div>
       {html ? (
-        <pre className="hljs rounded-lg overflow-x-auto text-sm border border-border p-4">
+        <pre className="hljs rounded-lg overflow-x-auto text-sm border border-border p-4 bg-muted text-foreground">
           <code dangerouslySetInnerHTML={{ __html: html }} />
         </pre>
       ) : (
-        <pre className="rounded-lg overflow-x-auto text-sm border border-border p-4 bg-zinc-900 text-zinc-300">
+        <pre className="rounded-lg overflow-x-auto text-sm border border-border p-4 bg-muted text-foreground">
           <code>{content}</code>
         </pre>
       )}
