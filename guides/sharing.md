@@ -4,7 +4,7 @@ Jeeves Server has a clear access model built around two roles: **insiders** and 
 
 ## Insiders
 
-An insider is someone with **full browsing access** to the server. They can navigate drives and directories, view any file, and generate share links for others.
+An insider is an **authenticated user** on the server. Depending on their configuration, they may have full access or be scoped to specific paths. Within their scope, they can navigate directories, view files, and generate share links for others.
 
 ### Who is an insider?
 
