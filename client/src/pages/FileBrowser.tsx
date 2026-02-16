@@ -370,7 +370,8 @@ export function FileBrowser() {
                   )}
                   <article
                     ref={(el) => { if (el) injectCopyButtons(el); }}
-                    className="prose prose-zinc dark:prose-invert max-w-none bg-background p-6 rounded-lg border border-border min-w-0 flex-1"
+                    className="prose max-w-none bg-background p-6 rounded-lg border border-border min-w-0 flex-1"
+                    style={{ '--tw-prose-body': 'var(--foreground)', '--tw-prose-headings': 'var(--foreground)', '--tw-prose-bold': 'var(--foreground)', '--tw-prose-links': '#3b82f6', '--tw-prose-code': 'var(--foreground)', '--tw-prose-hr': 'var(--border)', '--tw-prose-quotes': 'var(--muted-foreground)', '--tw-prose-quote-borders': 'var(--border)', '--tw-prose-th-borders': 'var(--border)', '--tw-prose-td-borders': 'var(--border)' } as React.CSSProperties}
                     dangerouslySetInnerHTML={{ __html: fileRendered.html! }}
                     onClick={(e) => {
                       const target = e.target as HTMLElement;
