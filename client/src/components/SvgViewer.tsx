@@ -17,22 +17,40 @@ export function SvgViewer({ content }: SvgViewerProps) {
       panzoomRef.current.destroy();
       panzoomRef.current = null;
     }
-    if (innerRef.current) {
-      const pz = Panzoom(innerRef.current, {
-        maxScale: 20,
-        contain: 'outside',
-      });
-      panzoomRef.current = pz;
+    if (!innerRef.current || !containerRef.current) return;
 
-      const container = containerRef.current;
-      if (container) {
-        const wheelHandler = (e: WheelEvent) => {
-          pz.zoomWithWheel(e);
-        };
-        container.addEventListener('wheel', wheelHandler, { passive: false });
-        return () => container.removeEventListener('wheel', wheelHandler);
+    const container = containerRef.current;
+    const inner = innerRef.current;
+    const svg = inner.querySelector('svg');
+
+    if (svg) {
+      // Ensure SVG has a viewBox so it scales properly
+      if (!svg.getAttribute('viewBox') && svg.getAttribute('width') && svg.getAttribute('height')) {
+        const w = parseFloat(svg.getAttribute('width')!);
+        const h = parseFloat(svg.getAttribute('height')!);
+        svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
       }
+      // Make SVG fill the container, centered via preserveAspectRatio
+      svg.setAttribute('width', '100%');
+      svg.setAttribute('height', '100%');
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     }
+
+    // Inner wrapper matches container size so SVG is fit-to-viewport at scale 1
+    inner.style.width = `${container.clientWidth}px`;
+    inner.style.height = `${container.clientHeight}px`;
+
+    const pz = Panzoom(inner, {
+      maxScale: 20,
+      contain: 'outside',
+    });
+    panzoomRef.current = pz;
+
+    const wheelHandler = (e: WheelEvent) => {
+      pz.zoomWithWheel(e);
+    };
+    container.addEventListener('wheel', wheelHandler, { passive: false });
+    return () => container.removeEventListener('wheel', wheelHandler);
   }, []);
 
   useEffect(() => {
@@ -53,7 +71,7 @@ export function SvgViewer({ content }: SvgViewerProps) {
 
   const wrapperClass = fullscreen
     ? 'fixed inset-0 z-[100] bg-black/90 flex items-center justify-center'
-    : 'relative bg-white rounded-lg border border-border overflow-hidden';
+    : 'relative bg-white dark:bg-zinc-900 rounded-lg border border-border overflow-hidden';
 
   return (
     <div
@@ -77,11 +95,10 @@ export function SvgViewer({ content }: SvgViewerProps) {
 
       <div
         ref={containerRef}
-        className={`overflow-hidden cursor-grab active:cursor-grabbing ${fullscreen ? 'w-full h-full' : 'w-full min-h-[200px]'}`}
+        className={`overflow-hidden cursor-grab active:cursor-grabbing ${fullscreen ? 'w-full h-full' : 'w-full h-[calc(100vh-8rem)]'}`}
       >
         <div
           ref={innerRef}
-          className="flex items-center justify-center p-4 [&>svg]:max-w-full [&>svg]:h-auto"
           dangerouslySetInnerHTML={{ __html: content }}
         />
       </div>
