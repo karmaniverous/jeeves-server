@@ -8,7 +8,7 @@ Jeeves Server can export files as PDF, DOCX, or ZIP — turning Markdown into bu
 |--------|--------------|--------------|
 | **PDF** | Markdown files | Puppeteer renders the page in headless Chrome and prints to PDF |
 | **DOCX** | Markdown files | HTML converted via `@turbodocx/html-to-docx` |
-| **ZIP** | Directories | Entire directory tree compressed via `archiver` |
+| **ZIP** | Directories | Entire directory tree compressed via [`archiver`](https://github.com/archiverjs/node-archiver) |
 | **Raw** | Any file | Direct file download |
 
 ## Using Exports
@@ -49,7 +49,7 @@ curl -o design.md "https://jeeves.example.com/path/d/docs/design.md?key=<key>&ra
 
 ## PDF Export
 
-PDF generation uses **Puppeteer** with your installed Chrome/Chromium. The server:
+PDF generation uses [**Puppeteer**](https://github.com/puppeteer/puppeteer) with your installed Chrome/Chromium. The server:
 
 1. Launches headless Chrome
 2. Loads the rendered markdown page (authenticating with the `_internal` key)
@@ -94,7 +94,7 @@ PDFs render from the same HTML as the browser view, but:
 
 ## DOCX Export
 
-DOCX generation converts the rendered HTML to a Word document using `@turbodocx/html-to-docx`. This happens server-side without Chrome.
+DOCX generation converts the rendered HTML to a Word document using [`@turbodocx/html-to-docx`](https://github.com/nickmessing/turbodocx). This happens server-side without Chrome.
 
 DOCX exports:
 - Preserve headings, tables, lists, and basic formatting

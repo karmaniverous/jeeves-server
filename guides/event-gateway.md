@@ -4,25 +4,7 @@ Jeeves Server includes a webhook gateway that receives HTTP POST requests, valid
 
 ## Overview
 
-```
-POST /event?key=<scoped-key>
-  │
-  ├─ Authenticate: validate key, check scope includes /event
-  │
-  ├─ For each event in config.events:
-  │    └─ Validate body against event.schema (ajv)
-  │    └─ First match wins
-  │
-  ├─ If match:
-  │    ├─ If event.map → transform body via JsonMap
-  │    ├─ Else → use full body
-  │    ├─ Append to durable JSONL queue
-  │    └─ Return 200 { matched: "<event-name>" }
-  │
-  └─ If no match:
-       ├─ Log as unmatched
-       └─ Return 200 { matched: null }
-```
+![Event Gateway Flow](event-gateway.svg)
 
 ## Configuration
 

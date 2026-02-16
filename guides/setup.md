@@ -16,7 +16,7 @@ npm install
 
 ## Configuration
 
-Jeeves Server uses a **TypeScript configuration file** validated at startup by a Zod schema. The schema at `src/config/schema.ts` is the single source of truth — all types are derived from it.
+Jeeves Server uses a **TypeScript configuration file** validated at startup by a [Zod](https://github.com/colinhacks/zod) schema. The schema at `src/config/schema.ts` is the single source of truth — all types are derived from it.
 
 ### Create your config
 

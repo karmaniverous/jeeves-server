@@ -1,0 +1,17 @@
+flowchart TD
+    A["POST /event?key=‹scoped-key›"] --> B["Authenticate key\n(check scope includes /event)"]
+    B --> C{"For each event\nin config.events"}
+    C --> D["Validate body against\nevent.schema (ajv)"]
+    D --> E{"Match?"}
+    E -- "First match wins" --> F{"event.map\ndefined?"}
+    F -- Yes --> G["Transform body\nvia JsonMap"]
+    F -- No --> H["Use full body"]
+    G --> I["Append to durable\nJSONL queue"]
+    H --> I
+    I --> J["Return 200\n{ matched: ‹event-name› }"]
+    E -- "No match" --> K["Log as unmatched"]
+    K --> L["Return 200\n{ matched: null }"]
+
+    style A fill:#4a9eff,color:#fff,stroke:#2d7dd2
+    style J fill:#22c55e,color:#fff,stroke:#16a34a
+    style L fill:#f59e0b,color:#fff,stroke:#d97706
