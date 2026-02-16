@@ -2,7 +2,7 @@
  * Post-processes a rendered markdown article to add Panzoom to embedded SVG images.
  * 
  * Finds <img> elements with .svg sources, fetches the SVG content,
- * and replaces them with interactive Panzoom containers.
+ * and replaces them with interactive Panzoom containers with fullscreen support.
  */
 import Panzoom from '@panzoom/panzoom';
 
@@ -34,8 +34,15 @@ export function initInlineSvgPanzoom(article: HTMLElement): () => void {
     inner.className = 'flex items-center justify-center p-4 [&>svg]:max-w-full [&>svg]:h-auto';
     inner.textContent = 'Loading SVG…';
 
+    // Fullscreen button
+    const fsBtn = document.createElement('button');
+    fsBtn.className = 'absolute top-2 right-2 z-10 p-1.5 bg-zinc-800/70 hover:bg-zinc-700 text-white rounded transition-colors';
+    fsBtn.title = 'Fullscreen';
+    fsBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
+
     container.appendChild(inner);
     wrapper.appendChild(container);
+    wrapper.appendChild(fsBtn);
 
     // Replace the img with the wrapper
     img.parentElement?.replaceChild(wrapper, img);
@@ -49,7 +56,7 @@ export function initInlineSvgPanzoom(article: HTMLElement): () => void {
       .then((svgContent) => {
         inner.innerHTML = svgContent;
 
-        const pz = Panzoom(inner, {
+        let pz = Panzoom(inner, {
           maxScale: 20,
           contain: 'outside',
         });
@@ -59,14 +66,57 @@ export function initInlineSvgPanzoom(article: HTMLElement): () => void {
         };
         container.addEventListener('wheel', wheelHandler, { passive: false });
 
-        // Add hint text
+        // Hint text
         const hint = document.createElement('div');
         hint.className = 'text-xs text-muted-foreground text-center py-1 opacity-60';
         hint.textContent = 'Scroll to zoom · Drag to pan';
         wrapper.appendChild(hint);
 
+        let isFullscreen = false;
+
+        const enterFullscreen = () => {
+          isFullscreen = true;
+          // Save original styles
+          wrapper.dataset.origClass = wrapper.className;
+          wrapper.className = 'fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center';
+          wrapper.style.cursor = 'grab';
+          container.className = 'overflow-hidden w-full h-full flex-1';
+          hint.textContent = 'Scroll to zoom · Drag to pan · Esc to close';
+          hint.className = 'text-zinc-400 text-xs text-center py-2 pointer-events-none';
+          fsBtn.title = 'Exit fullscreen';
+          fsBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
+          // Reinit panzoom for new container size
+          pz.destroy();
+          pz = Panzoom(inner, { maxScale: 20, contain: 'outside' });
+        };
+
+        const exitFullscreen = () => {
+          isFullscreen = false;
+          wrapper.className = wrapper.dataset.origClass ?? 'inline-svg-panzoom relative bg-white rounded-lg border border-border overflow-hidden my-4';
+          wrapper.style.cursor = 'grab';
+          container.className = 'overflow-hidden w-full min-h-[200px]';
+          hint.textContent = 'Scroll to zoom · Drag to pan';
+          hint.className = 'text-xs text-muted-foreground text-center py-1 opacity-60';
+          fsBtn.title = 'Fullscreen';
+          fsBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
+          // Reinit panzoom for original size
+          pz.destroy();
+          pz = Panzoom(inner, { maxScale: 20, contain: 'outside' });
+        };
+
+        fsBtn.addEventListener('click', () => {
+          if (isFullscreen) exitFullscreen();
+          else enterFullscreen();
+        });
+
+        const escHandler = (e: KeyboardEvent) => {
+          if (e.key === 'Escape' && isFullscreen) exitFullscreen();
+        };
+        document.addEventListener('keydown', escHandler);
+
         cleanups.push(() => {
           container.removeEventListener('wheel', wheelHandler);
+          document.removeEventListener('keydown', escHandler);
           pz.destroy();
         });
       })
@@ -74,6 +124,7 @@ export function initInlineSvgPanzoom(article: HTMLElement): () => void {
         // Fallback: put the img back
         inner.innerHTML = '';
         inner.appendChild(img);
+        fsBtn.remove();
       });
   }
 
