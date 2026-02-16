@@ -11,7 +11,7 @@ const API_BASE = '/api';
 const _urlKey = new URLSearchParams(window.location.search).get('key');
 
 /** Append key param to a URL if one was provided */
-function withKey(url: string): string {
+export function withKey(url: string): string {
   if (!_urlKey) return url;
   const sep = url.includes('?') ? '&' : '?';
   return `${url}${sep}key=${encodeURIComponent(_urlKey)}`;
