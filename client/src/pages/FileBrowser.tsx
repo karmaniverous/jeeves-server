@@ -44,7 +44,10 @@ function smoothScrollTo(container: HTMLElement | Window, targetY: number) {
 function scrollToIdInContainer(container: HTMLElement | null, id: string) {
   const el = document.getElementById(id);
   if (el && container) {
-    const top = el.offsetTop - 16; // small padding
+    // Calculate position relative to scroll container
+    const elRect = el.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const top = container.scrollTop + (elRect.top - containerRect.top) - 16;
     smoothScrollTo(container, top);
     window.history.replaceState(null, '', `#${id}`);
   }
