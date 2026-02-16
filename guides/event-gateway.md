@@ -95,7 +95,14 @@ keys: {
 },
 ```
 
-The derived key is used in the URL:
+Your config contains a **seed** — a secret string that never leaves the server. The actual URL key is **derived** from the seed by the server. To get it:
+
+```bash
+curl -s "https://your-domain.com/insider-key" -H "X-API-Key: <your-seed>"
+# Returns: { "key": "a1b2c3d4..." }
+```
+
+Use the returned key in webhook URLs:
 
 ```bash
 curl -X POST "https://your-domain.com/event?key=<derived-key>" \
@@ -103,7 +110,7 @@ curl -X POST "https://your-domain.com/event?key=<derived-key>" \
   -d '{"type": "page.content_updated", "data": {"page_id": "abc123"}}'
 ```
 
-To get the derived key from a seed, use the `/insider-key` endpoint or compute it programmatically (HMAC-SHA256 of the seed with "insider", truncated to 32 hex chars).
+See the [Insiders, Outsiders & Sharing](sharing.md) guide for full details on the key model.
 
 ## Queue Processing
 
