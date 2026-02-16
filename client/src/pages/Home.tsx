@@ -17,16 +17,13 @@ export function Home() {
 
   if (loading) {
     return (
-      <div className={theme === 'dark' ? 'dark' : ''}>
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-muted-foreground text-sm">Loading...</div>
         </div>
-      </div>
     );
   }
 
   return (
-    <div className={theme === 'dark' ? 'dark' : ''}>
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-6">
           <div className="text-6xl mb-2">🎩</div>
@@ -48,6 +45,5 @@ export function Home() {
           </a>
         </div>
       </div>
-    </div>
   );
 }

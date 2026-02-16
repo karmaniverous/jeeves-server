@@ -581,6 +581,29 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
           }
         }
       }
+      // Check key-based auth (query param or header)
+      if (config.authModes.includes('keys')) {
+        const query = request.query as Record<string, string>;
+        const providedKey = query.key;
+        if (providedKey) {
+          const result = verifyKey(
+            config.resolvedKeys,
+            '/',
+            providedKey,
+            undefined,
+            config.resolvedInsiders,
+          );
+          if (result.valid) {
+            return reply.send({
+              authenticated: true,
+              email: `key:${result.keyName}`,
+              isInsider: result.mode === 'insider',
+              keyCreatedAt: null,
+            });
+          }
+        }
+      }
+
       return reply.send({
         authenticated: false,
         isInsider: false,

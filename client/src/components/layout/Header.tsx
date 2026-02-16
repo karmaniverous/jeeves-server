@@ -37,7 +37,7 @@ export function Header({
   const hasKeyMgmt = isInsider && onRotateKey;
 
   return (
-    <header className="sticky top-0 z-50 bg-zinc-800 text-white px-4 py-2 flex flex-wrap items-center gap-2 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-zinc-800 text-white px-4 flex flex-nowrap items-center gap-2 overflow-x-auto">
       <nav className="flex items-center gap-1 min-w-0 flex-1">
         <Link to="/browse" className="text-3xl no-underline" title="Jeeves Server">
           🎩

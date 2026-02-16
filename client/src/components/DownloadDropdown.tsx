@@ -18,6 +18,8 @@ interface DownloadDropdownProps {
   isDirectory?: boolean;
   /** Small variant for directory rows */
   compact?: boolean;
+  /** Color variant: 'header' for always-dark header, 'default' for theme-aware table rows */
+  variant?: 'header' | 'default';
 }
 
 interface DownloadItem {
@@ -69,7 +71,7 @@ async function downloadBlob(href: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function DownloadDropdown({ reqPath, file, isDirectory, compact }: DownloadDropdownProps) {
+export function DownloadDropdown({ reqPath, file, isDirectory, compact, variant = 'default' }: DownloadDropdownProps) {
   const [state, setState] = useState<'idle' | 'loading' | 'done'>('idle');
   const items = getDownloadItems(reqPath, file, isDirectory);
 
@@ -97,7 +99,7 @@ export function DownloadDropdown({ reqPath, file, isDirectory, compact }: Downlo
         <Button
           variant="ghost"
           size="icon"
-          className={`${btnSize ? btnSize : 'h-8 w-8'} ${state === 'done' ? 'text-green-500' : 'text-zinc-400 hover:text-white'}`}
+          className={`${btnSize ? btnSize : 'h-8 w-8'} ${state === 'done' ? 'text-green-500' : variant === 'header' ? 'text-zinc-400 hover:text-white' : 'text-muted-foreground hover:text-foreground'}`}
           disabled={state === 'loading'}
           title="Download"
         >

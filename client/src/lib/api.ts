@@ -1,10 +1,21 @@
 /**
  * API client for Jeeves Server backend
  *
- * All auth is via session cookies — no keys or credentials on the client side.
+ * Auth: session cookies (Google OAuth) or key-based (?key= URL param).
+ * When a key is present in the URL, it's stored and passed to all API calls.
  */
 
 const API_BASE = '/api';
+
+/** Extract and cache API key from URL params (once) */
+const _urlKey = new URLSearchParams(window.location.search).get('key');
+
+/** Append key param to a URL if one was provided */
+function withKey(url: string): string {
+  if (!_urlKey) return url;
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}key=${encodeURIComponent(_urlKey)}`;
+}
 
 export interface DirectoryEntry {
   name: string;
@@ -63,7 +74,7 @@ export async function rotateKey(): Promise<{ ok: boolean; keyCreatedAt?: string 
 }
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
+  const res = await fetch(withKey(url), {
     ...init,
     credentials: 'same-origin',
   });
@@ -98,7 +109,7 @@ export async function getFileRaw(path: string): Promise<FileContent> {
 }
 
 export async function getAuthStatus(): Promise<AuthStatus> {
-  const res = await fetch(`${API_BASE}/auth/status`, { credentials: 'same-origin' });
+  const res = await fetch(withKey(`${API_BASE}/auth/status`), { credentials: 'same-origin' });
   if (!res.ok) {
     return { authenticated: false, isInsider: false };
   }

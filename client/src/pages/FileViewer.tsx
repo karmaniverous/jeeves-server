@@ -26,7 +26,6 @@ export function FileViewer() {
   const breadcrumbs: BreadcrumbItem[] = file?.breadcrumbs ?? [];
 
   return (
-    <div className={theme === 'dark' ? 'dark' : ''}>
       <div className="min-h-screen bg-background text-foreground">
         <Header
           breadcrumbs={breadcrumbs}
@@ -35,7 +34,7 @@ export function FileViewer() {
           onToggleTheme={toggleTheme}
         />
 
-        <main className="p-4 md:p-6">
+        <main className="p-4 md:p-6 pt-16">
           {loading && <div className="text-muted-foreground text-sm">Loading...</div>}
           {error && <div className="text-destructive text-sm">Error: {error}</div>}
 
@@ -66,6 +65,5 @@ export function FileViewer() {
           )}
         </main>
       </div>
-    </div>
   );
 }

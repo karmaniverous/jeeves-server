@@ -14,7 +14,7 @@ import { useAuth } from '@/lib/auth';
 import { injectCopyButtons } from '@/lib/codeBlockCopy';
 import { useTheme } from '@/lib/theme';
 
-const HEADER_OFFSET = 104;
+const HEADER_OFFSET = 120;
 const SCROLL_DURATION = 600; // ms
 
 function smoothScrollTo(targetY: number) {
@@ -173,7 +173,6 @@ export function FileBrowser() {
   };
 
   return (
-    <div className={theme === 'dark' ? 'dark' : ''}>
       <div className="min-h-screen bg-background text-foreground">
         <Header
           breadcrumbs={breadcrumbs}
@@ -184,14 +183,14 @@ export function FileBrowser() {
           onRotateKey={handleRotateKey}
           downloadDropdown={
             file ? (
-              <DownloadDropdown reqPath={reqPath} file={file} />
+              <DownloadDropdown reqPath={reqPath} file={file} variant="header" />
             ) : directory ? (
-              <DownloadDropdown reqPath={reqPath} file={null} isDirectory />
+              <DownloadDropdown reqPath={reqPath} file={null} isDirectory variant="header" />
             ) : undefined
           }
           linkControls={isInsider ? (
             <>
-              <LinkDropdown path={`/${reqPath}`} expiry={expiry} showEvent showRaw={!!file} />
+              <LinkDropdown path={`/${reqPath}`} expiry={expiry} showEvent showRaw={!!file} variant="header" />
               <span className="text-xs text-zinc-500">expires:</span>
               <select value={expiry} onChange={(e) => setExpiry(e.target.value)} className="h-7 text-xs bg-zinc-700 border border-zinc-600 text-white px-1.5 rounded">
                 <option value="">never</option>
@@ -205,7 +204,7 @@ export function FileBrowser() {
           ) : undefined}
         />
 
-        <main className={file || (loading && reqPath) ? 'px-0 pb-4 md:pb-6' : 'p-4 md:p-6'}>
+        <main className={file || (loading && reqPath) ? 'px-0 pb-4 md:pb-6 pt-14' : 'p-4 md:p-6 pt-14'}>
           {loading && !reqPath && (
             <div className="text-muted-foreground text-sm">Loading...</div>
           )}
@@ -297,7 +296,7 @@ export function FileBrowser() {
             return (
             <div>
               {/* Tabs — always shown */}
-              <div className="flex items-center gap-1 border-b border-border bg-background px-4 md:px-6 mb-4">
+              <div className="fixed top-14 left-0 right-0 z-40 flex items-center gap-1 border-b border-border bg-background px-4 md:px-6">
                 {/* Mobile TOC hamburger — only when headings exist */}
                 {fileRendered?.headings && fileRendered.headings.length > 2 && (
                   <button
@@ -332,26 +331,31 @@ export function FileBrowser() {
                 </button>
               </div>
 
-              {/* Mobile TOC panel */}
+              {/* Mobile TOC floating panel */}
               {mobileTocOpen && fileRendered?.headings && fileRendered.headings.length > 2 && (
-                <div className="lg:hidden border-b border-border bg-muted/50 px-4 py-3 max-h-64 overflow-y-auto mb-4">
-                  <nav>
-                    {fileRendered.headings.map((h) => (
-                      <button
-                        key={h.slug}
-                        type="button"
-                        onClick={() => { scrollToId(h.slug); setMobileTocOpen(false); }}
-                        className="block text-left text-sm text-muted-foreground hover:text-foreground cursor-pointer py-0.5 transition-colors"
-                        style={{ paddingLeft: `${(h.level - 1) * 0.75}rem` }}
-                      >
-                        {h.text}
-                      </button>
-                    ))}
-                  </nav>
-                </div>
+                <>
+                  {/* Backdrop */}
+                  <div className="lg:hidden fixed inset-0 z-40" onClick={() => setMobileTocOpen(false)} />
+                  {/* Floating menu anchored below sticky tabs */}
+                  <div className="lg:hidden fixed top-[7.25rem] left-2 right-2 z-50 bg-popover text-popover-foreground border border-border rounded-lg shadow-lg max-h-[60vh] overflow-y-auto px-4 py-3">
+                    <nav>
+                      {fileRendered.headings.map((h) => (
+                        <button
+                          key={h.slug}
+                          type="button"
+                          onClick={() => { scrollToId(h.slug); setMobileTocOpen(false); }}
+                          className="block text-left text-sm text-muted-foreground hover:text-foreground cursor-pointer py-1 transition-colors w-full"
+                          style={{ paddingLeft: `${(h.level - 1) * 0.75}rem` }}
+                        >
+                          {h.text}
+                        </button>
+                      ))}
+                    </nav>
+                  </div>
+                </>
               )}
 
-              <div className="px-4 md:px-6">
+              <div className="px-4 md:px-6 pt-12">
               {/* Loading spinner */}
               {fileLoading && (
                 <div className="flex items-center gap-2 text-muted-foreground text-sm py-8 justify-center">
@@ -452,7 +456,6 @@ export function FileBrowser() {
           })()}
         </main>
       </div>
-    </div>
   );
 }
 

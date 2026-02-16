@@ -21,6 +21,8 @@ interface LinkDropdownProps {
   showRaw?: boolean;
   /** Small variant for directory rows */
   compact?: boolean;
+  /** Color variant: 'header' for always-dark header, 'default' for theme-aware table rows */
+  variant?: 'header' | 'default';
 }
 
 type LinkType = 'page' | 'raw' | 'event';
@@ -49,7 +51,7 @@ async function copyShareLink(path: string, expiry: string, type: LinkType) {
   await navigator.clipboard.writeText(fullUrl);
 }
 
-export function LinkDropdown({ path, expiry, showEvent, showRaw, compact }: LinkDropdownProps) {
+export function LinkDropdown({ path, expiry, showEvent, showRaw, compact, variant = 'default' }: LinkDropdownProps) {
   const [state, setState] = useState<'idle' | 'loading' | 'done'>('idle');
 
   const items: { label: string; type: LinkType }[] = [
@@ -81,7 +83,7 @@ export function LinkDropdown({ path, expiry, showEvent, showRaw, compact }: Link
         <Button
           variant="ghost"
           size="icon"
-          className={`${btnSize} ${state === 'done' ? 'text-green-500' : 'text-zinc-500 hover:text-zinc-300'}`}
+          className={`${btnSize} ${state === 'done' ? 'text-green-500' : variant === 'header' ? 'text-zinc-400 hover:text-white' : 'text-muted-foreground hover:text-foreground'}`}
           disabled={state === 'loading'}
           title="Copy share link"
         >
