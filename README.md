@@ -43,6 +43,11 @@ The gap has always been the last mile: getting Markdown into the hands of people
 - **Event Gateway** — Webhook receiver with JSON Schema validation and durable queue
 - **Zero CDN** — All assets served locally, no external dependencies
 
+## Guides
+
+- [Setup & Configuration](guides/setup.md) — Installation, auth modes, keys, event gateway
+- [Insiders, Outsiders & Sharing](guides/sharing.md) — Access model, share links, key rotation
+
 ## Quick Start
 
 ```bash
