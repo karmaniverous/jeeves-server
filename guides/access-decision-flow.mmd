@@ -1,0 +1,24 @@
+flowchart TD
+    A["Request arrives"] --> B{"Has session cookie?\n(Google OAuth)"}
+    B -- Yes --> C{"Email in\ninsiders map?"}
+    C -- Yes --> D["✅ INSIDER access\n(within scopes)"]
+    C -- No --> E["❌ DENIED"]
+
+    B -- No --> F{"Has ?key=\nparameter?"}
+    F -- Yes --> G{"Matches machine\ninsider key?"}
+    G -- Yes --> H["✅ INSIDER access\n(within scopes)"]
+    G -- No --> I{"Matches outsider key?\n(machine or insider seed)"}
+    I -- Yes --> J{"Path matches key\npath or ancestor?"}
+    J -- Yes --> K["✅ OUTSIDER access"]
+    J -- No --> L["❌ DENIED"]
+    I -- No --> M["❌ DENIED"]
+
+    F -- No --> N["❌ DENIED\n(or redirect to Google login)"]
+
+    style D fill:#22c55e,color:#fff,stroke:#16a34a
+    style H fill:#22c55e,color:#fff,stroke:#16a34a
+    style K fill:#22c55e,color:#fff,stroke:#16a34a
+    style E fill:#ef4444,color:#fff,stroke:#dc2626
+    style L fill:#ef4444,color:#fff,stroke:#dc2626
+    style M fill:#ef4444,color:#fff,stroke:#dc2626
+    style N fill:#f59e0b,color:#fff,stroke:#d97706

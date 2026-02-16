@@ -156,20 +156,7 @@ Reserved for server-side operations. Puppeteer uses this key when rendering PDFs
 
 When a request arrives, the server determines access as follows:
 
-```
-Request arrives
-  │
-  ├─ Has session cookie (Google OAuth)?
-  │   └─ Email in insiders map? → INSIDER access (within scopes)
-  │
-  ├─ Has ?key= parameter?
-  │   ├─ Matches any machine insider key? → INSIDER access (within scopes)
-  │   ├─ Matches any outsider key (machine or insider seed)?
-  │   │   └─ Path matches key path or ancestor? → OUTSIDER access
-  │   └─ No match → DENIED
-  │
-  └─ No credentials → DENIED (or redirect to Google login if enabled)
-```
+![Access Decision Flow](access-decision-flow.svg)
 
 ### Insider vs outsider UI
 
