@@ -1,333 +1,85 @@
-# Jeeves Server
+# Jeeves Server 🎩
 
-A lightweight file browser, document viewer, and event gateway with secure, shareable links.
+**Turn AI-authored documents into business-ready deliverables.**
 
-## Why Markdown?
+## The Problem
 
-**Markdown is the ideal format for authoring documents**, especially when working with AI assistants. It's simple, readable, version-controllable, and diff-friendly.
+You're working with an AI assistant. Together, you're producing real work — design documents, technical specs, integration plans, meeting summaries. The output is Markdown, because that's the native authoring format for AI: structured, version-controllable, rich with embedded code and diagrams.
 
-But in the business world, you can't share `.md` files — people expect PDFs and Word documents.
+Now share that work with your colleagues.
 
-**Jeeves Server bridges this gap.** Author your documents in Markdown, review them beautifully rendered in the browser, then export to PDF or DOCX with one click when it's time to share with colleagues, clients, or stakeholders.
+You can't send them a `.md` file. You can't ask them to install a Markdown viewer. You need something they can read in a browser, download as a PDF, or open in Word — today, without friction.
 
-## Features
+## The Solution
 
-- **File Browser** — Navigate your filesystem through a web interface
-- **Markdown Rendering** — `.md` files render as styled HTML with table of contents
-- **PDF & DOCX Export** — One-click export for business-ready documents
-- **Code Highlighting** — Source files display with syntax highlighting
-- **SVG Rendering** — SVG files render as images with pan/zoom support
-- **Dark/Light Themes** — Toggle between themes; preference is saved
-- **Secure Sharing** — Generate expiring links for external recipients
-- **Named Keys with Scoping** — Multiple keys with optional path restrictions
-- **Event Gateway** — Receive webhooks, filter with JSON Schema, and dispatch commands
+Jeeves Server gives you a secure, polished window into the machine where your AI assistant lives. It turns the raw output of AI collaboration into something your team can actually use:
 
-## Setup
+- **Browse and view** any file on the server — Markdown renders beautifully with table of contents, syntax-highlighted code, and Mermaid diagrams
+- **Share securely** — generate expiring links for external recipients, no login required
+- **Export instantly** — one-click PDF and DOCX downloads, perfectly rendered
+- **Stay in control** — Google OAuth for your team, scoped API keys for integrations, all zero-trust
 
-```bash
-# Clone
-git clone https://github.com/karmaniverous/jeeves-server.git
-cd jeeves-server
-
-# Configure
-cp config.json.local.template config.json.local
-# Edit config.json.local and set your keys
-
-# Install & run
-npm install
-npm start
-```
-
-## Configuration
-
-### config.json (committed)
-
-Public configuration including event schemas and defaults.
-
-```json
-{
-  "eventTimeoutMs": 30000,
-  "eventLogPurgeMs": 604800000,
-  "events": {
-    "notion-page-update": {
-      "schema": {
-        "type": "object",
-        "properties": {
-          "type": { "const": "page.content_updated" }
-        },
-        "required": ["type"]
-      },
-      "cmd": "node D:\\.jeeves\\core\\dispatchers\\notion-page-update.js",
-      "map": {
-        "pageId": {
-          "$": { "method": "$.lib._.get", "params": ["$.input", "data.page_id"] }
-        },
-        "type": {
-          "$": { "method": "$.lib._.get", "params": ["$.input", "type"] }
-        }
-      },
-      "timeoutMs": 60000
-    }
-  }
-}
-```
-
-| Key | Type | Description |
-|-----|------|-------------|
-| `eventTimeoutMs` | number | Default command timeout for event processing (ms) |
-| `eventLogPurgeMs` | number | Purge event log entries older than this (ms). Purge runs on each log write. |
-| `events` | `Record<string, Event>` | Named event configurations (see [Event Gateway](#event-gateway)) |
-
-#### Event config
-
-```typescript
-interface Event {
-  schema: object;        // JSON Schema matched against incoming webhook body
-  cmd: string;           // Command to execute when schema matches
-  map?: object;          // Optional JsonMap to extract/transform body before passing to cmd
-  timeoutMs?: number;    // Override default timeout for this event's command
-}
-```
-
-### config.json.local (gitignored)
-
-Secrets and instance-specific configuration.
-
-```json
-{
-  "keys": {
-    "insider": "your-insider-key-here",
-    "webhook-notion": {
-      "key": "your-webhook-key-here",
-      "scopes": ["/event"]
-    }
-  }
-}
-```
-
-| Key | Type | Description |
-|-----|------|-------------|
-| `keys` | `Record<string, string \| KeyConfig>` | Named authentication keys |
-
-#### Key config
-
-```typescript
-type KeyValue = string;  // Shorthand: key value, all paths allowed
-
-interface KeyConfig {
-  key: string;             // The key value
-  scopes?: string | string[];  // Path glob(s) this key can access. Undefined = all paths.
-}
-```
-
-### config.json.local.template (committed)
-
-Template for new installs. Copy to `config.json.local` and fill in secrets.
-
-## Authentication
-
-Jeeves uses **named keys** for authentication. Every request requires `?key=<value>` where the value matches any configured key.
-
-### Key Types
-
-- **Unscoped keys** (plain string value) — access all paths and endpoints
-- **Scoped keys** (object with `scopes`) — access only paths matching the configured glob(s)
-
-### Key Resolution
-
-1. Incoming `?key=X` is matched against all key values in `config.json.local`
-2. The matched key's name and scopes are resolved
-3. If the key has scopes, the request path must match at least one scope glob
-4. The key name is available for logging and identification
-
-### Key Rotation
-
-The 🔑 button in the header rotates the key that was used on the current request. This allows multiple insider keys to be independently rotated or decommissioned.
-
-### Insider vs Outsider
-
-- **Insider access**: Request uses an unscoped key → full navigation, sharing controls, key rotation
-- **Outsider access**: Request uses a path-specific outsider key (generated via sharing) → view only that path
+You don't author documents here. That's what your AI assistant is for. Jeeves Server is the publishing layer — the bridge between the laboratory and the boardroom.
 
 ## Event Gateway
 
-The `/event` endpoint receives webhooks from external services, validates them against configured JSON Schemas, and dispatches matched events to commands via a durable queue.
+Jeeves Server also includes a **webhook gateway** — a durable, schema-validated event processing pipeline. External services (Notion, GitHub, CI/CD systems, anything that sends webhooks) can POST to your server, and Jeeves will:
 
-### Flow
+- **Validate** the payload against JSON Schema rules
+- **Transform** the body using JsonMap (extract just the fields you need)
+- **Queue** matched events in a durable JSONL queue that survives restarts
+- **Dispatch** to shell commands with the transformed payload on stdin
 
-```
-POST /event?key=<key>
-  │
-  ├─ Auth: validate key, check scope includes /event
-  │
-  ├─ For each event in config.events:
-  │    └─ Validate request body against event.schema (ajv)
-  │    └─ First match wins
-  │
-  ├─ If match:
-  │    ├─ If event.map defined → transform body via JsonMap
-  │    ├─ Else → use full body
-  │    ├─ Append to event-queue.jsonl (durable)
-  │    └─ Return 200 { matched: "<event-name>" }
-  │
-  └─ If no match:
-       ├─ Log as unmatched in event-log.jsonl
-       └─ Return 200 { matched: null }
-```
+This makes Jeeves Server a natural integration hub for the same AI-assisted workflow: your assistant writes automation scripts, Jeeves Server receives the triggers, and the scripts execute on the same machine where everything else lives. No Lambda functions, no cloud queues — just a webhook URL and a command.
 
-### Queue Processing
+See the [Event Gateway guide](guides/event-gateway.md) for setup and configuration.
 
-Events are processed **single-threaded** from a durable JSONL queue:
+## Why Markdown?
 
-1. **Append**: Validated events are appended to `event-queue.jsonl` with metadata
-2. **Drain**: A single-threaded processor reads entries sequentially
-3. **Execute**: For each entry, spawn `cmd` with the (optionally mapped) body piped as stdin
-4. **Timeout**: Commands are killed after `timeoutMs` (per-event or default)
-5. **Errors ignored**: The command is responsible for its own error handling; the queue processor logs and moves on
-6. **Cursor**: A cursor file tracks the byte offset of the last processed entry, surviving restarts
+Markdown is **the** native document format for AI collaboration:
 
-#### Queue entry format
+- AI assistants read and write it natively — no format translation, no lossy conversion
+- It supports everything business documents need: headings, tables, code blocks, diagrams, links
+- It's plain text — version-controllable, diffable, mergeable
+- It's the format your assistant already thinks in
 
-```jsonl
-{"ts":"2026-02-15T05:00:00Z","event":"notion-page-update","cmd":"node ...","body":{...},"timeoutMs":60000}
-```
+The gap has always been the last mile: getting Markdown into the hands of people who don't know what Markdown is. Jeeves Server closes that gap.
 
-### Event Logging
+## Features
 
-All events (matched and unmatched) are logged to `event-log.jsonl`:
+- **File Browser** — Navigate drives and directories through a modern React UI
+- **Markdown Rendering** — Prose with TOC sidebar, adjustable reading width, dark/light themes
+- **PDF & DOCX Export** — One-click, perfectly rendered, business-ready
+- **Code Highlighting** — Syntax highlighting with copy buttons
+- **SVG & Mermaid Diagrams** — Rendered inline with pan/zoom
+- **Secure Sharing** — Expiring links with HMAC signatures, scoped access
+- **Event Gateway** — Webhook receiver with JSON Schema validation and durable queue
+- **Zero CDN** — All assets served locally, no external dependencies
 
-```jsonl
-{"ts":"2026-02-15T05:00:00Z","event":"notion-page-update","matched":true,"exitCode":0,"durationMs":1234}
-{"ts":"2026-02-15T05:00:01Z","event":null,"matched":false,"bodyPreview":"..."}
-```
+## Guides
 
-Each log write also purges entries older than `eventLogPurgeMs`.
+- [Setup & Configuration](guides/setup.md) — Installation, auth modes (Google OAuth & key-based), config structure, and getting running
+- [Insiders, Outsiders & Sharing](guides/sharing.md) — The access model, how share links work, key derivation, expiry, and rotation
+- [Exporting & Downloads](guides/exports.md) — PDF, DOCX, and ZIP export, Puppeteer setup, troubleshooting, and what affects rendered output
+- [Event Gateway](guides/event-gateway.md) — Webhook receiving, JSON Schema matching, body mapping, durable queue processing, and monitoring
+- [Deployment](guides/deployment.md) — Running as a service (Windows & Linux), reverse proxy setup, HTTPS, Google OAuth for production, and updates
+- [API & Integration](guides/api-integration.md) — Programmatic access, endpoint reference, Windows path conversion, generating share links, and notes for AI assistants
 
-### Body Mapping with JsonMap
-
-When an event config includes a `map` object, the incoming webhook body is transformed via [@karmaniverous/jsonmap](https://github.com/karmaniverous/jsonmap) before being passed to the command. This extracts only the relevant fields from potentially large webhook payloads.
-
-The `map` object follows JsonMap syntax. The `lib` object available in mappings includes `lodash` as `_`.
-
-When `map` is undefined, the full webhook body is passed to the command as-is.
-
-### Example: Notion Webhook
-
-```json
-{
-  "events": {
-    "notion-page-update": {
-      "schema": {
-        "type": "object",
-        "properties": {
-          "type": { "const": "page.content_updated" }
-        },
-        "required": ["type"]
-      },
-      "cmd": "node D:\\.jeeves\\core\\dispatchers\\notion-page-update.js",
-      "map": {
-        "pageId": {
-          "$": { "method": "$.lib._.get", "params": ["$.input", "data.page_id"] }
-        },
-        "type": {
-          "$": { "method": "$.lib._.get", "params": ["$.input", "type"] }
-        }
-      },
-      "timeoutMs": 60000
-    }
-  }
-}
-```
-
-Notion sends a large payload; the `map` extracts just `pageId` and `type`, which is piped as JSON to stdin of the command.
-
-## Endpoints
-
-| Method | Path         | Auth                | Description                          |
-|--------|--------------|---------------------|--------------------------------------|
-| GET    | /path/*      | `?key=`             | Serve files (md rendered, code highlighted, binary served) |
-| POST   | /event       | `?key=` (scoped)    | Receive webhooks, match against event schemas |
-| GET    | /about       | None (or key)       | About page with usage instructions   |
-| GET    | /key         | X-API-Key header    | Compute path-key for a given path    |
-| GET    | /insider-key | X-API-Key header    | Get the insider key                  |
-| POST   | /rotate-key  | Key (in body)       | Rotate the key used on this request  |
-| GET    | /health      | None                | Health check                         |
-
-## Integration
-
-### Getting Keys
-
-```powershell
-# Read from config.json.local
-$config = Get-Content "E:\jeeves-server\config.json.local" | ConvertFrom-Json
-$insiderKey = $config.keys.insider
-# or for object-style keys:
-$webhookKey = $config.keys.'webhook-notion'.key
-```
-
-### Generating Shareable Links
+## Quick Start
 
 ```bash
-# Insider link (full navigation)
-https://jeeves.johngalt.id/path/d/docs/readme.md?key=<insider-key>
-
-# Outsider link (path-restricted, with expiry)
-curl -X POST "https://jeeves.johngalt.id/outsider-key" \
-  -H "Content-Type: application/json" \
-  -d '{"insiderKey":"<insider-key>","path":"/d/docs/readme.md","expiry":"7d"}'
+git clone https://github.com/karmaniverous/jeeves-server.git
+cd jeeves-server
+npm install
+cp jeeves.config.template.ts jeeves.config.ts  # Configure
+npm run build
+cd client && npx vite build --outDir ../dist/client && cd ..
+node dist/server.js
 ```
 
-### Export Options
+## Documentation
 
-Append to any markdown URL:
-- `?export=pdf` — Download as PDF
-- `?export=docx` — Download as Word document
-- `?raw=1` — Download raw markdown file
-
-### Converting Windows Paths
-
-```javascript
-// D:\docs\readme.md → /path/d/docs/readme.md
-const urlPath = winPath
-  .replace(/\\/g, '/')
-  .replace(/^([A-Z]):/, (m, d) => d.toLowerCase());
-const url = `https://jeeves.johngalt.id/path${urlPath}?key=${key}`;
-```
-
-### Sending Webhooks
-
-```bash
-curl -X POST "https://jeeves.johngalt.id/event?key=<webhook-key>" \
-  -H "Content-Type: application/json" \
-  -d '{"type":"page.content_updated","data":{"page_id":"abc123"}}'
-```
-
-## Dependencies
-
-| Package | Purpose |
-|---------|---------|
-| `express` | HTTP server |
-| `puppeteer-core` | PDF export (uses installed Chrome) |
-| `@turbodocx/html-to-docx` | DOCX export |
-| `highlight.js` | Syntax highlighting |
-| `marked` | Markdown → HTML |
-| `ajv` | JSON Schema validation (event gateway) |
-| `@karmaniverous/jsonmap` | JSON body mapping (event gateway) |
-| `lodash` | Utility functions (jsonmap lib) |
-| `@panzoom/panzoom` | SVG pan/zoom |
-
-## Running as Windows Service
-
-```bash
-nssm install JeevesServer "node" "E:\jeeves-server\server.js"
-nssm start JeevesServer
-```
-
-## Development
-
-```bash
-npm run dev
-```
+Full requirements and architecture: [`.stan/system/stan.requirements.md`](.stan/system/stan.requirements.md)
 
 ## License
 

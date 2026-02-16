@@ -1,0 +1,188 @@
+@import 'tailwindcss';
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+@plugin '@tailwindcss/typography';
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-destructive: var(--destructive);
+  --color-ring: var(--ring);
+  --radius: 0.5rem;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --background: #ffffff;
+    --foreground: #0a0a0a;
+    --muted: #f5f5f5;
+    --muted-foreground: #737373;
+    --border: #e5e5e5;
+    --primary: #171717;
+    --primary-foreground: #fafafa;
+    --accent: #f5f5f5;
+    --accent-foreground: #171717;
+    --popover: #ffffff;
+    --popover-foreground: #0a0a0a;
+    --destructive: #ef4444;
+    --ring: #171717;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --background: #0a0a0a;
+    --foreground: #fafafa;
+    --muted: #262626;
+    --muted-foreground: #a3a3a3;
+    --border: #262626;
+    --primary: #fafafa;
+    --primary-foreground: #0a0a0a;
+    --accent: #3a3a3a;
+    --accent-foreground: #fafafa;
+    --popover: #1c1c1c;
+    --popover-foreground: #fafafa;
+    --destructive: #f87171;
+    --ring: #d4d4d4;
+  }
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+/* Markdown anchor links */
+.prose .anchor {
+  text-decoration: none;
+  color: var(--color-muted-foreground);
+  opacity: 0;
+  transition: opacity 0.15s;
+  margin-left: 0.4em;
+}
+
+.prose h1:hover .anchor,
+.prose h2:hover .anchor,
+.prose h3:hover .anchor,
+.prose h4:hover .anchor,
+.prose h5:hover .anchor,
+.prose h6:hover .anchor {
+  opacity: 1;
+}
+
+.prose h1, .prose h2, .prose h3,
+.prose h4, .prose h5, .prose h6 {
+  position: relative;
+}
+
+/* Code blocks */
+.prose pre {
+  background-color: var(--color-muted);
+  color: var(--color-foreground);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  position: relative;
+}
+
+.prose pre code {
+  color: inherit;
+}
+
+/* Copy button on code blocks (injected via JS) */
+.code-copy-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.375rem;
+  border-radius: 0.25rem;
+  background: rgba(63, 63, 70, 0.8);
+  color: #a1a1aa;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+pre:hover .code-copy-btn {
+  opacity: 1;
+}
+
+.code-copy-btn:hover {
+  background: rgba(82, 82, 91, 0.9);
+  color: #fff;
+}
+
+.prose code {
+  font-size: 0.875em;
+}
+
+.prose :not(pre) > code {
+  background-color: var(--color-muted);
+  padding: 0.125em 0.375em;
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
+
+.prose :not(pre) > code::before,
+.prose :not(pre) > code::after {
+  content: none;
+}
+
+/* Thin scrollbar for breadcrumb nav */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.2) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  height: 3px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* TOC sidebar */
+.toc-sidebar {
+  position: sticky;
+  top: 1rem;
+  overflow-y: auto;
+}
+
+.toc-sidebar a {
+  display: block;
+  padding: 0.25rem 0;
+  color: var(--color-muted-foreground);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  transition: color 0.15s;
+}
+
+.toc-sidebar a:hover {
+  color: var(--color-foreground);
+}
+
+.toc-sidebar a.active {
+  color: var(--color-foreground);
+  font-weight: 600;
+}

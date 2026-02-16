@@ -8,7 +8,7 @@ import path from 'node:path';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 import type { AccessMode } from '../../config/types.js';
-import { buildBreadcrumbs } from '../../templates/layout.js';
+import { buildBreadcrumbs, renderPageShell } from '../../templates/layout.js';
 import { computeInsiderKey } from '../../util/crypto.js';
 
 /**
@@ -39,17 +39,9 @@ export function handleSVGFile(
     (request as { shareRoot?: string | null }).shareRoot,
   );
 
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex, nofollow">
-  <title>${fileName}</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #1e1e1e; color: #ccc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  // SVG viewer has a custom dark-only design
+  const pageStyles = `
+    body { background: #1e1e1e !important; color: #ccc !important; }
     .header {
       background: #161b22;
       padding: 0.75rem 1rem;
@@ -79,9 +71,9 @@ export function handleSVGFile(
       border-radius: 4px;
       display: inline-block;
     }
-  </style>
-</head>
-<body>
+  `;
+
+  const bodyContent = `
   <div class="header">
     <div class="breadcrumb">${breadcrumbs}</div>
     <div class="actions"><a href="?${query.key ? `key=${query.key}&amp;` : ''}raw=1">View Raw</a></div>
@@ -89,8 +81,15 @@ export function handleSVGFile(
   <div class="svg-wrapper">
     ${svgContent}
   </div>
-</body>
-</html>`;
+  `;
+
+  const html = renderPageShell({
+    title: fileName,
+    headerHtml: '', // SVG viewer uses its own custom header in bodyContent
+    bodyContent,
+    pageStyles,
+    shareScript: null, // No share UI for SVG viewer
+  });
 
   reply.type('text/html').send(html);
 }

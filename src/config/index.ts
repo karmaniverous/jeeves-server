@@ -1,100 +1,120 @@
-/**
- * Configuration loading and management
- */
-
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createJiti } from 'jiti';
+import { z } from 'zod';
 
-import type {
-  InsiderEntry,
-  JeevesConfig,
-  KeyEntry,
-  ResolvedInsider,
-  ResolvedKey,
-  RuntimeConfig,
-} from './types.js';
+import type { ServerState } from './types.js';
+
+import { computeInsiderKey } from '../util/crypto.js';
+import { jeevesConfigSchema, insiderEntrySchema, keyEntrySchema } from './schema.js';
+import type { JeevesConfig, ResolvedInsider, ResolvedKey, RuntimeConfig } from './types.js';
+
+type InsiderEntry = z.infer<typeof insiderEntrySchema>;
+type KeyEntry = z.infer<typeof keyEntrySchema>;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '../..');
 
-const CONFIG_FILENAME = 'jeeves.config.json';
+const CONFIG_FILENAME = 'jeeves.config';
 
-/**
- * Load configuration from jeeves.config.json
- */
 export function loadConfig(): RuntimeConfig {
+  // Use jiti to load TypeScript config at runtime
+  const jiti = createJiti(import.meta.url);
   const configPath = path.join(rootDir, CONFIG_FILENAME);
-  if (!fs.existsSync(configPath)) {
+  
+  let rawConfig: unknown;
+  try {
+    const mod = jiti(configPath) as { default?: unknown };
+    rawConfig = mod.default ?? mod;
+  } catch (err) {
     throw new Error(
-      `${CONFIG_FILENAME} not found. Copy jeeves.config.template.json and configure.`,
+      `Failed to load ${CONFIG_FILENAME}.ts. Copy ${CONFIG_FILENAME}.template.ts and configure.\n${String(err)}`
     );
   }
 
-  const config = JSON.parse(
-    fs.readFileSync(configPath, 'utf8'),
-  ) as JeevesConfig;
-
-  if (Object.keys(config.keys).length === 0) {
-    throw new Error(
-      `No keys configured in ${CONFIG_FILENAME}. At least one key is required.`,
-    );
+  // Validate with Zod
+  const parseResult = jeevesConfigSchema.safeParse(rawConfig);
+  if (!parseResult.success) {
+    const issues = parseResult.error.issues
+      .map((i) => `  - ${i.path.join('.')}: ${i.message}`)
+      .join('\n');
+    throw new Error(`Invalid configuration in ${CONFIG_FILENAME}.ts:\n${issues}`);
   }
 
-  // Resolve keys into normalized form
-  const resolvedKeys: ResolvedKey[] = Object.entries(config.keys).map(
-    ([name, entry]: [string, KeyEntry]) => {
+  const config = parseResult.data;
+
+  // Resolve keys
+  const resolvedKeys: ResolvedKey[] = Object.entries(
+    config.keys as Record<string, KeyEntry>,
+  ).map((
+    [name, entry]: [string, KeyEntry],
+  ) => {
       if (typeof entry === 'string') {
         return { name, seed: entry, scopes: null };
       }
       const scopes = entry.scopes
-        ? Array.isArray(entry.scopes)
-          ? entry.scopes
-          : [entry.scopes]
+        ? Array.isArray(entry.scopes) ? entry.scopes : [entry.scopes]
         : null;
       return { name, seed: entry.key, scopes };
     },
   );
 
-  // Resolve insiders into normalized form
-  const resolvedInsiders: ResolvedInsider[] = Object.entries(
-    config.insiders ?? {},
-  ).map(([email, entry]: [string, InsiderEntry]) => {
-    const scopes = entry.scopes
-      ? Array.isArray(entry.scopes)
-        ? entry.scopes
-        : [entry.scopes]
-      : null;
-    return {
-      email,
-      seed: entry.key ?? '',
-      scopes,
-      keyCreatedAt: entry.keyCreatedAt ?? null,
-    };
-  });
+  // Load state for insider key merging (read file directly to avoid circular dep)
+  const stateFile = path.join(rootDir, 'state.json');
+  let serverState: ServerState = {};
+  try {
+    if (fs.existsSync(stateFile)) {
+      serverState = JSON.parse(fs.readFileSync(stateFile, 'utf8')) as ServerState;
+    }
+  } catch {
+    // Ignore — empty state
+  }
 
-  // Build runtime config
-  const runtimeConfig: RuntimeConfig = {
+  // Resolve insiders (config defines identity + scopes, state provides keys)
+  const resolvedInsiders: ResolvedInsider[] = Object.entries(
+    config.insiders as Record<string, InsiderEntry>,
+  ).map((
+    [email, entry]: [string, InsiderEntry],
+  ) => {
+      const scopes = entry.scopes
+        ? Array.isArray(entry.scopes) ? entry.scopes : [entry.scopes]
+        : null;
+      const stateKey = serverState.insiderKeys?.[email.toLowerCase()];
+      return {
+        email,
+        seed: stateKey?.seed ?? '',
+        scopes,
+        keyCreatedAt: stateKey?.createdAt ?? null,
+      };
+    },
+  );
+
+  // Derive internal insider key
+  const internalKey = resolvedKeys.find((k) => k.name === '_internal');
+
+  return {
     port: config.port,
     eventTimeoutMs: config.eventTimeoutMs,
     eventLogPurgeMs: config.eventLogPurgeMs,
+    maxZipSizeMb: config.maxZipSizeMb,
     chromePath: config.chromePath,
     events: config.events,
+    authModes: config.auth.modes,
     resolvedKeys,
     resolvedInsiders,
-    auth: config.auth ?? null,
-    configPath,
+    googleAuth: config.auth.google ?? null,
+    sessionSecret: config.auth.sessionSecret ?? null,
+    internalInsiderKey: internalKey ? computeInsiderKey(internalKey.seed) : null,
+    configPath: path.join(rootDir, `${CONFIG_FILENAME}.ts`),
     eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),
     stateFile: path.join(rootDir, 'state.json'),
     eventQueuePath: path.join(rootDir, 'logs', 'event-queue.jsonl'),
     eventQueueCursorPath: path.join(rootDir, 'logs', 'event-queue.cursor'),
     eventLogPath: path.join(rootDir, 'logs', 'event-log.jsonl'),
   };
-
-  return runtimeConfig;
 }
 
-// Export singleton instance
 let configInstance: RuntimeConfig | null = null;
 
 export function getConfig(): RuntimeConfig {

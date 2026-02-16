@@ -1,63 +1,18 @@
 /**
- * Configuration types for Jeeves Server
+ * Runtime and internal types for Jeeves Server.
+ * Config types are derived from Zod schema in schema.ts.
  */
 
-/**
- * Event configuration for webhook event processing
- */
-export interface EventConfig {
-  schema: object; // JSON Schema for ajv validation
-  cmd: string; // Command to execute when schema matches
-  map?: object; // Optional JsonMap transform
-  timeoutMs?: number; // Override default timeout
-}
+import type {
+  JeevesConfig,
+  AuthMode,
+} from './schema.js';
 
-/**
- * A named API key seed entry.
- * Plain string = seed value, no scope restrictions.
- * Object = seed value + optional path scope restrictions.
- */
-export type KeyEntry = string | { key: string; scopes?: string | string[] };
-
-/**
- * Google OAuth configuration
- */
-export interface GoogleAuthConfig {
-  clientId: string;
-  clientSecret: string;
-}
-
-/**
- * Auth configuration block
- */
-export interface AuthConfig {
-  google?: GoogleAuthConfig;
-  sessionSecret?: string;
-}
-
-/**
- * Insider entry: a Google-authenticated human user.
- * `key` is auto-generated on first login and persisted.
- */
-export interface InsiderEntry {
-  scopes?: string | string[];
-  key?: string;
-  keyCreatedAt?: string;
-}
-
-/**
- * Unified configuration from jeeves.config.json
- */
-export interface JeevesConfig {
-  port: number;
-  eventTimeoutMs: number;
-  eventLogPurgeMs: number;
-  chromePath: string;
-  events: Record<string, EventConfig>;
-  auth?: AuthConfig;
-  insiders?: Record<string, InsiderEntry>;
-  keys: Record<string, KeyEntry>;
-}
+// Re-export config types from schema
+export type {
+  JeevesConfig,
+  AuthMode,
+};
 
 /**
  * Resolved key seed with normalized scopes
@@ -65,7 +20,7 @@ export interface JeevesConfig {
 export interface ResolvedKey {
   name: string;
   seed: string;
-  scopes: string[] | null; // null = unscoped (all paths)
+  scopes: string[] | null;
 }
 
 /**
@@ -79,20 +34,21 @@ export interface ResolvedInsider {
 }
 
 /**
- * Combined runtime configuration
- */
-/**
- * Combined runtime configuration
+ * Combined runtime configuration (post-resolution)
  */
 export interface RuntimeConfig {
   port: number;
   eventTimeoutMs: number;
   eventLogPurgeMs: number;
+  maxZipSizeMb: number;
   chromePath: string;
-  events: Record<string, EventConfig>;
+  events: JeevesConfig['events'];
+  authModes: AuthMode[];
   resolvedKeys: ResolvedKey[];
   resolvedInsiders: ResolvedInsider[];
-  auth: AuthConfig | null;
+  googleAuth: { clientId: string; clientSecret: string } | null;
+  sessionSecret: string | null;
+  internalInsiderKey: string | null;
   configPath: string;
   eventsLog: string;
   stateFile: string;
@@ -102,10 +58,20 @@ export interface RuntimeConfig {
 }
 
 /**
- * State file structure
+ * Insider key state (auto-generated, persisted in state.json)
+ */
+export interface InsiderKeyState {
+  seed: string;
+  createdAt: string;
+}
+
+/**
+ * State file structure (mutable runtime state, separate from config)
  */
 export interface ServerState {
   keyRotatedAt?: string;
+  /** Auto-generated insider keys, keyed by email */
+  insiderKeys?: Record<string, InsiderKeyState>;
 }
 
 /**

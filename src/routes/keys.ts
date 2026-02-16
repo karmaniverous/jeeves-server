@@ -9,7 +9,6 @@ import type { FastifyPluginAsync } from 'fastify';
 
 import { COOKIE_NAME, verifySessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
-import type { JeevesConfig } from '../config/types.js';
 import { appendEvent } from '../services/eventQueue.js';
 import {
   computeInsiderKey,
@@ -18,7 +17,7 @@ import {
   timingSafeEqual,
 } from '../util/crypto.js';
 import { nowIso } from '../util/formatters.js';
-import { setKeyRotationTimestamp } from '../util/state.js';
+import { setInsiderKey, setKeyRotationTimestamp } from '../util/state.js';
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const keysRoute: FastifyPluginAsync = async (fastify) => {
@@ -89,7 +88,7 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
 
       // Try session-based insider rotation
       if (!matched) {
-        const sessionSecret = config.auth?.sessionSecret;
+        const sessionSecret = config.sessionSecret;
         const cookieValue = sessionSecret
           ? ((request.cookies as Record<string, string> | undefined)?.[
               COOKIE_NAME
@@ -105,26 +104,16 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
           );
           if (insider?.seed) {
             const rotatedSeed = crypto.randomBytes(32).toString('hex');
-            const rotateConfig = JSON.parse(
-              fs.readFileSync(config.configPath, 'utf8'),
-            ) as JeevesConfig;
-            const insiderEntry = rotateConfig.insiders?.[insider.email];
-            if (insiderEntry) {
-              insiderEntry.key = rotatedSeed;
-              insiderEntry.keyCreatedAt = new Date().toISOString();
-              fs.writeFileSync(
-                config.configPath,
-                JSON.stringify(rotateConfig, null, 2),
-                'utf8',
-              );
-              appendEvent({
-                kind: 'insider_key_rotated',
-                email: insider.email,
-                at: new Date().toISOString(),
-              });
-              resetConfig();
-              return { ok: true, keyName: insider.email };
-            }
+            const timestamp = new Date().toISOString();
+            
+            setInsiderKey(insider.email, rotatedSeed, timestamp);
+            appendEvent({
+              kind: 'insider_key_rotated',
+              email: insider.email,
+              at: timestamp,
+            });
+            resetConfig();
+            return { ok: true, keyName: insider.email };
           }
         }
         return reply.code(401).send({ error: 'Invalid insider key' });
@@ -133,16 +122,24 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
       // Generate new machine API key seed
       const newSeed = crypto.randomBytes(32).toString('hex');
 
-      // Update jeeves.config.json
+      // Machine keys live in config (immutable at runtime with TS config)
+      if (!config.configPath.endsWith('.json')) {
+        return reply.code(501).send({
+          error: 'Machine key rotation is not supported with TypeScript config. ' +
+                 'Update the key manually in jeeves.config.ts and restart the server.',
+        });
+      }
+
       const fullConfig = JSON.parse(
         fs.readFileSync(config.configPath, 'utf8'),
-      ) as JeevesConfig;
+      ) as Record<string, unknown>;
 
-      const entry = fullConfig.keys[matched.name];
+      const keys = fullConfig.keys as Record<string, unknown>;
+      const entry = keys[matched.name];
       if (typeof entry === 'string') {
-        fullConfig.keys[matched.name] = newSeed;
-      } else {
-        entry.key = newSeed;
+        keys[matched.name] = newSeed;
+      } else if (typeof entry === 'object' && entry !== null) {
+        (entry as { key: string }).key = newSeed;
       }
 
       fs.writeFileSync(
@@ -198,7 +195,7 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
           : null);
       if (!matched) {
         // Also try session cookie auth for share
-        const sessionSecret = config.auth?.sessionSecret;
+        const sessionSecret = config.sessionSecret;
         const cookieValue = sessionSecret
           ? ((request.cookies as Record<string, string> | undefined)?.[
               COOKIE_NAME

@@ -12,6 +12,7 @@ const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 export interface SessionPayload {
   email: string;
+  picture?: string;
   exp: number;
 }
 
@@ -21,9 +22,11 @@ export interface SessionPayload {
 export function createSessionCookie(
   email: string,
   sessionSecret: string,
+  picture?: string,
 ): string {
   const payload: SessionPayload = {
     email,
+    ...(picture ? { picture } : {}),
     exp: Date.now() + SESSION_MAX_AGE_MS,
   };
   const b64 = Buffer.from(JSON.stringify(payload)).toString('base64url');

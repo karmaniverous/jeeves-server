@@ -7,6 +7,7 @@ import path from 'node:path';
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
+import { getConfig } from '../../config/index.js';
 import type { AccessMode } from '../../config/types.js';
 import { appendEvent } from '../../services/eventQueue.js';
 import { type ExportFormat, exportPage } from '../../services/export.js';
@@ -15,10 +16,8 @@ import { inlineSVGs } from '../../services/svg.js';
 import {
   buildBreadcrumbs,
   renderHeader,
-  renderShareScript,
-  renderThemeScript,
+  renderPageShell,
 } from '../../templates/layout.js';
-import { renderThemeStyles } from '../../templates/styles.js';
 import { computeInsiderKey, computePathKey } from '../../util/crypto.js';
 
 /**
@@ -45,8 +44,17 @@ export async function handleMarkdown(
 
   // Handle exports
   if (query.export === 'pdf' || query.export === 'docx') {
-    const insiderKeyForExport = computeInsiderKey(apiKey);
-    const exportKey = query.key || insiderKeyForExport;
+    // Use the dedicated internal key for Puppeteer auth — insider seeds
+    // can't authenticate as insider via URL key (by design).
+    const internalKey = getConfig().internalInsiderKey;
+    const exportKey = query.key || internalKey;
+    if (!exportKey) {
+      reply.code(500).send({
+        error: 'Export unavailable',
+        details: 'No internalKey configured in jeeves.config.json',
+      });
+      return;
+    }
     const exportUrl = `http://localhost:${String(serverPort)}${request.url.split('?')[0]}?key=${exportKey}&toc=${query.export === 'pdf' ? '1' : '0'}`;
     const baseName = fileName.replace(/\.md$/i, '');
 
@@ -179,39 +187,19 @@ export async function handleMarkdown(
     expiry,
     actions: isInsider
       ? [
-          `<a href="?export=pdf" title="Export as PDF">📄 PDF</a>`,
-          `<a href="?export=docx" title="Export as Word document">📝 DOCX</a>`,
+          `<button class="export-btn" data-format="pdf" data-lucide-icon="cloud-download" data-url="?export=pdf" title="Export as PDF"><span class="export-icon"><i data-lucide="cloud-download"></i></span> PDF</button>`,
+          `<button class="export-btn" data-format="docx" data-lucide-icon="cloud-download" data-url="?export=docx" title="Export as Word document"><span class="export-icon"><i data-lucide="cloud-download"></i></span> DOCX</button>`,
         ]
       : [
-          `<a href="?key=${query.key}&amp;export=pdf" title="Export as PDF">📄 PDF</a>`,
-          `<a href="?key=${query.key}&amp;export=docx" title="Export as Word document">📝 DOCX</a>`,
+          `<button class="export-btn" data-format="pdf" data-lucide-icon="cloud-download" data-url="?key=${query.key}&amp;export=pdf" title="Export as PDF"><span class="export-icon"><i data-lucide="cloud-download"></i></span> PDF</button>`,
+          `<button class="export-btn" data-format="docx" data-lucide-icon="cloud-download" data-url="?key=${query.key}&amp;export=docx" title="Export as Word document"><span class="export-icon"><i data-lucide="cloud-download"></i></span> DOCX</button>`,
         ],
     eventInScope: (request as { eventInScope?: boolean }).eventInScope,
     keyAge: (request as { keyAge?: string | null }).keyAge,
     hasRaw: true,
   });
 
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex, nofollow">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <title>${fileName}</title>
-  <script>${renderThemeScript()}</script>
-  <style>
-    ${renderThemeStyles()}
-    * { box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      line-height: 1.6;
-      margin: 0;
-      padding: 0;
-      color: var(--text-primary);
-      background: var(--bg-tertiary);
-    }
-    ${renderHeaderStyles()}
+  const pageStyles = `
     .layout { display: flex; min-height: calc(100vh - 42px); }
     .toc {
       width: 260px;
@@ -256,6 +244,14 @@ export async function handleMarkdown(
     hr { border: none; border-top: 1px solid var(--border-color); margin: 2em 0; }
     img { max-width: 100%; height: auto; }
     img.zoomable { cursor: zoom-in; }
+    .export-btn {
+      background: none; border: none; color: var(--link-color); cursor: pointer;
+      font: inherit; padding: 0; display: inline-flex; align-items: center; gap: 0.3em;
+    }
+    .export-btn:hover { text-decoration: underline; }
+    .export-btn:disabled { opacity: 0.6; cursor: default; text-decoration: none; }
+    .export-icon { display: inline-flex; align-items: center; width: 16px; height: 16px; }
+    .export-icon svg { width: 16px; height: 16px; }
     .svg-container { max-width: 100%; overflow: hidden; }
     .svg-container svg.inline-svg { max-width: 100%; height: auto; display: block; }
     .zoomable-svg { cursor: zoom-in; }
@@ -301,10 +297,9 @@ export async function handleMarkdown(
       .toc { display: none; }
       .content { padding: 1.5rem; }
     }
-  </style>
-</head>
-<body>
-  ${headerHtml}
+  `;
+
+  const bodyContent = `
   <div class="layout${showToc ? '' : ' no-toc'}">
     ${tocHtml}
     ${showToc ? '<div class="toc-spacer"></div>' : ''}
@@ -318,9 +313,12 @@ ${processedHtml}
     <div id="panzoom-svg" class="panzoom-svg-holder"></div>
     <div class="panzoom-hint">Scroll to zoom • Drag to pan • Click or Esc to close</div>
   </div>
-  <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
-  <script>
-    // Panzoom setup (same as original)
+  `;
+
+  const headExtra = '<script src="/static/panzoom.min.js"></script>';
+
+  const pageScripts = `
+    // Panzoom setup
     document.querySelectorAll('.content img').forEach(img => {
       const check = () => {
         if (img.naturalWidth > img.clientWidth || img.naturalHeight > img.clientHeight) {
@@ -373,7 +371,7 @@ ${processedHtml}
           const containerH = window.innerHeight;
           let innerW = maxW, innerH = maxH;
           if (vb) {
-            const parts = vb.split(/[\\s,]+/).map(Number);
+            const parts = vb.split(/[\\\\s,]+/).map(Number);
             const svgW = parts[2], svgH = parts[3];
             const scale = Math.min(maxW / svgW, maxH / svgH);
             innerW = svgW * scale;
@@ -405,35 +403,56 @@ ${processedHtml}
     overlay.addEventListener('click', e => { if (e.target === overlay || e.target === pzSvgContainer) closePanzoom(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('active')) closePanzoom(); });
 
-    ${renderShareScript(isInsider)}
-  </script>
-</body>
-</html>`;
+    // Export buttons: fetch + download with icon swap
+    document.querySelectorAll('.export-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (btn.disabled) return;
+        const icon = btn.querySelector('.export-icon');
+        const origIcon = btn.dataset.lucideIcon;
+        btn.disabled = true;
+        icon.innerHTML = '<i data-lucide="loader-2" class="lucide-spin"></i>';
+        lucide.createIcons();
+        try {
+          const resp = await fetch(btn.dataset.url);
+          if (!resp.ok) throw new Error('Export failed');
+          const blob = await resp.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          const disp = resp.headers.get('content-disposition') || '';
+          const match = disp.match(/filename="([^"]+)"/);
+          a.download = match ? match[1] : ('export.' + btn.dataset.format);
+          a.href = url;
+          a.click();
+          URL.revokeObjectURL(url);
+          icon.innerHTML = '<i data-lucide="check" style="color:#2ea043"></i>';
+          lucide.createIcons();
+          setTimeout(() => {
+            icon.innerHTML = '<i data-lucide="' + origIcon + '"></i>';
+            lucide.createIcons();
+            btn.disabled = false;
+          }, 2000);
+        } catch (err) {
+          icon.innerHTML = '<i data-lucide="x" style="color:#f85149"></i>';
+          lucide.createIcons();
+          setTimeout(() => {
+            icon.innerHTML = '<i data-lucide="' + origIcon + '"></i>';
+            lucide.createIcons();
+            btn.disabled = false;
+          }, 2000);
+        }
+      });
+    });
+  `;
+
+  const html = renderPageShell({
+    title: fileName,
+    headerHtml,
+    bodyContent,
+    pageStyles,
+    pageScripts,
+    shareScript: { isInsider },
+    headExtra,
+  });
 
   reply.type('text/html').send(html);
-}
-
-function renderHeaderStyles(): string {
-  return `
-    .header {
-      position: sticky;
-      top: 0;
-      background: var(--header-bg);
-      border-bottom: 1px solid var(--border-color);
-      padding: 0.5rem 1rem;
-      font-size: 13px;
-      z-index: 100;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-    }
-    .header a { color: var(--link-color); text-decoration: none; }
-    .header a:hover { text-decoration: underline; }
-    .breadcrumb { flex: 1; display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); }
-    .breadcrumb-sep { color: var(--text-tertiary); }
-    .header-right { display: flex; align-items: center; gap: 1rem; font-size: 12px; }
-    .header-actions { display: flex; gap: 0.75rem; }
-    .theme-toggle { cursor: pointer; user-select: none; font-size: 18px; }
-  `;
 }

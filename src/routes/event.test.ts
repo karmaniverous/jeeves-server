@@ -4,7 +4,7 @@
 
 import { JsonMap } from '@karmaniverous/jsonmap';
 import Ajv from 'ajv';
-import * as _ from 'lodash-es';
+import * as _ from 'radash';
 import { describe, expect, it } from 'vitest';
 
 const ajv = new Ajv();
@@ -78,7 +78,7 @@ describe('event route', () => {
   });
 
   describe('JsonMap transformation', () => {
-    it('should extract fields using lodash get', async () => {
+    it('should extract fields using radash get', async () => {
       const body = {
         type: 'page.content_updated',
         data: {
@@ -139,24 +139,31 @@ describe('event route', () => {
       expect(result.nested).toEqual({ a: { b: 'c' } });
     });
 
-    it('should handle complex transformations', async () => {
+    it('should handle nested path extraction', async () => {
       const body = {
-        items: [
-          { id: 1, name: 'First' },
-          { id: 2, name: 'Second' },
-        ],
+        metadata: {
+          author: {
+            name: 'Alice',
+            email: 'alice@example.com',
+          },
+          tags: ['important', 'review'],
+        },
       };
 
       const map = {
-        ids: {
-          $: { method: '$.lib._.map', params: ['$.input.items', 'id'] },
+        authorName: {
+          $: { method: '$.lib._.get', params: ['$.input', 'metadata.author.name'] },
+        },
+        authorEmail: {
+          $: { method: '$.lib._.get', params: ['$.input', 'metadata.author.email'] },
         },
       };
 
       const mapper = new JsonMap(map, { _: _ as never });
       const result = (await mapper.transform(body)) as Record<string, unknown>;
 
-      expect(result.ids).toEqual([1, 2]);
+      expect(result.authorName).toBe('Alice');
+      expect(result.authorEmail).toBe('alice@example.com');
     });
   });
 
