@@ -97,7 +97,12 @@ export function initInlineSvgPanzoom(article: HTMLElement): () => void {
                 container.clientHeight / svgH,
                 1 // Don't upscale beyond 1x
               );
-              pz = Panzoom(inner, { maxScale: 20, minScale: fitScale * 0.5, startScale: fitScale });
+              // Center vertically: offset by half the difference between container and scaled SVG
+              const scaledH = svgH * fitScale;
+              const startY = (container.clientHeight - scaledH) / 2;
+              const scaledW = svgW * fitScale;
+              const startX = (container.clientWidth - scaledW) / 2;
+              pz = Panzoom(inner, { maxScale: 20, minScale: fitScale * 0.5, startScale: fitScale, startX, startY });
             } else {
               pz = Panzoom(inner, { maxScale: 20, minScale: 0.1 });
             }
