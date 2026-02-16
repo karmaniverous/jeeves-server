@@ -59,6 +59,7 @@ export function renderShareScript(isInsider: boolean): string {
     // Load saved expiry
     const savedExpiry = localStorage.getItem('jeeves-share-expiry') || '';
     if (shareExpiry) shareExpiry.value = savedExpiry;
+    if (shareExpiry) shareExpiry.addEventListener('change', () => localStorage.setItem('jeeves-share-expiry', shareExpiry.value));
     
     // Copy link button: generate outsider link for selected type
     if (copyLinkBtn) {
@@ -67,32 +68,18 @@ export function renderShareScript(isInsider: boolean): string {
         const basePath = copyLinkBtn.dataset.path;
         const targetPath = type === 'event' ? '/event' : basePath;
         const insiderKey = copyLinkBtn.dataset.insiderKey;
-        const expiryInput = shareExpiry ? shareExpiry.value.trim() : '';
+        const expiryVal = shareExpiry ? shareExpiry.value : '';
         
-        // Validate expiry format
         let expParam = '';
-        if (expiryInput) {
-          const match = expiryInput.match(/^(\\d+)([mhd])$/i);
-          if (!match) {
-            shareExpiry.style.borderColor = '#f85149';
-            shareExpiry.title = 'Invalid format. Use: 15m, 1h, 7d';
-            setTimeout(() => { shareExpiry.style.borderColor = '#444'; }, 2000);
-            return;
+        if (expiryVal) {
+          const match = expiryVal.match(/^(\\d+)([mhd])$/i);
+          if (match) {
+            const val = parseInt(match[1], 10);
+            const unit = match[2].toLowerCase();
+            const multiplier = { m: 60*1000, h: 60*60*1000, d: 24*60*60*1000 }[unit];
+            expParam = '&exp=' + (Date.now() + val * multiplier);
           }
-          const val = parseInt(match[1], 10);
-          const unit = match[2].toLowerCase();
-          if (val <= 0 || val > 365) {
-            shareExpiry.style.borderColor = '#f85149';
-            shareExpiry.title = 'Value must be 1-365';
-            setTimeout(() => { shareExpiry.style.borderColor = '#444'; }, 2000);
-            return;
-          }
-          const multiplier = { m: 60*1000, h: 60*60*1000, d: 24*60*60*1000 }[unit];
-          const expiry = Date.now() + val * multiplier;
-          expParam = '&exp=' + expiry;
         }
-        
-        localStorage.setItem('jeeves-share-expiry', expiryInput);
         
         try {
           const resp = await fetch('/share?path=' + encodeURIComponent(targetPath) + '&key=' + insiderKey + expParam);
@@ -307,7 +294,7 @@ export function renderHeader(options: HeaderOptions): string {
           ${rawOption}
           ${eventOption}
         </select>
-        <input type="text" id="share-expiry" placeholder="1h" title="Expiry: 15m, 1h, 7d, or blank for never">
+        <select id="share-expiry" title="Link expiry"><option value="">never</option><option value="1h">1h</option><option value="1d">1d</option><option value="7d">1w</option><option value="30d">1m</option><option value="365d">1y</option></select>
         <button id="copy-link-btn" class="share-btn-outside" data-path="${currentPath}" data-insider-key="${insiderKey}" title="Copy outsider link to clipboard">📋</button>
       </div>
     `;
