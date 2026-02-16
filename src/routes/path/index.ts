@@ -29,34 +29,36 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
     const provided = (request.query as { key?: string }).key;
     const expParam = (request.query as { exp?: string }).exp;
     const config = getConfig();
+    const { authModes } = config;
 
-    // Try API key auth (machine keys + insider seeds for outsider access)
-    const authResult = verifyKey(
-      config.resolvedKeys,
-      urlPath,
-      provided,
-      expParam,
-      config.resolvedInsiders,
-    );
+    // Step 1: Try key auth (if 'keys' mode is active)
+    if (authModes.includes('keys')) {
+      const authResult = verifyKey(
+        config.resolvedKeys,
+        urlPath,
+        provided,
+        expParam,
+        config.resolvedInsiders,
+      );
 
-    if (authResult.valid) {
-      (request as { accessMode?: AccessMode }).accessMode =
-        authResult.mode ?? undefined;
-      (request as { authSeed?: string }).authSeed =
-        authResult.seed ?? undefined;
-      (request as { shareRoot?: string | null }).shareRoot =
-        authResult.matchedPath;
-      return;
+      if (authResult.valid) {
+        (request as { accessMode?: AccessMode }).accessMode =
+          authResult.mode ?? undefined;
+        (request as { authSeed?: string }).authSeed =
+          authResult.seed ?? undefined;
+        (request as { shareRoot?: string | null }).shareRoot =
+          authResult.matchedPath;
+        return;
+      }
     }
 
-    // Try session cookie auth (Google OAuth insiders)
-    const sessionSecret = config.auth?.sessionSecret;
-    if (sessionSecret) {
+    // Step 2: Try Google cookie auth (if 'google' mode is active)
+    if (authModes.includes('google') && config.sessionSecret) {
       const cookieValue = (
         request.cookies as Record<string, string> | undefined
       )?.[COOKIE_NAME];
       if (cookieValue) {
-        const session = verifySessionCookie(cookieValue, sessionSecret);
+        const session = verifySessionCookie(cookieValue, config.sessionSecret);
         if (session) {
           const insider = config.resolvedInsiders.find(
             (i) => i.email.toLowerCase() === session.email.toLowerCase(),
@@ -80,14 +82,16 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
       }
     }
 
-    // No valid auth — if Google auth is configured, redirect to login
-    if (config.auth?.google) {
+    // Step 3: Auth failed — behavior depends on modes
+    if (authModes.includes('google') && config.googleAuth) {
+      // Redirect to Google login
       const returnTo = request.url;
       const loginUrl = `/auth/login?returnTo=${encodeURIComponent(returnTo)}`;
       reply.redirect(loginUrl);
       return;
     }
 
+    // No Google configured — plain 401
     appendEvent({ kind: 'auth_failed_path', ip: request.ip, path: urlPath });
     reply.code(401).send({ error: 'Unauthorized' });
     return;

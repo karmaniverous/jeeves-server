@@ -5,6 +5,7 @@
 import type { AccessMode } from '../config/types.js';
 import { formatRelativeTime } from '../util/formatters.js';
 import { getKeyRotationTimestamp } from '../util/state.js';
+import { renderHeaderStyles, renderThemeStyles } from './styles.js';
 
 export interface HeaderOptions {
   isInsider: boolean;
@@ -36,11 +37,11 @@ export function renderThemeScript(): string {
         document.documentElement.setAttribute('data-theme', next);
         localStorage.setItem('jeeves-theme', next);
         const btn = document.getElementById('theme-toggle');
-        if (btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
+        if (btn) { btn.innerHTML = next === 'dark' ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>'; if (window.lucide) lucide.createIcons(); }
       };
       document.addEventListener('DOMContentLoaded', () => {
         const btn = document.getElementById('theme-toggle');
-        if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+        if (btn) { btn.innerHTML = saved === 'dark' ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>'; }
       });
     })();
   `;
@@ -88,8 +89,8 @@ export function renderShareScript(isInsider: boolean): string {
             let fullUrl = window.location.origin + data.url;
             if (type === 'raw') fullUrl += (fullUrl.includes('?') ? '&' : '?') + 'raw=1';
             await navigator.clipboard.writeText(fullUrl);
-            copyLinkBtn.textContent = '✓';
-            setTimeout(() => { copyLinkBtn.textContent = '📋'; }, 1500);
+            copyLinkBtn.innerHTML = '<i data-lucide="check"></i>'; lucide.createIcons();
+            setTimeout(() => { copyLinkBtn.innerHTML = '<i data-lucide="link"></i>'; lucide.createIcons(); }, 1500);
           }
         } catch (err) { console.error('Share failed:', err); }
       });
@@ -135,8 +136,8 @@ export function renderShareScript(isInsider: boolean): string {
     if (shareBtn) {
       shareBtn.addEventListener('click', async () => {
         await navigator.clipboard.writeText(window.location.href);
-        shareBtn.textContent = '✓ Copied';
-        setTimeout(() => { shareBtn.textContent = '📋 Share'; }, 1500);
+        shareBtn.innerHTML = '<i data-lucide="check"></i> Copied'; lucide.createIcons();
+        setTimeout(() => { shareBtn.innerHTML = '<i data-lucide="link"></i> Share'; lucide.createIcons(); }, 1500);
       });
     }
     
@@ -267,8 +268,8 @@ export function renderHeader(options: HeaderOptions): string {
     showRaw && fileName
       ? [
           isInsider
-            ? `<a href="?raw=1" download="${fileName}" title="Download raw file">⬇ Raw</a>`
-            : `<a href="?key=${queryKey}&amp;raw=1" download="${fileName}" title="Download raw file">⬇ Raw</a>`,
+            ? `<a href="?raw=1" download="${fileName}" title="Download raw file"><i data-lucide="cloud-download"></i> Raw</a>`
+            : `<a href="?key=${queryKey}&amp;raw=1" download="${fileName}" title="Download raw file"><i data-lucide="cloud-download"></i> Raw</a>`,
         ]
       : [];
   const allActions = [...defaultActions, ...actions];
@@ -283,19 +284,16 @@ export function renderHeader(options: HeaderOptions): string {
   let shareUi = '';
   if (showShareUi && isInsider) {
     const rawOption = hasRaw ? '<option value="raw">Raw</option>' : '';
-    const eventOption = eventInScope
-      ? '<option value="event">Event</option>'
-      : '';
     shareUi = `
       <div class="share-ui">
         <span style="color:#8b949e">Link:</span>
         <select id="link-type" title="Link type">
           <option value="page">Page</option>
           ${rawOption}
-          ${eventOption}
+          <option value="event">Event</option>
         </select>
         <select id="share-expiry" title="Link expiry"><option value="">never</option><option value="1h">1h</option><option value="1d">1d</option><option value="7d">1w</option><option value="30d">1m</option><option value="365d">1y</option></select>
-        <button id="copy-link-btn" class="share-btn-outside" data-path="${currentPath}" data-insider-key="${insiderKey}" title="Copy outsider link to clipboard">📋</button>
+        <button id="copy-link-btn" class="share-btn-outside" data-path="${currentPath}" data-insider-key="${insiderKey}" title="Copy outsider link to clipboard"><i data-lucide="link"></i></button>
       </div>
     `;
   } else if (showShareUi) {
@@ -304,7 +302,7 @@ export function renderHeader(options: HeaderOptions): string {
       : '';
     shareUi = `
       <div class="share-ui">
-        <button id="share-btn" data-key="${queryKey}" title="Copy link to clipboard">📋 Share</button>
+        <button id="share-btn" data-key="${queryKey}" title="Copy link to clipboard"><i data-lucide="link"></i> Share</button>
         ${expiryHtml}
       </div>
     `;
@@ -326,7 +324,7 @@ export function renderHeader(options: HeaderOptions): string {
       : '';
     keyRotateGroup = `
       <div class="key-rotation-group">
-        <button id="rotate-key-btn" class="theme-toggle" title="Rotate key (invalidates all your shares)" data-insider-key="${insiderKey}">🔑</button>
+        <button id="rotate-key-btn" class="theme-toggle" title="Rotate key (invalidates all your shares)" data-insider-key="${insiderKey}"><i data-lucide="key-round"></i></button>
         ${ageHtml}
       </div>
     `;
@@ -340,8 +338,70 @@ export function renderHeader(options: HeaderOptions): string {
         ${keyRotateGroup}
         ${allActions.join('\n        ')}
         ${shareUi}
-        <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light theme">🌙</button>
+        <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light theme"><i data-lucide="moon"></i></button>
       </div>
     </div>
   `;
+}
+
+export interface PageShellOptions {
+  title: string;
+  headerHtml: string;
+  bodyContent: string;
+  /** Additional CSS to include in <style> */
+  pageStyles?: string;
+  /** Additional JS to include before closing </body>. Runs AFTER lucide.createIcons() */
+  pageScripts?: string;
+  /** Whether page needs share script (insider/outsider) */
+  shareScript?: { isInsider: boolean } | null;
+  /** Additional <head> elements (e.g. highlight.js theme link) */
+  headExtra?: string;
+}
+
+/**
+ * Render a complete HTML page shell with shared head, theme, and Lucide
+ */
+export function renderPageShell(options: PageShellOptions): string {
+  const { title, headerHtml, bodyContent, pageStyles = '', pageScripts = '', shareScript = null, headExtra = '' } = options;
+  
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script src="/static/lucide.min.js"></script>
+  <title>${title}</title>
+  <script>${renderThemeScript()}</script>
+  ${headExtra}
+  <style>
+    ${renderThemeStyles()}
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+      color: var(--text-primary);
+      background: var(--bg-tertiary);
+    }
+    ${renderHeaderStyles()}
+    [data-lucide] { width: 16px; height: 16px; display: inline-block; vertical-align: middle; }
+    .lucide-spin { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    ${pageStyles}
+  </style>
+</head>
+<body>
+  ${headerHtml}
+  ${bodyContent}
+  <script>
+    ${shareScript ? renderShareScript(shareScript.isInsider) : ''}
+    ${pageScripts}
+    // Initialize all Lucide icons
+    lucide.createIcons();
+  </script>
+</body>
+</html>`;
 }

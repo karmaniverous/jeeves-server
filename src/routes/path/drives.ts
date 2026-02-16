@@ -9,13 +9,8 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { AccessMode } from '../../config/types.js';
 import {
   renderHeader,
-  renderShareScript,
-  renderThemeScript,
+  renderPageShell,
 } from '../../templates/layout.js';
-import {
-  renderHeaderStyles,
-  renderThemeStyles,
-} from '../../templates/styles.js';
 import { computeInsiderKey, computePathKey } from '../../util/crypto.js';
 
 export interface DriveInfo {
@@ -100,19 +95,7 @@ export function renderDriveListing(
     keyAge: (request as { keyAge?: string | null }).keyAge,
   });
 
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex, nofollow">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <title>Drives</title>
-  <script>${renderThemeScript()}</script>
-  <style>
-    ${renderThemeStyles()}
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: var(--bg-tertiary); color: var(--text-primary); }
-    ${renderHeaderStyles()}
+  const pageStyles = `
     .container { padding: 1.5rem 2rem; }
     table { width: 100%; border-collapse: collapse; background: var(--bg-primary); border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
@@ -126,21 +109,27 @@ export function renderDriveListing(
     .share-icon:hover { border-color: var(--link-color); }
     .share-icon.copied { border-color: #3fb950; }
     .share-expiry-select { padding: 2px 4px; font-size: 11px; border: 1px solid var(--border-color); border-radius: 3px; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; }
-  </style>
-</head>
-<body>
-  ${headerHtml}
+  `;
+
+  const bodyContent = `
   <div class="container">
     <table>
       <thead><tr><th>Drive</th><th>Type</th>${isInsider ? `<th>Share <select id="dir-share-expiry" class="share-expiry-select" title="Link expiry"><option value="">never</option><option value="1h">1h</option><option value="1d">1d</option><option value="7d">1w</option><option value="30d">1m</option><option value="365d">1y</option></select></th>` : ''}</tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div>
-  <script>
-    ${renderShareScript(true)}
-    ${isInsider ? renderDriveShareScript(insiderKey) : ''}
-</body>
-</html>`;
+  `;
+
+  const pageScripts = isInsider ? renderDriveShareScript(insiderKey) : '';
+
+  const html = renderPageShell({
+    title: 'Drives',
+    headerHtml,
+    bodyContent,
+    pageStyles,
+    pageScripts,
+    shareScript: { isInsider: true },
+  });
 
   reply.type('text/html').send(html);
 }

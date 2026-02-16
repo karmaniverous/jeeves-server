@@ -2,6 +2,7 @@
  * JSON API endpoints for the React frontend
  */
 
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,9 +10,15 @@ import { fileURLToPath } from 'node:url';
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 
 import { _pathMatchesScopes, verifyKey } from '../auth/keys.js';
+import { computeOutsiderKeyWithExpiry, computePathKey } from '../util/crypto.js';
 import { COOKIE_NAME, verifySessionCookie } from '../auth/session.js';
-import { getConfig } from '../config/index.js';
+import { getConfig, resetConfig } from '../config/index.js';
+import { setInsiderKey } from '../util/state.js';
 import type { AccessMode } from '../config/types.js';
+import { execSync } from 'node:child_process';
+
+import hljs from 'highlight.js';
+
 import { parseMarkdown } from '../services/markdown.js';
 import { looksLikeText } from '../util/fileDetection.js';
 import { formatRelativeTime } from '../util/formatters.js';
@@ -42,6 +49,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', async (request, reply) => {
     if (!request.url.startsWith('/api')) return;
     if (request.url.startsWith('/api/about')) return;
+    if (request.url.startsWith('/api/auth/status')) return;
 
     const config = getConfig();
     const provided = (request.query as { key?: string }).key;
@@ -72,7 +80,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
     }
 
     // Try session cookie auth
-    const sessionSecret = config.auth?.sessionSecret;
+    const sessionSecret = config.sessionSecret;
     if (sessionSecret) {
       const cookieValue = (
         request.cookies as Record<string, string> | undefined
@@ -225,9 +233,11 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
   );
 
   // GET /api/file/* — file content as JSON
-  fastify.get<{ Params: { '*': string } }>(
+  // ?raw=1 returns only raw content (skips server-side rendering/highlighting)
+  fastify.get<{ Params: { '*': string }; Querystring: { raw?: string } }>(
     '/api/file/*',
     async (request, reply) => {
+      const rawOnly = request.query.raw === '1';
       const reqPath = request.params['*'];
       if (!reqPath) return reply.code(400).send({ error: 'Path required' });
 
@@ -268,13 +278,52 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       // Markdown
       if (ext === '.md') {
         const markdown = fs.readFileSync(resolved, 'utf8');
+        if (rawOnly) {
+          return reply.send({ type: 'markdown', content: markdown, fileName, breadcrumbs, isInsider });
+        }
+        const urlDir = reqPath.includes('/') ? reqPath.substring(0, reqPath.lastIndexOf('/')) : '';
         const { html, headings } = parseMarkdown(markdown, {
           linkWindowsPaths: true,
+          basePath: urlDir,
         });
         return reply.send({
           type: 'markdown',
+          content: markdown,
           html,
           headings,
+          fileName,
+          breadcrumbs,
+          isInsider,
+        });
+      }
+
+      // Mermaid — render to SVG server-side via mmdc
+      if (ext === '.mmd') {
+        const content = fs.readFileSync(resolved, 'utf8');
+        if (rawOnly) {
+          return reply.send({ type: 'mermaid', content, fileName, breadcrumbs, isInsider });
+        }
+        let renderedSvg: string | null = null;
+        try {
+          const tmpOut = path.join(
+            path.dirname(resolved),
+            `.${path.basename(resolved, '.mmd')}.tmp.svg`,
+          );
+          execSync(
+            `npx --prefix E:\\tools\\mermaid-cli mmdc -i "${resolved}" -o "${tmpOut}" -w 1600 -s 2 -b white`,
+            { timeout: 30_000, stdio: 'pipe' },
+          );
+          if (fs.existsSync(tmpOut)) {
+            renderedSvg = fs.readFileSync(tmpOut, 'utf8');
+            fs.unlinkSync(tmpOut);
+          }
+        } catch {
+          // Fall back to raw content only
+        }
+        return reply.send({
+          type: 'mermaid',
+          content,
+          html: renderedSvg,
           fileName,
           breadcrumbs,
           isInsider,
@@ -296,9 +345,50 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       // Text files (check content)
       const buffer = fs.readFileSync(resolved);
       if (looksLikeText(buffer)) {
+        const textContent = buffer.toString('utf8');
+        if (rawOnly) {
+          return reply.send({ type: 'text', content: textContent, fileName, breadcrumbs, isInsider });
+        }
+        // Server-side syntax highlighting
+        let highlightedHtml: string | null = null;
+        let detectedLang: string | null = null;
+        const extLangMap: Record<string, string> = {
+          '.js': 'javascript', '.mjs': 'javascript', '.cjs': 'javascript',
+          '.ts': 'typescript', '.mts': 'typescript', '.tsx': 'typescript', '.jsx': 'javascript',
+          '.json': 'json', '.jsonl': 'json',
+          '.yaml': 'yaml', '.yml': 'yaml',
+          '.xml': 'xml', '.html': 'xml', '.htm': 'xml',
+          '.css': 'css', '.scss': 'scss', '.less': 'less',
+          '.py': 'python', '.rb': 'ruby', '.go': 'go', '.rs': 'rust',
+          '.java': 'java', '.c': 'c', '.cpp': 'cpp', '.h': 'c', '.hpp': 'cpp',
+          '.cs': 'csharp', '.sh': 'bash', '.bash': 'bash', '.zsh': 'bash',
+          '.ps1': 'powershell', '.bat': 'dos', '.cmd': 'dos',
+          '.sql': 'sql', '.md': 'markdown', '.ini': 'ini', '.toml': 'ini',
+          '.graphql': 'graphql', '.gql': 'graphql',
+          '.swift': 'swift', '.kt': 'kotlin', '.lua': 'lua',
+          '.php': 'php', '.r': 'r', '.pl': 'perl',
+        };
+        try {
+          const knownLang = extLangMap[ext];
+          if (knownLang) {
+            const result = hljs.highlight(textContent, { language: knownLang });
+            highlightedHtml = result.value;
+            detectedLang = knownLang;
+          } else {
+            const result = hljs.highlightAuto(textContent);
+            if (result.relevance > 5) {
+              highlightedHtml = result.value;
+              detectedLang = result.language ?? null;
+            }
+          }
+        } catch {
+          // Fall back to unhighlighted
+        }
         return reply.send({
           type: 'text',
-          content: buffer.toString('utf8'),
+          content: textContent,
+          html: highlightedHtml,
+          language: detectedLang,
           fileName,
           breadcrumbs,
           isInsider,
@@ -356,17 +446,144 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
     });
   });
 
-  // GET /api/auth/status — check auth
+  // POST /api/share — generate outsider share link (cookie auth only, no keys on client)
+  fastify.post<{ Body: { path: string; expiry?: string } }>(
+    '/api/share',
+    async (request, reply) => {
+      const seed = (request as { authSeed?: string }).authSeed;
+      if (!seed) {
+        return reply.code(401).send({ error: 'Insider auth required' });
+      }
+
+      const { path: targetPath, expiry } = request.body;
+      if (!targetPath) {
+        return reply.code(400).send({ error: 'path is required' });
+      }
+
+      let outsiderKey: string;
+      let shareUrl: string;
+      if (expiry) {
+        outsiderKey = computeOutsiderKeyWithExpiry(seed, targetPath, expiry);
+        shareUrl = `/path${targetPath}?key=${outsiderKey}&exp=${expiry}`;
+      } else {
+        outsiderKey = computePathKey(seed, targetPath);
+        shareUrl = `/path${targetPath}?key=${outsiderKey}`;
+      }
+
+      return reply.send({ url: shareUrl, path: targetPath, exp: expiry ?? null });
+    },
+  );
+
+  // GET /api/mermaid-export/* — render .mmd file to SVG or PNG
+  fastify.get<{ Params: { '*': string }; Querystring: { format?: string } }>(
+    '/api/mermaid-export/*',
+    async (request, reply) => {
+      const reqPath = request.params['*'];
+      if (!reqPath) return reply.code(400).send({ error: 'Path required' });
+
+      let filePath = reqPath;
+      if (/^[a-zA-Z]\//.test(filePath)) {
+        filePath = `${filePath[0].toUpperCase()}:${filePath.slice(1)}`;
+      }
+      filePath = filePath.replace(/\//g, '\\');
+      const resolved = path.resolve(filePath);
+
+      if (!fs.existsSync(resolved) || !resolved.toLowerCase().endsWith('.mmd')) {
+        return reply.code(404).send({ error: 'Mermaid file not found' });
+      }
+
+      const format = request.query.format === 'png' ? 'png' : 'svg';
+      const outFile = path.join(
+        path.dirname(resolved),
+        `${path.basename(resolved, '.mmd')}.${format}`,
+      );
+
+      // Render using mermaid CLI
+      try {
+        execSync(
+          `npx --prefix E:\\tools\\mermaid-cli mmdc -i "${resolved}" -o "${outFile}" -w 1600 -s 2 -b white`,
+          { timeout: 30_000, stdio: 'pipe' },
+        );
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Mermaid render failed';
+        return reply.code(500).send({ error: message });
+      }
+
+      if (!fs.existsSync(outFile)) {
+        return reply.code(500).send({ error: 'Render output not found' });
+      }
+
+      const content = fs.readFileSync(outFile);
+      const contentType = format === 'png' ? 'image/png' : 'image/svg+xml';
+      const downloadName = path.basename(outFile);
+
+      return reply
+        .header('Content-Type', contentType)
+        .header('Content-Disposition', `attachment; filename="${downloadName}"`)
+        .send(content);
+    },
+  );
+
+  // POST /api/rotate-key — rotate the insider's key (uses preHandler auth)
+  fastify.post(
+    '/api/rotate-key',
+    async (request, reply) => {
+      const insiderEmail = (request as { insiderEmail?: string }).insiderEmail;
+      if (!insiderEmail) {
+        return reply.code(403).send({ error: 'Insider auth required' });
+      }
+      const config = getConfig();
+      const insider = config.resolvedInsiders.find(
+        (i) => i.email.toLowerCase() === insiderEmail.toLowerCase(),
+      );
+      if (!insider) {
+        return reply.code(403).send({ error: 'Not an insider' });
+      }
+
+      // Generate new key
+      const newSeed = crypto.randomBytes(32).toString('hex');
+      const now = new Date().toISOString();
+
+      // Persist to state.json
+      setInsiderKey(insider.email, newSeed, now);
+      resetConfig();
+      
+      return reply.send({
+        ok: true,
+        keyCreatedAt: now,
+      });
+    },
+  );
+
+  // GET /api/auth/status — check auth (bypasses preHandler, does its own check)
   fastify.get(
     '/api/auth/status',
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const isInsider =
-        (request as { accessMode?: AccessMode }).accessMode === 'insider';
-      const email = (request as { insiderEmail?: string }).insiderEmail;
+      const config = getConfig();
+      const sessionSecret = config.sessionSecret;
+      if (sessionSecret) {
+        const cookieValue = (
+          request.cookies as Record<string, string> | undefined
+        )?.[COOKIE_NAME];
+        if (cookieValue) {
+          const session = verifySessionCookie(cookieValue, sessionSecret);
+          if (session) {
+            const insider = config.resolvedInsiders.find(
+              (i) => i.email.toLowerCase() === session.email.toLowerCase(),
+            );
+            return reply.send({
+              authenticated: true,
+              email: session.email,
+              picture: session.picture,
+              isInsider: !!insider?.seed,
+              keyCreatedAt: insider?.keyCreatedAt ?? null,
+            });
+          }
+        }
+      }
       return reply.send({
-        authenticated: true,
-        email,
-        isInsider,
+        authenticated: false,
+        isInsider: false,
       });
     },
   );

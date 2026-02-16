@@ -7,14 +7,13 @@
  */
 
 import crypto from 'node:crypto';
-import fs from 'node:fs';
 
 import type { FastifyPluginAsync } from 'fastify';
 
 import { buildAuthUrl, exchangeCode, getUserInfo } from '../auth/google.js';
 import { COOKIE_NAME, createSessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
-import type { JeevesConfig } from '../config/types.js';
+import { setInsiderKey } from '../util/state.js';
 
 /**
  * Build the redirect URI from the request.
@@ -38,7 +37,7 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
     '/auth/login',
     async (request, reply) => {
       const config = getConfig();
-      const google = config.auth?.google;
+      const google = config.googleAuth;
       if (!google) {
         return reply.code(500).send({ error: 'Google OAuth not configured' });
       }
@@ -57,8 +56,8 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
     Querystring: { code?: string; error?: string; state?: string };
   }>('/auth/callback', async (request, reply) => {
     const config = getConfig();
-    const google = config.auth?.google;
-    const sessionSecret = config.auth?.sessionSecret;
+    const google = config.googleAuth;
+    const sessionSecret = config.sessionSecret;
 
     if (!google || !sessionSecret) {
       return reply.code(500).send({ error: 'Google OAuth not configured' });
@@ -104,27 +103,16 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
     // Auto-generate insider key on first login if missing
     if (!insider.seed) {
       const newSeed = crypto.randomBytes(32).toString('hex');
+      const timestamp = new Date().toISOString();
       insider.seed = newSeed;
 
-      // Persist to jeeves.config.json
-      const fullConfig = JSON.parse(
-        fs.readFileSync(config.configPath, 'utf8'),
-      ) as JeevesConfig;
-      const insiderEntry = fullConfig.insiders?.[insider.email];
-      if (insiderEntry) {
-        insiderEntry.key = newSeed;
-        insiderEntry.keyCreatedAt = new Date().toISOString();
-        fs.writeFileSync(
-          config.configPath,
-          JSON.stringify(fullConfig, null, 2),
-          'utf8',
-        );
-        resetConfig();
-      }
+      // Persist to state.json (mutable runtime state)
+      setInsiderKey(insider.email, newSeed, timestamp);
+      resetConfig(); // Reload to pick up new state
     }
 
     // Set session cookie
-    const cookieValue = createSessionCookie(email, sessionSecret);
+    const cookieValue = createSessionCookie(email, sessionSecret, userInfo.picture);
     void reply.setCookie(COOKIE_NAME, cookieValue, {
       path: '/',
       httpOnly: true,
@@ -146,6 +134,6 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
 
   fastify.get('/auth/logout', async (_request, reply) => {
     void reply.clearCookie(COOKIE_NAME, { path: '/' });
-    return reply.redirect('/auth/login');
+    return reply.redirect('/');
   });
 };

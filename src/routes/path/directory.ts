@@ -4,6 +4,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import archiver from 'archiver';
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
@@ -13,15 +14,38 @@ import type { AccessMode } from '../../config/types.js';
 import {
   buildBreadcrumbs,
   renderHeader,
-  renderShareScript,
-  renderThemeScript,
+  renderPageShell,
 } from '../../templates/layout.js';
-import {
-  renderHeaderStyles,
-  renderThemeStyles,
-} from '../../templates/styles.js';
 import { computeInsiderKey, computePathKey } from '../../util/crypto.js';
 import { formatSize } from '../../util/formatters.js';
+
+/**
+ * Recursively calculate total size of a directory in bytes
+ */
+function getDirSize(dirPath: string): number {
+  let totalSize = 0;
+  
+  try {
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    for (const entry of entries) {
+      const entryPath = path.join(dirPath, entry.name);
+      try {
+        if (entry.isDirectory()) {
+          totalSize += getDirSize(entryPath);
+        } else {
+          const stats = fs.statSync(entryPath);
+          totalSize += stats.size;
+        }
+      } catch {
+        // Skip inaccessible entries
+      }
+    }
+  } catch {
+    // Skip inaccessible directories
+  }
+  
+  return totalSize;
+}
 
 /**
  * Handle directory listing
@@ -31,9 +55,37 @@ export function handleDirectory(
   reply: FastifyReply,
   resolved: string,
   reqPath: string,
-  query: { key: string; exp?: string },
+  query: { key: string; exp?: string; export?: string },
   apiKey: string,
 ): void {
+  const isInsider =
+    (request as { accessMode?: AccessMode }).accessMode === 'insider';
+
+  // Handle ZIP export
+  if (query.export === 'zip' && isInsider) {
+    const config = getConfig();
+    const totalSize = getDirSize(resolved);
+    const maxSizeBytes = config.maxZipSizeMb * 1024 * 1024;
+    
+    if (totalSize > maxSizeBytes) {
+      reply.code(413).send({
+        error: `Directory too large for ZIP export (${Math.round(totalSize / 1024 / 1024)}MB, max ${config.maxZipSizeMb}MB)`,
+      });
+      return;
+    }
+    
+    const dirName = path.basename(resolved);
+    const archive = archiver('zip', { zlib: { level: 6 } });
+    
+    reply.header('Content-Type', 'application/zip');
+    reply.header('Content-Disposition', `attachment; filename="${dirName}.zip"`);
+    reply.send(archive);
+    
+    archive.directory(resolved, dirName);
+    void archive.finalize();
+    return;
+  }
+
   const breadcrumbs = buildBreadcrumbs(
     resolved,
     query.key,
@@ -41,8 +93,6 @@ export function handleDirectory(
     computeInsiderKey(apiKey),
     (request as { shareRoot?: string | null }).shareRoot,
   );
-  const isInsider =
-    (request as { accessMode?: AccessMode }).accessMode === 'insider';
   const insiderKey = computeInsiderKey(apiKey);
 
   const allEntries = fs.readdirSync(resolved, { withFileTypes: true });
@@ -179,25 +229,15 @@ export function handleDirectory(
     insiderKey,
     expiry,
     showRaw: false,
-    actions: [],
+    actions: isInsider ? [
+      `<button class="export-btn" data-format="zip" data-lucide-icon="cloud-download" data-url="?export=zip" title="Download as ZIP"><span class="export-icon"><i data-lucide="cloud-download"></i></span> ZIP</button>`,
+    ] : [],
     eventInScope: (request as { eventInScope?: boolean }).eventInScope,
     keyAge: (request as { keyAge?: string | null }).keyAge,
     showShareUi: true,
   });
 
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex, nofollow">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <title>${dirName}</title>
-  <script>${renderThemeScript()}</script>
-  <style>
-    ${renderThemeStyles()}
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: var(--bg-tertiary); color: var(--text-primary); }
-    ${renderHeaderStyles()}
+  const pageStyles = `
     .container { padding: 1.5rem 2rem; }
     table { width: 100%; border-collapse: collapse; background: var(--bg-primary); border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
@@ -212,10 +252,9 @@ export function handleDirectory(
     .share-icon:hover { border-color: var(--link-color); }
     .share-icon.copied { border-color: #3fb950; }
     .share-expiry-select { padding: 2px 4px; font-size: 11px; border: 1px solid var(--border-color); border-radius: 3px; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; }
-  </style>
-</head>
-<body>
-  ${headerHtml}
+  `;
+
+  const bodyContent = `
   <div class="container">
     <div class="count">${String(entries.length)} items</div>
     <table>
@@ -223,12 +262,18 @@ export function handleDirectory(
       <tbody>${rows}</tbody>
     </table>
   </div>
-  <script>
-    ${renderShareScript(isInsider)}
-    ${isInsider ? renderDirectoryShareScript(insiderKey) : ''}
-  </script>
-</body>
-</html>`;
+  `;
+
+  const pageScripts = isInsider ? renderDirectoryShareScript(insiderKey) : '';
+
+  const html = renderPageShell({
+    title: dirName,
+    headerHtml,
+    bodyContent,
+    pageStyles,
+    pageScripts,
+    shareScript: { isInsider },
+  });
 
   reply.type('text/html').send(html);
 }

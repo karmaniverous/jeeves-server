@@ -1,14 +1,10 @@
 /**
  * API client for Jeeves Server backend
+ *
+ * All auth is via session cookies — no keys or credentials on the client side.
  */
 
 const API_BASE = '/api';
-
-/** Extract API key from URL query params (for key-based auth) */
-function getApiKey(): string | null {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('key');
-}
 
 export interface DirectoryEntry {
   name: string;
@@ -36,10 +32,11 @@ export interface DriveEntry {
 }
 
 export interface FileContent {
-  type: 'markdown' | 'text' | 'svg' | 'image' | 'binary';
+  type: 'markdown' | 'text' | 'svg' | 'mermaid' | 'image' | 'binary';
   content?: string;
   html?: string;
   headings?: { level: number; text: string; slug: string }[];
+  language?: string | null;
   contentType?: string;
   fileName: string;
   breadcrumbs: BreadcrumbItem[];
@@ -48,28 +45,30 @@ export interface FileContent {
 
 export interface ShareResponse {
   path: string;
-  key: string;
-  exp: string | null;
   url: string;
+  exp: string | null;
 }
 
 export interface AuthStatus {
   authenticated: boolean;
   email?: string;
+  picture?: string;
   isInsider: boolean;
+  keyCreatedAt?: string | null;
+}
+
+/** Rotate insider key — invalidates all existing shares */
+export async function rotateKey(): Promise<{ ok: boolean; keyCreatedAt?: string }> {
+  return fetchJson('/api/rotate-key', { method: 'POST' });
 }
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const apiKey = getApiKey();
-  const sep = url.includes('?') ? '&' : '?';
-  const finalUrl = apiKey ? `${url}${sep}key=${apiKey}` : url;
-  const res = await fetch(finalUrl, {
+  const res = await fetch(url, {
     ...init,
     credentials: 'same-origin',
   });
 
   if (res.status === 401) {
-    // Redirect to login
     window.location.href = `/auth/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
     throw new Error('Unauthorized');
   }
@@ -94,25 +93,30 @@ export async function getFile(path: string): Promise<FileContent> {
   return fetchJson<FileContent>(`${API_BASE}/file/${path}`);
 }
 
-export async function getAuthStatus(): Promise<AuthStatus> {
-  return fetchJson<AuthStatus>(`${API_BASE}/auth/status`);
+export async function getFileRaw(path: string): Promise<FileContent> {
+  return fetchJson<FileContent>(`${API_BASE}/file/${path}?raw=1`);
 }
 
+export async function getAuthStatus(): Promise<AuthStatus> {
+  const res = await fetch(`${API_BASE}/auth/status`, { credentials: 'same-origin' });
+  if (!res.ok) {
+    return { authenticated: false, isInsider: false };
+  }
+  return res.json() as Promise<AuthStatus>;
+}
+
+/** Generate an outsider share link — computed server-side, no keys on client */
 export async function getShareLink(
-  insiderKey: string,
-  path: string,
+  targetPath: string,
   expiry?: string,
 ): Promise<ShareResponse> {
-  const params = new URLSearchParams({ path, key: insiderKey });
-  if (expiry) params.set('exp', expiry);
-  return fetchJson<ShareResponse>(`/share?${params.toString()}`);
+  return fetchJson<ShareResponse>(`${API_BASE}/share`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: targetPath, expiry }),
+  });
 }
 
-export async function rotateKey(): Promise<{ ok: boolean; insiderKey?: string }> {
-  return fetchJson(`/rotate-key`, { method: 'POST' });
-}
-
-export function getRawFileUrl(path: string, key?: string): string {
-  const params = key ? `?key=${key}&raw=1` : '?raw=1';
-  return `/path/${path}${params}`;
+export function getRawFileUrl(path: string): string {
+  return `/path/${path}?raw=1`;
 }

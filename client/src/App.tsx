@@ -1,16 +1,20 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
+import { AuthProvider } from '@/lib/auth';
 import { About } from '@/pages/About';
 import { FileBrowser } from '@/pages/FileBrowser';
+import { Home } from '@/pages/Home';
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/browse/*" element={<FileBrowser />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/" element={<Navigate to="/browse" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/browse/*" element={<FileBrowser />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/" element={<Home />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

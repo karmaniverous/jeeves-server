@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 
 import { Header } from '@/components/layout/Header';
 import type { FileContent } from '@/lib/api';
-import { getFile } from '@/lib/api';
 import { useTheme } from '@/lib/theme';
 
 export function About() {

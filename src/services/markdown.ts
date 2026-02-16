@@ -4,6 +4,7 @@
 
 import fs from 'node:fs';
 
+import hljs from 'highlight.js';
 import { marked } from 'marked';
 
 export interface Heading {
@@ -57,7 +58,7 @@ function linkifyWindowsPaths(markdown: string): string {
  */
 export function parseMarkdown(
   markdown: string,
-  options: { linkWindowsPaths?: boolean } = {},
+  options: { linkWindowsPaths?: boolean; basePath?: string } = {},
 ): { html: string; headings: Heading[] } {
   let processedMarkdown = markdown;
 
@@ -88,7 +89,49 @@ export function parseMarkdown(
 
     headings.push({ level, text: text.replace(/<[^>]+>/g, ''), slug });
 
-    return `<h${String(level)} id="${slug}"><a href="#${slug}" class="anchor">#</a> ${text}</h${String(level)}>\n`;
+    return `<h${String(level)} id="${slug}">${text} <a href="#${slug}" class="anchor">#</a></h${String(level)}>\n`;
+  };
+
+  // Rewrite relative image src to /path/ URLs
+  if (options.basePath) {
+    const base = options.basePath;
+    renderer.image = function (
+      args: string | { href: string; title: string | null; text: string },
+    ) {
+      const href = typeof args === 'object' ? args.href : args;
+      const title = typeof args === 'object' ? args.title : '';
+      const text = typeof args === 'object' ? args.text : '';
+      let src = href;
+      if (src && !src.startsWith('http') && !src.startsWith('data:')) {
+        // Rewrite relative paths to absolute
+        if (!src.startsWith('/')) {
+          src = `/path/${base}/${src}`;
+        }
+        // Ensure raw=1 for /path/ URLs so they serve the actual file
+        if (src.startsWith('/path/')) {
+          src += (src.includes('?') ? '&' : '?') + 'raw=1';
+        }
+      }
+      const titleAttr = title ? ` title="${title}"` : '';
+      return `<img src="${src}" alt="${text}"${titleAttr} />`;
+    };
+  }
+
+  // Syntax-highlight fenced code blocks
+  renderer.code = function (
+    args: string | { text: string; lang?: string; escaped?: boolean },
+  ) {
+    const text = typeof args === 'object' ? args.text : args;
+    const lang = typeof args === 'object' ? args.lang : undefined;
+    let highlighted: string;
+    if (lang && hljs.getLanguage(lang)) {
+      highlighted = hljs.highlight(text, { language: lang }).value;
+    } else {
+      const auto = hljs.highlightAuto(text);
+      highlighted = auto.relevance > 5 ? auto.value : text;
+    }
+    const langClass = lang ? ` class="language-${lang}"` : '';
+    return `<pre class="hljs"><code${langClass}>${highlighted}</code></pre>\n`;
   };
 
   marked.setOptions({ renderer });
