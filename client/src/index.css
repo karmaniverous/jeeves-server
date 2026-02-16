@@ -137,8 +137,8 @@ pre:hover .code-copy-btn {
 /* TOC sidebar */
 .toc-sidebar {
   position: sticky;
-  top: 7rem;
-  max-height: calc(100vh - 7.5rem);
+  top: 3.5rem;
+  max-height: calc(100vh - 4rem);
   overflow-y: auto;
 }
 

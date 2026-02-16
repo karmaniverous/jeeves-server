@@ -296,7 +296,7 @@ export function FileBrowser() {
             return (
             <div>
               {/* Tabs — always shown */}
-              <div className="flex gap-1 border-b border-border sticky top-14 z-40 bg-background px-4 md:px-6 mb-4">
+              <div className="flex gap-1 border-b border-border bg-background px-4 md:px-6 mb-4">
                 {renderable && (
                   <button
                     onClick={() => setViewTab('rendered')}
