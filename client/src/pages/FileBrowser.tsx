@@ -1,4 +1,4 @@
-import { FileText, FolderOpen, Loader2 } from 'lucide-react';
+import { FileText, FolderOpen, Loader2, Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 
@@ -85,6 +85,7 @@ export function FileBrowser() {
   const reqPath = params['*'] ?? '';
   const [theme, toggleTheme] = useTheme();
   const [expiry, setExpiry] = useState(() => localStorage.getItem('jeeves-share-expiry') ?? '');
+  const [mobileTocOpen, setMobileTocOpen] = useState(false);
 
   // State for drives, directory, or file
   const [drives, setDrives] = useState<DriveEntry[] | null>(null);
@@ -296,7 +297,17 @@ export function FileBrowser() {
             return (
             <div>
               {/* Tabs — always shown */}
-              <div className="flex gap-1 border-b border-border bg-background px-4 md:px-6 mb-4">
+              <div className="flex items-center gap-1 border-b border-border bg-background px-4 md:px-6 mb-4">
+                {/* Mobile TOC hamburger — only when headings exist */}
+                {fileRendered?.headings && fileRendered.headings.length > 2 && (
+                  <button
+                    onClick={() => setMobileTocOpen(!mobileTocOpen)}
+                    className="lg:hidden p-1.5 mr-1 text-muted-foreground hover:text-foreground transition-colors"
+                    title="Table of contents"
+                  >
+                    {mobileTocOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                  </button>
+                )}
                 {renderable && (
                   <button
                     onClick={() => setViewTab('rendered')}
@@ -320,6 +331,25 @@ export function FileBrowser() {
                   Raw
                 </button>
               </div>
+
+              {/* Mobile TOC panel */}
+              {mobileTocOpen && fileRendered?.headings && fileRendered.headings.length > 2 && (
+                <div className="lg:hidden border-b border-border bg-muted/50 px-4 py-3 max-h-64 overflow-y-auto mb-4">
+                  <nav>
+                    {fileRendered.headings.map((h) => (
+                      <button
+                        key={h.slug}
+                        type="button"
+                        onClick={() => { scrollToId(h.slug); setMobileTocOpen(false); }}
+                        className="block text-left text-sm text-muted-foreground hover:text-foreground cursor-pointer py-0.5 transition-colors"
+                        style={{ paddingLeft: `${(h.level - 1) * 0.75}rem` }}
+                      >
+                        {h.text}
+                      </button>
+                    ))}
+                  </nav>
+                </div>
+              )}
 
               <div className="px-4 md:px-6">
               {/* Loading spinner */}
