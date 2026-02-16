@@ -274,7 +274,7 @@ export function FileBrowser() {
                 >
                   Raw
                 </button>
-                {renderable && activeTab === 'rendered' && (
+                {file?.type === 'markdown' && activeTab === 'rendered' && (
                   <div className="hidden md:flex items-center ml-2 border border-border rounded-md overflow-hidden">
                     <button
                       onClick={() => toggleProseWidth('narrow')}
