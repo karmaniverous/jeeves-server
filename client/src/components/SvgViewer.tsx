@@ -49,9 +49,14 @@ export function SvgViewer({ content }: SvgViewerProps) {
   }, []);
 
   useEffect(() => {
-    const cleanup = initPanzoom();
+    // Defer init to next frame so container has layout dimensions after mount
+    let cleanupWheel: (() => void) | undefined;
+    const frameId = requestAnimationFrame(() => {
+      cleanupWheel = initPanzoom() ?? undefined;
+    });
     return () => {
-      cleanup?.();
+      cancelAnimationFrame(frameId);
+      cleanupWheel?.();
       panzoomRef.current?.destroy();
     };
   }, [content, initPanzoom]);
