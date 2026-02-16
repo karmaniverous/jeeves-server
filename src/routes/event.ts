@@ -5,7 +5,7 @@
 import { JsonMap } from '@karmaniverous/jsonmap';
 import Ajv from 'ajv';
 import type { FastifyPluginAsync } from 'fastify';
-import * as _ from 'lodash-es';
+import * as _ from 'radash';
 import { z } from 'zod';
 
 import { verifyKey } from '../auth/keys.js';
@@ -56,7 +56,7 @@ async function transformBody(
 ): Promise<Record<string, unknown>> {
   if (!map) return body;
 
-  // JsonMap with lodash available as $.lib._
+  // JsonMap with radash available as $.lib._
   const mapper = new JsonMap(map, { _: _ as never });
   const result = await mapper.transform(body);
   return result as Record<string, unknown>;

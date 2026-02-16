@@ -62,7 +62,7 @@ Common patterns:
 
 When an event config includes a `map` object, the incoming body is transformed via [@karmaniverous/jsonmap](https://github.com/karmaniverous/jsonmap) before being passed to the command. This extracts only the fields you need from potentially large webhook payloads.
 
-The `lib` object available in mappings includes `lodash` as `_`.
+The `lib` object available in mappings includes [`radash`](https://github.com/sodiray/radash) as `_`.
 
 When `map` is omitted, the full webhook body is passed as-is.
 
