@@ -110,6 +110,8 @@ curl -X POST "https://your-domain.com/event?key=<derived-key>" \
   -d '{"type": "page.content_updated", "data": {"page_id": "abc123"}}'
 ```
 
+Insiders with `/event` scope can also copy an authenticated event URL directly from the **Event link button** in the header bar — no command line needed.
+
 See the [Insiders, Outsiders & Sharing](sharing.md) guide for full details on the key model.
 
 ## Queue Processing
