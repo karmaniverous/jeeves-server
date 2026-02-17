@@ -7,14 +7,28 @@
 
 const API_BASE = '/api';
 
-/** Extract and cache API key from URL params (once) */
-const _urlKey = new URLSearchParams(window.location.search).get('key');
+/** Extract and cache auth params from URL (once) */
+const _urlParams = new URLSearchParams(window.location.search);
+const _urlKey = _urlParams.get('key');
 
-/** Append key param to a URL if one was provided */
+/** Auth-related params to forward on every API call (key + deep share params) */
+const _authSuffix = (() => {
+  if (!_urlKey) return '';
+  const params = new URLSearchParams();
+  params.set('key', _urlKey);
+  // Forward deep share params so the server can verify the key
+  for (const p of ['d', 'dirs', 's', 'exp'] as const) {
+    const v = _urlParams.get(p);
+    if (v !== null) params.set(p, v);
+  }
+  return params.toString();
+})();
+
+/** Append auth params to a URL if a key was provided */
 export function withKey(url: string): string {
-  if (!_urlKey) return url;
+  if (!_authSuffix) return url;
   const sep = url.includes('?') ? '&' : '?';
-  return `${url}${sep}key=${encodeURIComponent(_urlKey)}`;
+  return `${url}${sep}${_authSuffix}`;
 }
 
 export interface DirectoryEntry {
@@ -116,8 +130,12 @@ export async function getFileRaw(path: string): Promise<FileContent> {
   return fetchJson<FileContent>(`${API_BASE}/file/${path}?raw=1`);
 }
 
-export async function getAuthStatus(): Promise<AuthStatus> {
-  const res = await fetch(withKey(`${API_BASE}/auth/status`), { credentials: 'same-origin' });
+export async function getAuthStatus(browsePath?: string): Promise<AuthStatus> {
+  let url = `${API_BASE}/auth/status`;
+  if (browsePath) {
+    url += `?path=${encodeURIComponent(browsePath)}`;
+  }
+  const res = await fetch(withKey(url), { credentials: 'same-origin' });
   if (!res.ok) {
     return { authenticated: false, isInsider: false };
   }

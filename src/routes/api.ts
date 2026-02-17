@@ -73,7 +73,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       .replace('/api/export', '');
 
     // Try API key auth
-    const authResult = verifyKey(
+    let authResult = verifyKey(
       config.resolvedKeys,
       urlPath || '/',
       provided,
@@ -81,6 +81,37 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       config.resolvedInsiders,
       deepParams,
     );
+
+    // For directory requests with dirs=1, the key was derived for a file path
+    // (the last entry in the stack), not the directory path. Verify against the
+    // stack's last entry and allow if the directory is an ancestor/sibling.
+    if (!authResult.valid && deepParams && deepParams.dirs === '1' && provided) {
+      const { decodeStack } = await import('../services/deepShareLinks.js');
+      const stack = decodeStack(deepParams.s);
+      const lastStackEntry = stack[stack.length - 1];
+      if (lastStackEntry && lastStackEntry !== urlPath) {
+        authResult = verifyKey(
+          config.resolvedKeys,
+          lastStackEntry,
+          provided,
+          expParam,
+          config.resolvedInsiders,
+          deepParams,
+        );
+        // Only allow the shared file's directory and its descendants.
+        // This prevents traversal up to unrelated parent directories.
+        if (authResult.valid) {
+          const normalizedDir = (urlPath || '/').replace(/\/$/, '');
+          // Use the root stack entry's directory as the boundary
+          const rootEntry = stack[0];
+          const rootDir = rootEntry ? rootEntry.substring(0, rootEntry.lastIndexOf('/')) : '';
+          const isAllowed = normalizedDir === rootDir || normalizedDir.startsWith(rootDir + '/');
+          if (!isAllowed) {
+            authResult = { valid: false, mode: null, keyName: null, seed: null, matchedPath: null };
+          }
+        }
+      }
+    }
 
     if (authResult.valid) {
       (request as { accessMode?: AccessMode }).accessMode =
@@ -799,12 +830,20 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         const query = request.query as Record<string, string>;
         const providedKey = query.key;
         if (providedKey) {
+          // For outsider deep-share keys, verify against the browsed path.
+          // Deep keys are derived per-path, so '/' would never match.
+          // Client sends the path as a query param.
+          const verifyPath = query.path ?? '/';
+          const deepParams = query.d !== undefined && query.s !== undefined
+            ? { d: query.d, dirs: query.dirs ?? '0', s: query.s }
+            : undefined;
           const result = verifyKey(
             config.resolvedKeys,
-            '/',
+            verifyPath,
             providedKey,
-            undefined,
+            query.exp,
             config.resolvedInsiders,
+            deepParams,
           );
           if (result.valid) {
             return reply.send({

@@ -29,7 +29,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [keyCreatedAt, setKeyCreatedAt] = useState<string | null | undefined>();
 
   useEffect(() => {
-    getAuthStatus()
+    // Extract the browsed path from the URL for outsider key verification
+    const browsePath = window.location.pathname.replace(/^\/browse/, '') || '/';
+    getAuthStatus(browsePath)
       .then((status) => {
         setAuthenticated(status.authenticated);
         setEmail(status.email);
