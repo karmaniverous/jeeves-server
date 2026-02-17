@@ -44,25 +44,25 @@ export function Header({
   // Link controls — hidden below 400px
   if (linkMenuItem) {
     collapsedItems.push({
-      breakpoint: 'xs',
+      breakpoint: 'bp-400',
       node: linkMenuItem,
       hasNestedDropdown: true,
     });
   }
 
-  // Download dropdown — hidden below sm (640px)
+  // Download dropdown — hidden below 480px
   if (downloadMenuItem) {
     collapsedItems.push({
-      breakpoint: 'sm',
+      breakpoint: 'bp-480',
       node: downloadMenuItem,
       hasNestedDropdown: true,
     });
   }
 
-  // Key management — hidden below md (768px)
+  // Key management — hidden below sm (640px)
   if (hasKeyMgmt) {
     collapsedItems.push({
-      breakpoint: 'md',
+      breakpoint: 'sm',
       node: (
         <button onClick={onRotateKey} className={menuItemClass}>
           <KeyRound className="h-4 w-4 shrink-0" />
@@ -72,9 +72,9 @@ export function Header({
     });
   }
 
-  // About — hidden below lg (1024px)
+  // About — hidden below md (768px)
   collapsedItems.push({
-    breakpoint: 'lg',
+    breakpoint: 'md',
     node: (
       <Link to="/about" className={menuItemClass}>
         <Info className="h-4 w-4 shrink-0" />
@@ -83,9 +83,9 @@ export function Header({
     ),
   });
 
-  // Theme — hidden below lg (1024px)
+  // Theme — hidden below md (768px)
   collapsedItems.push({
-    breakpoint: 'lg',
+    breakpoint: 'md',
     node: (
       <button onClick={onToggleTheme} className={menuItemClass}>
         {theme === 'dark' ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
@@ -128,14 +128,14 @@ export function Header({
             <div className="hidden min-[400px]:flex items-center">{linkControls}</div>
           )}
 
-          {/* Download: visible sm+ (640px) */}
+          {/* Download: visible 480px+ */}
           {downloadDropdown && (
-            <div className="hidden sm:flex items-center">{downloadDropdown}</div>
+            <div className="hidden min-[480px]:flex items-center">{downloadDropdown}</div>
           )}
 
-          {/* Key management: visible md+ (768px) */}
+          {/* Key management: visible sm+ (640px) */}
           {hasKeyMgmt && (
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden sm:flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
@@ -149,8 +149,8 @@ export function Header({
             </div>
           )}
 
-          {/* About: visible lg+ (1024px) */}
-          <Link to="/about" title="About Jeeves Server" className="hidden lg:inline-flex">
+          {/* About: visible md+ (768px) */}
+          <Link to="/about" title="About Jeeves Server" className="hidden md:inline-flex">
             <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white h-8 w-8">
               <Info className="h-4 w-4" />
             </Button>
@@ -160,7 +160,7 @@ export function Header({
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:text-white h-8 w-8 hidden lg:inline-flex"
+            className="text-zinc-400 hover:text-white h-8 w-8 hidden md:inline-flex"
             title="Toggle theme"
             onClick={onToggleTheme}
           >

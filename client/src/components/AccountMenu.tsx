@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth';
 export interface CollapsedItem {
   node: React.ReactNode | ((onDismiss: () => void) => React.ReactNode);
   /** Breakpoint at which this item is hidden from the header bar (and thus shown in the menu) */
-  breakpoint: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  breakpoint: 'bp-400' | 'bp-480' | 'sm' | 'md' | 'lg';
   /** If true, this item contains a nested dropdown that should prevent account menu auto-close */
   hasNestedDropdown?: boolean;
 }
@@ -28,11 +28,11 @@ interface AccountMenuProps {
  * Using arbitrary min-width values for tighter control over when items fold.
  */
 const BREAKPOINT_CLASS: Record<string, string> = {
-  xs: 'min-[400px]:hidden',
+  'bp-400': 'min-[400px]:hidden',
+  'bp-480': 'min-[480px]:hidden',
   sm: 'sm:hidden',       // 640px
   md: 'md:hidden',       // 768px
   lg: 'lg:hidden',       // 1024px
-  xl: 'xl:hidden',       // 1280px
 };
 
 export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
