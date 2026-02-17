@@ -570,7 +570,7 @@ function DirectoryRow({ entry, basePath, isInsider, shareSettings, onShareSettin
                 isDirectory={isDir}
                 compact
               />
-              <LinkDropdown path={urlPath} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} showRaw={hasRaw} compact />
+              <LinkDropdown path={urlPath} shareSettings={shareSettings} onShareSettingsChange={onShareSettingsChange} showRaw={hasRaw} compact />
             </div>
           )}
         </div>
