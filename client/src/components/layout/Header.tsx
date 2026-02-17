@@ -31,11 +31,14 @@ export function Header({
   // Build account menu collapsed items in left-to-right header order
   const collapsedItems: { node: React.ReactNode; breakpoint: 'sm' | 'md' | 'lg' }[] = [];
 
+  const menuItemClass = 'flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors w-full text-left cursor-pointer';
+
   // Link controls — hidden below sm
   if (linkControls) {
     collapsedItems.push({
       breakpoint: 'sm',
       node: linkControls,
+      label: 'Share',
     });
   }
 
@@ -44,6 +47,7 @@ export function Header({
     collapsedItems.push({
       breakpoint: 'md',
       node: downloadDropdown,
+      label: 'Download',
     });
   }
 
@@ -52,11 +56,8 @@ export function Header({
     collapsedItems.push({
       breakpoint: 'lg',
       node: (
-        <button
-          onClick={onRotateKey}
-          className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors w-full text-left"
-        >
-          <KeyRound className="h-4 w-4" />
+        <button onClick={onRotateKey} className={menuItemClass}>
+          <KeyRound className="h-4 w-4 shrink-0" />
           Rotate key{keyAge ? ` (${keyAge})` : ''}
         </button>
       ),
@@ -67,11 +68,8 @@ export function Header({
   collapsedItems.push({
     breakpoint: 'xl',
     node: (
-      <Link
-        to="/about"
-        className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
-      >
-        <Info className="h-4 w-4" />
+      <Link to="/about" className={menuItemClass}>
+        <Info className="h-4 w-4 shrink-0" />
         About Jeeves Server
       </Link>
     ),
@@ -81,11 +79,8 @@ export function Header({
   collapsedItems.push({
     breakpoint: 'xl',
     node: (
-      <button
-        onClick={onToggleTheme}
-        className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors w-full text-left"
-      >
-        {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      <button onClick={onToggleTheme} className={menuItemClass}>
+        {theme === 'dark' ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
         {theme === 'dark' ? 'Light mode' : 'Dark mode'}
       </button>
     ),

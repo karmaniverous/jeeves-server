@@ -7,6 +7,8 @@ export interface CollapsedItem {
   node: React.ReactNode;
   /** Breakpoint at which this item is hidden from the header bar (and thus shown in the menu) */
   breakpoint: 'sm' | 'md' | 'lg' | 'xl';
+  /** If set, the node is a dropdown trigger — render it inline with this label */
+  label?: string;
 }
 
 interface AccountMenuProps {
@@ -64,21 +66,33 @@ export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
 
       {open && (
         <div className="absolute right-0 top-full mt-1 w-56 bg-popover border border-border rounded-lg shadow-lg z-50 py-1">
-          {/* User info */}
-          <div className="px-3 py-2 border-b border-border">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-foreground truncate">{email}</span>
-            </div>
-          </div>
+          {/* User info — links to Google account */}
+          <a
+            href="https://myaccount.google.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-3 py-2 border-b border-border hover:bg-accent transition-colors"
+          >
+            <User className="h-4 w-4 text-foreground" />
+            <span className="text-sm text-foreground truncate">{email}</span>
+          </a>
 
           {/* Collapsed items — each visible in menu only below its breakpoint */}
           {collapsedItems.map((item, i) => (
             <div
               key={i}
-              className={`${BREAKPOINT_CLASS[item.breakpoint]} account-menu-item flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors [&_button]:h-auto [&_button]:w-auto [&_button]:p-0 [&_button]:text-foreground [&_button]:hover:text-foreground [&_button]:hover:bg-transparent [&_svg]:h-4 [&_svg]:w-4`}
+              className={BREAKPOINT_CLASS[item.breakpoint]}
+              onClick={item.label ? undefined : () => setOpen(false)}
             >
-              {item.node}
+              {item.label ? (
+                /* Dropdown trigger styled as menu row: icon button + label */
+                <div className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors [&_button]:h-auto [&_button]:w-auto [&_button]:p-0 [&_button]:bg-transparent [&_button]:hover:bg-transparent [&_button]:text-foreground [&_button]:hover:text-foreground [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0">
+                  {item.node}
+                  <span>{item.label}</span>
+                </div>
+              ) : (
+                item.node
+              )}
             </div>
           ))}
 
