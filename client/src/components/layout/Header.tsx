@@ -1,9 +1,12 @@
-import { Moon, Sun, Info, KeyRound } from 'lucide-react';
+import { Moon, Sun, BookOpen, KeyRound, Github } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { AccountMenu, type CollapsedItem } from '@/components/AccountMenu';
 import { Button } from '@/components/ui/button';
 import type { BreadcrumbItem } from '@/lib/api';
+
+const GITHUB_URL = 'https://github.com/karmaniverous/jeeves-server';
 
 interface HeaderProps {
   breadcrumbs?: BreadcrumbItem[];
@@ -35,6 +38,14 @@ export function Header({
   linkMenuItem,
 }: HeaderProps) {
   const hasKeyMgmt = isInsider && onRotateKey;
+  const [readmeUrl, setReadmeUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/readme-link')
+      .then(r => r.ok ? r.json() as Promise<{ url: string }> : null)
+      .then(data => { if (data?.url) setReadmeUrl(data.url); })
+      .catch(() => {});
+  }, []);
 
   // Build account menu collapsed items in left-to-right header order
   const collapsedItems: CollapsedItem[] = [];
@@ -72,14 +83,27 @@ export function Header({
     });
   }
 
-  // About — hidden below md (768px)
+  // README — hidden below md (768px)
+  if (readmeUrl) {
+    collapsedItems.push({
+      breakpoint: 'md',
+      node: (
+        <a href={readmeUrl} className={menuItemClass}>
+          <BookOpen className="h-4 w-4 shrink-0" />
+          README
+        </a>
+      ),
+    });
+  }
+
+  // GitHub — hidden below md (768px)
   collapsedItems.push({
     breakpoint: 'md',
     node: (
-      <Link to="/about" className={menuItemClass}>
-        <Info className="h-4 w-4 shrink-0" />
-        About Jeeves Server
-      </Link>
+      <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className={menuItemClass}>
+        <Github className="h-4 w-4 shrink-0" />
+        GitHub
+      </a>
     ),
   });
 
@@ -149,12 +173,21 @@ export function Header({
             </div>
           )}
 
-          {/* About: visible md+ (768px) */}
-          <Link to="/about" title="About Jeeves Server" className="hidden md:inline-flex">
+          {/* README: visible md+ (768px) */}
+          {readmeUrl && (
+            <a href={readmeUrl} title="README" className="hidden md:inline-flex">
+              <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white h-8 w-8">
+                <BookOpen className="h-4 w-4" />
+              </Button>
+            </a>
+          )}
+
+          {/* GitHub: visible md+ (768px) */}
+          <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" title="GitHub" className="hidden md:inline-flex">
             <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white h-8 w-8">
-              <Info className="h-4 w-4" />
+              <Github className="h-4 w-4" />
             </Button>
-          </Link>
+          </a>
 
           {/* Theme: visible lg+ (1024px) */}
           <Button

@@ -52,7 +52,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
   // API authentication middleware
   fastify.addHook('preHandler', async (request, reply) => {
     if (!request.url.startsWith('/api')) return;
-    if (request.url.startsWith('/api/about')) return;
+    if (request.url.startsWith('/api/readme-link')) return;
     if (request.url.startsWith('/api/auth/status')) return;
 
     const config = getConfig();
@@ -645,25 +645,34 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // GET /api/about — about page content (no auth required)
-  fastify.get('/api/about', async (_request, reply) => {
-    const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    const aboutPath = path.join(__dirname, '..', '..', 'about.md');
-    if (!fs.existsSync(aboutPath)) {
-      return reply.code(404).send({ error: 'About page not found' });
+  // GET /api/readme-link — pre-computed outsider share link for the server's README (no auth required)
+  fastify.get('/api/readme-link', async (_request, reply) => {
+    const config = getConfig();
+    // Find the first insider seed to derive the share key
+    const insider = config.resolvedInsiders.find(i => i.seed);
+    if (!insider?.seed) {
+      return reply.code(503).send({ error: 'No insider seed available' });
     }
-    const markdown = fs.readFileSync(aboutPath, 'utf8');
-    const { html, headings } = parseMarkdown(markdown, {
-      linkWindowsPaths: false,
-    });
-    return reply.send({
-      type: 'markdown',
-      html,
-      headings,
-      fileName: 'about.md',
-      breadcrumbs: [{ label: 'About', path: 'about' }],
-      isInsider: false,
-    });
+
+    // Compute the README's URL path from the server's install directory
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const serverRoot = path.resolve(__dirname, '..', '..');
+    const readmePath = path.join(serverRoot, 'README.md');
+    if (!fs.existsSync(readmePath)) {
+      return reply.code(404).send({ error: 'README.md not found' });
+    }
+
+    // Convert Windows path to URL path: E:\foo\bar → /e/foo/bar
+    const urlPath = '/' + serverRoot.replace(/\\/g, '/').replace(/^([A-Za-z]):/, (_, d: string) => d.toLowerCase()) + '/README.md';
+
+    // Generate deep share link with depth=2, dirs=false
+    const { encodeStack } = await import('../services/deepShareLinks.js');
+    const stack = encodeStack([urlPath]);
+    const deepParams = { depth: 2, dirs: false, stack, exp: undefined };
+    const key = computeDeepShareKey(insider.seed, urlPath, deepParams);
+    const shareUrl = `/browse${urlPath}?key=${key}&d=2&dirs=0&s=${stack}`;
+
+    return reply.send({ url: shareUrl });
   });
 
   // POST /api/share — generate outsider share link (cookie auth only, no keys on client)
