@@ -166,10 +166,11 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
           const svg = container.querySelector('svg');
           if (!svg) return null;
           const rect = svg.getBoundingClientRect();
+          // Use absolute document coordinates (add scroll offset)
           return {
             index: i,
-            x: Math.floor(rect.x),
-            y: Math.floor(rect.y),
+            x: Math.floor(rect.x + window.scrollX),
+            y: Math.floor(rect.y + window.scrollY),
             width: Math.ceil(rect.width),
             height: Math.ceil(rect.height),
           };
@@ -177,7 +178,7 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
         .filter(Boolean);
     });
 
-    // Screenshot each SVG as PNG
+    // Screenshot each SVG as PNG — scroll into view first for accurate capture
     interface SVGPngData {
       index: number;
       dataUrl: string;
@@ -188,21 +189,33 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
     const svgPngDataUrls: SVGPngData[] = [];
     for (const info of svgInfos as SVGInfo[]) {
       if (info.width > 0 && info.height > 0) {
-        const pngBuffer = await page.screenshot({
-          clip: {
-            x: info.x,
-            y: info.y,
-            width: info.width,
-            height: info.height,
-          },
-          type: 'png',
-        });
-        svgPngDataUrls.push({
-          index: info.index,
-          dataUrl: `data:image/png;base64,${Buffer.from(pngBuffer).toString('base64')}`,
-          width: info.width,
-          height: info.height,
-        });
+        // Use element handle screenshot — captures the full element regardless of viewport
+        const pngBuffer = await page.evaluate((idx: number) => {
+          const containers = document.querySelectorAll(
+            '.svg-container, .zoomable-svg, .inline-svg-panzoom',
+          );
+          const container = containers[idx];
+          const svg = container?.querySelector('svg');
+          if (svg) {
+            // Add a temporary ID for selection
+            svg.setAttribute('data-export-idx', String(idx));
+          }
+          return !!svg;
+        }, info.index);
+
+        if (pngBuffer) {
+          const svgHandle = await page.$(`svg[data-export-idx="${String(info.index)}"]`);
+          if (svgHandle) {
+            const screenshot = await svgHandle.screenshot({ type: 'png' });
+            const box = await svgHandle.boundingBox();
+            svgPngDataUrls.push({
+              index: info.index,
+              dataUrl: `data:image/png;base64,${Buffer.from(screenshot).toString('base64')}`,
+              width: box?.width ? Math.ceil(box.width) : info.width,
+              height: box?.height ? Math.ceil(box.height) : info.height,
+            });
+          }
+        }
       }
     }
 
