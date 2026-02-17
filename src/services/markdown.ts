@@ -36,7 +36,7 @@ function linkifyWindowsPaths(markdown: string): string {
     if (!resolved) return winPath;
 
     const urlPath = `/${resolved.replace(/\\/g, '/').replace(/^([A-Z]):/, (_m: string, d: string) => d.toLowerCase())}`;
-    return `[${winPath}](/path${urlPath})`;
+    return `[${winPath}](/browse${urlPath})`;
   };
 
   // Split by code blocks and inline code
@@ -103,13 +103,12 @@ export function parseMarkdown(
       const text = typeof args === 'object' ? args.text : '';
       let src = href;
       if (src && !src.startsWith('http') && !src.startsWith('data:')) {
-        // Rewrite relative paths to absolute
+        // Rewrite relative paths to /api/raw/ for file serving
         if (!src.startsWith('/')) {
-          src = `/path/${base}/${src}`;
-        }
-        // Ensure raw=1 for /path/ URLs so they serve the actual file
-        if (src.startsWith('/path/')) {
-          src += (src.includes('?') ? '&' : '?') + 'raw=1';
+          src = `/api/raw/${base}/${src}`;
+        } else if (src.startsWith('/path/')) {
+          // Legacy /path/ references → /api/raw/
+          src = src.replace('/path/', '/api/raw/');
         }
       }
       const titleAttr = title ? ` title="${title}"` : '';

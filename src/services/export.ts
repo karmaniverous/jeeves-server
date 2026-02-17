@@ -41,6 +41,9 @@ async function addPrintStyles(page: Page): Promise<void> {
       .toc-spacer { display: none !important; }
       .layout { display: block !important; }
       body { background: #fff !important; font-size: 10pt !important; line-height: 1.5 !important; color: #000 !important; }
+      /* SPA layout: remove scroll containers so body grows to full content height */
+      html, body, #root { height: auto !important; overflow: visible !important; }
+      main, [class*="overflow-y"] { overflow: visible !important; height: auto !important; }
       /* SPA article.prose */
       article.prose { max-width: none !important; border: none !important; padding: 0 !important; }
       .content, article.prose { font-size: 10pt !important; }
@@ -89,6 +92,28 @@ async function addPrintStyles(page: Page): Promise<void> {
 }
 
 /**
+ * Wait for SPA content to fully render, including async SVG fetches.
+ */
+async function waitForSpaContent(page: Page): Promise<void> {
+  // Wait for the article.prose element to appear (markdown rendered)
+  await page.waitForSelector('article.prose', { timeout: 15_000 }).catch(() => {});
+  // Wait for any inline SVG panzoom containers to finish loading
+  // (they start with "Loading SVG…" text, then get replaced with actual SVG content)
+  await page.waitForFunction(
+    () => {
+      const containers = document.querySelectorAll('.inline-svg-panzoom');
+      if (containers.length === 0) return true;
+      return Array.from(containers).every(
+        (c) => !c.textContent?.includes('Loading SVG')
+      );
+    },
+    { timeout: 15_000 },
+  ).catch(() => {});
+  // Small extra delay for any final rendering
+  await new Promise((r) => setTimeout(r, 1000));
+}
+
+/**
  * Export page as PDF
  */
 export async function exportPDF(options: ExportOptions): Promise<Buffer> {
@@ -96,6 +121,7 @@ export async function exportPDF(options: ExportOptions): Promise<Buffer> {
   try {
     const page = await browser.newPage();
     await page.goto(options.url, { waitUntil: 'networkidle0' });
+    await waitForSpaContent(page);
     await addPrintStyles(page);
 
     const pdfBuffer = await page.pdf({
@@ -119,6 +145,7 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
     const page = await browser.newPage();
     await page.setViewport({ width: 1200, height: 800 });
     await page.goto(options.url, { waitUntil: 'networkidle0' });
+    await waitForSpaContent(page);
     await addPrintStyles(page);
 
     // Get SVG bounding boxes for screenshots
