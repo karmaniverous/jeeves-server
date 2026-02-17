@@ -11,7 +11,7 @@ import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 
 import { _pathMatchesScopes, verifyKey } from '../auth/keys.js';
 import archiver from 'archiver';
-import { computeOutsiderKeyWithExpiry, computePathKey } from '../util/crypto.js';
+import { computeDeepShareKey, computeOutsiderKeyWithExpiry, computePathKey } from '../util/crypto.js';
 import { COOKIE_NAME, verifySessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
 import { setInsiderKey } from '../util/state.js';
@@ -22,6 +22,7 @@ import { appendEvent } from '../services/eventQueue.js';
 
 import hljs from 'highlight.js';
 
+import { rewriteLinksForDeepShare } from '../services/deepShareLinks.js';
 import { parseMarkdown } from '../services/markdown.js';
 import { getContentType, isInlineType, looksLikeText } from '../util/fileDetection.js';
 import { formatRelativeTime } from '../util/formatters.js';
@@ -55,8 +56,12 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
     if (request.url.startsWith('/api/auth/status')) return;
 
     const config = getConfig();
-    const provided = (request.query as { key?: string }).key;
-    const expParam = (request.query as { exp?: string }).exp;
+    const query = request.query as { key?: string; exp?: string; d?: string; dirs?: string; s?: string };
+    const provided = query.key;
+    const expParam = query.exp;
+    const deepParams = query.d !== undefined && query.s !== undefined
+      ? { d: query.d!, dirs: query.dirs ?? '0', s: query.s! }
+      : undefined;
 
     // Determine URL path for scope checking
     const urlPath = request.url
@@ -74,6 +79,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       provided,
       expParam,
       config.resolvedInsiders,
+      deepParams,
     );
 
     if (authResult.valid) {
@@ -81,6 +87,8 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         authResult.mode ?? undefined;
       (request as { authSeed?: string }).authSeed =
         authResult.seed ?? undefined;
+      (request as { deepShareParams?: typeof deepParams }).deepShareParams =
+        deepParams;
       return;
     }
 
@@ -287,10 +295,31 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
           return reply.send({ type: 'markdown', content: markdown, fileName, breadcrumbs, isInsider });
         }
         const urlDir = reqPath.includes('/') ? reqPath.substring(0, reqPath.lastIndexOf('/')) : '';
-        const { html, headings } = parseMarkdown(markdown, {
+        let { html, headings } = parseMarkdown(markdown, {
           linkWindowsPaths: true,
           basePath: urlDir,
         });
+
+        // Deep share link rewriting for outsiders with depth > 0
+        const deepShare = (request as { deepShareParams?: { d: string; dirs: string; s: string } }).deepShareParams;
+        const seed = (request as { authSeed?: string }).authSeed;
+        if (!isInsider && deepShare && seed) {
+          const maxDepth = parseInt(deepShare.d, 10);
+          const dirs = deepShare.dirs === '1';
+          const currentPath = `/${reqPath}`;
+          if (!isNaN(maxDepth) && maxDepth > 0) {
+            html = rewriteLinksForDeepShare(
+              html,
+              seed,
+              currentPath,
+              maxDepth,
+              dirs,
+              deepShare.s,
+              (request.query as { exp?: string }).exp,
+            );
+          }
+        }
+
         return reply.send({
           type: 'markdown',
           content: markdown,
@@ -617,7 +646,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
   });
 
   // POST /api/share — generate outsider share link (cookie auth only, no keys on client)
-  fastify.post<{ Body: { path: string; expiry?: string } }>(
+  fastify.post<{ Body: { path: string; expiry?: string; depth?: number; dirs?: boolean } }>(
     '/api/share',
     async (request, reply) => {
       const seed = (request as { authSeed?: string }).authSeed;
@@ -625,14 +654,28 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         return reply.code(401).send({ error: 'Insider auth required' });
       }
 
-      const { path: targetPath, expiry } = request.body;
+      const { path: targetPath, expiry, depth, dirs } = request.body;
       if (!targetPath) {
         return reply.code(400).send({ error: 'path is required' });
       }
 
       let outsiderKey: string;
       let shareUrl: string;
-      if (expiry) {
+
+      // Deep share (depth > 0 or dirs enabled)
+      if ((depth && depth > 0) || dirs) {
+        const { encodeStack } = await import('../services/deepShareLinks.js');
+        const stack = encodeStack([targetPath]);
+        const deepParams: import('../util/crypto.js').DeepShareParams = {
+          depth: depth ?? 0,
+          dirs: dirs ?? false,
+          stack,
+          exp: expiry,
+        };
+        outsiderKey = computeDeepShareKey(seed, targetPath, deepParams);
+        shareUrl = `/browse${targetPath}?key=${outsiderKey}&d=${String(depth ?? 0)}&dirs=${dirs ? '1' : '0'}&s=${stack}`;
+        if (expiry) shareUrl += `&exp=${expiry}`;
+      } else if (expiry) {
         outsiderKey = computeOutsiderKeyWithExpiry(seed, targetPath, expiry);
         shareUrl = `/browse${targetPath}?key=${outsiderKey}&exp=${expiry}`;
       } else {
@@ -640,7 +683,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         shareUrl = `/browse${targetPath}?key=${outsiderKey}`;
       }
 
-      return reply.send({ url: shareUrl, path: targetPath, exp: expiry ?? null });
+      return reply.send({ url: shareUrl, path: targetPath, exp: expiry ?? null, depth: depth ?? 0, dirs: dirs ?? false });
     },
   );
 

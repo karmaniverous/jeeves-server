@@ -17,9 +17,11 @@ import type {
   ResolvedKey,
 } from '../config/types.js';
 import {
+  computeDeepShareKey,
   computeInsiderKey,
   computeOutsiderKeyWithExpiry,
   computePathKey,
+  type DeepShareParams,
   timingSafeEqual,
 } from '../util/crypto.js';
 
@@ -66,7 +68,29 @@ function checkOutsiderKey(
   urlPath: string,
   providedKey: string,
   expParam: string | undefined,
+  deepParams?: { d: string; dirs: string; s: string },
 ): string | null {
+  // Deep share key check (when d and s params are present)
+  if (deepParams?.d !== undefined && deepParams?.s !== undefined) {
+    const params: DeepShareParams = {
+      depth: parseInt(deepParams.d, 10),
+      dirs: deepParams.dirs === '1',
+      stack: deepParams.s,
+      exp: expParam,
+    };
+    if (!isNaN(params.depth)) {
+      // Check expiry if present
+      if (params.exp) {
+        const expiry = parseInt(params.exp, 10);
+        if (isNaN(expiry) || expiry < Date.now()) return null;
+      }
+      const expectedKey = computeDeepShareKey(seed, urlPath, params);
+      if (timingSafeEqual(providedKey, expectedKey)) return urlPath;
+    }
+    return null; // Deep params present but invalid — don't fall through to legacy
+  }
+
+  // Legacy outsider key check (no deep params)
   const pathsToCheck = getPathAndAncestors(urlPath);
 
   for (const checkPath of pathsToCheck) {
@@ -107,6 +131,7 @@ export function verifyKey(
   providedKey: string | undefined,
   expParam: string | undefined,
   resolvedInsiders: ResolvedInsider[] = [],
+  deepParams?: { d: string; dirs: string; s: string },
 ): KeyVerificationResult {
   const fail: KeyVerificationResult = {
     valid: false,
@@ -141,6 +166,7 @@ export function verifyKey(
       urlPath,
       providedKey,
       expParam,
+      deepParams,
     );
     if (machineMatch !== null) {
       if (rk.scopes && !pathMatchesScopes(urlPath, rk.scopes)) {
@@ -165,6 +191,7 @@ export function verifyKey(
       urlPath,
       providedKey,
       expParam,
+      deepParams,
     );
     if (insiderMatch !== null) {
       if (ri.scopes && !pathMatchesScopes(urlPath, ri.scopes)) {
