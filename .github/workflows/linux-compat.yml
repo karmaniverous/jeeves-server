@@ -21,8 +21,11 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Install dependencies
+      - name: Install server dependencies
         run: npm ci
+
+      - name: Install client dependencies
+        run: cd client && npm ci
 
       - name: TypeScript compile
         run: npx tsc
@@ -67,37 +70,35 @@ jobs:
             sleep 1
           done
 
+      - name: Compute insider key
+        run: |
+          KEY=$(node -e "
+            import crypto from 'crypto';
+            const seed = 'ci-test-seed-not-a-real-secret-0000000000000000000000000000000000';
+            console.log(crypto.createHmac('sha256', seed).update('insider').digest('hex').substring(0, 32));
+          " --input-type=module)
+          echo "INSIDER_KEY=$KEY" >> $GITHUB_ENV
+          echo "Insider key: $KEY"
+
       - name: Smoke test - drives endpoint
         run: |
-          RESPONSE=$(curl -s http://localhost:3456/api/drives)
+          RESPONSE=$(curl -s "http://localhost:3456/api/drives?key=$INSIDER_KEY")
           echo "Drives response: $RESPONSE"
           echo "$RESPONSE" | grep -q '"letter"' || (echo "FAIL: No drives in response" && exit 1)
+          echo "$RESPONSE" | grep -q '"workspace"' || (echo "FAIL: workspace root not found" && exit 1)
 
       - name: Smoke test - directory listing
         run: |
-          # List the workspace root
-          RESPONSE=$(curl -s -H "Authorization: Bearer ci-test" "http://localhost:3456/api/path/workspace" \
-            -H "Cookie: " \
-            --data-urlencode "" 2>/dev/null || \
-            curl -s "http://localhost:3456/api/path/workspace?key=$(node -e "
-              const {computeInsiderKey} = require('./dist/util/crypto.js');
-              console.log(computeInsiderKey('ci-test-seed-not-a-real-secret-0000000000000000000000000000000000'));
-            ")")
+          RESPONSE=$(curl -s "http://localhost:3456/api/path/workspace?key=$INSIDER_KEY")
           echo "Directory response (first 500 chars): ${RESPONSE:0:500}"
-          echo "$RESPONSE" | grep -q '"entries"' || echo "WARN: Directory listing may need auth adjustment"
+          echo "$RESPONSE" | grep -q '"entries"' || (echo "FAIL: No entries in directory listing" && exit 1)
 
       - name: Smoke test - file serving
         run: |
-          # Try to load README.md via the API
-          KEY=$(node -e "
-            const crypto = require('crypto');
-            const seed = 'ci-test-seed-not-a-real-secret-0000000000000000000000000000000000';
-            const key = crypto.createHmac('sha256', seed).update('insider').digest('hex').substring(0, 32);
-            console.log(key);
-          ")
-          RESPONSE=$(curl -s -w "\n%{http_code}" "http://localhost:3456/api/file/workspace/README.md?key=$KEY")
+          RESPONSE=$(curl -s -w "\n%{http_code}" "http://localhost:3456/api/file/workspace/README.md?key=$INSIDER_KEY")
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           echo "README.md status: $HTTP_CODE"
+          [ "$HTTP_CODE" = "200" ] || (echo "FAIL: README.md returned $HTTP_CODE" && exit 1)
 
       - name: Smoke test - SPA loads
         run: |
