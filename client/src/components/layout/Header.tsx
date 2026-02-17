@@ -1,9 +1,12 @@
-import { Moon, Sun, Info, KeyRound } from 'lucide-react';
+import { Moon, Sun, BookOpen, KeyRound, Github } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { AccountMenu } from '@/components/AccountMenu';
+import { AccountMenu, type CollapsedItem } from '@/components/AccountMenu';
 import { Button } from '@/components/ui/button';
 import type { BreadcrumbItem } from '@/lib/api';
+
+const GITHUB_URL = 'https://github.com/karmaniverous/jeeves-server';
 
 interface HeaderProps {
   breadcrumbs?: BreadcrumbItem[];
@@ -12,14 +15,14 @@ interface HeaderProps {
   onToggleTheme: () => void;
   keyAge?: string | null;
   onRotateKey?: () => void;
-  /** Download dropdown (context-dependent) */
+  /** Download dropdown for header bar (icon button variant) */
   downloadDropdown?: React.ReactNode;
-  /** Link dropdown + expiry selector */
+  /** Link dropdown for header bar (icon button variant) */
   linkControls?: React.ReactNode;
-}
-
-function Divider() {
-  return <div className="w-px h-6 bg-zinc-600 mx-1 shrink-0" />;
+  /** Download dropdown factory for account menu (receives dismiss callback) */
+  downloadMenuItem?: (onDismiss: () => void) => React.ReactNode;
+  /** Link dropdown factory for account menu (receives dismiss callback) */
+  linkMenuItem?: (onDismiss: () => void) => React.ReactNode;
 }
 
 export function Header({
@@ -31,16 +34,94 @@ export function Header({
   onRotateKey,
   downloadDropdown,
   linkControls,
+  downloadMenuItem,
+  linkMenuItem,
 }: HeaderProps) {
-  const hasDownloads = !!downloadDropdown;
-  const hasShare = !!linkControls;
   const hasKeyMgmt = isInsider && onRotateKey;
-  const hasActionBar = hasDownloads || hasShare || hasKeyMgmt;
+  const [readmeUrl, setReadmeUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/readme-link')
+      .then(r => r.ok ? r.json() as Promise<{ url: string }> : null)
+      .then(data => { if (data?.url) setReadmeUrl(data.url); })
+      .catch(() => {});
+  }, []);
+
+  // Build account menu collapsed items in left-to-right header order
+  const collapsedItems: CollapsedItem[] = [];
+
+  const menuItemClass = 'flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors w-full text-left cursor-pointer';
+
+  // Link controls — hidden below 400px
+  if (linkMenuItem) {
+    collapsedItems.push({
+      breakpoint: 'bp-400',
+      node: linkMenuItem,
+      hasNestedDropdown: true,
+    });
+  }
+
+  // Download dropdown — hidden below 480px
+  if (downloadMenuItem) {
+    collapsedItems.push({
+      breakpoint: 'bp-480',
+      node: downloadMenuItem,
+      hasNestedDropdown: true,
+    });
+  }
+
+  // Key management — hidden below sm (640px)
+  if (hasKeyMgmt) {
+    collapsedItems.push({
+      breakpoint: 'sm',
+      node: (
+        <button onClick={onRotateKey} className={menuItemClass}>
+          <KeyRound className="h-4 w-4 shrink-0" />
+          Rotate key{keyAge ? ` (${keyAge})` : ''}
+        </button>
+      ),
+    });
+  }
+
+  // README — hidden below md (768px)
+  if (readmeUrl) {
+    collapsedItems.push({
+      breakpoint: 'md',
+      node: (
+        <a href={readmeUrl} className={menuItemClass}>
+          <BookOpen className="h-4 w-4 shrink-0" />
+          README
+        </a>
+      ),
+    });
+  }
+
+  // GitHub — hidden below md (768px)
+  collapsedItems.push({
+    breakpoint: 'md',
+    node: (
+      <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className={menuItemClass}>
+        <Github className="h-4 w-4 shrink-0" />
+        GitHub
+      </a>
+    ),
+  });
+
+  // Theme — hidden below md (768px)
+  collapsedItems.push({
+    breakpoint: 'md',
+    node: (
+      <button onClick={onToggleTheme} className={menuItemClass}>
+        {theme === 'dark' ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
+        {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+      </button>
+    ),
+  });
 
   return (
     <header className="bg-zinc-800 text-white px-4 py-2">
-      <div className="flex flex-wrap items-center gap-y-1">
-        {/* Group 1: Breadcrumbs (🎩 pinned, rest scrollable) */}
+      <div className="flex items-center gap-1">
+        {/* Breadcrumbs — takes remaining space, truncates */}
         <div className="flex items-center min-w-0 flex-1">
           <Link to="/browse" className="text-3xl no-underline shrink-0 mr-1" title="Jeeves Server">
             🎩
@@ -64,61 +145,66 @@ export function Header({
           </nav>
         </div>
 
-        {/* Group 2: Action bar (download, link, key) — wraps to row 2 on medium screens */}
-        {hasActionBar && (
-          <div className="flex items-center gap-1 shrink-0 order-3 lg:order-2 w-full lg:w-auto mt-1 lg:mt-0">
-            {hasDownloads && (
-              <>
-                <div className="flex items-center gap-1">{downloadDropdown}</div>
-                {(hasShare || hasKeyMgmt) && <Divider />}
-              </>
-            )}
-            {hasShare && (
-              <>
-                <div className="flex items-center gap-2">{linkControls}</div>
-                {hasKeyMgmt && <Divider />}
-              </>
-            )}
-            {hasKeyMgmt && (
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-zinc-400 hover:text-white h-8 w-8"
-                  title="Rotate key (invalidates all your shares)"
-                  onClick={onRotateKey}
-                >
-                  <KeyRound className="h-4 w-4" />
-                </Button>
-                {keyAge && (
-                  <span className="text-xs text-zinc-500">{keyAge}</span>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Controls — progressively hidden via responsive classes */}
+        <div className="flex items-center gap-1 shrink-0">
+          {/* Link controls: visible 400px+ */}
+          {linkControls && (
+            <div className="hidden min-[400px]:flex items-center">{linkControls}</div>
+          )}
 
-        {/* Group 3: Utility bar (info, theme, account) */}
-        <div className="flex items-center gap-1 shrink-0 order-2 lg:order-3">
-          {/* Info & theme — visible at lg+, hidden below (folded into account menu) */}
-          <Link to="/about" title="About Jeeves Server" className="hidden lg:inline-flex">
-            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white h-8 w-8">
-              <Info className="h-4 w-4" />
+          {/* Download: visible 480px+ */}
+          {downloadDropdown && (
+            <div className="hidden min-[480px]:flex items-center">{downloadDropdown}</div>
+          )}
+
+          {/* Key management: visible sm+ (640px) */}
+          {hasKeyMgmt && (
+            <div className="hidden sm:flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-zinc-300 hover:text-white h-8 w-8"
+                title="Rotate key (invalidates all your shares)"
+                onClick={onRotateKey}
+              >
+                <KeyRound className="h-4 w-4" />
+              </Button>
+              {keyAge && <span className="text-xs text-zinc-500">{keyAge}</span>}
+            </div>
+          )}
+
+          {/* README: visible md+ (768px) */}
+          {readmeUrl && (
+            <a href={readmeUrl} title="README" className="hidden md:inline-flex">
+              <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white h-8 w-8">
+                <BookOpen className="h-4 w-4" />
+              </Button>
+            </a>
+          )}
+
+          {/* GitHub: visible md+ (768px) */}
+          <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" title="GitHub" className="hidden md:inline-flex">
+            <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white h-8 w-8">
+              <Github className="h-4 w-4" />
             </Button>
-          </Link>
+          </a>
+
+          {/* Theme: visible lg+ (1024px) */}
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:text-white h-8 w-8 hidden lg:inline-flex"
+            className="text-zinc-300 hover:text-white h-8 w-8 hidden md:inline-flex"
             title="Toggle theme"
             onClick={onToggleTheme}
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
+
+          {/* Account menu — always visible */}
           <AccountMenu
             theme={theme}
             onToggleTheme={onToggleTheme}
-            collapsed={true}
+            collapsedItems={collapsedItems}
           />
         </div>
       </div>

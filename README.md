@@ -65,6 +65,10 @@ The gap has always been the last mile: getting Markdown into the hands of people
 - [Deployment](guides/deployment.md) — Running as a service (Windows & Linux), reverse proxy setup, HTTPS, Google OAuth for production, and updates
 - [API & Integration](guides/api-integration.md) — Programmatic access, endpoint reference, Windows path conversion, generating share links, and notes for AI assistants
 
+## Live Demo
+
+The 📖 button in the header is itself a live external share link — it points to this very README—in the working directory on a live production Jeeves Server—with `depth=2` (so you can follow links to the guides) and `dirs=false` (no directory browsing). If you're reading this in Jeeves Server, you're seeing the deep share feature in action. If you're reading this on GitHub, click [here](https://jeeves.johngalt.id/browse/e/jeeves-server/README.md?key=58f33049a73af8c3e694afa45eca426c&d=2&dirs=0&s=NoIg9ApmBWEQbhAzgWiRATojYBKBRAQQBEBZfAOgFsATEAXSA) to see for yourself.
+
 ## Quick Start
 
 ```bash

@@ -11,7 +11,7 @@ import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 
 import { _pathMatchesScopes, verifyKey } from '../auth/keys.js';
 import archiver from 'archiver';
-import { computeOutsiderKeyWithExpiry, computePathKey } from '../util/crypto.js';
+import { computeDeepShareKey, computeOutsiderKeyWithExpiry, computePathKey } from '../util/crypto.js';
 import { COOKIE_NAME, verifySessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
 import { setInsiderKey } from '../util/state.js';
@@ -22,6 +22,7 @@ import { appendEvent } from '../services/eventQueue.js';
 
 import hljs from 'highlight.js';
 
+import { rewriteLinksForDeepShare } from '../services/deepShareLinks.js';
 import { parseMarkdown } from '../services/markdown.js';
 import { getContentType, isInlineType, looksLikeText } from '../util/fileDetection.js';
 import { formatRelativeTime } from '../util/formatters.js';
@@ -29,6 +30,35 @@ import { formatRelativeTime } from '../util/formatters.js';
 interface DriveInfo {
   letter: string;
   label: string;
+}
+
+interface Breadcrumb {
+  label: string;
+  path: string;
+}
+
+/**
+ * Filter breadcrumbs for outsiders:
+ * - File shares: no breadcrumbs (the page stands alone)
+ * - Directory shares: trim to the share root (matchedPath)
+ */
+function filterBreadcrumbsForOutsider(
+  breadcrumbs: Breadcrumb[],
+  isInsider: boolean,
+  matchedPath: string | null,
+  isDirectoryView: boolean,
+): Breadcrumb[] {
+  if (isInsider) return breadcrumbs;
+  if (!isDirectoryView) return breadcrumbs.length > 0 ? [breadcrumbs[breadcrumbs.length - 1]] : [];
+  // For directory views, trim breadcrumbs to the matched (shared) path root
+  if (matchedPath) {
+    const normalizedMatch = matchedPath.replace(/^\/+|\/+$/g, '').toLowerCase();
+    const matchIdx = breadcrumbs.findIndex(
+      b => b.path.replace(/^\/+|\/+$/g, '').toLowerCase() === normalizedMatch,
+    );
+    if (matchIdx >= 0) return breadcrumbs.slice(matchIdx);
+  }
+  return breadcrumbs;
 }
 
 function getDrives(): DriveInfo[] {
@@ -51,12 +81,16 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
   // API authentication middleware
   fastify.addHook('preHandler', async (request, reply) => {
     if (!request.url.startsWith('/api')) return;
-    if (request.url.startsWith('/api/about')) return;
+    if (request.url.startsWith('/api/readme-link')) return;
     if (request.url.startsWith('/api/auth/status')) return;
 
     const config = getConfig();
-    const provided = (request.query as { key?: string }).key;
-    const expParam = (request.query as { exp?: string }).exp;
+    const query = request.query as { key?: string; exp?: string; d?: string; dirs?: string; s?: string };
+    const provided = query.key;
+    const expParam = query.exp;
+    const deepParams = query.d !== undefined && query.s !== undefined
+      ? { d: query.d!, dirs: query.dirs ?? '0', s: query.s! }
+      : undefined;
 
     // Determine URL path for scope checking
     const urlPath = request.url
@@ -68,19 +102,45 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       .replace('/api/export', '');
 
     // Try API key auth
-    const authResult = verifyKey(
+    let authResult = verifyKey(
       config.resolvedKeys,
       urlPath || '/',
       provided,
       expParam,
       config.resolvedInsiders,
+      deepParams,
     );
+
+    // For directory requests with dirs=1, the key was derived for a file path
+    // (the last entry in the stack), not the directory path. Verify against the
+    // stack's last entry and allow if the directory is an ancestor/sibling.
+    if (!authResult.valid && deepParams && deepParams.dirs === '1' && provided) {
+      const { decodeStack } = await import('../services/deepShareLinks.js');
+      const stack = decodeStack(deepParams.s);
+      const lastStackEntry = stack[stack.length - 1];
+      if (lastStackEntry && lastStackEntry !== urlPath) {
+        authResult = verifyKey(
+          config.resolvedKeys,
+          lastStackEntry,
+          provided,
+          expParam,
+          config.resolvedInsiders,
+          deepParams,
+        );
+        // dirs=true grants unrestricted directory access,
+        // scoped only by the sharer's own permissions.
+      }
+    }
 
     if (authResult.valid) {
       (request as { accessMode?: AccessMode }).accessMode =
         authResult.mode ?? undefined;
       (request as { authSeed?: string }).authSeed =
         authResult.seed ?? undefined;
+      (request as { deepShareParams?: typeof deepParams }).deepShareParams =
+        deepParams;
+      (request as { authMatchedPath?: string | null }).authMatchedPath =
+        authResult.matchedPath;
       return;
     }
 
@@ -228,10 +288,13 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         return { label: part, path: urlPath };
       });
 
+      const matchedPath = (request as { authMatchedPath?: string | null }).authMatchedPath ?? null;
+      const filteredBreadcrumbs = filterBreadcrumbsForOutsider(breadcrumbs, isInsider, matchedPath, true);
+
       return reply.send({
         path: reqPath,
         entries: result,
-        breadcrumbs,
+        breadcrumbs: filteredBreadcrumbs,
         isInsider,
       });
     },
@@ -271,14 +334,20 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
 
       // Build breadcrumbs
       const pathParts = resolved.split('\\').filter((p) => p);
-      const breadcrumbs = pathParts.map((part, i) => {
-        const accumParts = pathParts.slice(0, i + 1);
-        const winPath = accumParts.join('\\');
-        const urlPath = winPath
-          .replace(/\\/g, '/')
-          .replace(/^([A-Z]):/, (_m: string, d: string) => d.toLowerCase());
-        return { label: part, path: urlPath };
-      });
+      const matchedPath = (request as { authMatchedPath?: string | null }).authMatchedPath ?? null;
+      const breadcrumbs = filterBreadcrumbsForOutsider(
+        pathParts.map((part, i) => {
+          const accumParts = pathParts.slice(0, i + 1);
+          const winPath = accumParts.join('\\');
+          const urlPath = winPath
+            .replace(/\\/g, '/')
+            .replace(/^([A-Z]):/, (_m: string, d: string) => d.toLowerCase());
+          return { label: part, path: urlPath };
+        }),
+        isInsider,
+        matchedPath,
+        false, // file view, not directory
+      );
 
       // Markdown
       if (ext === '.md') {
@@ -287,10 +356,31 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
           return reply.send({ type: 'markdown', content: markdown, fileName, breadcrumbs, isInsider });
         }
         const urlDir = reqPath.includes('/') ? reqPath.substring(0, reqPath.lastIndexOf('/')) : '';
-        const { html, headings } = parseMarkdown(markdown, {
+        let { html, headings } = parseMarkdown(markdown, {
           linkWindowsPaths: true,
           basePath: urlDir,
         });
+
+        // Deep share link rewriting for outsiders with depth > 0
+        const deepShare = (request as { deepShareParams?: { d: string; dirs: string; s: string } }).deepShareParams;
+        const seed = (request as { authSeed?: string }).authSeed;
+        if (!isInsider && deepShare && seed) {
+          const maxDepth = parseInt(deepShare.d, 10);
+          const dirs = deepShare.dirs === '1';
+          const currentPath = `/${reqPath}`;
+          if (!isNaN(maxDepth) && maxDepth > 0) {
+            html = rewriteLinksForDeepShare(
+              html,
+              seed,
+              currentPath,
+              maxDepth,
+              dirs,
+              deepShare.s,
+              (request.query as { exp?: string }).exp,
+            );
+          }
+        }
+
         return reply.send({
           type: 'markdown',
           content: markdown,
@@ -595,29 +685,39 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // GET /api/about — about page content (no auth required)
-  fastify.get('/api/about', async (_request, reply) => {
-    const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    const aboutPath = path.join(__dirname, '..', '..', 'about.md');
-    if (!fs.existsSync(aboutPath)) {
-      return reply.code(404).send({ error: 'About page not found' });
+  // GET /api/readme-link — pre-computed outsider share link for the server's README (no auth required)
+  fastify.get('/api/readme-link', async (_request, reply) => {
+    const config = getConfig();
+    // Use the _internal key seed for the README share link
+    const internalKey = config.resolvedKeys.find(k => k.name === '_internal');
+    if (!internalKey?.seed) {
+      return reply.code(503).send({ error: 'No _internal key configured' });
     }
-    const markdown = fs.readFileSync(aboutPath, 'utf8');
-    const { html, headings } = parseMarkdown(markdown, {
-      linkWindowsPaths: false,
-    });
-    return reply.send({
-      type: 'markdown',
-      html,
-      headings,
-      fileName: 'about.md',
-      breadcrumbs: [{ label: 'About', path: 'about' }],
-      isInsider: false,
-    });
+    const seed = internalKey.seed;
+
+    // Compute the README's URL path from the server's install directory
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const serverRoot = path.resolve(__dirname, '..', '..');
+    const readmePath = path.join(serverRoot, 'README.md');
+    if (!fs.existsSync(readmePath)) {
+      return reply.code(404).send({ error: 'README.md not found' });
+    }
+
+    // Convert Windows path to URL path: E:\foo\bar → /e/foo/bar
+    const urlPath = '/' + serverRoot.replace(/\\/g, '/').replace(/^([A-Za-z]):/, (_, d: string) => d.toLowerCase()) + '/README.md';
+
+    // Generate deep share link with depth=2, dirs=false
+    const { encodeStack } = await import('../services/deepShareLinks.js');
+    const stack = encodeStack([urlPath]);
+    const deepParams = { depth: 2, dirs: false, stack, exp: undefined };
+    const key = computeDeepShareKey(seed, urlPath, deepParams);
+    const shareUrl = `/browse${urlPath}?key=${key}&d=2&dirs=0&s=${stack}`;
+
+    return reply.send({ url: shareUrl });
   });
 
   // POST /api/share — generate outsider share link (cookie auth only, no keys on client)
-  fastify.post<{ Body: { path: string; expiry?: string } }>(
+  fastify.post<{ Body: { path: string; expiry?: string; depth?: number; dirs?: boolean } }>(
     '/api/share',
     async (request, reply) => {
       const seed = (request as { authSeed?: string }).authSeed;
@@ -625,14 +725,28 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         return reply.code(401).send({ error: 'Insider auth required' });
       }
 
-      const { path: targetPath, expiry } = request.body;
+      const { path: targetPath, expiry, depth, dirs } = request.body;
       if (!targetPath) {
         return reply.code(400).send({ error: 'path is required' });
       }
 
       let outsiderKey: string;
       let shareUrl: string;
-      if (expiry) {
+
+      // Deep share (depth > 0 or dirs enabled)
+      if ((depth && depth > 0) || dirs) {
+        const { encodeStack } = await import('../services/deepShareLinks.js');
+        const stack = encodeStack([targetPath]);
+        const deepParams: import('../util/crypto.js').DeepShareParams = {
+          depth: depth ?? 0,
+          dirs: dirs ?? false,
+          stack,
+          exp: expiry,
+        };
+        outsiderKey = computeDeepShareKey(seed, targetPath, deepParams);
+        shareUrl = `/browse${targetPath}?key=${outsiderKey}&d=${String(depth ?? 0)}&dirs=${dirs ? '1' : '0'}&s=${stack}`;
+        if (expiry) shareUrl += `&exp=${expiry}`;
+      } else if (expiry) {
         outsiderKey = computeOutsiderKeyWithExpiry(seed, targetPath, expiry);
         shareUrl = `/browse${targetPath}?key=${outsiderKey}&exp=${expiry}`;
       } else {
@@ -640,7 +754,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         shareUrl = `/browse${targetPath}?key=${outsiderKey}`;
       }
 
-      return reply.send({ url: shareUrl, path: targetPath, exp: expiry ?? null });
+      return reply.send({ url: shareUrl, path: targetPath, exp: expiry ?? null, depth: depth ?? 0, dirs: dirs ?? false });
     },
   );
 
@@ -756,12 +870,20 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         const query = request.query as Record<string, string>;
         const providedKey = query.key;
         if (providedKey) {
+          // For outsider deep-share keys, verify against the browsed path.
+          // Deep keys are derived per-path, so '/' would never match.
+          // Client sends the path as a query param.
+          const verifyPath = query.path ?? '/';
+          const deepParams = query.d !== undefined && query.s !== undefined
+            ? { d: query.d, dirs: query.dirs ?? '0', s: query.s }
+            : undefined;
           const result = verifyKey(
             config.resolvedKeys,
-            '/',
+            verifyPath,
             providedKey,
-            undefined,
+            query.exp,
             config.resolvedInsiders,
+            deepParams,
           );
           if (result.valid) {
             return reply.send({
