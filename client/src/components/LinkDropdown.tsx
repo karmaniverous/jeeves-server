@@ -1,4 +1,4 @@
-import { Check, Link as LinkIcon, Loader2 } from 'lucide-react';
+import { Check, Link as LinkIcon, Loader2, X } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -24,8 +24,12 @@ interface LinkDropdownProps {
   showRaw?: boolean;
   /** Small variant for directory rows */
   compact?: boolean;
-  /** Color variant: 'header' for always-dark header, 'default' for theme-aware table rows */
-  variant?: 'header' | 'default';
+  /** Render variant */
+  variant?: 'header' | 'default' | 'menuItem';
+  /** Error callback (for parent to show error UI) */
+  onError?: (error: string) => void;
+  /** Called when state changes (for parent menu auto-close control) */
+  onStateChange?: (state: 'idle' | 'loading' | 'done' | 'error') => void;
 }
 
 type LinkType = 'page' | 'raw' | 'event';
@@ -65,8 +69,9 @@ const EXPIRY_OPTIONS = [
   { label: '30 days', value: '30d' },
 ];
 
-export function LinkDropdown({ path, shareSettings, onShareSettingsChange, showEvent, showRaw, compact, variant = 'default' }: LinkDropdownProps) {
-  const [state, setState] = useState<'idle' | 'loading' | 'done'>('idle');
+export function LinkDropdown({ path, shareSettings, onShareSettingsChange, showEvent, showRaw, compact, variant = 'default', onError, onStateChange }: LinkDropdownProps) {
+  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const items: { label: string; type: LinkType }[] = [
     { label: 'Page', type: 'page' },
@@ -74,37 +79,69 @@ export function LinkDropdown({ path, shareSettings, onShareSettingsChange, showE
   if (showRaw) items.push({ label: 'Raw', type: 'raw' });
   if (showEvent) items.push({ label: 'Event', type: 'event' });
 
+  const updateState = (s: 'idle' | 'loading' | 'done' | 'error') => {
+    setState(s);
+    onStateChange?.(s);
+  };
+
   const handleSelect = async (type: LinkType) => {
-    setState('loading');
+    updateState('loading');
+    setErrorMsg(null);
     try {
       await copyShareLink(path, shareSettings, type);
-      setState('done');
-      setTimeout(() => setState('idle'), 1500);
+      updateState('done');
+      setTimeout(() => updateState('idle'), 1500);
     } catch (err) {
-      console.error('Share failed:', err);
-      setState('idle');
+      const msg = err instanceof Error ? err.message : 'Share failed';
+      setErrorMsg(msg);
+      updateState('error');
+      onError?.(msg);
     }
   };
 
+  const isMenuItem = variant === 'menuItem';
   const iconSize = compact ? 'h-3.5 w-3.5' : 'h-4 w-4';
   const btnSize = compact ? 'h-7 w-7' : 'h-8 w-8';
 
-  const Icon = state === 'done' ? Check : state === 'loading' ? Loader2 : LinkIcon;
+  const Icon = state === 'done' ? Check : state === 'error' ? X : state === 'loading' ? Loader2 : LinkIcon;
+  const iconColor = state === 'done' ? 'text-green-500' : state === 'error' ? 'text-red-500' : '';
+
+  const trigger = isMenuItem ? (
+    <button
+      className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors w-full text-left"
+      disabled={state === 'loading'}
+    >
+      <Icon className={`h-4 w-4 shrink-0 ${iconColor} ${state === 'loading' ? 'animate-spin' : ''}`} />
+      Share
+    </button>
+  ) : (
+    <Button
+      variant="ghost"
+      size="icon"
+      className={`${btnSize} ${iconColor || (variant === 'header' ? 'text-zinc-400 hover:text-white' : 'text-muted-foreground hover:text-foreground')}`}
+      disabled={state === 'loading'}
+      title="Copy share link"
+    >
+      <Icon className={`${iconSize} ${state === 'loading' ? 'animate-spin' : ''}`} />
+    </Button>
+  );
 
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={(open) => { if (!open && state === 'error') { updateState('idle'); setErrorMsg(null); } }}>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={`${btnSize} ${state === 'done' ? 'text-green-500' : variant === 'header' ? 'text-zinc-400 hover:text-white' : 'text-muted-foreground hover:text-foreground'}`}
-          disabled={state === 'loading'}
-          title="Copy share link"
-        >
-          <Icon className={`${iconSize} ${state === 'loading' ? 'animate-spin' : ''}`} />
-        </Button>
+        {trigger}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
+        {/* Error message */}
+        {errorMsg && (
+          <>
+            <div className="px-2 py-1.5 text-xs text-red-500 bg-red-500/10 rounded mx-1 mb-1">
+              {errorMsg}
+            </div>
+            <DropdownMenuSeparator />
+          </>
+        )}
+
         {/* Copy link actions */}
         {items.map((item) => (
           <DropdownMenuItem
@@ -119,7 +156,6 @@ export function LinkDropdown({ path, shareSettings, onShareSettingsChange, showE
         {/* Share settings */}
         <DropdownMenuSeparator />
 
-        {/* Expires — inline */}
         <div className="px-2 py-1 flex items-center justify-between gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Expires</span>
           <select
@@ -134,7 +170,6 @@ export function LinkDropdown({ path, shareSettings, onShareSettingsChange, showE
           </select>
         </div>
 
-        {/* Depth — inline */}
         <div className="px-2 py-1 flex items-center justify-between gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Depth</span>
           <input
@@ -148,7 +183,6 @@ export function LinkDropdown({ path, shareSettings, onShareSettingsChange, showE
           />
         </div>
 
-        {/* Dirs — inline */}
         <div className="px-2 py-1 flex items-center justify-between gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Directories</span>
           <input

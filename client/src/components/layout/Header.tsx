@@ -1,7 +1,7 @@
 import { Moon, Sun, Info, KeyRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { AccountMenu } from '@/components/AccountMenu';
+import { AccountMenu, type CollapsedItem } from '@/components/AccountMenu';
 import { Button } from '@/components/ui/button';
 import type { BreadcrumbItem } from '@/lib/api';
 
@@ -12,8 +12,14 @@ interface HeaderProps {
   onToggleTheme: () => void;
   keyAge?: string | null;
   onRotateKey?: () => void;
+  /** Download dropdown for header bar (icon button variant) */
   downloadDropdown?: React.ReactNode;
+  /** Link dropdown for header bar (icon button variant) */
   linkControls?: React.ReactNode;
+  /** Download dropdown for account menu (menuItem variant) */
+  downloadMenuItem?: React.ReactNode;
+  /** Link dropdown for account menu (menuItem variant) */
+  linkMenuItem?: React.ReactNode;
 }
 
 export function Header({
@@ -25,29 +31,29 @@ export function Header({
   onRotateKey,
   downloadDropdown,
   linkControls,
+  downloadMenuItem,
+  linkMenuItem,
 }: HeaderProps) {
   const hasKeyMgmt = isInsider && onRotateKey;
 
   // Build account menu collapsed items in left-to-right header order
-  const collapsedItems: { node: React.ReactNode; breakpoint: 'sm' | 'md' | 'lg' }[] = [];
+  const collapsedItems: CollapsedItem[] = [];
 
   const menuItemClass = 'flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors w-full text-left cursor-pointer';
 
   // Link controls — hidden below sm
-  if (linkControls) {
+  if (linkMenuItem) {
     collapsedItems.push({
       breakpoint: 'sm',
-      node: linkControls,
-      label: 'Share',
+      node: linkMenuItem,
     });
   }
 
   // Download dropdown — hidden below md
-  if (downloadDropdown) {
+  if (downloadMenuItem) {
     collapsedItems.push({
       breakpoint: 'md',
-      node: downloadDropdown,
-      label: 'Download',
+      node: downloadMenuItem,
     });
   }
 

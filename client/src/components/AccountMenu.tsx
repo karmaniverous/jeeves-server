@@ -7,8 +7,6 @@ export interface CollapsedItem {
   node: React.ReactNode;
   /** Breakpoint at which this item is hidden from the header bar (and thus shown in the menu) */
   breakpoint: 'sm' | 'md' | 'lg' | 'xl';
-  /** If set, the node is a dropdown trigger — render it inline with this label */
-  label?: string;
 }
 
 interface AccountMenuProps {
@@ -79,20 +77,8 @@ export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
 
           {/* Collapsed items — each visible in menu only below its breakpoint */}
           {collapsedItems.map((item, i) => (
-            <div
-              key={i}
-              className={BREAKPOINT_CLASS[item.breakpoint]}
-              onClick={item.label ? undefined : () => setOpen(false)}
-            >
-              {item.label ? (
-                /* Dropdown trigger styled as menu row: icon button + label */
-                <div className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors [&_button]:h-auto [&_button]:w-auto [&_button]:p-0 [&_button]:bg-transparent [&_button]:hover:bg-transparent [&_button]:text-foreground [&_button]:hover:text-foreground [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0">
-                  {item.node}
-                  <span>{item.label}</span>
-                </div>
-              ) : (
-                item.node
-              )}
+            <div key={i} className={BREAKPOINT_CLASS[item.breakpoint]}>
+              {item.node}
             </div>
           ))}
 

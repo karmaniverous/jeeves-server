@@ -197,8 +197,18 @@ export function FileBrowser() {
               <DownloadDropdown reqPath={reqPath} file={null} isDirectory variant="header" />
             ) : undefined
           }
+          downloadMenuItem={
+            file ? (
+              <DownloadDropdown reqPath={reqPath} file={file} variant="menuItem" />
+            ) : directory ? (
+              <DownloadDropdown reqPath={reqPath} file={null} isDirectory variant="menuItem" />
+            ) : undefined
+          }
           linkControls={isInsider ? (
             <LinkDropdown path={`/${reqPath}`} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} showEvent showRaw={!!file} variant="header" />
+          ) : undefined}
+          linkMenuItem={isInsider ? (
+            <LinkDropdown path={`/${reqPath}`} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} showEvent showRaw={!!file} variant="menuItem" />
           ) : undefined}
         />
 
