@@ -99,6 +99,8 @@ export function loadConfig(): RuntimeConfig {
     eventLogPurgeMs: config.eventLogPurgeMs,
     maxZipSizeMb: config.maxZipSizeMb,
     chromePath: config.chromePath,
+    roots: config.roots,
+    mermaidCliPath: config.mermaidCliPath,
     events: config.events,
     authModes: config.auth.modes,
     resolvedKeys,

@@ -54,6 +54,15 @@ export const jeevesConfigSchema = z
     eventLogPurgeMs: z.number().positive().default(2_592_000_000),
     /** Maximum directory size in MB for ZIP export. Directories exceeding this are refused. */
     maxZipSizeMb: z.number().positive().default(100),
+    /**
+     * Filesystem roots for the file browser (Linux only).
+     * Map of id → filesystem path. On Windows this is ignored (drives are auto-discovered).
+     * Example: { home: '/home/user', projects: '/opt/projects' }
+     * Default: { root: '/' }
+     */
+    roots: z.record(z.string(), z.string()).optional(),
+    /** Path to mermaid-cli (npx prefix directory). If not set, mermaid rendering is disabled. */
+    mermaidCliPath: z.string().optional(),
   })
   .superRefine((config, ctx) => {
     // Google auth mode requires google config + sessionSecret
