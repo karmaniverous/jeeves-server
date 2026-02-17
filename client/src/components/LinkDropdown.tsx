@@ -6,7 +6,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -119,13 +118,12 @@ export function LinkDropdown({ path, shareSettings, onShareSettingsChange, showE
 
         {/* Share settings */}
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">Share Settings</DropdownMenuLabel>
 
-        {/* Expires */}
-        <div className="px-2 py-1.5">
-          <label className="text-xs text-muted-foreground">Expires</label>
+        {/* Expires — inline */}
+        <div className="px-2 py-1 flex items-center justify-between gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Expires</span>
           <select
-            className="w-full mt-0.5 text-sm bg-transparent border border-border rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-ring"
+            className="text-xs bg-transparent border border-border rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-ring min-w-0"
             value={shareSettings.expiry}
             onChange={(e) => onShareSettingsChange({ ...shareSettings, expiry: e.target.value })}
             onClick={(e) => e.stopPropagation()}
@@ -136,33 +134,30 @@ export function LinkDropdown({ path, shareSettings, onShareSettingsChange, showE
           </select>
         </div>
 
-        {/* Depth */}
-        <div className="px-2 py-1.5">
-          <label className="text-xs text-muted-foreground">Link Depth</label>
+        {/* Depth — inline */}
+        <div className="px-2 py-1 flex items-center justify-between gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Depth</span>
           <input
             type="number"
             min={0}
             max={10}
-            className="w-full mt-0.5 text-sm bg-transparent border border-border rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-ring"
+            className="text-xs bg-transparent border border-border rounded px-1 py-0.5 w-14 text-right focus:outline-none focus:ring-1 focus:ring-ring"
             value={shareSettings.depth}
             onChange={(e) => onShareSettingsChange({ ...shareSettings, depth: Math.max(0, parseInt(e.target.value, 10) || 0) })}
             onClick={(e) => e.stopPropagation()}
           />
         </div>
 
-        {/* Dirs */}
-        <div className="px-2 py-1.5 flex items-center gap-2">
+        {/* Dirs — inline */}
+        <div className="px-2 py-1 flex items-center justify-between gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Directories</span>
           <input
             type="checkbox"
-            id="share-dirs"
             className="rounded border-border"
             checked={shareSettings.dirs}
             onChange={(e) => onShareSettingsChange({ ...shareSettings, dirs: e.target.checked })}
             onClick={(e) => e.stopPropagation()}
           />
-          <label htmlFor="share-dirs" className="text-sm cursor-pointer" onClick={(e) => e.stopPropagation()}>
-            Allow directories
-          </label>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
