@@ -100,8 +100,10 @@ async function start() {
     await fastify.listen({ port: config.port, host: '0.0.0.0' });
     console.log(`Jeeves server listening on port ${String(config.port)}`);
     console.log(`Endpoints:`);
+    console.log(`  GET  /browse/* - File browser SPA`);
+    console.log(`  GET  /api/raw/*    - Raw file serving`);
+    console.log(`  GET  /api/export/* - PDF/DOCX/ZIP export`);
     console.log(`  POST /event    - Event Gateway (key auth)`);
-    console.log(`  GET  /path/*   - Serve files (key auth)`);
     console.log(`  GET  /key      - Compute path key (X-API-Key auth)`);
     console.log(`  GET  /health   - Health check (no auth)`);
   } catch (err) {

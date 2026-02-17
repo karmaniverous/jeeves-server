@@ -104,7 +104,7 @@ export const aboutRoute: FastifyPluginAsync = async (fastify) => {
 
     // Build header
     const breadcrumbHtml = isInsider
-      ? `<a href="/path?key=${insiderKey}" class="home-icon" title="Jeeves Server">🎩</a> About`
+      ? `<a href="/browse?key=${insiderKey}" class="home-icon" title="Jeeves Server">🎩</a> About`
       : '<span class="home-icon" title="Jeeves Server">🎩</span> About';
 
     let headerActions = '';

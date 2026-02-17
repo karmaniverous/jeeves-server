@@ -34,12 +34,19 @@ async function launchBrowser(): Promise<Browser> {
 async function addPrintStyles(page: Page): Promise<void> {
   await page.addStyleTag({
     content: `
-      .header, .header-actions, .panzoom-container, .panzoom-hint { display: none !important; }
+      /* Hide chrome — works for both legacy server-rendered and SPA */
+      .header, .header-actions, .panzoom-container, .panzoom-hint,
+      header, nav, .toc-sidebar, [class*="sticky"], [class*="fixed"] { display: none !important; }
       .toc { position: static !important; height: auto !important; page-break-after: always; }
       .toc-spacer { display: none !important; }
       .layout { display: block !important; }
-      body { background: #fff !important; font-size: 10pt !important; line-height: 1.5 !important; }
-      .content { font-size: 10pt !important; }
+      body { background: #fff !important; font-size: 10pt !important; line-height: 1.5 !important; color: #000 !important; }
+      /* SPA article.prose */
+      article.prose { max-width: none !important; border: none !important; padding: 0 !important; }
+      .content, article.prose { font-size: 10pt !important; }
+      /* Hide tab bar and other SPA controls */
+      [role="tablist"], button { display: none !important; }
+      main { padding-top: 0 !important; }
       h1 { font-size: 18pt !important; }
       h2 { font-size: 14pt !important; }
       h3 { font-size: 12pt !important; }
@@ -177,7 +184,7 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
           return { width: w, height: h };
         }
 
-        const content = document.querySelector('.content');
+        const content = document.querySelector('article.prose') ?? document.querySelector('.content');
         if (!content) return '<p>No content</p>';
 
         const contentClone = content.cloneNode(true) as HTMLElement;

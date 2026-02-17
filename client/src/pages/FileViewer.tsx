@@ -70,7 +70,7 @@ export function FileViewer() {
 
           {file?.type === 'image' && (
             <div className="flex justify-center p-4">
-              <img src={`/path/${reqPath}?raw=1`} alt={file.fileName} className="max-w-full" />
+              <img src={`/api/raw/${reqPath}`} alt={file.fileName} className="max-w-full" />
             </div>
           )}
         </main>

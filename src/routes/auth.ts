@@ -126,7 +126,7 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
     // Redirect to returnTo or root
     const returnTo = request.query.state
       ? Buffer.from(request.query.state, 'base64url').toString()
-      : '/path';
+      : '/browse';
     return reply.redirect(returnTo);
   });
 

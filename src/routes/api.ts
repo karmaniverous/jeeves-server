@@ -10,17 +10,20 @@ import { fileURLToPath } from 'node:url';
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 
 import { _pathMatchesScopes, verifyKey } from '../auth/keys.js';
+import archiver from 'archiver';
 import { computeOutsiderKeyWithExpiry, computePathKey } from '../util/crypto.js';
 import { COOKIE_NAME, verifySessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
 import { setInsiderKey } from '../util/state.js';
 import type { AccessMode } from '../config/types.js';
 import { execSync } from 'node:child_process';
+import { type ExportFormat, exportPage } from '../services/export.js';
+import { appendEvent } from '../services/eventQueue.js';
 
 import hljs from 'highlight.js';
 
 import { parseMarkdown } from '../services/markdown.js';
-import { looksLikeText } from '../util/fileDetection.js';
+import { getContentType, isInlineType, looksLikeText } from '../util/fileDetection.js';
 import { formatRelativeTime } from '../util/formatters.js';
 
 interface DriveInfo {
@@ -60,7 +63,9 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       .split('?')[0]
       .replace('/api/path', '')
       .replace('/api/drives', '/')
-      .replace('/api/file', '');
+      .replace('/api/file', '')
+      .replace('/api/raw', '')
+      .replace('/api/export', '');
 
     // Try API key auth
     const authResult = verifyKey(
@@ -425,6 +430,171 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
     },
   );
 
+  // ── Raw file serving ────────────────────────────────────────────────
+
+  // GET /api/raw/* — serve raw file bytes (replaces /path/X?raw=1)
+  fastify.get<{ Params: { '*': string } }>(
+    '/api/raw/*',
+    async (request, reply) => {
+      const reqPath = request.params['*'];
+      if (!reqPath) return reply.code(400).send({ error: 'Path required' });
+
+      let filePath = reqPath;
+      if (/^[a-zA-Z]$/.test(filePath)) {
+        filePath = `${filePath.toUpperCase()}:\\`;
+      } else if (/^[a-zA-Z]\//.test(filePath)) {
+        filePath = `${filePath[0].toUpperCase()}:${filePath.slice(1)}`;
+      }
+      filePath = filePath.replace(/\//g, '\\');
+      const resolved = path.resolve(filePath);
+
+      if (!fs.existsSync(resolved)) {
+        return reply.code(404).send({ error: 'Not found', path: resolved });
+      }
+
+      const stats = fs.statSync(resolved);
+      if (stats.isDirectory()) {
+        return reply.code(400).send({ error: 'Cannot serve directory as raw — use /api/export for ZIP' });
+      }
+
+      const ext = path.extname(resolved).toLowerCase();
+      const contentType = getContentType(ext);
+      reply.header('Content-Type', contentType);
+
+      if (!isInlineType(contentType)) {
+        reply.header(
+          'Content-Disposition',
+          `attachment; filename="${path.basename(resolved)}"`,
+        );
+      }
+
+      return reply.send(fs.readFileSync(resolved));
+    },
+  );
+
+  // ── Export endpoints ───────────────────────────────────────────────
+
+  /**
+   * Recursively calculate total size of a directory in bytes
+   */
+  function getDirSize(dirPath: string): number {
+    let totalSize = 0;
+    try {
+      const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+      for (const entry of entries) {
+        const entryPath = path.join(dirPath, entry.name);
+        try {
+          if (entry.isDirectory()) {
+            totalSize += getDirSize(entryPath);
+          } else {
+            const s = fs.statSync(entryPath);
+            totalSize += s.size;
+          }
+        } catch { /* skip inaccessible */ }
+      }
+    } catch { /* skip inaccessible */ }
+    return totalSize;
+  }
+
+  // GET /api/export/* — export files (PDF, DOCX, ZIP)
+  fastify.get<{ Params: { '*': string }; Querystring: { format?: string } }>(
+    '/api/export/*',
+    async (request, reply) => {
+      const reqPath = request.params['*'];
+      if (!reqPath) return reply.code(400).send({ error: 'Path required' });
+
+      let filePath = reqPath;
+      if (/^[a-zA-Z]$/.test(filePath)) {
+        filePath = `${filePath.toUpperCase()}:\\`;
+      } else if (/^[a-zA-Z]\//.test(filePath)) {
+        filePath = `${filePath[0].toUpperCase()}:${filePath.slice(1)}`;
+      }
+      filePath = filePath.replace(/\//g, '\\');
+      const resolved = path.resolve(filePath);
+
+      if (!fs.existsSync(resolved)) {
+        return reply.code(404).send({ error: 'Not found', path: resolved });
+      }
+
+      const format = request.query.format ?? 'pdf';
+      const stats = fs.statSync(resolved);
+
+      // ZIP export for directories
+      if (stats.isDirectory()) {
+        if (format !== 'zip') {
+          return reply.code(400).send({ error: 'Directories only support ZIP export' });
+        }
+        const isInsider = (request as { accessMode?: AccessMode }).accessMode === 'insider';
+        if (!isInsider) {
+          return reply.code(403).send({ error: 'ZIP export requires insider access' });
+        }
+        const config = getConfig();
+        const totalSize = getDirSize(resolved);
+        const maxSizeBytes = config.maxZipSizeMb * 1024 * 1024;
+        if (totalSize > maxSizeBytes) {
+          return reply.code(413).send({
+            error: `Directory too large for ZIP export (${Math.round(totalSize / 1024 / 1024)}MB, max ${config.maxZipSizeMb}MB)`,
+          });
+        }
+        const dirName = path.basename(resolved);
+        const archive = archiver('zip', { zlib: { level: 6 } });
+        reply.header('Content-Type', 'application/zip');
+        reply.header('Content-Disposition', `attachment; filename="${dirName}.zip"`);
+        reply.send(archive);
+        archive.directory(resolved, dirName);
+        void archive.finalize();
+        return;
+      }
+
+      // PDF/DOCX export for files
+      if (format !== 'pdf' && format !== 'docx') {
+        return reply.code(400).send({ error: 'Files support pdf or docx export' });
+      }
+
+      const ext = path.extname(resolved).toLowerCase();
+      if (ext !== '.md') {
+        return reply.code(400).send({ error: 'Only markdown files support PDF/DOCX export' });
+      }
+
+      const internalKey = getConfig().internalInsiderKey;
+      const { port } = getConfig();
+      const exportKey = (request.query as { key?: string }).key || internalKey;
+      if (!exportKey) {
+        return reply.code(500).send({ error: 'Export unavailable — no internal key configured' });
+      }
+
+      // Navigate Puppeteer to the SPA browse page for rendering
+      const exportUrl = `http://localhost:${String(port)}/browse/${reqPath}?key=${exportKey}`;
+      const fileName = path.basename(resolved);
+      const baseName = fileName.replace(/\.md$/i, '');
+
+      try {
+        const buffer = await exportPage({
+          url: exportUrl,
+          fileName,
+          format: format as ExportFormat,
+        });
+
+        const contentType = format === 'pdf'
+          ? 'application/pdf'
+          : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        const fileExt = format === 'pdf' ? 'pdf' : 'docx';
+
+        return reply
+          .header('Content-Type', contentType)
+          .header('Content-Disposition', `attachment; filename="${baseName}.${fileExt}"`)
+          .header('Content-Length', buffer.length)
+          .send(buffer);
+      } catch (err) {
+        appendEvent({ kind: `${format}_export_error`, error: String(err) });
+        return reply.code(500).send({
+          error: `${format.toUpperCase()} export failed`,
+          details: String(err),
+        });
+      }
+    },
+  );
+
   // GET /api/about — about page content (no auth required)
   fastify.get('/api/about', async (_request, reply) => {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -464,10 +634,10 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       let shareUrl: string;
       if (expiry) {
         outsiderKey = computeOutsiderKeyWithExpiry(seed, targetPath, expiry);
-        shareUrl = `/path${targetPath}?key=${outsiderKey}&exp=${expiry}`;
+        shareUrl = `/browse${targetPath}?key=${outsiderKey}&exp=${expiry}`;
       } else {
         outsiderKey = computePathKey(seed, targetPath);
-        shareUrl = `/path${targetPath}?key=${outsiderKey}`;
+        shareUrl = `/browse${targetPath}?key=${outsiderKey}`;
       }
 
       return reply.send({ url: shareUrl, path: targetPath, exp: expiry ?? null });
