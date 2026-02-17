@@ -139,7 +139,7 @@ export function Header({
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-zinc-400 hover:text-white h-8 w-8"
+                className="text-zinc-300 hover:text-white h-8 w-8"
                 title="Rotate key (invalidates all your shares)"
                 onClick={onRotateKey}
               >
@@ -151,7 +151,7 @@ export function Header({
 
           {/* About: visible md+ (768px) */}
           <Link to="/about" title="About Jeeves Server" className="hidden md:inline-flex">
-            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white h-8 w-8">
+            <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white h-8 w-8">
               <Info className="h-4 w-4" />
             </Button>
           </Link>
@@ -160,7 +160,7 @@ export function Header({
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:text-white h-8 w-8 hidden md:inline-flex"
+            className="text-zinc-300 hover:text-white h-8 w-8 hidden md:inline-flex"
             title="Toggle theme"
             onClick={onToggleTheme}
           >
