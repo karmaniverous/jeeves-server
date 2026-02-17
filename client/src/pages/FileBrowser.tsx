@@ -91,7 +91,11 @@ export function FileBrowser() {
   const params = useParams<{ '*': string }>();
   const reqPath = params['*'] ?? '';
   const [theme, toggleTheme] = useTheme();
-  const [expiry, setExpiry] = useState(() => localStorage.getItem('jeeves-share-expiry') ?? '');
+  const [shareSettings, setShareSettings] = useState<import('@/lib/api').ShareSettings>(() => {
+    const saved = localStorage.getItem('jeeves-share-settings');
+    if (saved) try { return JSON.parse(saved) as import('@/lib/api').ShareSettings; } catch { /* ignore */ }
+    return { expiry: localStorage.getItem('jeeves-share-expiry') ?? '', depth: 0, dirs: false };
+  });
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const [proseWidth, setProseWidth] = useState<'narrow' | 'medium' | 'wide'>(
     () => (localStorage.getItem('jeeves-prose-width') as 'narrow' | 'medium' | 'wide') ?? 'medium'
@@ -172,8 +176,8 @@ export function FileBrowser() {
   }, [file]);
 
   useEffect(() => {
-    localStorage.setItem('jeeves-share-expiry', expiry);
-  }, [expiry]);
+    localStorage.setItem('jeeves-share-settings', JSON.stringify(shareSettings));
+  }, [shareSettings]);
 
   const { isInsider: authInsider, keyCreatedAt, rotateKey } = useAuth();
   const breadcrumbs: BreadcrumbItem[] = directory?.breadcrumbs ?? file?.breadcrumbs ?? [];
@@ -223,16 +227,7 @@ export function FileBrowser() {
             }
             linkControls={isInsider ? (
               <>
-                <LinkDropdown path={`/${reqPath}`} expiry={expiry} showEvent showRaw={!!file} variant="header" />
-                <span className="text-xs text-zinc-500">expires:</span>
-                <select value={expiry} onChange={(e) => setExpiry(e.target.value)} className="h-7 text-xs bg-zinc-700 border border-zinc-600 text-white px-1.5 rounded">
-                  <option value="">never</option>
-                  <option value="1h">1 hour</option>
-                  <option value="1d">1 day</option>
-                  <option value="1w">1 week</option>
-                  <option value="30d">1 month</option>
-                  <option value="365d">1 year</option>
-                </select>
+                <LinkDropdown path={`/${reqPath}`} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} showEvent showRaw={!!file} variant="header" />
               </>
             ) : undefined}
           />
@@ -356,7 +351,7 @@ export function FileBrowser() {
                             </Link>
                             {isInsider && (
                               <div className="ml-auto flex items-center gap-0.5 shrink-0">
-                                <LinkDropdown path={drivePath} expiry={expiry} compact />
+                                <LinkDropdown path={drivePath} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} compact />
                               </div>
                             )}
                           </div>
@@ -392,7 +387,7 @@ export function FileBrowser() {
                         entry={entry}
                         basePath={reqPath}
                         isInsider={isInsider}
-                        expiry={expiry}
+                        shareSettings={shareSettings} onShareSettingsChange={setShareSettings}
                       />
                     ))}
                   </tbody>
@@ -543,10 +538,11 @@ interface DirectoryRowProps {
   entry: DirectoryEntry;
   basePath: string;
   isInsider: boolean;
-  expiry: string;
+  shareSettings: import('@/lib/api').ShareSettings;
+  onShareSettingsChange: (settings: import('@/lib/api').ShareSettings) => void;
 }
 
-function DirectoryRow({ entry, basePath, isInsider, expiry }: DirectoryRowProps) {
+function DirectoryRow({ entry, basePath, isInsider, shareSettings, onShareSettingsChange }: DirectoryRowProps) {
   const entryPath = basePath ? `${basePath}/${entry.name}` : entry.name;
   const isDir = entry.type === 'directory';
   const hasPage = isDir || PAGE_EXTENSIONS.has(entry.ext);
@@ -574,7 +570,7 @@ function DirectoryRow({ entry, basePath, isInsider, expiry }: DirectoryRowProps)
                 isDirectory={isDir}
                 compact
               />
-              <LinkDropdown path={urlPath} expiry={expiry} showRaw={hasRaw} compact />
+              <LinkDropdown path={urlPath} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} showRaw={hasRaw} compact />
             </div>
           )}
         </div>

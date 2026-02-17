@@ -58,6 +58,14 @@ export interface ShareResponse {
   path: string;
   url: string;
   exp: string | null;
+  depth: number;
+  dirs: boolean;
+}
+
+export interface ShareSettings {
+  expiry: string;
+  depth: number;
+  dirs: boolean;
 }
 
 export interface AuthStatus {
@@ -120,11 +128,13 @@ export async function getAuthStatus(): Promise<AuthStatus> {
 export async function getShareLink(
   targetPath: string,
   expiry?: string,
+  depth?: number,
+  dirs?: boolean,
 ): Promise<ShareResponse> {
   return fetchJson<ShareResponse>(`${API_BASE}/share`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path: targetPath, expiry }),
+    body: JSON.stringify({ path: targetPath, expiry, depth, dirs }),
   });
 }
 
