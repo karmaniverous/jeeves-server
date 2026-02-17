@@ -648,11 +648,12 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
   // GET /api/readme-link — pre-computed outsider share link for the server's README (no auth required)
   fastify.get('/api/readme-link', async (_request, reply) => {
     const config = getConfig();
-    // Find the first insider seed to derive the share key
-    const insider = config.resolvedInsiders.find(i => i.seed);
-    if (!insider?.seed) {
-      return reply.code(503).send({ error: 'No insider seed available' });
+    // Use the _internal key seed for the README share link
+    const internalKey = config.resolvedKeys.find(k => k.name === '_internal');
+    if (!internalKey?.seed) {
+      return reply.code(503).send({ error: 'No _internal key configured' });
     }
+    const seed = internalKey.seed;
 
     // Compute the README's URL path from the server's install directory
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -669,7 +670,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
     const { encodeStack } = await import('../services/deepShareLinks.js');
     const stack = encodeStack([urlPath]);
     const deepParams = { depth: 2, dirs: false, stack, exp: undefined };
-    const key = computeDeepShareKey(insider.seed, urlPath, deepParams);
+    const key = computeDeepShareKey(seed, urlPath, deepParams);
     const shareUrl = `/browse${urlPath}?key=${key}&d=2&dirs=0&s=${stack}`;
 
     return reply.send({ url: shareUrl });
