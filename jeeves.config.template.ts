@@ -93,4 +93,23 @@ export default {
 
   /** How long to keep event log entries before purging (ms). Default: 30 days */
   eventLogPurgeMs: 2_592_000_000,
+
+  /**
+   * Filesystem roots for the file browser (Linux only — ignored on Windows).
+   * Maps a URL-safe id to a filesystem path.
+   * Default (if omitted): { root: '/' }
+   *
+   * Examples:
+   *   { home: '/home/user', projects: '/opt/projects' }
+   *   { workspace: '/workspace' }
+   */
+  // roots: { home: '/home/user' },
+
+  /**
+   * Path to mermaid-cli installation (npx --prefix directory).
+   * If omitted, uses system npx (mermaid-cli must be globally installed).
+   * Windows example: 'E:\\tools\\mermaid-cli'
+   * Linux example: '/opt/mermaid-cli'
+   */
+  // mermaidCliPath: '/opt/mermaid-cli',
 } satisfies JeevesConfig;

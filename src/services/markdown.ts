@@ -14,29 +14,41 @@ export interface Heading {
 }
 
 /**
- * Resolve Windows path for linking (skip non-existent and templated paths)
+ * Resolve a filesystem path for linking (skip non-existent and templated paths)
  */
-function resolvePathForLink(winPath: string): string | null {
+function resolvePathForLink(fsPath: string): string | null {
   // Skip templated paths
-  if (winPath.includes('{') || winPath.includes('}')) return null;
+  if (fsPath.includes('{') || fsPath.includes('}')) return null;
 
-  if (!fs.existsSync(winPath)) return null;
+  if (!fs.existsSync(fsPath)) return null;
 
-  return winPath;
+  return fsPath;
 }
 
+const IS_WINDOWS = process.platform === 'win32';
+
 /**
- * Convert Windows paths to markdown links
+ * Convert platform-native filesystem paths in markdown text to clickable browse links.
+ * Windows: C:\foo\bar → [C:\foo\bar](/browse/c/foo/bar)
+ * Linux: /home/user/docs → [/home/user/docs](/browse/home/user/docs)
  */
-function linkifyWindowsPaths(markdown: string): string {
-  const winPathRegex = /([A-Z]):\\(?:[^\s"'`<>\\]+\\)*[^\s"'`<>\\]+/g;
+function linkifyFilesystemPaths(markdown: string): string {
+  // Platform-specific path regex
+  const pathRegex = IS_WINDOWS
+    ? /([A-Z]):\\(?:[^\s"'`<>\\]+\\)*[^\s"'`<>\\]+/g
+    : /(?<=\s|^)(\/(?:home|opt|var|tmp|etc|usr|srv|mnt|media)\/[^\s"'`<>]+)/gm;
 
-  const linkifyPath = (winPath: string): string => {
-    const resolved = resolvePathForLink(winPath);
-    if (!resolved) return winPath;
+  const linkifyPath = (fsPath: string): string => {
+    const resolved = resolvePathForLink(fsPath);
+    if (!resolved) return fsPath;
 
-    const urlPath = `/${resolved.replace(/\\/g, '/').replace(/^([A-Z]):/, (_m: string, d: string) => d.toLowerCase())}`;
-    return `[${winPath}](/browse${urlPath})`;
+    let urlPath: string;
+    if (IS_WINDOWS) {
+      urlPath = '/' + resolved.replace(/\\/g, '/').replace(/^([A-Z]):/, (_m: string, d: string) => d.toLowerCase());
+    } else {
+      urlPath = resolved;
+    }
+    return `[${fsPath}](/browse${urlPath})`;
   };
 
   // Split by code blocks and inline code
@@ -48,7 +60,7 @@ function linkifyWindowsPaths(markdown: string): string {
       if (part.startsWith('```') || part.startsWith('`')) {
         return part; // Don't modify code
       }
-      return part.replace(winPathRegex, linkifyPath);
+      return part.replace(pathRegex, linkifyPath);
     })
     .join('');
 }
@@ -64,7 +76,7 @@ export function parseMarkdown(
 
   // Optionally linkify Windows paths
   if (options.linkWindowsPaths) {
-    processedMarkdown = linkifyWindowsPaths(processedMarkdown);
+    processedMarkdown = linkifyFilesystemPaths(processedMarkdown);
   }
 
   const headings: Heading[] = [];

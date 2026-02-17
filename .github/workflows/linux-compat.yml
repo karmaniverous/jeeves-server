@@ -1,0 +1,115 @@
+name: Linux Compatibility
+
+on:
+  push:
+    branches: [feature/GH-13-linux-compat, main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20, 22]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install server dependencies
+        run: npm ci
+
+      - name: Install client dependencies
+        run: cd client && npm ci
+
+      - name: TypeScript compile
+        run: npx tsc
+
+      - name: Build client
+        run: cd client && npx vite build --outDir ../dist/client
+
+      - name: Write test config
+        run: |
+          cat > jeeves.config.ts << 'EOF'
+          import type { JeevesConfig } from './src/config/schema.js';
+
+          export default {
+            port: 3456,
+            chromePath: '/usr/bin/chromium-browser',
+            auth: {
+              modes: ['keys'],
+            },
+            keys: {
+              primary: 'ci-test-seed-not-a-real-secret-0000000000000000000000000000000000',
+              _internal: 'ci-internal-seed-not-a-real-secret-00000000000000000000000000000000',
+            },
+            roots: {
+              workspace: process.cwd(),
+            },
+            events: {},
+          } satisfies JeevesConfig;
+          EOF
+
+      - name: Start server
+        run: |
+          node dist/server.js &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+
+          # Wait for server to be ready
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:3456/api/drives > /dev/null 2>&1; then
+              echo "Server ready after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Compute insider key
+        run: |
+          KEY=$(node -e "
+            import crypto from 'crypto';
+            const seed = 'ci-test-seed-not-a-real-secret-0000000000000000000000000000000000';
+            console.log(crypto.createHmac('sha256', seed).update('insider').digest('hex').substring(0, 32));
+          " --input-type=module)
+          echo "INSIDER_KEY=$KEY" >> $GITHUB_ENV
+          echo "Insider key: $KEY"
+
+      - name: Smoke test - drives endpoint
+        run: |
+          RESPONSE=$(curl -s "http://localhost:3456/api/drives?key=$INSIDER_KEY")
+          echo "Drives response: $RESPONSE"
+          echo "$RESPONSE" | grep -q '"letter"' || (echo "FAIL: No drives in response" && exit 1)
+          echo "$RESPONSE" | grep -q '"workspace"' || (echo "FAIL: workspace root not found" && exit 1)
+
+      - name: Smoke test - directory listing
+        run: |
+          RESPONSE=$(curl -s "http://localhost:3456/api/path/workspace?key=$INSIDER_KEY")
+          echo "Directory response (first 500 chars): ${RESPONSE:0:500}"
+          echo "$RESPONSE" | grep -q '"entries"' || (echo "FAIL: No entries in directory listing" && exit 1)
+
+      - name: Smoke test - file serving
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" "http://localhost:3456/api/file/workspace/README.md?key=$INSIDER_KEY")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          echo "README.md status: $HTTP_CODE"
+          [ "$HTTP_CODE" = "200" ] || (echo "FAIL: README.md returned $HTTP_CODE" && exit 1)
+
+      - name: Smoke test - SPA loads
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" http://localhost:3456/browse)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          echo "SPA status: $HTTP_CODE"
+          [ "$HTTP_CODE" = "200" ] || (echo "FAIL: SPA didn't load" && exit 1)
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -n "$SERVER_PID" ]; then
+            kill $SERVER_PID 2>/dev/null || true
+          fi

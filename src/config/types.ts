@@ -42,6 +42,8 @@ export interface RuntimeConfig {
   eventLogPurgeMs: number;
   maxZipSizeMb: number;
   chromePath: string;
+  roots?: Record<string, string>;
+  mermaidCliPath?: string;
   events: JeevesConfig['events'];
   authModes: AuthMode[];
   resolvedKeys: ResolvedKey[];

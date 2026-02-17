@@ -16,6 +16,7 @@ import { COOKIE_NAME, verifySessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
 import { setInsiderKey } from '../util/state.js';
 import type { AccessMode } from '../config/types.js';
+import { getRoots, urlPathToFs, fsPathToUrl, breadcrumbParts, type RootEntry } from '../util/platform.js';
 import { execSync } from 'node:child_process';
 import { type ExportFormat, exportPage } from '../services/export.js';
 import { appendEvent } from '../services/eventQueue.js';
@@ -27,15 +28,13 @@ import { parseMarkdown } from '../services/markdown.js';
 import { getContentType, isInlineType, looksLikeText } from '../util/fileDetection.js';
 import { formatRelativeTime } from '../util/formatters.js';
 
-interface DriveInfo {
-  letter: string;
-  label: string;
-}
-
 interface Breadcrumb {
   label: string;
   path: string;
 }
+
+// Platform roots — initialized when routes are registered
+let _roots: RootEntry[] = [];
 
 /**
  * Filter breadcrumbs for outsiders:
@@ -61,23 +60,14 @@ function filterBreadcrumbsForOutsider(
   return breadcrumbs;
 }
 
-function getDrives(): DriveInfo[] {
-  const drives: DriveInfo[] = [];
-  for (let code = 65; code <= 90; code++) {
-    const letter = String.fromCharCode(code);
-    const drivePath = `${letter}:\\`;
-    try {
-      fs.accessSync(drivePath, fs.constants.R_OK);
-      drives.push({ letter, label: '' });
-    } catch {
-      // Drive not accessible
-    }
-  }
-  return drives;
-}
-
 // eslint-disable-next-line @typescript-eslint/require-await
 export const apiRoute: FastifyPluginAsync = async (fastify) => {
+  // Initialize platform roots and mermaid command from config
+  const config = getConfig();
+  _roots = getRoots(config.roots);
+  const mmcdPrefix = config.mermaidCliPath ? `npx --prefix ${config.mermaidCliPath}` : 'npx';
+  const mmcdCmd = `${mmcdPrefix} mmdc`;
+
   // API authentication middleware
   fastify.addHook('preHandler', async (request, reply) => {
     if (!request.url.startsWith('/api')) return;
@@ -176,11 +166,11 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
     return;
   });
 
-  // GET /api/drives — list accessible drives
+  // GET /api/drives — list accessible filesystem roots
   fastify.get(
     '/api/drives',
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const drives = getDrives();
+      const drives = _roots.map(r => ({ letter: r.id, label: r.label }));
       return reply.send(drives);
     },
   );
@@ -192,15 +182,12 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       const reqPath = request.params['*'];
       if (!reqPath) return reply.redirect('/api/drives');
 
-      // Convert URL path to Windows path
-      let filePath = reqPath;
-      if (/^[a-zA-Z]$/.test(filePath)) {
-        filePath = `${filePath.toUpperCase()}:\\`;
-      } else if (/^[a-zA-Z]\//.test(filePath)) {
-        filePath = `${filePath[0].toUpperCase()}:${filePath.slice(1)}`;
+      // Convert URL path to filesystem path
+      const fsPath = urlPathToFs(reqPath, _roots);
+      if (!fsPath) {
+        return reply.code(404).send({ error: 'Invalid path' });
       }
-      filePath = filePath.replace(/\//g, '\\');
-      const resolved = path.resolve(filePath);
+      const resolved = path.resolve(fsPath);
 
       if (!fs.existsSync(resolved)) {
         return reply.code(404).send({ error: 'Not found', path: resolved });
@@ -230,7 +217,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       const entries = insiderScopes
         ? allEntries.filter((entry) => {
             const entryPath = path.join(resolved, entry.name);
-            const entryUrlPath = `/${entryPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (_m: string, d: string) => d.toLowerCase())}`;
+            const entryUrlPath = fsPathToUrl(entryPath, _roots);
             if (entry.isDirectory()) {
               return insiderScopes.some((scope) => {
                 const s = scope.toLowerCase().replace(/\/+$/, '');
@@ -278,16 +265,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       });
 
       // Build breadcrumbs
-      const pathParts = resolved.split('\\').filter((p) => p);
-      const breadcrumbs = pathParts.map((part, i) => {
-        const accumParts = pathParts.slice(0, i + 1);
-        const winPath = accumParts.join('\\');
-        const urlPath = winPath
-          .replace(/\\/g, '/')
-          .replace(/^([A-Z]):/, (_m: string, d: string) => d.toLowerCase());
-        return { label: part, path: urlPath };
-      });
-
+      const breadcrumbs = breadcrumbParts(resolved, _roots);
       const matchedPath = (request as { authMatchedPath?: string | null }).authMatchedPath ?? null;
       const filteredBreadcrumbs = filterBreadcrumbsForOutsider(breadcrumbs, isInsider, matchedPath, true);
 
@@ -309,12 +287,12 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       const reqPath = request.params['*'];
       if (!reqPath) return reply.code(400).send({ error: 'Path required' });
 
-      let filePath = reqPath;
-      if (/^[a-zA-Z]\//.test(filePath)) {
-        filePath = `${filePath[0].toUpperCase()}:${filePath.slice(1)}`;
+      // Convert URL path to filesystem path
+      const fsFilePath = urlPathToFs(reqPath, _roots);
+      if (!fsFilePath) {
+        return reply.code(404).send({ error: 'Invalid path' });
       }
-      filePath = filePath.replace(/\//g, '\\');
-      const resolved = path.resolve(filePath);
+      const resolved = path.resolve(fsFilePath);
 
       if (!fs.existsSync(resolved)) {
         return reply.code(404).send({ error: 'Not found' });
@@ -333,17 +311,9 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         (request as { accessMode?: AccessMode }).accessMode === 'insider';
 
       // Build breadcrumbs
-      const pathParts = resolved.split('\\').filter((p) => p);
       const matchedPath = (request as { authMatchedPath?: string | null }).authMatchedPath ?? null;
       const breadcrumbs = filterBreadcrumbsForOutsider(
-        pathParts.map((part, i) => {
-          const accumParts = pathParts.slice(0, i + 1);
-          const winPath = accumParts.join('\\');
-          const urlPath = winPath
-            .replace(/\\/g, '/')
-            .replace(/^([A-Z]):/, (_m: string, d: string) => d.toLowerCase());
-          return { label: part, path: urlPath };
-        }),
+        breadcrumbParts(resolved, _roots),
         isInsider,
         matchedPath,
         false, // file view, not directory
@@ -405,7 +375,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
             `.${path.basename(resolved, '.mmd')}.tmp.svg`,
           );
           execSync(
-            `npx --prefix E:\\tools\\mermaid-cli mmdc -i "${resolved}" -o "${tmpOut}" -w 1600 -s 2 -b white -p puppeteer.json`,
+            `${mmcdCmd} -i "${resolved}" -o "${tmpOut}" -w 1600 -s 2 -b white -p puppeteer.json`,
             { timeout: 30_000, stdio: 'pipe' },
           );
           if (fs.existsSync(tmpOut)) {
@@ -529,14 +499,9 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       const reqPath = request.params['*'];
       if (!reqPath) return reply.code(400).send({ error: 'Path required' });
 
-      let filePath = reqPath;
-      if (/^[a-zA-Z]$/.test(filePath)) {
-        filePath = `${filePath.toUpperCase()}:\\`;
-      } else if (/^[a-zA-Z]\//.test(filePath)) {
-        filePath = `${filePath[0].toUpperCase()}:${filePath.slice(1)}`;
-      }
-      filePath = filePath.replace(/\//g, '\\');
-      const resolved = path.resolve(filePath);
+      const _rawFsPath = urlPathToFs(reqPath, _roots);
+      if (!_rawFsPath) return reply.code(404).send({ error: 'Invalid path' });
+      const resolved = path.resolve(_rawFsPath);
 
       if (!fs.existsSync(resolved)) {
         return reply.code(404).send({ error: 'Not found', path: resolved });
@@ -593,14 +558,9 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       const reqPath = request.params['*'];
       if (!reqPath) return reply.code(400).send({ error: 'Path required' });
 
-      let filePath = reqPath;
-      if (/^[a-zA-Z]$/.test(filePath)) {
-        filePath = `${filePath.toUpperCase()}:\\`;
-      } else if (/^[a-zA-Z]\//.test(filePath)) {
-        filePath = `${filePath[0].toUpperCase()}:${filePath.slice(1)}`;
-      }
-      filePath = filePath.replace(/\//g, '\\');
-      const resolved = path.resolve(filePath);
+      const _exportFsPath = urlPathToFs(reqPath, _roots);
+      if (!_exportFsPath) return reply.code(404).send({ error: 'Invalid path' });
+      const resolved = path.resolve(_exportFsPath);
 
       if (!fs.existsSync(resolved)) {
         return reply.code(404).send({ error: 'Not found', path: resolved });
@@ -703,8 +663,8 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       return reply.code(404).send({ error: 'README.md not found' });
     }
 
-    // Convert Windows path to URL path: E:\foo\bar → /e/foo/bar
-    const urlPath = '/' + serverRoot.replace(/\\/g, '/').replace(/^([A-Za-z]):/, (_, d: string) => d.toLowerCase()) + '/README.md';
+    // Convert filesystem path to URL path
+    const urlPath = fsPathToUrl(readmePath, _roots);
 
     // Generate deep share link with depth=2, dirs=false
     const { encodeStack } = await import('../services/deepShareLinks.js');
@@ -765,12 +725,9 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       const reqPath = request.params['*'];
       if (!reqPath) return reply.code(400).send({ error: 'Path required' });
 
-      let filePath = reqPath;
-      if (/^[a-zA-Z]\//.test(filePath)) {
-        filePath = `${filePath[0].toUpperCase()}:${filePath.slice(1)}`;
-      }
-      filePath = filePath.replace(/\//g, '\\');
-      const resolved = path.resolve(filePath);
+      const _mmdFsPath = urlPathToFs(reqPath, _roots);
+      if (!_mmdFsPath) return reply.code(404).send({ error: 'Invalid path' });
+      const resolved = path.resolve(_mmdFsPath);
 
       if (!fs.existsSync(resolved) || !resolved.toLowerCase().endsWith('.mmd')) {
         return reply.code(404).send({ error: 'Mermaid file not found' });
@@ -785,7 +742,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       // Render using mermaid CLI
       try {
         execSync(
-          `npx --prefix E:\\tools\\mermaid-cli mmdc -i "${resolved}" -o "${outFile}" -w 1600 -s 2 -b white -p puppeteer.json`,
+          `${mmcdCmd} -i "${resolved}" -o "${outFile}" -w 1600 -s 2 -b white -p puppeteer.json`,
           { timeout: 30_000, stdio: 'pipe' },
         );
       } catch (err) {

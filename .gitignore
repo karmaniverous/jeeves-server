@@ -33,3 +33,5 @@ build/
 coverage/
 
 puppeteer.json
+
+cloud-init-linux-test.yaml

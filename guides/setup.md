@@ -43,6 +43,25 @@ export default {
 
 The `satisfies` keyword gives you type checking without losing literal types — your editor will autocomplete and validate as you type.
 
+### Platform-specific settings
+
+**Windows** — drives are auto-discovered; no `roots` config needed:
+```typescript
+chromePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+```
+
+**Linux** — configure filesystem roots for the file browser:
+```typescript
+chromePath: '/usr/bin/chromium-browser',
+roots: {
+  home: '/home',
+  projects: '/opt/projects',
+},
+mermaidCliPath: '/opt/mermaid-cli',  // optional
+```
+
+On Windows, `roots` is ignored. On Linux, if omitted, it defaults to `{ root: '/' }`.
+
 ### Config is immutable at runtime
 
 Once the server starts, the config is loaded once and never written to. Mutable state (like auto-generated insider keys) lives in a separate `state.json` file that the server manages itself.
