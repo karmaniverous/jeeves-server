@@ -1,4 +1,4 @@
-import { Moon, Sun, Info, KeyRound } from 'lucide-react';
+import { Moon, Sun, Info, KeyRound, Link as LinkIcon, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { AccountMenu } from '@/components/AccountMenu';
@@ -36,9 +36,9 @@ export function Header({
     collapsedItems.push({
       breakpoint: 'sm',
       node: (
-        <div className="flex items-center gap-2 px-3 py-2">
+        <div className="flex items-center gap-2 px-1 py-0.5 text-sm text-foreground">
           {linkControls}
-          <span className="text-sm text-foreground">Share</span>
+          <span>Share</span>
         </div>
       ),
     });
@@ -49,9 +49,9 @@ export function Header({
     collapsedItems.push({
       breakpoint: 'md',
       node: (
-        <div className="flex items-center gap-2 px-3 py-2">
+        <div className="flex items-center gap-2 px-1 py-0.5 text-sm text-foreground">
           {downloadDropdown}
-          <span className="text-sm text-foreground">Download</span>
+          <span>Download</span>
         </div>
       ),
     });
