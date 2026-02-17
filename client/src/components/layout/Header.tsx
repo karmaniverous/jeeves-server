@@ -46,6 +46,7 @@ export function Header({
     collapsedItems.push({
       breakpoint: 'sm',
       node: linkMenuItem,
+      hasNestedDropdown: true,
     });
   }
 
@@ -54,6 +55,7 @@ export function Header({
     collapsedItems.push({
       breakpoint: 'md',
       node: downloadMenuItem,
+      hasNestedDropdown: true,
     });
   }
 

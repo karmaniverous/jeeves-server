@@ -1,5 +1,5 @@
 import { LogOut, User } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAuth } from '@/lib/auth';
 
@@ -7,6 +7,8 @@ export interface CollapsedItem {
   node: React.ReactNode;
   /** Breakpoint at which this item is hidden from the header bar (and thus shown in the menu) */
   breakpoint: 'sm' | 'md' | 'lg' | 'xl';
+  /** If true, this item contains a nested dropdown that should prevent account menu auto-close */
+  hasNestedDropdown?: boolean;
 }
 
 interface AccountMenuProps {
@@ -32,18 +34,31 @@ export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Track whether a nested Radix dropdown is currently open
+  const nestedDropdownOpen = useCallback(() => {
+    return !!document.querySelector('[data-radix-popper-content-wrapper]');
+  }, []);
+
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
+    if (!open) return;
+    function handleClickOutside(e: Event) {
       const target = e.target as HTMLElement;
       // Don't close if click is inside the account menu
       if (menuRef.current?.contains(target)) return;
-      // Don't close if click is inside a Radix portal (nested dropdown)
+      // Don't close if a nested Radix dropdown is open anywhere
+      if (nestedDropdownOpen()) return;
+      // Don't close if click is inside any Radix portal
       if (target.closest?.('[data-radix-popper-content-wrapper]')) return;
+      if (target.closest?.('[role="menu"]')) return;
       setOpen(false);
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('pointerdown', handleClickOutside, true);
+    document.addEventListener('mousedown', handleClickOutside, true);
+    return () => {
+      document.removeEventListener('pointerdown', handleClickOutside, true);
+      document.removeEventListener('mousedown', handleClickOutside, true);
+    };
+  }, [open, nestedDropdownOpen]);
 
   if (!authenticated) return null;
 
