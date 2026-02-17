@@ -49,7 +49,7 @@ function filterBreadcrumbsForOutsider(
   isDirectoryView: boolean,
 ): Breadcrumb[] {
   if (isInsider) return breadcrumbs;
-  if (!isDirectoryView) return [];
+  if (!isDirectoryView) return breadcrumbs.length > 0 ? [breadcrumbs[breadcrumbs.length - 1]] : [];
   // For directory views, trim breadcrumbs to the matched (shared) path root
   if (matchedPath) {
     const normalizedMatch = matchedPath.replace(/^\/+|\/+$/g, '').toLowerCase();
