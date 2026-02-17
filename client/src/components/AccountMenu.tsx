@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 
 export interface CollapsedItem {
-  node: React.ReactNode;
+  node: React.ReactNode | ((onDismiss: () => void) => React.ReactNode);
   /** Breakpoint at which this item is hidden from the header bar (and thus shown in the menu) */
   breakpoint: 'sm' | 'md' | 'lg' | 'xl';
   /** If true, this item contains a nested dropdown that should prevent account menu auto-close */
@@ -96,7 +96,7 @@ export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
           {/* Collapsed items — each visible in menu only below its breakpoint */}
           {collapsedItems.map((item, i) => (
             <div key={i} className={BREAKPOINT_CLASS[item.breakpoint]}>
-              {item.node}
+              {typeof item.node === 'function' ? item.node(() => setOpen(false)) : item.node}
             </div>
           ))}
 

@@ -16,10 +16,10 @@ interface HeaderProps {
   downloadDropdown?: React.ReactNode;
   /** Link dropdown for header bar (icon button variant) */
   linkControls?: React.ReactNode;
-  /** Download dropdown for account menu (menuItem variant) */
-  downloadMenuItem?: React.ReactNode;
-  /** Link dropdown for account menu (menuItem variant) */
-  linkMenuItem?: React.ReactNode;
+  /** Download dropdown factory for account menu (receives dismiss callback) */
+  downloadMenuItem?: (onDismiss: () => void) => React.ReactNode;
+  /** Link dropdown factory for account menu (receives dismiss callback) */
+  linkMenuItem?: (onDismiss: () => void) => React.ReactNode;
 }
 
 export function Header({
@@ -50,7 +50,7 @@ export function Header({
     });
   }
 
-  // Download dropdown — hidden below md
+  // Download dropdown — hidden below md  
   if (downloadMenuItem) {
     collapsedItems.push({
       breakpoint: 'md',

@@ -199,16 +199,16 @@ export function FileBrowser() {
           }
           downloadMenuItem={
             file ? (
-              <DownloadDropdown reqPath={reqPath} file={file} variant="menuItem" />
+              (onDismiss) => <DownloadDropdown reqPath={reqPath} file={file} variant="menuItem" onStateChange={(s) => { if (s === 'done') setTimeout(onDismiss, 800); }} />
             ) : directory ? (
-              <DownloadDropdown reqPath={reqPath} file={null} isDirectory variant="menuItem" />
+              (onDismiss) => <DownloadDropdown reqPath={reqPath} file={null} isDirectory variant="menuItem" onStateChange={(s) => { if (s === 'done') setTimeout(onDismiss, 800); }} />
             ) : undefined
           }
           linkControls={isInsider ? (
             <LinkDropdown path={`/${reqPath}`} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} showEvent showRaw={!!file} variant="header" />
           ) : undefined}
           linkMenuItem={isInsider ? (
-            <LinkDropdown path={`/${reqPath}`} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} showEvent showRaw={!!file} variant="menuItem" />
+            (onDismiss) => <LinkDropdown path={`/${reqPath}`} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} showEvent showRaw={!!file} variant="menuItem" onStateChange={(s) => { if (s === 'done') setTimeout(onDismiss, 800); }} />
           ) : undefined}
         />
 
