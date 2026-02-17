@@ -2,6 +2,8 @@
 
 How to run Jeeves Server in production.
 
+> **Platform note:** Jeeves Server currently runs on **Windows**. The service management examples below include both Windows (NSSM) and Linux (systemd) for forward compatibility, but the file browsing layer (drive enumeration, path handling) is Windows-specific today. Linux support is planned — [open an issue](https://github.com/karmaniverous/jeeves-server/issues/new?title=Linux+support&labels=enhancement) if you need it.
+
 ## Prerequisites
 
 - **Node.js** ≥ 18

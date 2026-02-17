@@ -69,6 +69,16 @@ The gap has always been the last mile: getting Markdown into the hands of people
 
 The 📖 button in the header is itself a live external share link — it points to this very README—in the working directory on a live production Jeeves Server—with `depth=2` (so you can follow links to the guides) and `dirs=false` (no directory browsing). If you're reading this in Jeeves Server, you're seeing the deep share feature in action. If you're reading this on GitHub, click [here](https://jeeves.johngalt.id/browse/e/jeeves-server/README.md?key=58f33049a73af8c3e694afa45eca426c&d=2&dirs=0&s=NoIg9ApmBWEQbhAzgWiRATojYBKBRAQQBEBZfAOgFsATEAXSA) to see for yourself.
 
+## Platform Support
+
+Jeeves Server currently runs on **Windows**. The core architecture (Fastify, React, HMAC auth, markdown rendering, export service) is fully platform-agnostic — the Windows-specific surface is small:
+
+- Drive letter enumeration (A-Z) for the file browser root
+- A handful of backslash path normalizations in the file/directory API
+- Puppeteer Chrome path in config
+
+Linux support is next up. If you need it, [open an issue](https://github.com/karmaniverous/jeeves-server/issues/new?title=Linux+support&labels=enhancement) — it'll help us prioritize.
+
 ## Quick Start
 
 ```bash

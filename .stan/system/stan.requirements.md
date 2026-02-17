@@ -61,9 +61,20 @@ But in the business world, you can't share `.md` files — people expect PDFs an
 
 - **Share link generation** — Expiring outsider links with HMAC signatures
 - **Expiry control** — Configurable expiration (or "never")
-- **Dropdown menus** — `DownloadDropdown` and `LinkDropdown` components with `variant` prop (`'header'` | `'default'`)
-  - Header variant: always-dark styling
+- **Deep share links** — Configurable `depth` (0-10) for following internal links, `dirs` flag for directory browsing
+  - Server-side link rewriting: internal links get computed sub-keys, external links untouched
+  - Stack-based navigation: tracks visited pages, supports back-traversal without depth cost
+  - Backward-compatible key derivation: existing share links (no depth/dirs) keep working
+  - Directory access scoped by sharer's permissions when `dirs=true`
+  - `withKey()` forwards all auth params (`key`, `d`, `dirs`, `s`, `exp`) on API calls
+- **README share link** — `/api/readme-link` endpoint returns pre-computed deep share URL for server's README (uses `_internal` key seed, `depth=2`, `dirs=false`)
+- **Outsider breadcrumbs** — File shares show filename only; directory shares trim to share root
+- **Dropdown menus** — `DownloadDropdown` and `LinkDropdown` components with `variant` prop (`'header'` | `'default'` | `'menuItem'`)
+  - Header variant: always-dark styling with `hover:bg-white/10`
   - Default variant: theme-aware for table rows
+  - MenuItem variant: full-width menu row for collapsed account menu items
+  - Directory shares hide depth/dirs controls (inherently descendant-scoped)
+- **Progressive header collapse** — Controls fold into account menu across breakpoints: 400px (link), 480px (download), sm (key), md (readme+github+theme)
 
 ### Event Gateway
 
@@ -158,7 +169,7 @@ React SPA served at `/browse/*` with the following pages:
 | `/` | Redirects to `/browse` | |
 | `/browse` | `FileBrowser` | Drive listing |
 | `/browse/:path` | `FileBrowser` | Directory listing or file view |
-| `/browse/about` | `About` | About page |
+| `/browse` (header) | `Header` | 📖 README share link + GitHub link |
 
 **Layout pattern**: Each page manages its own fixed top bar container with `topBarRef` + resize observer for dynamic height measurement. Header component (`flex-wrap py-2`) wraps naturally on mobile — no fixed height.
 
@@ -169,9 +180,9 @@ React SPA served at `/browse/*` with the following pages:
 - `SvgViewer` — Pan/zoom SVG rendering
 - `MermaidViewer` — Mermaid diagram rendering
 
-### Server-Rendered Pages (Legacy)
+### Server-Rendered Pages (Removed)
 
-Server-rendered `/path/*` pages are **frozen** — no modifications until React migration is complete, then they will be deleted. DRY template via `renderPageShell()` in `src/templates/layout.ts`.
+Legacy `/path/*` routes have been decommissioned. All page views are served by the React SPA at `/browse/*`. API endpoints at `/api/raw/*` and `/api/export/*` handle raw file access and exports.
 
 ### Dark Mode
 
@@ -185,20 +196,20 @@ Tailwind v4 with `@theme inline` requires CSS variable indirection:
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/browse/*` | Cookie or `?key=` | React SPA (file browser, viewer, about) |
-| GET | `/path/*` | `?key=` | Legacy server-rendered pages (frozen) |
-| GET | `/api/auth/status` | Cookie or `?key=` | Auth status check |
+| GET | `/browse/*` | Cookie or `?key=` | React SPA (file browser, viewer) |
+| GET | `/api/auth/status` | Cookie or `?key=` | Auth status check (accepts `path` param for outsider key verification) |
 | GET | `/api/auth/google` | None | Google OAuth initiation |
 | GET | `/api/auth/google/callback` | None | Google OAuth callback |
 | GET | `/api/drives` | Cookie or `?key=` | List available drives |
-| GET | `/api/directory/:path` | Cookie or `?key=` | Directory listing |
+| GET | `/api/path/:path` | Cookie or `?key=` | Directory listing |
 | GET | `/api/file/:path` | Cookie or `?key=` | File content (rendered or raw) |
+| GET | `/api/raw/:path` | Cookie or `?key=` | Raw file download |
+| GET | `/api/export/:path` | Cookie or `?key=` | PDF/DOCX export |
+| POST | `/api/share` | Cookie (insider) | Generate outsider share link (accepts `depth`, `dirs`) |
+| GET | `/api/readme-link` | None | Pre-computed README share URL |
+| POST | `/api/rotate-key` | Cookie (insider) | Rotate insider key |
 | POST | `/event` | `?key=` (scoped) | Webhook gateway |
-| GET | `/key` | X-API-Key header | Compute outsider key for a path |
-| GET | `/insider-key` | X-API-Key header | Get insider key |
-| POST | `/rotate-key` | Key (in body) | Rotate a key |
 | GET | `/health` | None | Health check |
-| GET | `/about` | None or key | Legacy about page |
 
 ## Build & Development
 
@@ -235,7 +246,7 @@ Uses `puppeteer-core` from the project's `node_modules` with the derived `_inter
 
 ### Git Workflow
 
-Branch: `feature/GH-5-react-frontend` for React SPA migration. Lefthook pre-commit hooks with `add-issue` (auto-prefixes `[GH-5]`).
+Feature branches named `feature/GH-{N}-description`. Lefthook pre-commit hooks with `add-issue` (auto-prefixes `[GH-{N}]`). Squash merge to `main`.
 
 ## Static Assets (Zero CDN)
 
@@ -278,6 +289,20 @@ All JS/CSS libraries are served locally:
 | `@tailwindcss/typography` | Prose styling |
 | `tailwind-merge` | Class merging utility |
 | `clsx` | Conditional classes |
+
+## Platform Support
+
+**Current:** Windows only.
+
+**Windows-specific surface:**
+- `getDrives()` enumerates A-Z drive letters for file browser root
+- ~10 instances of backslash path splitting/normalization in `api.ts` and `markdown.ts`
+- Puppeteer Chrome path in config (`chromePath`)
+- NSSM service management (deployment)
+
+**Platform-agnostic core:** Fastify, React SPA, HMAC auth model, markdown rendering, export service, event gateway.
+
+**Next up:** Linux compatibility. Requires abstracting the filesystem layer to handle mount points vs drive letters and using `path.sep` consistently. See [GitHub Issues](https://github.com/karmaniverous/jeeves-server/issues) for status.
 
 ## Running as Windows Service
 
