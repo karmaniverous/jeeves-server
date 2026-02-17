@@ -24,6 +24,8 @@ interface LinkDropdownProps {
   showRaw?: boolean;
   /** Small variant for directory rows */
   compact?: boolean;
+  /** Whether this is a directory share (hides depth/dirs controls) */
+  isDirectory?: boolean;
   /** Render variant */
   variant?: 'header' | 'default' | 'menuItem';
   /** Error callback (for parent to show error UI) */
@@ -34,7 +36,7 @@ interface LinkDropdownProps {
 
 type LinkType = 'page' | 'raw' | 'event';
 
-async function copyShareLink(path: string, settings: ShareSettings, type: LinkType) {
+async function copyShareLink(path: string, settings: ShareSettings, type: LinkType, isDirectory?: boolean) {
   let expiryParam: string | undefined;
   if (settings.expiry) {
     const match = settings.expiry.match(/^(\d+)([hdw])$/i);
@@ -46,8 +48,9 @@ async function copyShareLink(path: string, settings: ShareSettings, type: LinkTy
     }
   }
 
-  const depth = settings.depth > 0 ? settings.depth : undefined;
-  const dirs = settings.dirs || undefined;
+  // Directory shares are inherently descendant-scoped — no depth/dirs needed
+  const depth = !isDirectory && settings.depth > 0 ? settings.depth : undefined;
+  const dirs = !isDirectory && settings.dirs ? true : undefined;
 
   const data = await getShareLink(path, expiryParam, depth, dirs);
   if (!data.url) throw new Error('No URL returned');
@@ -69,7 +72,7 @@ const EXPIRY_OPTIONS = [
   { label: '30 days', value: '30d' },
 ];
 
-export function LinkDropdown({ path, shareSettings, onShareSettingsChange, showEvent, showRaw, compact, variant = 'default', onError, onStateChange }: LinkDropdownProps) {
+export function LinkDropdown({ path, shareSettings, onShareSettingsChange, showEvent, showRaw, compact, isDirectory, variant = 'default', onError, onStateChange }: LinkDropdownProps) {
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -88,7 +91,7 @@ export function LinkDropdown({ path, shareSettings, onShareSettingsChange, showE
     updateState('loading');
     setErrorMsg(null);
     try {
-      await copyShareLink(path, shareSettings, type);
+      await copyShareLink(path, shareSettings, type, isDirectory);
       updateState('done');
       setTimeout(() => updateState('idle'), 1500);
     } catch (err) {
@@ -170,29 +173,33 @@ export function LinkDropdown({ path, shareSettings, onShareSettingsChange, showE
           </select>
         </div>
 
-        <div className="px-2 py-1 flex items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Depth</span>
-          <input
-            type="number"
-            min={0}
-            max={10}
-            className="text-xs bg-popover text-popover-foreground border border-border rounded px-1 py-0.5 w-14 text-right focus:outline-none focus:ring-1 focus:ring-ring"
-            value={shareSettings.depth}
-            onChange={(e) => onShareSettingsChange({ ...shareSettings, depth: Math.max(0, parseInt(e.target.value, 10) || 0) })}
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
+        {!isDirectory && (
+          <>
+            <div className="px-2 py-1 flex items-center justify-between gap-2">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">Depth</span>
+              <input
+                type="number"
+                min={0}
+                max={10}
+                className="text-xs bg-popover text-popover-foreground border border-border rounded px-1 py-0.5 w-14 text-right focus:outline-none focus:ring-1 focus:ring-ring"
+                value={shareSettings.depth}
+                onChange={(e) => onShareSettingsChange({ ...shareSettings, depth: Math.max(0, parseInt(e.target.value, 10) || 0) })}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
 
-        <div className="px-2 py-1 flex items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Directories</span>
-          <input
-            type="checkbox"
-            className="rounded border-border"
-            checked={shareSettings.dirs}
-            onChange={(e) => onShareSettingsChange({ ...shareSettings, dirs: e.target.checked })}
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
+            <div className="px-2 py-1 flex items-center justify-between gap-2">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">Directories</span>
+              <input
+                type="checkbox"
+                className="rounded border-border"
+                checked={shareSettings.dirs}
+                onChange={(e) => onShareSettingsChange({ ...shareSettings, dirs: e.target.checked })}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
