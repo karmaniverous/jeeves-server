@@ -41,12 +41,35 @@ async function addPrintStyles(page: Page): Promise<void> {
       .toc-spacer { display: none !important; }
       .layout { display: block !important; }
       body { background: #fff !important; font-size: 10pt !important; line-height: 1.5 !important; color: #000 !important; }
+      /* SPA layout: remove scroll containers so body grows to full content height */
+      html, body, #root { height: auto !important; overflow: visible !important; }
+      main, [class*="overflow-y"] { overflow: visible !important; height: auto !important; }
       /* SPA article.prose */
       article.prose { max-width: none !important; border: none !important; padding: 0 !important; }
       .content, article.prose { font-size: 10pt !important; }
       /* Hide tab bar and other SPA controls */
       [role="tablist"], button { display: none !important; }
       main { padding-top: 0 !important; }
+      /* Inline SVG Panzoom: strip container chrome, show SVGs cleanly */
+      .inline-svg-panzoom { 
+        position: static !important; 
+        background: white !important; 
+        border: none !important; 
+        overflow: visible !important;
+        cursor: default !important;
+        padding: 0 !important;
+        margin: 1em 0 !important;
+      }
+      .inline-svg-panzoom button { display: none !important; }
+      .inline-svg-panzoom .text-xs { display: none !important; }
+      .inline-svg-panzoom svg {
+        max-width: 190mm !important;
+        max-height: 250mm !important;
+        width: auto !important;
+        height: auto !important;
+        display: block !important;
+        page-break-inside: avoid !important;
+      }
       h1 { font-size: 18pt !important; }
       h2 { font-size: 14pt !important; }
       h3 { font-size: 12pt !important; }
@@ -69,6 +92,28 @@ async function addPrintStyles(page: Page): Promise<void> {
 }
 
 /**
+ * Wait for SPA content to fully render, including async SVG fetches.
+ */
+async function waitForSpaContent(page: Page): Promise<void> {
+  // Wait for the article.prose element to appear (markdown rendered)
+  await page.waitForSelector('article.prose', { timeout: 15_000 }).catch(() => {});
+  // Wait for any inline SVG panzoom containers to finish loading
+  // (they start with "Loading SVG…" text, then get replaced with actual SVG content)
+  await page.waitForFunction(
+    () => {
+      const containers = document.querySelectorAll('.inline-svg-panzoom');
+      if (containers.length === 0) return true;
+      return Array.from(containers).every(
+        (c) => !c.textContent?.includes('Loading SVG')
+      );
+    },
+    { timeout: 15_000 },
+  ).catch(() => {});
+  // Small extra delay for any final rendering
+  await new Promise((r) => setTimeout(r, 1000));
+}
+
+/**
  * Export page as PDF
  */
 export async function exportPDF(options: ExportOptions): Promise<Buffer> {
@@ -76,6 +121,7 @@ export async function exportPDF(options: ExportOptions): Promise<Buffer> {
   try {
     const page = await browser.newPage();
     await page.goto(options.url, { waitUntil: 'networkidle0' });
+    await waitForSpaContent(page);
     await addPrintStyles(page);
 
     const pdfBuffer = await page.pdf({
@@ -99,37 +145,11 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
     const page = await browser.newPage();
     await page.setViewport({ width: 1200, height: 800 });
     await page.goto(options.url, { waitUntil: 'networkidle0' });
+    await waitForSpaContent(page);
+    await addPrintStyles(page);
 
-    // Get SVG bounding boxes for screenshots
-    interface SVGInfo {
-      index: number;
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    }
-
-    const svgInfos = await page.evaluate(() => {
-      const svgContainers = document.querySelectorAll(
-        '.svg-container, .zoomable-svg',
-      );
-      return Array.from(svgContainers)
-        .map((container, i) => {
-          const svg = container.querySelector('svg');
-          if (!svg) return null;
-          const rect = svg.getBoundingClientRect();
-          return {
-            index: i,
-            x: Math.floor(rect.x),
-            y: Math.floor(rect.y),
-            width: Math.ceil(rect.width),
-            height: Math.ceil(rect.height),
-          };
-        })
-        .filter(Boolean);
-    });
-
-    // Screenshot each SVG as PNG
+    // Extract raw SVG content from panzoom containers, then render each
+    // in a clean isolated page to avoid panzoom transform/styling issues.
     interface SVGPngData {
       index: number;
       dataUrl: string;
@@ -137,25 +157,43 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
       height: number;
     }
 
+    const svgContents = await page.evaluate(() => {
+      const containers = document.querySelectorAll(
+        '.svg-container, .zoomable-svg, .inline-svg-panzoom',
+      );
+      return Array.from(containers).map((container, i) => {
+        const svg = container.querySelector('svg');
+        return { index: i, svgHtml: svg ? svg.outerHTML : null };
+      });
+    });
+
     const svgPngDataUrls: SVGPngData[] = [];
-    for (const info of svgInfos as SVGInfo[]) {
-      if (info.width > 0 && info.height > 0) {
-        const pngBuffer = await page.screenshot({
-          clip: {
-            x: info.x,
-            y: info.y,
-            width: info.width,
-            height: info.height,
-          },
-          type: 'png',
-        });
-        svgPngDataUrls.push({
-          index: info.index,
-          dataUrl: `data:image/png;base64,${Buffer.from(pngBuffer).toString('base64')}`,
-          width: info.width,
-          height: info.height,
-        });
+    for (const { index, svgHtml } of svgContents) {
+      if (!svgHtml) continue;
+
+      // Render SVG in a clean page at full width for high-quality capture
+      const svgPage = await browser.newPage();
+      await svgPage.setViewport({ width: 1200, height: 2000, deviceScaleFactor: 2 });
+      await svgPage.setContent(`<!DOCTYPE html>
+<html><head><style>
+  body { margin: 0; padding: 0; background: #fff; }
+  svg { width: 1152px; height: auto; display: block; }
+</style></head><body>${svgHtml}</body></html>`, { waitUntil: 'networkidle0' });
+
+      const svgHandle = await svgPage.$('svg');
+      if (svgHandle) {
+        const screenshot = await svgHandle.screenshot({ type: 'png' });
+        const box = await svgHandle.boundingBox();
+        if (box && box.width > 0 && box.height > 0) {
+          svgPngDataUrls.push({
+            index,
+            dataUrl: `data:image/png;base64,${Buffer.from(screenshot).toString('base64')}`,
+            width: Math.ceil(box.width),
+            height: Math.ceil(box.height),
+          });
+        }
       }
+      await svgPage.close();
     }
 
     // Max bounds for images in DOCX
@@ -196,7 +234,7 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
 
         // Replace SVG containers with PNG images
         const svgContainers = contentClone.querySelectorAll(
-          '.svg-container, .zoomable-svg',
+          '.svg-container, .zoomable-svg, .inline-svg-panzoom',
         );
         svgContainers.forEach((container, i) => {
           const pngInfo = pngUrls.find((p) => p.index === i);
