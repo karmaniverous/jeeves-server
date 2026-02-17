@@ -12,7 +12,6 @@ import fastifyStatic from '@fastify/static';
 import Fastify from 'fastify';
 
 import { getConfig } from './config/index.js';
-import { aboutRoute } from './routes/about.js';
 import { apiRoute } from './routes/api.js';
 import { authRoute } from './routes/auth.js';
 import { eventRoute } from './routes/event.js';
@@ -67,7 +66,6 @@ async function start() {
 
     // Register routes
     await fastify.register(healthRoute);
-    await fastify.register(aboutRoute);
     await fastify.register(authRoute);
     await fastify.register(keysRoute);
     await fastify.register(eventRoute);
