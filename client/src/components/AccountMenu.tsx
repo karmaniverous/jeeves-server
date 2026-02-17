@@ -34,9 +34,12 @@ export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const target = e.target as HTMLElement;
+      // Don't close if click is inside the account menu
+      if (menuRef.current?.contains(target)) return;
+      // Don't close if click is inside a Radix portal (nested dropdown)
+      if (target.closest?.('[data-radix-popper-content-wrapper]')) return;
+      setOpen(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
