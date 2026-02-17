@@ -173,7 +173,7 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
 
       // Render SVG in a clean page at full width for high-quality capture
       const svgPage = await browser.newPage();
-      await svgPage.setViewport({ width: 1200, height: 2000 });
+      await svgPage.setViewport({ width: 1200, height: 2000, deviceScaleFactor: 2 });
       await svgPage.setContent(`<!DOCTYPE html>
 <html><head><style>
   body { margin: 0; padding: 0; background: #fff; }
