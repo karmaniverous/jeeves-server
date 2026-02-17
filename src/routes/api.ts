@@ -32,6 +32,35 @@ interface DriveInfo {
   label: string;
 }
 
+interface Breadcrumb {
+  label: string;
+  path: string;
+}
+
+/**
+ * Filter breadcrumbs for outsiders:
+ * - File shares: no breadcrumbs (the page stands alone)
+ * - Directory shares: trim to the share root (matchedPath)
+ */
+function filterBreadcrumbsForOutsider(
+  breadcrumbs: Breadcrumb[],
+  isInsider: boolean,
+  matchedPath: string | null,
+  isDirectoryView: boolean,
+): Breadcrumb[] {
+  if (isInsider) return breadcrumbs;
+  if (!isDirectoryView) return [];
+  // For directory views, trim breadcrumbs to the matched (shared) path root
+  if (matchedPath) {
+    const normalizedMatch = matchedPath.replace(/^\/+|\/+$/g, '').toLowerCase();
+    const matchIdx = breadcrumbs.findIndex(
+      b => b.path.replace(/^\/+|\/+$/g, '').toLowerCase() === normalizedMatch,
+    );
+    if (matchIdx >= 0) return breadcrumbs.slice(matchIdx);
+  }
+  return breadcrumbs;
+}
+
 function getDrives(): DriveInfo[] {
   const drives: DriveInfo[] = [];
   for (let code = 65; code <= 90; code++) {
@@ -110,6 +139,8 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         authResult.seed ?? undefined;
       (request as { deepShareParams?: typeof deepParams }).deepShareParams =
         deepParams;
+      (request as { authMatchedPath?: string | null }).authMatchedPath =
+        authResult.matchedPath;
       return;
     }
 
@@ -257,10 +288,13 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         return { label: part, path: urlPath };
       });
 
+      const matchedPath = (request as { authMatchedPath?: string | null }).authMatchedPath ?? null;
+      const filteredBreadcrumbs = filterBreadcrumbsForOutsider(breadcrumbs, isInsider, matchedPath, true);
+
       return reply.send({
         path: reqPath,
         entries: result,
-        breadcrumbs,
+        breadcrumbs: filteredBreadcrumbs,
         isInsider,
       });
     },
@@ -300,14 +334,20 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
 
       // Build breadcrumbs
       const pathParts = resolved.split('\\').filter((p) => p);
-      const breadcrumbs = pathParts.map((part, i) => {
-        const accumParts = pathParts.slice(0, i + 1);
-        const winPath = accumParts.join('\\');
-        const urlPath = winPath
-          .replace(/\\/g, '/')
-          .replace(/^([A-Z]):/, (_m: string, d: string) => d.toLowerCase());
-        return { label: part, path: urlPath };
-      });
+      const matchedPath = (request as { authMatchedPath?: string | null }).authMatchedPath ?? null;
+      const breadcrumbs = filterBreadcrumbsForOutsider(
+        pathParts.map((part, i) => {
+          const accumParts = pathParts.slice(0, i + 1);
+          const winPath = accumParts.join('\\');
+          const urlPath = winPath
+            .replace(/\\/g, '/')
+            .replace(/^([A-Z]):/, (_m: string, d: string) => d.toLowerCase());
+          return { label: part, path: urlPath };
+        }),
+        isInsider,
+        matchedPath,
+        false, // file view, not directory
+      );
 
       // Markdown
       if (ext === '.md') {
