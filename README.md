@@ -71,13 +71,12 @@ The 📖 button in the header is itself a live external share link — it points
 
 ## Platform Support
 
-Jeeves Server currently runs on **Windows**. The core architecture (Fastify, React, HMAC auth, markdown rendering, export service) is fully platform-agnostic — the Windows-specific surface is small:
+Jeeves Server runs on **Windows** and **Linux**.
 
-- Drive letter enumeration (A-Z) for the file browser root
-- A handful of backslash path normalizations in the file/directory API
-- Puppeteer Chrome path in config
+- **Windows:** File browser auto-discovers drive letters (A-Z). Chrome path defaults to Program Files.
+- **Linux:** File browser uses configurable `roots` in `jeeves.config.ts` (e.g. `{ home: '/home', projects: '/opt/projects' }`). Chromium path is typically `/usr/bin/chromium-browser`.
 
-Linux support is next up. If you need it, [open an issue](https://github.com/karmaniverous/jeeves-server/issues/new?title=Linux+support&labels=enhancement) — it'll help us prioritize.
+Both platforms are tested in CI (GitHub Actions on Ubuntu, Node 20 + 22).
 
 ## Quick Start
 

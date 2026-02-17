@@ -292,23 +292,32 @@ All JS/CSS libraries are served locally:
 
 ## Platform Support
 
-**Current:** Windows only.
+**Supported:** Windows and Linux. Both tested in CI (GitHub Actions, Ubuntu, Node 20 + 22).
 
-**Windows-specific surface:**
-- `getDrives()` enumerates A-Z drive letters for file browser root
-- ~10 instances of backslash path splitting/normalization in `api.ts` and `markdown.ts`
-- Puppeteer Chrome path in config (`chromePath`)
-- NSSM service management (deployment)
+**Platform abstraction layer** (`src/util/platform.ts`):
+- `getRoots()` — Windows: auto-discovers drive letters A-Z. Linux: uses configurable `roots` from config.
+- `urlPathToFs()` / `fsPathToUrl()` — bidirectional URL ↔ filesystem path conversion.
+- `breadcrumbParts()` — platform-aware breadcrumb generation.
+
+**Platform-specific config:**
+- `chromePath` — path to Chrome/Chromium binary (platform-dependent)
+- `roots` — filesystem root map for Linux file browser (ignored on Windows)
+- `mermaidCliPath` — path to mermaid-cli installation (optional, replaces hardcoded path)
 
 **Platform-agnostic core:** Fastify, React SPA, HMAC auth model, markdown rendering, export service, event gateway.
 
-**Next up:** Linux compatibility. Requires abstracting the filesystem layer to handle mount points vs drive letters and using `path.sep` consistently. See [GitHub Issues](https://github.com/karmaniverous/jeeves-server/issues) for status.
+## Running as a Service
 
-## Running as Windows Service
-
+**Windows (NSSM):**
 ```bash
 nssm install JeevesServer "node" "E:\jeeves-server\dist\server.js"
 nssm start JeevesServer
+```
+
+**Linux (systemd):**
+```bash
+sudo systemctl enable jeeves-server
+sudo systemctl start jeeves-server
 ```
 
 ## License

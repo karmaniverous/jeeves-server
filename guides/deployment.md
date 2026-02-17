@@ -2,7 +2,7 @@
 
 How to run Jeeves Server in production.
 
-> **Platform note:** Jeeves Server currently runs on **Windows**. The service management examples below include both Windows (NSSM) and Linux (systemd) for forward compatibility, but the file browsing layer (drive enumeration, path handling) is Windows-specific today. Linux support is planned — [open an issue](https://github.com/karmaniverous/jeeves-server/issues/new?title=Linux+support&labels=enhancement) if you need it.
+> Jeeves Server runs on **Windows** and **Linux**. Both platforms are tested in CI.
 
 ## Prerequisites
 
@@ -74,6 +74,60 @@ WantedBy=multi-user.target
 sudo systemctl enable jeeves-server
 sudo systemctl start jeeves-server
 sudo systemctl status jeeves-server
+```
+
+### Linux Quick Start (Ubuntu/Debian)
+
+```bash
+# System packages
+sudo apt-get update && sudo apt-get install -y curl git build-essential chromium-browser caddy
+
+# Node.js 22
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash -
+sudo apt-get install -y nodejs
+
+# Clone and build
+cd /opt
+sudo git clone https://github.com/karmaniverous/jeeves-server.git
+cd jeeves-server
+npm ci
+cd client && npm ci && npx vite build --outDir ../dist/client && cd ..
+npx tsc
+
+# Configure
+cp jeeves.config.template.ts jeeves.config.ts
+# Edit jeeves.config.ts — set chromePath, roots, auth, keys, etc.
+echo '{}' > state.json
+```
+
+**Linux-specific config options:**
+
+```typescript
+{
+  // Chromium path (required for PDF/DOCX export)
+  chromePath: '/usr/bin/chromium-browser',
+
+  // Filesystem roots for the file browser (replaces Windows drive letters)
+  roots: {
+    home: '/home',
+    projects: '/opt/projects',
+  },
+
+  // Mermaid CLI path (optional, for .mmd diagram rendering)
+  mermaidCliPath: '/opt/mermaid-cli',
+}
+```
+
+On Windows, `roots` is ignored — the file browser auto-discovers drive letters. On Linux, if `roots` is omitted, it defaults to `{ root: '/' }`.
+
+**Puppeteer config** (for Chromium on Linux):
+
+Create `puppeteer.json` in the server root:
+```json
+{
+  "executablePath": "/usr/bin/chromium-browser",
+  "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+}
 ```
 
 ## Reverse Proxy
