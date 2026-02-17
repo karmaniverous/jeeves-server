@@ -163,7 +163,7 @@ export function Header({
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-zinc-300 hover:text-white h-8 w-8"
+                className="text-zinc-300 hover:text-white hover:bg-white/10 h-8 w-8"
                 title="Rotate key (invalidates all your shares)"
                 onClick={onRotateKey}
               >
@@ -176,7 +176,7 @@ export function Header({
           {/* README: visible md+ (768px) */}
           {readmeUrl && (
             <a href={readmeUrl} title="README" className="hidden md:inline-flex">
-              <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white h-8 w-8">
+              <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white hover:bg-white/10 h-8 w-8">
                 <BookOpen className="h-4 w-4" />
               </Button>
             </a>
@@ -184,7 +184,7 @@ export function Header({
 
           {/* GitHub: visible md+ (768px) */}
           <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" title="GitHub" className="hidden md:inline-flex">
-            <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white h-8 w-8">
+            <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white hover:bg-white/10 h-8 w-8">
               <Github className="h-4 w-4" />
             </Button>
           </a>
@@ -193,7 +193,7 @@ export function Header({
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-300 hover:text-white h-8 w-8 hidden md:inline-flex"
+            className="text-zinc-300 hover:text-white hover:bg-white/10 h-8 w-8 hidden md:inline-flex"
             title="Toggle theme"
             onClick={onToggleTheme}
           >

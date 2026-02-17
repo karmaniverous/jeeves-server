@@ -116,7 +116,7 @@ export function DownloadDropdown({ reqPath, file, isDirectory, compact, variant 
     <Button
       variant="ghost"
       size="icon"
-      className={`${btnSize} ${iconColor || (variant === 'header' ? 'text-zinc-300 hover:text-white' : 'text-muted-foreground hover:text-foreground')}`}
+      className={`${btnSize} ${iconColor || (variant === 'header' ? 'text-zinc-300 hover:text-white hover:bg-white/10' : 'text-muted-foreground hover:text-foreground')}`}
       disabled={state === 'loading'}
       title="Download"
     >
