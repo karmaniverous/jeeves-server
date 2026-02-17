@@ -171,13 +171,13 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
     for (const { index, svgHtml } of svgContents) {
       if (!svgHtml) continue;
 
-      // Render SVG in a clean page
+      // Render SVG in a clean page at full width for high-quality capture
       const svgPage = await browser.newPage();
-      await svgPage.setViewport({ width: 1200, height: 800 });
+      await svgPage.setViewport({ width: 1200, height: 2000 });
       await svgPage.setContent(`<!DOCTYPE html>
 <html><head><style>
-  body { margin: 0; padding: 16px; background: #fff; display: inline-block; }
-  svg { max-width: 1100px; height: auto; display: block; }
+  body { margin: 0; padding: 0; background: #fff; }
+  svg { width: 1152px; height: auto; display: block; }
 </style></head><body>${svgHtml}</body></html>`, { waitUntil: 'networkidle0' });
 
       const svgHandle = await svgPage.$('svg');
