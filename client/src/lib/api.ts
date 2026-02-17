@@ -129,5 +129,5 @@ export async function getShareLink(
 }
 
 export function getRawFileUrl(path: string): string {
-  return `/path/${path}?raw=1`;
+  return `/api/raw/${path}`;
 }

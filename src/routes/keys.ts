@@ -225,10 +225,10 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
                 targetPath,
                 expiry,
               );
-              shareUrl = `/path${targetPath}?key=${outsiderKey}&exp=${expiry}`;
+              shareUrl = `/browse${targetPath}?key=${outsiderKey}&exp=${expiry}`;
             } else {
               outsiderKey = computePathKey(insider.seed, targetPath);
-              shareUrl = `/path${targetPath}?key=${outsiderKey}`;
+              shareUrl = `/browse${targetPath}?key=${outsiderKey}`;
             }
             return {
               path: targetPath,
@@ -256,10 +256,10 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
           targetPath,
           expiry,
         );
-        shareUrl = `/path${targetPath}?key=${outsiderKey}&exp=${expiry}`;
+        shareUrl = `/browse${targetPath}?key=${outsiderKey}&exp=${expiry}`;
       } else {
         outsiderKey = computePathKey(matched.seed, targetPath);
-        shareUrl = `/path${targetPath}?key=${outsiderKey}`;
+        shareUrl = `/browse${targetPath}?key=${outsiderKey}`;
       }
 
       return {

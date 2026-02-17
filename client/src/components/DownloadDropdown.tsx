@@ -33,19 +33,19 @@ function getDownloadItems(reqPath: string, file: { fileName: string; type: strin
 
   if (isDirectory || !file) {
     // Directory: ZIP only
-    items.push({ label: 'ZIP', href: `/path/${reqPath}?export=zip`, filename: `${reqPath.split('/').pop() ?? 'archive'}.zip` });
+    items.push({ label: 'ZIP', href: `/api/export/${reqPath}?format=zip`, filename: `${reqPath.split('/').pop() ?? 'archive'}.zip` });
     return items;
   }
 
   const baseName = file.fileName.replace(/\.[^.]+$/, '');
 
   // Raw is always available for files
-  items.push({ label: 'Raw', href: `/path/${reqPath}?raw=1`, filename: file.fileName });
+  items.push({ label: 'Raw', href: `/api/raw/${reqPath}`, filename: file.fileName });
 
   // Markdown exports
   if (file.type === 'markdown' || file.type === '.md') {
-    items.push({ label: 'PDF', href: `/path/${reqPath}?export=pdf`, filename: `${baseName}.pdf` });
-    items.push({ label: 'DOCX', href: `/path/${reqPath}?export=docx`, filename: `${baseName}.docx` });
+    items.push({ label: 'PDF', href: `/api/export/${reqPath}?format=pdf`, filename: `${baseName}.pdf` });
+    items.push({ label: 'DOCX', href: `/api/export/${reqPath}?format=docx`, filename: `${baseName}.docx` });
   }
 
   // Mermaid exports

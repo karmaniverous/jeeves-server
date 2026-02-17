@@ -513,7 +513,7 @@ export function FileBrowser() {
               {/* Image */}
               {file?.type === 'image' && (
                 <div className="flex justify-center p-4">
-                  <img src={`/path/${reqPath}?raw=1`} alt={file.fileName} className="max-w-full rounded-lg shadow-md" />
+                  <img src={`/api/raw/${reqPath}`} alt={file.fileName} className="max-w-full rounded-lg shadow-md" />
                 </div>
               )}
 
@@ -522,7 +522,7 @@ export function FileBrowser() {
                 <div className="text-center p-8">
                   <p className="text-muted-foreground mb-4">{file.fileName}</p>
                   <a
-                    href={`/path/${reqPath}?raw=1`}
+                    href={`/api/raw/${reqPath}`}
                     download={file.fileName}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
                   >
