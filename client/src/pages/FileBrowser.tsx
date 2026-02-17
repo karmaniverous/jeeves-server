@@ -318,7 +318,7 @@ export function FileBrowser() {
 
         <main
           ref={mainRef}
-          className={file || (loading && reqPath) ? 'px-0 pb-16 overflow-y-auto' : 'p-4 pb-16 md:px-6 md:pt-6 overflow-y-auto'}
+          className={file || (loading && reqPath) ? 'px-0 pb-32 overflow-y-auto' : 'p-4 pb-32 md:px-6 md:pt-6 overflow-y-auto'}
           style={{ marginTop: `${topBarHeight}px`, height: `calc(100vh - ${topBarHeight}px)` }}
         >
           {loading && !reqPath && (
