@@ -41,28 +41,28 @@ export function Header({
 
   const menuItemClass = 'flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors w-full text-left cursor-pointer';
 
-  // Link controls — hidden below sm
+  // Link controls — hidden below 400px
   if (linkMenuItem) {
     collapsedItems.push({
-      breakpoint: 'sm',
+      breakpoint: 'xs',
       node: linkMenuItem,
       hasNestedDropdown: true,
     });
   }
 
-  // Download dropdown — hidden below md  
+  // Download dropdown — hidden below sm (640px)
   if (downloadMenuItem) {
     collapsedItems.push({
-      breakpoint: 'md',
+      breakpoint: 'sm',
       node: downloadMenuItem,
       hasNestedDropdown: true,
     });
   }
 
-  // Key management — hidden below lg
+  // Key management — hidden below md (768px)
   if (hasKeyMgmt) {
     collapsedItems.push({
-      breakpoint: 'lg',
+      breakpoint: 'md',
       node: (
         <button onClick={onRotateKey} className={menuItemClass}>
           <KeyRound className="h-4 w-4 shrink-0" />
@@ -72,9 +72,9 @@ export function Header({
     });
   }
 
-  // About — hidden below xl
+  // About — hidden below lg (1024px)
   collapsedItems.push({
-    breakpoint: 'xl',
+    breakpoint: 'lg',
     node: (
       <Link to="/about" className={menuItemClass}>
         <Info className="h-4 w-4 shrink-0" />
@@ -83,9 +83,9 @@ export function Header({
     ),
   });
 
-  // Theme — hidden below xl
+  // Theme — hidden below lg (1024px)
   collapsedItems.push({
-    breakpoint: 'xl',
+    breakpoint: 'lg',
     node: (
       <button onClick={onToggleTheme} className={menuItemClass}>
         {theme === 'dark' ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
@@ -123,19 +123,19 @@ export function Header({
 
         {/* Controls — progressively hidden via responsive classes */}
         <div className="flex items-center gap-1 shrink-0">
-          {/* Link controls: visible sm+ */}
+          {/* Link controls: visible 400px+ */}
           {linkControls && (
-            <div className="hidden sm:flex items-center">{linkControls}</div>
+            <div className="hidden min-[400px]:flex items-center">{linkControls}</div>
           )}
 
-          {/* Download: visible md+ */}
+          {/* Download: visible sm+ (640px) */}
           {downloadDropdown && (
-            <div className="hidden md:flex items-center">{downloadDropdown}</div>
+            <div className="hidden sm:flex items-center">{downloadDropdown}</div>
           )}
 
-          {/* Key management: visible lg+ */}
+          {/* Key management: visible md+ (768px) */}
           {hasKeyMgmt && (
-            <div className="hidden lg:flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
@@ -149,18 +149,18 @@ export function Header({
             </div>
           )}
 
-          {/* About: visible xl+ */}
-          <Link to="/about" title="About Jeeves Server" className="hidden xl:inline-flex">
+          {/* About: visible lg+ (1024px) */}
+          <Link to="/about" title="About Jeeves Server" className="hidden lg:inline-flex">
             <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white h-8 w-8">
               <Info className="h-4 w-4" />
             </Button>
           </Link>
 
-          {/* Theme: visible xl+ */}
+          {/* Theme: visible lg+ (1024px) */}
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:text-white h-8 w-8 hidden xl:inline-flex"
+            className="text-zinc-400 hover:text-white h-8 w-8 hidden lg:inline-flex"
             title="Toggle theme"
             onClick={onToggleTheme}
           >

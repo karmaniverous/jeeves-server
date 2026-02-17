@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth';
 export interface CollapsedItem {
   node: React.ReactNode | ((onDismiss: () => void) => React.ReactNode);
   /** Breakpoint at which this item is hidden from the header bar (and thus shown in the menu) */
-  breakpoint: 'sm' | 'md' | 'lg' | 'xl';
+  breakpoint: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   /** If true, this item contains a nested dropdown that should prevent account menu auto-close */
   hasNestedDropdown?: boolean;
 }
@@ -22,11 +22,17 @@ interface AccountMenuProps {
  * Maps breakpoint to Tailwind class that shows the item only BELOW that breakpoint.
  * e.g. breakpoint 'sm' → item is in menu when < sm → "sm:hidden" (visible below sm, hidden at sm+)
  */
+/**
+ * Maps breakpoint key to Tailwind class that hides the item AT OR ABOVE that width.
+ * Items appear in the menu only below their breakpoint.
+ * Using arbitrary min-width values for tighter control over when items fold.
+ */
 const BREAKPOINT_CLASS: Record<string, string> = {
-  sm: 'sm:hidden',
-  md: 'md:hidden',
-  lg: 'lg:hidden',
-  xl: 'xl:hidden',
+  xs: 'min-[400px]:hidden',
+  sm: 'sm:hidden',       // 640px
+  md: 'md:hidden',       // 768px
+  lg: 'lg:hidden',       // 1024px
+  xl: 'xl:hidden',       // 1280px
 };
 
 export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
