@@ -260,13 +260,13 @@ async function runTests() {
     const subDirRes = await fetchJson(apiDirUrl('/e/dev/karmaniverous/jeeves-server/test-docs/sub', params));
     assert(subDirRes.status === 200, 'Subdirectory listing works with dirs=true');
 
-    // Unrelated ancestor directory should be blocked
+    // Any directory accessible (scoped only by sharer's access)
     const ancestorDirRes = await fetchJson(apiDirUrl('/e/dev', params));
-    assert(ancestorDirRes.status === 401, `Unrelated ancestor dir blocked (got ${ancestorDirRes.status})`);
+    assert(ancestorDirRes.status === 200, `Ancestor dir accessible with dirs=true (got ${ancestorDirRes.status})`);
 
-    // Sibling directory should be blocked
+    // Sibling directory accessible too
     const siblingDirRes = await fetchJson(apiDirUrl('/e/dev/karmaniverous/jeeves-server/src', params));
-    assert(siblingDirRes.status === 401, `Sibling dir blocked (got ${siblingDirRes.status})`);
+    assert(siblingDirRes.status === 200, `Sibling dir accessible with dirs=true (got ${siblingDirRes.status})`);
   }
 
   // ================================================================

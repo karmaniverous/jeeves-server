@@ -98,18 +98,8 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
           config.resolvedInsiders,
           deepParams,
         );
-        // Only allow the shared file's directory and its descendants.
-        // This prevents traversal up to unrelated parent directories.
-        if (authResult.valid) {
-          const normalizedDir = (urlPath || '/').replace(/\/$/, '');
-          // Use the root stack entry's directory as the boundary
-          const rootEntry = stack[0];
-          const rootDir = rootEntry ? rootEntry.substring(0, rootEntry.lastIndexOf('/')) : '';
-          const isAllowed = normalizedDir === rootDir || normalizedDir.startsWith(rootDir + '/');
-          if (!isAllowed) {
-            authResult = { valid: false, mode: null, keyName: null, seed: null, matchedPath: null };
-          }
-        }
+        // dirs=true grants unrestricted directory access,
+        // scoped only by the sharer's own permissions.
       }
     }
 
