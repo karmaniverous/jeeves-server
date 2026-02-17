@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import { CodeBlock } from '@/components/CodeBlock';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { DirectoryTable } from '@/components/DirectoryTable';
 import { DownloadDropdown } from '@/components/DownloadDropdown';
 import { DriveList } from '@/components/DriveList';
@@ -161,8 +162,10 @@ export function FileBrowser() {
   const isInsider = directory?.isInsider ?? file?.isInsider ?? authInsider;
   const keyAge = keyCreatedAt ? formatRelativeTime(keyCreatedAt) : null;
 
-  const handleRotateKey = async () => {
-    if (!confirm('Rotate your insider key?\n\nThis will INVALIDATE all existing share links.')) return;
+  const [rotateKeyDialogOpen, setRotateKeyDialogOpen] = useState(false);
+  const handleRotateKey = () => setRotateKeyDialogOpen(true);
+  const confirmRotateKey = async () => {
+    setRotateKeyDialogOpen(false);
     await rotateKey();
   };
 
@@ -410,6 +413,15 @@ export function FileBrowser() {
           );
         })()}
       </main>
+
+      <ConfirmDialog
+        open={rotateKeyDialogOpen}
+        onOpenChange={setRotateKeyDialogOpen}
+        title="Rotate insider key?"
+        description="This will invalidate ALL existing share links generated with your current key. This action cannot be undone."
+        confirmLabel="Rotate Key"
+        onConfirm={() => void confirmRotateKey()}
+      />
     </div>
   );
 }
