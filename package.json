@@ -1,7 +1,24 @@
 {
   "name": "@karmaniverous/jeeves-server",
   "version": "2.2.0",
-  "description": "Fastify server for Jeeves - webhooks, file serving, markdown rendering",
+  "description": "Secure file browser, markdown viewer, and webhook gateway with PDF/DOCX export and expiring share links",
+  "keywords": [
+    "fastify",
+    "react",
+    "markdown",
+    "file-server",
+    "file-browser",
+    "pdf-export",
+    "docx-export",
+    "mermaid",
+    "typescript",
+    "webhook",
+    "document-viewer",
+    "self-hosted",
+    "share-links",
+    "hmac",
+    "google-oauth"
+  ],
   "type": "module",
   "scripts": {
     "start": "node dist/server.js",
