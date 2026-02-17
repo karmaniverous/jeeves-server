@@ -148,37 +148,8 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
     await waitForSpaContent(page);
     await addPrintStyles(page);
 
-    // Get SVG bounding boxes for screenshots
-    interface SVGInfo {
-      index: number;
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    }
-
-    const svgInfos = await page.evaluate(() => {
-      const svgContainers = document.querySelectorAll(
-        '.svg-container, .zoomable-svg, .inline-svg-panzoom',
-      );
-      return Array.from(svgContainers)
-        .map((container, i) => {
-          const svg = container.querySelector('svg');
-          if (!svg) return null;
-          const rect = svg.getBoundingClientRect();
-          // Use absolute document coordinates (add scroll offset)
-          return {
-            index: i,
-            x: Math.floor(rect.x + window.scrollX),
-            y: Math.floor(rect.y + window.scrollY),
-            width: Math.ceil(rect.width),
-            height: Math.ceil(rect.height),
-          };
-        })
-        .filter(Boolean);
-    });
-
-    // Screenshot each SVG as PNG — scroll into view first for accurate capture
+    // Extract raw SVG content from panzoom containers, then render each
+    // in a clean isolated page to avoid panzoom transform/styling issues.
     interface SVGPngData {
       index: number;
       dataUrl: string;
@@ -186,37 +157,43 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
       height: number;
     }
 
-    const svgPngDataUrls: SVGPngData[] = [];
-    for (const info of svgInfos as SVGInfo[]) {
-      if (info.width > 0 && info.height > 0) {
-        // Use element handle screenshot — captures the full element regardless of viewport
-        const pngBuffer = await page.evaluate((idx: number) => {
-          const containers = document.querySelectorAll(
-            '.svg-container, .zoomable-svg, .inline-svg-panzoom',
-          );
-          const container = containers[idx];
-          const svg = container?.querySelector('svg');
-          if (svg) {
-            // Add a temporary ID for selection
-            svg.setAttribute('data-export-idx', String(idx));
-          }
-          return !!svg;
-        }, info.index);
+    const svgContents = await page.evaluate(() => {
+      const containers = document.querySelectorAll(
+        '.svg-container, .zoomable-svg, .inline-svg-panzoom',
+      );
+      return Array.from(containers).map((container, i) => {
+        const svg = container.querySelector('svg');
+        return { index: i, svgHtml: svg ? svg.outerHTML : null };
+      });
+    });
 
-        if (pngBuffer) {
-          const svgHandle = await page.$(`svg[data-export-idx="${String(info.index)}"]`);
-          if (svgHandle) {
-            const screenshot = await svgHandle.screenshot({ type: 'png' });
-            const box = await svgHandle.boundingBox();
-            svgPngDataUrls.push({
-              index: info.index,
-              dataUrl: `data:image/png;base64,${Buffer.from(screenshot).toString('base64')}`,
-              width: box?.width ? Math.ceil(box.width) : info.width,
-              height: box?.height ? Math.ceil(box.height) : info.height,
-            });
-          }
+    const svgPngDataUrls: SVGPngData[] = [];
+    for (const { index, svgHtml } of svgContents) {
+      if (!svgHtml) continue;
+
+      // Render SVG in a clean page
+      const svgPage = await browser.newPage();
+      await svgPage.setViewport({ width: 1200, height: 800 });
+      await svgPage.setContent(`<!DOCTYPE html>
+<html><head><style>
+  body { margin: 0; padding: 16px; background: #fff; display: inline-block; }
+  svg { max-width: 1100px; height: auto; display: block; }
+</style></head><body>${svgHtml}</body></html>`, { waitUntil: 'networkidle0' });
+
+      const svgHandle = await svgPage.$('svg');
+      if (svgHandle) {
+        const screenshot = await svgHandle.screenshot({ type: 'png' });
+        const box = await svgHandle.boundingBox();
+        if (box && box.width > 0 && box.height > 0) {
+          svgPngDataUrls.push({
+            index,
+            dataUrl: `data:image/png;base64,${Buffer.from(screenshot).toString('base64')}`,
+            width: Math.ceil(box.width),
+            height: Math.ceil(box.height),
+          });
         }
       }
+      await svgPage.close();
     }
 
     // Max bounds for images in DOCX
