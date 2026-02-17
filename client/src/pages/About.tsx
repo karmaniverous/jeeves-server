@@ -39,7 +39,7 @@ export function About() {
           />
         </div>
 
-        <main className="p-4 md:p-6 max-w-4xl mx-auto overflow-y-auto" style={{ marginTop: `${topBarHeight}px`, height: `calc(100vh - ${topBarHeight}px)` }}>
+        <main className="p-4 md:p-6 pb-16 max-w-4xl mx-auto overflow-y-auto" style={{ marginTop: `${topBarHeight}px`, height: `calc(100vh - ${topBarHeight}px)` }}>
           {loading && <div className="text-muted-foreground text-sm">Loading...</div>}
           {error && <div className="text-muted-foreground text-sm">About page not available.</div>}
 
