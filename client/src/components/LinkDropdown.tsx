@@ -123,7 +123,7 @@ export function LinkDropdown({ path, shareSettings, onShareSettingsChange, showE
         <div className="px-2 py-1 flex items-center justify-between gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Expires</span>
           <select
-            className="text-xs bg-transparent border border-border rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-ring min-w-0"
+            className="text-xs bg-popover text-popover-foreground border border-border rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-ring min-w-0"
             value={shareSettings.expiry}
             onChange={(e) => onShareSettingsChange({ ...shareSettings, expiry: e.target.value })}
             onClick={(e) => e.stopPropagation()}
@@ -141,7 +141,7 @@ export function LinkDropdown({ path, shareSettings, onShareSettingsChange, showE
             type="number"
             min={0}
             max={10}
-            className="text-xs bg-transparent border border-border rounded px-1 py-0.5 w-14 text-right focus:outline-none focus:ring-1 focus:ring-ring"
+            className="text-xs bg-popover text-popover-foreground border border-border rounded px-1 py-0.5 w-14 text-right focus:outline-none focus:ring-1 focus:ring-ring"
             value={shareSettings.depth}
             onChange={(e) => onShareSettingsChange({ ...shareSettings, depth: Math.max(0, parseInt(e.target.value, 10) || 0) })}
             onClick={(e) => e.stopPropagation()}
