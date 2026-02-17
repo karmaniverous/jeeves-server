@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth';
 export interface CollapsedItem {
   node: React.ReactNode;
   /** Breakpoint at which this item is hidden from the header bar (and thus shown in the menu) */
-  breakpoint: 'sm' | 'md' | 'lg';
+  breakpoint: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 interface AccountMenuProps {
@@ -24,6 +24,7 @@ const BREAKPOINT_CLASS: Record<string, string> = {
   sm: 'sm:hidden',
   md: 'md:hidden',
   lg: 'lg:hidden',
+  xl: 'xl:hidden',
 };
 
 export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {

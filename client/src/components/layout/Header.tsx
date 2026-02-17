@@ -44,10 +44,10 @@ export function Header({
     });
   }
 
-  // Download dropdown — hidden below sm
+  // Download dropdown — hidden below md
   if (downloadDropdown) {
     collapsedItems.push({
-      breakpoint: 'sm',
+      breakpoint: 'md',
       node: (
         <div className="flex items-center gap-2 px-3 py-2">
           {downloadDropdown}
@@ -57,10 +57,10 @@ export function Header({
     });
   }
 
-  // Key management — hidden below md
+  // Key management — hidden below lg
   if (hasKeyMgmt) {
     collapsedItems.push({
-      breakpoint: 'md',
+      breakpoint: 'lg',
       node: (
         <button
           onClick={onRotateKey}
@@ -73,9 +73,9 @@ export function Header({
     });
   }
 
-  // About — hidden below lg
+  // About — hidden below xl
   collapsedItems.push({
-    breakpoint: 'lg',
+    breakpoint: 'xl',
     node: (
       <Link
         to="/about"
@@ -87,9 +87,9 @@ export function Header({
     ),
   });
 
-  // Theme — hidden below lg
+  // Theme — hidden below xl
   collapsedItems.push({
-    breakpoint: 'lg',
+    breakpoint: 'xl',
     node: (
       <button
         onClick={onToggleTheme}
@@ -135,14 +135,14 @@ export function Header({
             <div className="hidden sm:flex items-center">{linkControls}</div>
           )}
 
-          {/* Download: visible sm+ */}
+          {/* Download: visible md+ */}
           {downloadDropdown && (
-            <div className="hidden sm:flex items-center">{downloadDropdown}</div>
+            <div className="hidden md:flex items-center">{downloadDropdown}</div>
           )}
 
-          {/* Key management: visible md+ */}
+          {/* Key management: visible lg+ */}
           {hasKeyMgmt && (
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden lg:flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
@@ -156,18 +156,18 @@ export function Header({
             </div>
           )}
 
-          {/* About: visible lg+ */}
-          <Link to="/about" title="About Jeeves Server" className="hidden lg:inline-flex">
+          {/* About: visible xl+ */}
+          <Link to="/about" title="About Jeeves Server" className="hidden xl:inline-flex">
             <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white h-8 w-8">
               <Info className="h-4 w-4" />
             </Button>
           </Link>
 
-          {/* Theme: visible lg+ */}
+          {/* Theme: visible xl+ */}
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:text-white h-8 w-8 hidden lg:inline-flex"
+            className="text-zinc-400 hover:text-white h-8 w-8 hidden xl:inline-flex"
             title="Toggle theme"
             onClick={onToggleTheme}
           >
