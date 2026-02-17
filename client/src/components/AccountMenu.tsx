@@ -1,18 +1,32 @@
-import { Info, LogOut, Moon, Sun, User } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 
 import { useAuth } from '@/lib/auth';
 
-interface AccountMenuProps {
-  /** Extra items to show in the menu (e.g. info/theme at narrow widths) */
-  theme?: 'light' | 'dark';
-  onToggleTheme?: () => void;
-  /** Show info/theme inside menu (collapsed mode) */
-  collapsed?: boolean;
+export interface CollapsedItem {
+  node: React.ReactNode;
+  /** Breakpoint at which this item is hidden from the header bar (and thus shown in the menu) */
+  breakpoint: 'sm' | 'md' | 'lg';
 }
 
-export function AccountMenu({ theme, onToggleTheme, collapsed }: AccountMenuProps) {
+interface AccountMenuProps {
+  theme?: 'light' | 'dark';
+  onToggleTheme?: () => void;
+  /** Items that collapse into this menu at various breakpoints, in display order */
+  collapsedItems?: CollapsedItem[];
+}
+
+/**
+ * Maps breakpoint to Tailwind class that shows the item only BELOW that breakpoint.
+ * e.g. breakpoint 'sm' → item is in menu when < sm → "sm:hidden" (visible below sm, hidden at sm+)
+ */
+const BREAKPOINT_CLASS: Record<string, string> = {
+  sm: 'sm:hidden',
+  md: 'md:hidden',
+  lg: 'lg:hidden',
+};
+
+export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
   const { authenticated, email, picture } = useAuth();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -49,34 +63,26 @@ export function AccountMenu({ theme, onToggleTheme, collapsed }: AccountMenuProp
 
       {open && (
         <div className="absolute right-0 top-full mt-1 w-56 bg-popover border border-border rounded-lg shadow-lg z-50 py-1">
+          {/* User info */}
           <div className="px-3 py-2 border-b border-border">
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-foreground truncate">{email}</span>
             </div>
           </div>
-          {collapsed && (
-            <>
-              <Link
-                to="/about"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
-              >
-                <Info className="h-4 w-4" />
-                About Jeeves Server
-              </Link>
-              {onToggleTheme && (
-                <button
-                  onClick={() => { onToggleTheme(); setOpen(false); }}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors w-full text-left"
-                >
-                  {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                  {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-                </button>
-              )}
-              <div className="border-b border-border" />
-            </>
+
+          {/* Collapsed items — each visible in menu only below its breakpoint */}
+          {collapsedItems.map((item, i) => (
+            <div key={i} className={BREAKPOINT_CLASS[item.breakpoint]} onClick={() => setOpen(false)}>
+              {item.node}
+            </div>
+          ))}
+
+          {/* Separator before sign out if there are collapsed items */}
+          {collapsedItems.length > 0 && (
+            <div className="border-b border-border" />
           )}
+
           <a
             href="/auth/logout"
             className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"

@@ -49,13 +49,13 @@ export function DirectoryRow({ entry, basePath, isInsider, shareSettings, onShar
           </Link>
           {isInsider && (
             <div className="ml-auto flex items-center gap-0.5 shrink-0">
+              <LinkDropdown path={urlPath} shareSettings={shareSettings} onShareSettingsChange={onShareSettingsChange} showRaw={hasRaw} compact />
               <DownloadDropdown
                 reqPath={entryPath}
                 file={isDir ? null : { fileName: entry.name, type: entry.ext }}
                 isDirectory={isDir}
                 compact
               />
-              <LinkDropdown path={urlPath} shareSettings={shareSettings} onShareSettingsChange={onShareSettingsChange} showRaw={hasRaw} compact />
             </div>
           )}
         </div>
