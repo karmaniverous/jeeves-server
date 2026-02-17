@@ -37,7 +37,7 @@ export function DriveList({ drives, isInsider, shareSettings, onShareSettingsCha
                       </Link>
                       {isInsider && (
                         <div className="ml-auto flex items-center gap-0.5 shrink-0">
-                          <LinkDropdown path={drivePath} shareSettings={shareSettings} onShareSettingsChange={onShareSettingsChange} compact />
+                          <LinkDropdown path={drivePath} shareSettings={shareSettings} onShareSettingsChange={onShareSettingsChange} compact isDirectory />
                         </div>
                       )}
                     </div>
