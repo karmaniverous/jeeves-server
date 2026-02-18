@@ -15,12 +15,21 @@ export type {
 };
 
 /**
+ * Normalized scopes — always resolved to { allow, deny } form.
+ * null = unrestricted access.
+ */
+export interface NormalizedScopes {
+  allow: string[];
+  deny: string[];
+}
+
+/**
  * Resolved key seed with normalized scopes
  */
 export interface ResolvedKey {
   name: string;
   seed: string;
-  scopes: string[] | null;
+  scopes: NormalizedScopes | null;
 }
 
 /**
@@ -29,7 +38,7 @@ export interface ResolvedKey {
 export interface ResolvedInsider {
   email: string;
   seed: string;
-  scopes: string[] | null;
+  scopes: NormalizedScopes | null;
   keyCreatedAt: string | null;
 }
 

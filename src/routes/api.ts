@@ -15,7 +15,7 @@ import { computeDeepShareKey, computeOutsiderKeyWithExpiry, computePathKey } fro
 import { COOKIE_NAME, verifySessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
 import { setInsiderKey } from '../util/state.js';
-import type { AccessMode } from '../config/types.js';
+import type { AccessMode, NormalizedScopes } from '../config/types.js';
 import { getRoots, urlPathToFs, fsPathToUrl, breadcrumbParts, type RootEntry } from '../util/platform.js';
 import { execSync } from 'node:child_process';
 import { type ExportFormat, exportPage } from '../services/export.js';
@@ -150,7 +150,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
             (request as { accessMode?: AccessMode }).accessMode = 'insider';
             (request as { authSeed?: string }).authSeed = insider.seed;
             (request as { insiderEmail?: string }).insiderEmail = insider.email;
-            (request as { insiderScopes?: string[] | null }).insiderScopes =
+            (request as { insiderScopes?: NormalizedScopes | null }).insiderScopes =
               insider.scopes ?? null;
             (request as { keyAge?: string | null }).keyAge =
               insider.keyCreatedAt
@@ -209,17 +209,33 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       const isInsider =
         (request as { accessMode?: AccessMode }).accessMode === 'insider';
       const insiderScopes =
-        (request as { insiderScopes?: string[] | null }).insiderScopes ?? null;
+        (request as { insiderScopes?: NormalizedScopes | null }).insiderScopes ?? null;
 
       const allEntries = fs.readdirSync(resolved, { withFileTypes: true });
 
-      // Filter by scopes
+      // Filter by scopes (allow/deny)
       const entries = insiderScopes
         ? allEntries.filter((entry) => {
             const entryPath = path.join(resolved, entry.name);
             const entryUrlPath = fsPathToUrl(entryPath, _roots);
+
+            // Check deny first — if denied, always hide
+            if (insiderScopes.deny.length > 0) {
+              const p = entryUrlPath.toLowerCase().replace(/\/+$/, '');
+              const isDenied = insiderScopes.deny.some((pattern) => {
+                const d = pattern.toLowerCase().replace(/\/+$/, '');
+                if (d.endsWith('/*')) {
+                  const prefix = d.slice(0, -2);
+                  return p === prefix || p.startsWith(prefix + '/');
+                }
+                return p === d;
+              });
+              if (isDenied) return false;
+            }
+
+            // For directories, check if any allowed scope is under or above this directory
             if (entry.isDirectory()) {
-              return insiderScopes.some((scope) => {
+              return insiderScopes.allow.some((scope) => {
                 const s = scope.toLowerCase().replace(/\/+$/, '');
                 const p = entryUrlPath.toLowerCase();
                 return (

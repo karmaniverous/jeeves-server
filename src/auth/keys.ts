@@ -13,6 +13,7 @@
 
 import type {
   KeyVerificationResult,
+  NormalizedScopes,
   ResolvedInsider,
   ResolvedKey,
 } from '../config/types.js';
@@ -26,13 +27,13 @@ import {
 } from '../util/crypto.js';
 
 /**
- * Check whether a request path matches any of the configured scopes.
+ * Check whether a path matches a list of scope patterns.
  * Supports exact match and trailing wildcard (e.g. "/event", "/path/d/docs/*").
  */
-function pathMatchesScopes(requestPath: string, scopes: string[]): boolean {
+function pathMatchesPatterns(requestPath: string, patterns: string[]): boolean {
   const normalized = requestPath.toLowerCase().replace(/\/+$/, '');
-  for (const scope of scopes) {
-    const s = scope.toLowerCase().replace(/\/+$/, '');
+  for (const pattern of patterns) {
+    const s = pattern.toLowerCase().replace(/\/+$/, '');
     if (s.endsWith('/*')) {
       const prefix = s.slice(0, -2);
       if (normalized === prefix || normalized.startsWith(prefix + '/')) {
@@ -43,6 +44,16 @@ function pathMatchesScopes(requestPath: string, scopes: string[]): boolean {
     }
   }
   return false;
+}
+
+/**
+ * Check whether a request path matches normalized scopes (allow/deny).
+ * Path must match at least one allow rule AND NOT match any deny rule.
+ */
+function pathMatchesScopes(requestPath: string, scopes: NormalizedScopes): boolean {
+  if (!pathMatchesPatterns(requestPath, scopes.allow)) return false;
+  if (scopes.deny.length > 0 && pathMatchesPatterns(requestPath, scopes.deny)) return false;
+  return true;
 }
 
 /**
