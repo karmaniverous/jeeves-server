@@ -8,7 +8,7 @@ import type { ServerState } from './types.js';
 
 import { computeInsiderKey } from '../util/crypto.js';
 import { jeevesConfigSchema, insiderEntrySchema, keyEntrySchema } from './schema.js';
-import type { JeevesConfig, ResolvedInsider, ResolvedKey, RuntimeConfig } from './types.js';
+import type { JeevesConfig, NormalizedScopes, ResolvedInsider, ResolvedKey, RuntimeConfig } from './types.js';
 
 type InsiderEntry = z.infer<typeof insiderEntrySchema>;
 type KeyEntry = z.infer<typeof keyEntrySchema>;
@@ -17,6 +17,27 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '../..');
 
 const CONFIG_FILENAME = 'jeeves.config';
+
+/**
+ * Normalize any scopes format to { allow, deny }.
+ * - undefined/null → null (unrestricted)
+ * - string → { allow: [string], deny: [] }
+ * - string[] → { allow: string[], deny: [] }
+ * - { allow?, deny? } → { allow: allow ?? ['/*'], deny: deny ?? [] }
+ */
+function normalizeScopes(raw: unknown): NormalizedScopes | null {
+  if (raw === undefined || raw === null) return null;
+  if (typeof raw === 'string') return { allow: [raw], deny: [] };
+  if (Array.isArray(raw)) return { allow: raw as string[], deny: [] };
+  if (typeof raw === 'object') {
+    const obj = raw as { allow?: string[]; deny?: string[] };
+    return {
+      allow: obj.allow ?? ['/*'],
+      deny: obj.deny ?? [],
+    };
+  }
+  return null;
+}
 
 export function loadConfig(): RuntimeConfig {
   // Use jiti to load TypeScript config at runtime
@@ -53,9 +74,7 @@ export function loadConfig(): RuntimeConfig {
       if (typeof entry === 'string') {
         return { name, seed: entry, scopes: null };
       }
-      const scopes = entry.scopes
-        ? Array.isArray(entry.scopes) ? entry.scopes : [entry.scopes]
-        : null;
+      const scopes = normalizeScopes(entry.scopes);
       return { name, seed: entry.key, scopes };
     },
   );
@@ -77,9 +96,7 @@ export function loadConfig(): RuntimeConfig {
   ).map((
     [email, entry]: [string, InsiderEntry],
   ) => {
-      const scopes = entry.scopes
-        ? Array.isArray(entry.scopes) ? entry.scopes : [entry.scopes]
-        : null;
+      const scopes = normalizeScopes(entry.scopes);
       const stateKey = serverState.insiderKeys?.[email.toLowerCase()];
       return {
         email,

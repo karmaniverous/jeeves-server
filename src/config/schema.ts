@@ -27,9 +27,34 @@ export const eventConfigSchema = z.object({
   timeoutMs: z.number().positive().optional(),
 });
 
+/**
+ * Scopes configuration — controls which paths a user/key can access.
+ *
+ * Three forms:
+ * - `string` — single allow pattern (e.g. '/d/*')
+ * - `string[]` — array of allow patterns (shorthand for { allow: [...] })
+ * - `{ allow?: string[], deny?: string[] }` — explicit allow/deny rules
+ *
+ * Semantics:
+ * - Path must match at least one allow rule AND NOT match any deny rule
+ * - Omitting `allow` = implicit ['/*'] (allow everything)
+ * - Omitting `deny` = no exclusions
+ * - Omitting scopes entirely = unrestricted access
+ */
+export const scopesObjectSchema = z.object({
+  allow: z.array(z.string()).optional(),
+  deny: z.array(z.string()).optional(),
+});
+
+export const scopesSchema = z.union([
+  z.string(),
+  z.array(z.string()),
+  scopesObjectSchema,
+]);
+
 /** Insider entry (identity + scopes only; keys are in state.json) */
 export const insiderEntrySchema = z.object({
-  scopes: z.union([z.string(), z.array(z.string())]).optional(),
+  scopes: scopesSchema.optional(),
 });
 
 /** Key entry — plain string (seed, no scopes) or object with key + optional scopes */
@@ -37,7 +62,7 @@ export const keyEntrySchema = z.union([
   z.string().min(1),
   z.object({
     key: z.string().min(1),
-    scopes: z.union([z.string(), z.array(z.string())]).optional(),
+    scopes: scopesSchema.optional(),
   }),
 ]);
 
