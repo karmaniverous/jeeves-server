@@ -36,17 +36,39 @@ Depends on which auth modes are active:
 
 ### Scoped insiders
 
-Scopes restrict which paths an insider can access:
+Scopes restrict which paths an insider can access. Three formats are supported:
 
+**Allow-only** (string array — backward compatible):
 ```typescript
 'contractor@example.com': {
   scopes: ['/d/projects/client-x/*'],
 },
 ```
 
-This insider can only access files under `D:\projects\client-x\`. Attempts to browse other paths will be denied.
+**Allow with deny** (broad access with cutouts):
+```typescript
+'team-member@example.com': {
+  scopes: {
+    allow: ['/d/*'],
+    deny: ['/d/secrets/*', '/d/.private/*'],
+  },
+},
+```
 
-An empty scopes array or omitted scopes means **full access**.
+**Deny-only** (everything except exclusions):
+```typescript
+'almost-full@example.com': {
+  scopes: {
+    deny: ['/d/hr/*', '/d/finance/*'],
+  },
+},
+```
+
+**Semantics:**
+- A path must match at least one allow rule **and** not match any deny rule
+- Omitting `allow` = implicit `['/*']` (allow everything)
+- Omitting `deny` = no exclusions
+- Omitting scopes entirely = **full access** (unchanged)
 
 ---
 

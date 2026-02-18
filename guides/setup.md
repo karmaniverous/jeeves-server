@@ -153,9 +153,17 @@ insiders: {
   // Full access
   'alice@example.com': {},
 
-  // Restricted to specific paths
+  // Restricted to specific paths (allow-only)
   'contractor@example.com': {
     scopes: ['/d/projects/client-x/*'],
+  },
+
+  // Broad access with cutouts (allow/deny)
+  'team-member@example.com': {
+    scopes: {
+      allow: ['/d/*'],
+      deny: ['/d/secrets/*', '/d/.private/*'],
+    },
   },
 },
 ```
