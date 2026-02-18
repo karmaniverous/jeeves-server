@@ -9,7 +9,12 @@ import { fileURLToPath } from 'node:url';
 
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 
-import { _pathMatchesScopes, verifyKey } from '../auth/keys.js';
+import {
+  _directoryVisibleUnderScopes,
+  _pathMatchesPatterns,
+  _pathMatchesScopes,
+  verifyKey,
+} from '../auth/keys.js';
 import archiver from 'archiver';
 import { computeDeepShareKey, computeInsiderKey, computeOutsiderKeyWithExpiry, computePathKey, timingSafeEqual } from '../util/crypto.js';
 import { COOKIE_NAME, verifySessionCookie } from '../auth/session.js';
@@ -276,28 +281,12 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
 
             // Check deny first — if denied, always hide
             if (insiderScopes.deny.length > 0) {
-              const p = entryUrlPath.toLowerCase().replace(/\/+$/, '');
-              const isDenied = insiderScopes.deny.some((pattern) => {
-                const d = pattern.toLowerCase().replace(/\/+$/, '');
-                if (d.endsWith('/*')) {
-                  const prefix = d.slice(0, -2);
-                  return p === prefix || p.startsWith(prefix + '/');
-                }
-                return p === d;
-              });
-              if (isDenied) return false;
+              if (_pathMatchesPatterns(entryUrlPath, insiderScopes.deny)) return false;
             }
 
             // For directories, check if any allowed scope is under or above this directory
             if (entry.isDirectory()) {
-              return insiderScopes.allow.some((scope) => {
-                const s = scope.toLowerCase().replace(/\/+$/, '');
-                const p = entryUrlPath.toLowerCase();
-                return (
-                  p.startsWith(s.replace(/\/\*$/, '')) ||
-                  s.replace(/\/\*$/, '').startsWith(p)
-                );
-              });
+              return _directoryVisibleUnderScopes(entryUrlPath, insiderScopes.allow);
             }
             return _pathMatchesScopes(entryUrlPath, insiderScopes);
           })
