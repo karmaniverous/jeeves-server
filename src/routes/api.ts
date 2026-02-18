@@ -11,7 +11,7 @@ import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 
 import { _pathMatchesScopes, verifyKey } from '../auth/keys.js';
 import archiver from 'archiver';
-import { computeDeepShareKey, computeOutsiderKeyWithExpiry, computePathKey } from '../util/crypto.js';
+import { computeDeepShareKey, computeInsiderKey, computeOutsiderKeyWithExpiry, computePathKey, timingSafeEqual } from '../util/crypto.js';
 import { COOKIE_NAME, verifySessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
 import { setInsiderKey } from '../util/state.js';
@@ -73,6 +73,61 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
     if (!request.url.startsWith('/api')) return;
     if (request.url.startsWith('/api/readme-link')) return;
     if (request.url.startsWith('/api/auth/status')) return;
+    // Utility endpoints handle their own scope checking (path is in body, not URL)
+    if (request.url.startsWith('/api/util/')) {
+      // Still need auth, but skip scope-based path verification
+      const config = getConfig();
+      const query = request.query as { key?: string; exp?: string };
+      const provided = query.key;
+
+      // Try key auth (insider key, no path scope check)
+      if (provided) {
+        const result = verifyKey(config.resolvedKeys, '/', provided, query.exp, config.resolvedInsiders);
+        if (result.valid && result.mode === 'insider') {
+          (request as { accessMode?: AccessMode }).accessMode = 'insider';
+          (request as { authSeed?: string }).authSeed = result.seed!;
+          (request as { insiderScopes?: NormalizedScopes | null }).insiderScopes =
+            config.resolvedKeys.find(k => k.seed === result.seed)?.scopes ?? null;
+          return;
+        }
+        // Check insider keys
+        for (const ri of config.resolvedInsiders) {
+          if (!ri.seed) continue;
+          const insiderKey = computeInsiderKey(ri.seed);
+          if (timingSafeEqual(provided, insiderKey)) {
+            (request as { accessMode?: AccessMode }).accessMode = 'insider';
+            (request as { authSeed?: string }).authSeed = ri.seed;
+            (request as { insiderScopes?: NormalizedScopes | null }).insiderScopes = ri.scopes;
+            (request as { insiderEmail?: string }).insiderEmail = ri.email;
+            return;
+          }
+        }
+      }
+
+      // Try session auth
+      const sessionSecret = config.sessionSecret;
+      if (sessionSecret) {
+        const cookieValue = (request.cookies as Record<string, string> | undefined)?.[COOKIE_NAME];
+        if (cookieValue) {
+          const session = verifySessionCookie(cookieValue, sessionSecret);
+          if (session) {
+            const insider = config.resolvedInsiders.find(
+              (i) => i.email.toLowerCase() === session.email.toLowerCase(),
+            );
+            if (insider?.seed) {
+              (request as { accessMode?: AccessMode }).accessMode = 'insider';
+              (request as { authSeed?: string }).authSeed = insider.seed;
+              (request as { insiderScopes?: NormalizedScopes | null }).insiderScopes = insider.scopes;
+              (request as { insiderEmail?: string }).insiderEmail = insider.email;
+              return;
+            }
+          }
+        }
+      }
+
+      reply.code(401).send({ error: 'Insider auth required for utility endpoints' });
+      return;
+    }
 
     const config = getConfig();
     const query = request.query as { key?: string; exp?: string; d?: string; dirs?: string; s?: string };
@@ -809,6 +864,131 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         ok: true,
         keyCreatedAt: now,
       });
+    },
+  );
+
+  // POST /api/util/share-for — audience-aware share link generation
+  fastify.post<{
+    Body: {
+      path: string;
+      insiders: string[];
+      depth?: number;
+      dirs?: boolean;
+      enforceOutsiderPolicy?: boolean;
+    };
+  }>(
+    '/api/util/share-for',
+    async (request, reply) => {
+      const config = getConfig();
+
+      // 1. Identify sharer from auth context
+      const sharerSeed = (request as { authSeed?: string }).authSeed;
+      const sharerScopes = (request as { insiderScopes?: NormalizedScopes | null }).insiderScopes ?? null;
+      if (!sharerSeed) {
+        return reply.code(401).send({ error: 'Authentication required' });
+      }
+
+      const { path: targetPath, insiders: audienceIds, depth, dirs, enforceOutsiderPolicy } = request.body;
+      if (!targetPath) return reply.code(400).send({ error: 'path is required' });
+      if (!audienceIds || !Array.isArray(audienceIds)) return reply.code(400).send({ error: 'insiders array is required' });
+
+      // 2. Can the sharer access this path?
+      if (sharerScopes && !_pathMatchesScopes(targetPath, sharerScopes)) {
+        return reply.send({
+          url: null,
+          type: 'blocked',
+          reason: 'Sharer does not have access to this path',
+          blocked: [],
+        });
+      }
+
+      // 3. Check each audience member
+      const blockedInsiders: string[] = [];
+      const unknownIds: string[] = []; // Not found in insiders map → outsiders
+
+      for (const id of audienceIds) {
+        const insider = config.resolvedInsiders.find(
+          (ri) => ri.email.toLowerCase() === id.toLowerCase(),
+        );
+        if (!insider || !insider.seed) {
+          unknownIds.push(id);
+          continue;
+        }
+        // Insider exists — check their scopes against the path
+        if (insider.scopes && !_pathMatchesScopes(targetPath, insider.scopes)) {
+          blockedInsiders.push(id);
+        }
+      }
+
+      // If any insider is blocked, return null
+      if (blockedInsiders.length > 0) {
+        return reply.send({
+          url: null,
+          type: 'blocked',
+          reason: `Insider(s) do not have access to this path`,
+          blocked: blockedInsiders,
+        });
+      }
+
+      // 4. Determine link type
+      const hasOutsiders = unknownIds.length > 0;
+
+      if (!hasOutsiders) {
+        // All audience members are insiders with access → bare insider URL
+        const proto = request.headers['x-forwarded-proto'] || 'https';
+        const host = request.headers['x-forwarded-host'] || request.headers.host;
+        return reply.send({
+          url: `${proto}://${host}/browse${targetPath}`,
+          type: 'insider',
+        });
+      }
+
+      // Has outsiders — check outsider policy
+      const outsiderPolicy = config.outsiderPolicy;
+      const policyEnforced = enforceOutsiderPolicy !== false; // default true
+
+      if (outsiderPolicy && policyEnforced) {
+        if (!_pathMatchesScopes(targetPath, outsiderPolicy)) {
+          return reply.send({
+            url: null,
+            type: 'policy-denied',
+            reason: 'Outsider policy does not allow sharing this path',
+          });
+        }
+      }
+
+      // Generate outsider share link
+      const { encodeStack } = await import('../services/deepShareLinks.js');
+
+      const shareDepth = depth ?? 0;
+      const shareDirs = dirs ?? false;
+      const stack = encodeStack([targetPath]);
+      const deepParams: import('../util/crypto.js').DeepShareParams = {
+        depth: shareDepth,
+        dirs: shareDirs,
+        stack,
+      };
+
+      const outsiderKey = computeDeepShareKey(sharerSeed, targetPath, deepParams);
+      const proto = request.headers['x-forwarded-proto'] || 'https';
+      const host = request.headers['x-forwarded-host'] || request.headers.host;
+
+      let shareUrl = `${proto}://${host}/browse${targetPath}?key=${outsiderKey}`;
+      if (shareDepth > 0) shareUrl += `&d=${shareDepth}`;
+      shareUrl += `&dirs=${shareDirs ? 1 : 0}`;
+      if (stack) shareUrl += `&s=${stack}`;
+
+      const response: Record<string, unknown> = {
+        url: shareUrl,
+        type: 'outsider-share',
+      };
+
+      // Add warning if policy would deny but wasn't enforced
+      if (outsiderPolicy && !policyEnforced && !_pathMatchesScopes(targetPath, outsiderPolicy)) {
+        response.warning = 'Outsider policy would deny this path';
+      }
+
+      return reply.send(response);
     },
   );
 

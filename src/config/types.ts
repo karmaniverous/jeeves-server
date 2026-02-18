@@ -53,6 +53,7 @@ export interface RuntimeConfig {
   chromePath: string;
   roots?: Record<string, string>;
   mermaidCliPath?: string;
+  outsiderPolicy: NormalizedScopes | null;
   events: JeevesConfig['events'];
   authModes: AuthMode[];
   resolvedKeys: ResolvedKey[];

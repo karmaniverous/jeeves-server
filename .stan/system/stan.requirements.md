@@ -208,8 +208,65 @@ Tailwind v4 with `@theme inline` requires CSS variable indirection:
 | POST | `/api/share` | Cookie (insider) | Generate outsider share link (accepts `depth`, `dirs`) |
 | GET | `/api/readme-link` | None | Pre-computed README share URL |
 | POST | `/api/rotate-key` | Cookie (insider) | Rotate insider key |
+| POST | `/api/util/share-for` | Cookie or `?key=` | Audience-aware share link generation |
 | POST | `/event` | `?key=` (scoped) | Webhook gateway |
 | GET | `/health` | None | Health check |
+
+## Utility Endpoints (`/api/util/*`)
+
+Programmatic endpoints for access decisions and server introspection. Used by the resident AI assistant and future CLI.
+
+### `POST /api/util/share-for`
+
+Determines the appropriate link type for sharing a resource with a specific audience. The sharer is identified from the request's auth context.
+
+**Request:**
+```json
+{
+  "path": "/d/projects/foo/spec.md",
+  "insiders": ["devin@qtalo.com", "guest@example.com"],
+  "depth": 2,
+  "dirs": false,
+  "enforceOutsiderPolicy": true
+}
+```
+
+**Decision tree:**
+1. Can the sharer access this path? No → `null`
+2. Can all insider participants access this path? No → `null` (returns `blocked` list)
+3. Are there non-insider participants?
+   - No → bare insider URL
+   - Yes + `enforceOutsiderPolicy` + policy allows → outsider share link
+   - Yes + `enforceOutsiderPolicy` + policy denies → `null`
+   - Yes + policy not enforced → outsider share link (+ `warning` if policy would deny)
+
+**Response types:** `insider`, `outsider-share`, `blocked`, `policy-denied`
+
+### Outsider Policy
+
+Global config constraining which paths are eligible for outsider sharing:
+
+```typescript
+outsiderPolicy?: {
+  allow?: string[];
+  deny?: string[];
+}
+```
+
+Uses the same allow/deny scopes model as insider scopes. When `enforceOutsiderPolicy: true` is passed (default for AI assistant usage), the policy gates outsider share link generation. When `false` (web UI usage), the policy produces warnings but doesn't block.
+
+### Client-side Insider Upgrade
+
+When a logged-in insider lands on an outsider share link, the SPA detects insider status via `/api/auth/status` and strips the key/depth/stack params, upgrading to full insider navigation.
+
+### Future Utility Endpoints (planned)
+
+| Path | Description |
+|------|-------------|
+| `/api/util/access` | Raw access check for a single identity + path |
+| `/api/util/keys` | Key derivation and rotation status |
+| `/api/util/config` | Sanitized config introspection |
+| `/api/util/health` | Extended health check |
 
 ## Build & Development
 

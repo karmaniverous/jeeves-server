@@ -118,6 +118,7 @@ export function loadConfig(): RuntimeConfig {
     chromePath: config.chromePath,
     roots: config.roots,
     mermaidCliPath: config.mermaidCliPath,
+    outsiderPolicy: normalizeScopes(config.outsiderPolicy) ?? null,
     events: config.events,
     authModes: config.auth.modes,
     resolvedKeys,
