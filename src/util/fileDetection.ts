@@ -2,64 +2,16 @@
  * File type detection and content-type mapping
  */
 
+import mime from 'mime-types';
+
 /**
- * Content type mapping by file extension
+ * Override map for extensions where mime-types returns an incorrect or
+ * unhelpful result for our use case.
  */
-export const CONTENT_TYPES: Record<string, string> = {
-  // Text files
-  '.txt': 'text/plain; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.yaml': 'text/yaml; charset=utf-8',
-  '.yml': 'text/yaml; charset=utf-8',
-  '.html': 'text/html; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.ts': 'text/plain; charset=utf-8',
-  '.xml': 'application/xml; charset=utf-8',
-  '.csv': 'text/csv; charset=utf-8',
-  '.jsonl': 'text/plain; charset=utf-8',
-  '.log': 'text/plain; charset=utf-8',
+const OVERRIDES: Record<string, string> = {
   '.mmd': 'text/plain; charset=utf-8',
-  '.md': 'text/markdown; charset=utf-8',
-  // Images
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.webp': 'image/webp',
-  '.bmp': 'image/bmp',
-  '.ico': 'image/x-icon',
-  '.svg': 'image/svg+xml',
-  // Documents
-  '.pdf': 'application/pdf',
-  '.doc': 'application/msword',
-  '.docx':
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  '.xls': 'application/vnd.ms-excel',
-  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  '.ppt': 'application/vnd.ms-powerpoint',
-  '.pptx':
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  // Archives
-  '.zip': 'application/zip',
-  '.tar': 'application/x-tar',
-  '.gz': 'application/gzip',
-  '.7z': 'application/x-7z-compressed',
-  '.rar': 'application/vnd.rar',
-  // Audio/Video
-  '.mp3': 'audio/mpeg',
-  '.wav': 'audio/wav',
-  '.ogg': 'audio/ogg',
-  '.mp4': 'video/mp4',
-  '.webm': 'video/webm',
-  '.avi': 'video/x-msvideo',
-  '.mov': 'video/quicktime',
-  '.mkv': 'video/x-matroska',
-  // Fonts
-  '.woff': 'font/woff',
-  '.woff2': 'font/woff2',
-  '.ttf': 'font/ttf',
-  '.eot': 'application/vnd.ms-fontobject',
+  '.log': 'text/plain; charset=utf-8',
+  '.jsonl': 'text/plain; charset=utf-8',
 };
 
 /**
@@ -74,10 +26,13 @@ export function looksLikeText(buffer: Buffer): boolean {
 }
 
 /**
- * Get content type for a file extension
+ * Get content type for a file extension (with leading dot, e.g. '.md')
  */
 export function getContentType(ext: string): string {
-  return CONTENT_TYPES[ext.toLowerCase()] || 'application/octet-stream';
+  const dotExt = ext.startsWith('.') ? ext : `.${ext}`;
+  if (OVERRIDES[dotExt.toLowerCase()]) return OVERRIDES[dotExt.toLowerCase()];
+  // mime-types expects extension without the dot
+  return mime.contentType(dotExt.slice(1)) || 'application/octet-stream';
 }
 
 /**

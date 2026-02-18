@@ -5,6 +5,7 @@
  * enabling outsiders to follow links up to N levels deep.
  */
 
+import * as cheerio from 'cheerio';
 import LZString from 'lz-string';
 
 import { computeDeepShareKey, type DeepShareParams } from '../util/crypto.js';
@@ -107,92 +108,91 @@ export function rewriteLinksForDeepShare(
   const currentStack = decodeStack(stackCompressed);
   // Ensure current path is in the stack
   if (currentStack.length === 0 || currentStack[currentStack.length - 1] !== currentPath) {
-    // This shouldn't happen if the stack is well-formed, but handle gracefully
     currentStack.push(currentPath);
   }
 
   const remaining = remainingDepth(maxDepth, currentStack);
 
-  // Rewrite href attributes in <a> tags
-  let result = html.replace(
-    /<a\s+([^>]*?)href="([^"]*)"([^>]*?)>([\s\S]*?)<\/a>/gi,
-    (match: string, pre: string, href: string, post: string, content: string) => {
-      // Skip external links, anchors, and data URLs
-      if (
-        href.startsWith('http://') ||
-        href.startsWith('https://') ||
-        href.startsWith('#') ||
-        href.startsWith('//') ||
-        href.startsWith('data:') ||
-        href.startsWith('mailto:')
-      ) {
-        return match;
-      }
+  const $ = cheerio.load(html, null, false);
 
-      // If no remaining depth, strip the link (keep text)
-      if (remaining <= 0) {
-        return content;
-      }
+  // Rewrite <a> tags
+  $('a').each((_i, el) => {
+    const $el = $(el);
+    const href = $el.attr('href');
+    if (!href) return;
 
-      // Determine if it's a /browse/ link (internal navigation)
-      let targetPath: string;
-      if (href.startsWith('/browse/')) {
-        targetPath = '/' + href.replace('/browse/', '').split('?')[0];
-      } else if (href.startsWith('/api/raw/')) {
-        // Raw file links — leave as-is (these are for images/downloads)
-        return match;
-      } else if (href.startsWith('/')) {
-        targetPath = href.split('?')[0];
-      } else {
-        // Relative link — resolve against current path directory
-        const dir = currentPath.substring(0, currentPath.lastIndexOf('/'));
-        targetPath = dir ? `${dir}/${href.split('?')[0]}` : `/${href.split('?')[0]}`;
-      }
+    // Skip external links, anchors, and data URLs
+    if (
+      href.startsWith('http://') ||
+      href.startsWith('https://') ||
+      href.startsWith('#') ||
+      href.startsWith('//') ||
+      href.startsWith('data:') ||
+      href.startsWith('mailto:')
+    ) {
+      return;
+    }
 
-      // Normalize
-      targetPath = targetPath.replace(/\/+/g, '/');
+    // If no remaining depth, strip the link (keep text)
+    if (remaining <= 0) {
+      $el.replaceWith($el.html() ?? '');
+      return;
+    }
 
-      // For now, treat all links as file links (not directory)
-      // Directory detection would require filesystem access
-      const isDirectory = targetPath.endsWith('/');
-      const subLink = computeSubLink(
-        seed,
-        targetPath,
-        currentStack,
-        maxDepth,
-        dirs,
-        exp,
-        isDirectory,
-      );
+    // Raw file links — leave as-is (these are for images/downloads)
+    if (href.startsWith('/api/raw/')) return;
 
-      if (subLink === null) {
-        // Strip link, keep text
-        return content;
-      }
+    // Determine target path
+    let targetPath: string;
+    if (href.startsWith('/browse/')) {
+      targetPath = '/' + href.replace('/browse/', '').split('?')[0];
+    } else if (href.startsWith('/')) {
+      targetPath = href.split('?')[0];
+    } else {
+      // Relative link — resolve against current path directory
+      const dir = currentPath.substring(0, currentPath.lastIndexOf('/'));
+      targetPath = dir ? `${dir}/${href.split('?')[0]}` : `/${href.split('?')[0]}`;
+    }
 
-      return `<a ${pre}href="${subLink}"${post}>${content}</a>`;
-    },
-  );
+    // Normalize
+    targetPath = targetPath.replace(/\/+/g, '/');
 
-  // Also rewrite <img> src for images that use /api/raw/ — these need key auth
-  // but they're data, not navigation, so just add the current key
-  result = result.replace(
-    /(<img\s+[^>]*?)src="(\/api\/raw\/[^"]*)"([^>]*?>)/gi,
-    (match: string, pre: string, src: string, post: string) => {
-      // Add key param for auth
-      const params: DeepShareParams = {
-        depth: maxDepth,
-        dirs,
-        stack: stackCompressed,
-        exp,
-      };
-      // Use the raw path for key derivation
-      const rawPath = '/' + src.replace('/api/raw/', '').split('?')[0];
-      const key = computeDeepShareKey(seed, rawPath, params);
-      const authSrc = `${src}${src.includes('?') ? '&' : '?'}key=${key}&d=${String(maxDepth)}&dirs=${dirs ? '1' : '0'}&s=${stackCompressed}${exp ? `&exp=${exp}` : ''}`;
-      return `${pre}src="${authSrc}"${post}`;
-    },
-  );
+    const isDirectory = targetPath.endsWith('/');
+    const subLink = computeSubLink(
+      seed,
+      targetPath,
+      currentStack,
+      maxDepth,
+      dirs,
+      exp,
+      isDirectory,
+    );
 
-  return result;
+    if (subLink === null) {
+      // Strip link, keep text
+      $el.replaceWith($el.html() ?? '');
+    } else {
+      $el.attr('href', subLink);
+    }
+  });
+
+  // Rewrite <img> src for images that use /api/raw/ — add key auth
+  $('img').each((_i, el) => {
+    const $el = $(el);
+    const src = $el.attr('src');
+    if (!src || !src.startsWith('/api/raw/')) return;
+
+    const params: DeepShareParams = {
+      depth: maxDepth,
+      dirs,
+      stack: stackCompressed,
+      exp,
+    };
+    const rawPath = '/' + src.replace('/api/raw/', '').split('?')[0];
+    const key = computeDeepShareKey(seed, rawPath, params);
+    const authSrc = `${src}${src.includes('?') ? '&' : '?'}key=${key}&d=${String(maxDepth)}&dirs=${dirs ? '1' : '0'}&s=${stackCompressed}${exp ? `&exp=${exp}` : ''}`;
+    $el.attr('src', authSrc);
+  });
+
+  return $.html();
 }

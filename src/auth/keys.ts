@@ -11,6 +11,8 @@
  * against the requested path AND all ancestor paths.
  */
 
+import picomatch from 'picomatch';
+
 import type {
   KeyVerificationResult,
   NormalizedScopes,
@@ -28,22 +30,13 @@ import {
 
 /**
  * Check whether a path matches a list of scope patterns.
- * Supports exact match and trailing wildcard (e.g. "/event", "/path/d/docs/*").
+ * Uses picomatch for glob matching — standard glob semantics apply.
+ * Use `/**` for recursive matching, `/*` for single-level only.
  */
 function pathMatchesPatterns(requestPath: string, patterns: string[]): boolean {
   const normalized = requestPath.toLowerCase().replace(/\/+$/, '');
-  for (const pattern of patterns) {
-    const s = pattern.toLowerCase().replace(/\/+$/, '');
-    if (s.endsWith('/*')) {
-      const prefix = s.slice(0, -2);
-      if (normalized === prefix || normalized.startsWith(prefix + '/')) {
-        return true;
-      }
-    } else if (normalized === s) {
-      return true;
-    }
-  }
-  return false;
+  const isMatch = picomatch(patterns.map((p) => p.toLowerCase().replace(/\/+$/, '')));
+  return isMatch(normalized);
 }
 
 /**
@@ -221,4 +214,30 @@ export function verifyKey(
   return fail;
 }
 
-export { pathMatchesScopes as _pathMatchesScopes };
+/**
+ * Check whether a directory should be visible given allow scope patterns.
+ * A directory is visible if any allowed scope is under it OR above it.
+ * This enables navigating toward allowed paths through parent directories.
+ */
+function directoryVisibleUnderScopes(
+  dirUrlPath: string,
+  allowPatterns: string[],
+): boolean {
+  const normalized = dirUrlPath.toLowerCase().replace(/\/+$/, '');
+  for (const pattern of allowPatterns) {
+    const p = pattern.toLowerCase().replace(/\/+$/, '');
+    // Strip trailing glob parts to get the "prefix" of the pattern
+    const prefix = p.replace(/\/\*\*$/, '').replace(/\/\*$/, '');
+    // Directory is above a scope (navigate toward it)
+    if (prefix.startsWith(normalized + '/') || prefix === normalized) return true;
+    // Directory is under a scope (already inside an allowed area)
+    if (normalized.startsWith(prefix + '/') || normalized === prefix) return true;
+  }
+  return false;
+}
+
+export {
+  pathMatchesPatterns as _pathMatchesPatterns,
+  pathMatchesScopes as _pathMatchesScopes,
+  directoryVisibleUnderScopes as _directoryVisibleUnderScopes,
+};

@@ -66,7 +66,7 @@ Scopes restrict which paths an insider can access. Three formats are supported:
 
 **Semantics:**
 - A path must match at least one allow rule **and** not match any deny rule
-- Omitting `allow` = implicit `['/*']` (allow everything)
+- Omitting `allow` = implicit `['/**']` (allow everything)
 - Omitting `deny` = no exclusions
 - Omitting scopes entirely = **full access** (unchanged)
 
