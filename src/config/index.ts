@@ -23,7 +23,7 @@ const CONFIG_FILENAME = 'jeeves.config';
  * - undefined/null → null (unrestricted)
  * - string → { allow: [string], deny: [] }
  * - string[] → { allow: string[], deny: [] }
- * - { allow?, deny? } → { allow: allow ?? ['/*'], deny: deny ?? [] }
+ * - { allow?, deny? } → { allow: allow ?? ['/**'], deny: deny ?? [] }
  */
 function normalizeScopes(raw: unknown): NormalizedScopes | null {
   if (raw === undefined || raw === null) return null;
@@ -32,7 +32,7 @@ function normalizeScopes(raw: unknown): NormalizedScopes | null {
   if (typeof raw === 'object') {
     const obj = raw as { allow?: string[]; deny?: string[] };
     return {
-      allow: obj.allow ?? ['/*'],
+      allow: obj.allow ?? ['/**'],
       deny: obj.deny ?? [],
     };
   }

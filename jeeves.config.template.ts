@@ -56,11 +56,12 @@ export default {
    * With 'keys' mode: authenticated via HMAC-derived insider URL key.
    *
    * Scopes restrict which paths the insider can access.
-   * ['/*'] = full access. ['/d/docs/*'] = only files under D:\docs\.
+   * Uses standard glob syntax (picomatch): /** for recursive, /* for single-level.
+   * ['/**'] = full access. ['/d/docs/**'] = only files under D:\docs\.
    */
   insiders: {
     'user@example.com': {
-      scopes: ['/*'],
+      scopes: ['/**'],
     },
   },
 

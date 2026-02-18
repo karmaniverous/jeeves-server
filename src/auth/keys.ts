@@ -30,25 +30,12 @@ import {
 
 /**
  * Check whether a path matches a list of scope patterns.
- * Uses picomatch for glob matching (supports *, **, ?, [...], etc.).
- *
- * Backward compatibility: a trailing `/*` is treated as `/**` (match all
- * descendants), matching the original hand-rolled semantics. Use `/**`
- * explicitly for the same effect; use picomatch's native `/*` if you truly
- * want single-level matching.
+ * Uses picomatch for glob matching — standard glob semantics apply.
+ * Use `/**` for recursive matching, `/*` for single-level only.
  */
 function pathMatchesPatterns(requestPath: string, patterns: string[]): boolean {
   const normalized = requestPath.toLowerCase().replace(/\/+$/, '');
-  const expanded = patterns.map((p) => {
-    const s = p.toLowerCase().replace(/\/+$/, '');
-    // Backward compat: /foo/* → match /foo and /foo/**
-    if (s.endsWith('/*') && !s.endsWith('/**')) {
-      const prefix = s.slice(0, -2);
-      return [prefix, prefix + '/**'];
-    }
-    return [s];
-  }).flat();
-  const isMatch = picomatch(expanded);
+  const isMatch = picomatch(patterns.map((p) => p.toLowerCase().replace(/\/+$/, '')));
   return isMatch(normalized);
 }
 
