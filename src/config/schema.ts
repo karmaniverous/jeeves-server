@@ -88,6 +88,12 @@ export const jeevesConfigSchema = z
     roots: z.record(z.string(), z.string()).optional(),
     /** Path to mermaid-cli (npx prefix directory). If not set, mermaid rendering is disabled. */
     mermaidCliPath: z.string().optional(),
+    /**
+     * Global outsider policy — constrains which paths are eligible for outsider sharing.
+     * Uses the same allow/deny model as insider scopes.
+     * If omitted, all paths are shareable with outsiders.
+     */
+    outsiderPolicy: scopesObjectSchema.optional(),
   })
   .superRefine((config, ctx) => {
     // Google auth mode requires google config + sessionSecret
