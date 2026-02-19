@@ -57,7 +57,11 @@ async function copyShareLink(path: string, settings: ShareSettings, type: LinkTy
 
   let fullUrl = window.location.origin + data.url;
   if (type === 'raw') {
-    fullUrl += (fullUrl.includes('?') ? '&' : '?') + 'raw=1';
+    // Build /api/raw/ URL directly with auth params from the share link
+    const shareUrl = new URL(fullUrl);
+    const rawPath = shareUrl.pathname.replace('/browse/', '/api/raw/');
+    shareUrl.pathname = rawPath;
+    fullUrl = shareUrl.toString();
   } else if (type === 'event') {
     fullUrl = window.location.origin + '/event?key=' + data.url.split('key=')[1];
   }
