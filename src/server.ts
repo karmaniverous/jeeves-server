@@ -87,7 +87,15 @@ async function start() {
       fastify.get('/browse', async (_request, reply) => {
         return reply.sendFile('index.html', clientDir);
       });
-      fastify.get('/browse/*', async (_request, reply) => {
+      fastify.get<{ Params: { '*': string }; Querystring: { raw?: string } }>('/browse/*', async (request, reply) => {
+        // raw=1 → serve raw file bytes instead of the SPA
+        if (request.query.raw === '1') {
+          const filePath = request.params['*'];
+          const qs = new URLSearchParams(request.query as Record<string, string>);
+          qs.delete('raw');
+          const suffix = qs.toString() ? `?${qs.toString()}` : '';
+          return reply.redirect(`/api/raw/${filePath}${suffix}`);
+        }
         return reply.sendFile('index.html', clientDir);
       });
     }
