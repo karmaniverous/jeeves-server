@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { withKey } from '@/lib/api';
 
 interface DownloadDropdownProps {
   /** Current file path (relative, no leading slash) */
@@ -57,8 +58,11 @@ function getDownloadItems(reqPath: string, file: { fileName: string; type: strin
 }
 
 async function downloadBlob(href: string, filename: string) {
-  const res = await fetch(href, { credentials: 'include' });
-  if (!res.ok) throw new Error(`Download failed (${String(res.status)})`);
+  const res = await fetch(withKey(href), { credentials: 'include' });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(body || `Download failed (${String(res.status)})`);
+  }
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -94,6 +98,8 @@ export function DownloadDropdown({ reqPath, file, isDirectory, compact, variant 
       setErrorMsg(msg);
       updateState('error');
       onError?.(msg);
+      // Show error immediately — don't hide it inside the closed dropdown
+      alert(`Download failed: ${msg}`);
     }
   };
 
