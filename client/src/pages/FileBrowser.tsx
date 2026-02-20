@@ -205,26 +205,26 @@ export function FileBrowser() {
           isInsider={isInsider}
           theme={theme}
           onToggleTheme={toggleTheme}
-          keyAge={keyAge}
-          onRotateKey={handleRotateKey}
-          downloadDropdown={
+          keyAge={editing ? undefined : keyAge}
+          onRotateKey={editing ? undefined : handleRotateKey}
+          downloadDropdown={editing ? undefined :
             file ? (
               <DownloadDropdown reqPath={reqPath} file={file} variant="header" />
             ) : directory ? (
               <DownloadDropdown reqPath={reqPath} file={null} isDirectory variant="header" />
             ) : undefined
           }
-          downloadMenuItem={
+          downloadMenuItem={editing ? undefined :
             file ? (
               (onDismiss) => <DownloadDropdown reqPath={reqPath} file={file} variant="menuItem" onStateChange={(s) => { if (s === 'done') setTimeout(onDismiss, 800); }} />
             ) : directory ? (
               (onDismiss) => <DownloadDropdown reqPath={reqPath} file={null} isDirectory variant="menuItem" onStateChange={(s) => { if (s === 'done') setTimeout(onDismiss, 800); }} />
             ) : undefined
           }
-          linkControls={isInsider ? (
+          linkControls={editing ? undefined : isInsider ? (
             <LinkDropdown path={`/${reqPath}`} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} showEvent showRaw={!!file} variant="header" isDirectory={!file} />
           ) : undefined}
-          linkMenuItem={isInsider ? (
+          linkMenuItem={editing ? undefined : isInsider ? (
             (onDismiss) => <LinkDropdown path={`/${reqPath}`} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} showEvent showRaw={!!file} variant="menuItem" isDirectory={!file} onStateChange={(s) => { if (s === 'done') setTimeout(onDismiss, 800); }} />
           ) : undefined}
         />

@@ -2,6 +2,8 @@
 
 This page tests inline diagram rendering in markdown.
 
+Foo!
+
 ## Mermaid Diagram
 
 ```mermaid
