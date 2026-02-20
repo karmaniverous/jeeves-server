@@ -12,6 +12,14 @@ export default {
   /** Server port */
   port: 3456,
 
+  /**
+   * Local developer mode. When true:
+   * - Localhost requests get full insider access without auth
+   * - "Open locally" button opens files with OS default handler
+   * - Share/link UI is hidden
+   */
+  // localMode: true,
+
   /** Path to Chrome/Chromium for Puppeteer PDF/DOCX export */
   chromePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
 

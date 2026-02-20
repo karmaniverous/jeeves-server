@@ -53,6 +53,7 @@ The gap has always been the last mile: getting Markdown into the hands of people
 - **Code Highlighting** — Syntax highlighting with copy buttons
 - **SVG, Mermaid & PlantUML Diagrams** — Rendered inline with pan/zoom; PlantUML uses a fallback pipeline (local jar → private servers → community server)
 - **Embedded Diagrams in Markdown** — `mermaid` and `plantuml` fenced code blocks render as inline SVGs (GitHub convention)
+- **Local Developer Mode** — `localMode` for personal use: no login on localhost, "Open locally" button for native file handlers, clean UI without sharing controls
 - **Secure Sharing** — Expiring links with HMAC signatures, scoped access
 - **Event Gateway** — Webhook receiver with JSON Schema validation and durable queue
 - **Zero CDN** — All assets served locally, no external dependencies

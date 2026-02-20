@@ -67,6 +67,23 @@ plantuml: {                          // optional
 
 On Windows, `roots` is ignored. On Linux, if omitted, it defaults to `{ root: '/' }`.
 
+### Local Developer Mode
+
+When running Jeeves Server on your own machine as a personal file browser, enable `localMode` for a frictionless experience:
+
+```typescript
+localMode: true,
+```
+
+When enabled:
+- **No login required** — requests from `localhost` get full insider access automatically
+- **Open locally** — an "Open" button in the header opens files with your OS default handler (VS Code, Excel, etc.)
+- **Clean UI** — share/link controls are hidden (localhost links aren't useful to others)
+
+This is ideal for developers who want a powerful local file browser with Markdown rendering, diagram support, and semantic search — with the ability to open any file in its native application.
+
+> **Note:** `localMode` only trusts `localhost` (`127.0.0.1` / `::1`). Remote requests still require normal authentication. Leave `localMode` off (or omit it) when testing the full auth experience locally.
+
 ### Config is immutable at runtime
 
 Once the server starts, the config is loaded once and never written to. Mutable state (like auto-generated insider keys) lives in a separate `state.json` file that the server manages itself.

@@ -22,6 +22,7 @@ But in the business world, you can't share `.md` files — people expect PDFs an
 - **PlantUML diagrams** — `.puml`/`.pu`/`.plantuml` files render via fallback pipeline (local jar → configured servers → community server)
 - **Embedded diagrams** — Mermaid and PlantUML fenced code blocks in markdown render as inline SVG diagrams (GitHub convention: ` ```mermaid ` and ` ```plantuml ` blocks always rendered; use ` ```text ` to show source)
 - **Image viewing** — Direct display of image files
+- **Local developer mode** — `localMode` flag for frictionless local use: localhost auth bypass, "Open locally" button (OS default handler), hidden share UI
 - **Breadcrumb navigation** — Full path breadcrumbs with clickable segments
 
 ### Export & Download
