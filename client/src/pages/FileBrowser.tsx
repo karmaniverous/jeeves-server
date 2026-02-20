@@ -83,6 +83,15 @@ export function FileBrowser() {
   const params = useParams<{ '*': string }>();
   const reqPath = params['*'] ?? '';
   const [theme, toggleTheme] = useTheme();
+
+  // Browser tab title: <filename> - <site title>
+  useEffect(() => {
+    const siteTitle = 'Jeeves Server';
+    const segments = reqPath.split('/').filter(Boolean);
+    const last = segments.length ? segments[segments.length - 1] : '';
+    const decoded = last ? decodeURIComponent(last) : '';
+    document.title = decoded ? `${decoded} - ${siteTitle}` : siteTitle;
+  }, [reqPath]);
   const [shareSettings, setShareSettings] = useState<ShareSettings>(loadShareSettings);
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const [proseWidth, setProseWidth] = useState<'narrow' | 'medium' | 'wide'>(
