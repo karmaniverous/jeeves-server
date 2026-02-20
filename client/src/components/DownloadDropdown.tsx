@@ -61,7 +61,6 @@ function getDownloadItems(reqPath: string, file: { fileName: string; type: strin
     items.push({ label: 'PDF', href: `/api/plantuml-export/${reqPath}?format=pdf`, filename: `${baseName}.pdf` });
     items.push({ label: 'EPS', href: `/api/plantuml-export/${reqPath}?format=eps`, filename: `${baseName}.eps` });
     items.push({ label: 'LaTeX', href: `/api/plantuml-export/${reqPath}?format=latex`, filename: `${baseName}.latex` });
-    items.push({ label: 'Text', href: `/api/plantuml-export/${reqPath}?format=txt`, filename: `${baseName}.txt` });
   }
 
   return items;
