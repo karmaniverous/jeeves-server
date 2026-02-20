@@ -1189,7 +1189,17 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         });
       }
 
-      return reply.send({ ok: true, path: resolved });
+      const envInfo = {
+        platform: process.platform,
+        user: process.env.USERNAME ?? process.env.USER ?? null,
+        sessionName: process.env.SESSIONNAME ?? null,
+      };
+
+      const note = process.platform === 'win32'
+        ? 'On Windows this only shows a visible effect if jeeves-server is running in an interactive desktop session (not as a service).'
+        : null;
+
+      return reply.send({ ok: true, path: resolved, env: envInfo, note });
     },
   );
 };
