@@ -1,4 +1,4 @@
-import { Moon, Sun, BookOpen, KeyRound, Github } from 'lucide-react';
+import { Moon, Sun, BookOpen, KeyRound, Github, FolderOpen } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -23,6 +23,10 @@ interface HeaderProps {
   downloadMenuItem?: (onDismiss: () => void) => React.ReactNode;
   /** Link dropdown factory for account menu (receives dismiss callback) */
   linkMenuItem?: (onDismiss: () => void) => React.ReactNode;
+  /** Local developer mode — hides share/auth UI, shows Open button */
+  localMode?: boolean;
+  /** Callback to open current file/directory with OS default handler */
+  onOpenLocally?: () => void;
 }
 
 export function Header({
@@ -36,6 +40,8 @@ export function Header({
   linkControls,
   downloadMenuItem,
   linkMenuItem,
+  localMode = false,
+  onOpenLocally,
 }: HeaderProps) {
   const hasKeyMgmt = isInsider && onRotateKey;
   const [readmeUrl, setReadmeUrl] = useState<string | null>(null);
@@ -52,8 +58,21 @@ export function Header({
 
   const menuItemClass = 'flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors w-full text-left cursor-pointer';
 
-  // Link controls — hidden below 400px
-  if (linkMenuItem) {
+  // Open locally — localMode only
+  if (localMode && onOpenLocally) {
+    collapsedItems.push({
+      breakpoint: 'bp-400',
+      node: (
+        <button onClick={onOpenLocally} className={menuItemClass}>
+          <FolderOpen className="h-4 w-4 shrink-0" />
+          Open locally
+        </button>
+      ),
+    });
+  }
+
+  // Link controls — hidden below 400px (hidden in localMode)
+  if (linkMenuItem && !localMode) {
     collapsedItems.push({
       breakpoint: 'bp-400',
       node: linkMenuItem,
@@ -70,8 +89,8 @@ export function Header({
     });
   }
 
-  // Key management — hidden below sm (640px)
-  if (hasKeyMgmt) {
+  // Key management — hidden below sm (640px) (hidden in localMode)
+  if (hasKeyMgmt && !localMode) {
     collapsedItems.push({
       breakpoint: 'sm',
       node: (
@@ -147,8 +166,23 @@ export function Header({
 
         {/* Controls — progressively hidden via responsive classes */}
         <div className="flex items-center gap-1 shrink-0">
-          {/* Link controls: visible 400px+ */}
-          {linkControls && (
+          {/* Open locally: visible 400px+ (localMode only) */}
+          {localMode && onOpenLocally && (
+            <div className="hidden min-[400px]:flex items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-zinc-300 hover:text-white hover:bg-white/10 h-8 w-8"
+                title="Open locally"
+                onClick={onOpenLocally}
+              >
+                <FolderOpen className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          {/* Link controls: visible 400px+ (hidden in localMode) */}
+          {linkControls && !localMode && (
             <div className="hidden min-[400px]:flex items-center">{linkControls}</div>
           )}
 
@@ -157,8 +191,8 @@ export function Header({
             <div className="hidden min-[480px]:flex items-center">{downloadDropdown}</div>
           )}
 
-          {/* Key management: visible sm+ (640px) */}
-          {hasKeyMgmt && (
+          {/* Key management: visible sm+ (640px) (hidden in localMode) */}
+          {hasKeyMgmt && !localMode && (
             <div className="hidden sm:flex items-center gap-1">
               <Button
                 variant="ghost"

@@ -159,3 +159,27 @@ export async function getShareLink(
 export function getRawFileUrl(path: string): string {
   return `/api/raw/${path}`;
 }
+
+export interface Capabilities {
+  localMode: boolean;
+  mermaid: boolean;
+  plantuml: boolean;
+}
+
+let _capabilitiesCache: Capabilities | null = null;
+
+export async function getCapabilities(): Promise<Capabilities> {
+  if (_capabilitiesCache) return _capabilitiesCache;
+  try {
+    const res = await fetch('/api/capabilities');
+    if (res.ok) {
+      _capabilitiesCache = await res.json() as Capabilities;
+      return _capabilitiesCache;
+    }
+  } catch { /* ignore */ }
+  return { localMode: false, mermaid: false, plantuml: false };
+}
+
+export async function openLocally(path: string): Promise<{ ok: boolean }> {
+  return fetchJson<{ ok: boolean }>(`${API_BASE}/open/${path}`, { method: 'POST' });
+}

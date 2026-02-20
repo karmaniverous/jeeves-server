@@ -113,6 +113,7 @@ export function loadConfig(): RuntimeConfig {
 
   return {
     port: config.port,
+    localMode: config.localMode ?? false,
     eventTimeoutMs: config.eventTimeoutMs,
     eventLogPurgeMs: config.eventLogPurgeMs,
     maxZipSizeMb: config.maxZipSizeMb,

@@ -12,8 +12,8 @@ import { LinkDropdown } from '@/components/LinkDropdown';
 import { MermaidViewer } from '@/components/MermaidViewer';
 import { PlantUmlViewer } from '@/components/PlantUmlViewer';
 import { SvgViewer } from '@/components/SvgViewer';
-import type { BreadcrumbItem, DirectoryListing, DriveEntry, FileContent, ShareSettings } from '@/lib/api';
-import { getDrives, getDirectory, getFile, getFileRaw } from '@/lib/api';
+import type { BreadcrumbItem, Capabilities, DirectoryListing, DriveEntry, FileContent, ShareSettings } from '@/lib/api';
+import { getDrives, getDirectory, getFile, getFileRaw, getCapabilities, openLocally } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { initEmbeddedDiagramPanzoom } from '@/components/EmbeddedDiagramPanzoom';
 import { initInlineSvgPanzoom } from '@/components/InlineSvgPanzoom';
@@ -84,6 +84,11 @@ export function FileBrowser() {
   const reqPath = params['*'] ?? '';
   const [theme, toggleTheme] = useTheme();
 
+  // Fetch server capabilities once
+  useEffect(() => {
+    getCapabilities().then(setCapabilities).catch(() => {});
+  }, []);
+
   // Browser tab title: <filename> - <site title>
   useEffect(() => {
     const siteTitle = 'Jeeves Server';
@@ -102,6 +107,7 @@ export function FileBrowser() {
     localStorage.setItem('jeeves-prose-width', w);
   };
 
+  const [capabilities, setCapabilities] = useState<Capabilities>({ localMode: false, mermaid: false, plantuml: false });
   const [drives, setDrives] = useState<DriveEntry[] | null>(null);
   const [directory, setDirectory] = useState<DirectoryListing | null>(null);
   const [fileRaw, setFileRaw] = useState<FileContent | null>(null);
@@ -204,6 +210,8 @@ export function FileBrowser() {
           onToggleTheme={toggleTheme}
           keyAge={keyAge}
           onRotateKey={handleRotateKey}
+          localMode={capabilities.localMode}
+          onOpenLocally={reqPath ? () => { openLocally(reqPath).catch(() => {}); } : undefined}
           downloadDropdown={
             file ? (
               <DownloadDropdown reqPath={reqPath} file={file} variant="header" />

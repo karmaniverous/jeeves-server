@@ -86,6 +86,14 @@ export const jeevesConfigSchema = z
      * Default: { root: '/' }
      */
     roots: z.record(z.string(), z.string()).optional(),
+    /**
+     * Local developer mode. When enabled:
+     * - Requests from localhost get full insider access without auth
+     * - "Open locally" button appears in the UI (opens files with OS default handler)
+     * - Share/link UI is hidden (localhost links aren't useful to others)
+     * - Google auth UI is hidden
+     */
+    localMode: z.boolean().default(false),
     /** Path to mermaid-cli (npx prefix directory). If not set, mermaid rendering is disabled. */
     mermaidCliPath: z.string().optional(),
     /**

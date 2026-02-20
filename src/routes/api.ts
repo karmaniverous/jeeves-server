@@ -80,6 +80,17 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
     if (!request.url.startsWith('/api')) return;
     if (request.url.startsWith('/api/readme-link')) return;
     if (request.url.startsWith('/api/auth/status')) return;
+    if (request.url.startsWith('/api/capabilities')) return;
+
+    // localMode: trust localhost requests as full insider
+    if (getConfig().localMode) {
+      const ip = request.ip;
+      if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1') {
+        (request as { accessMode?: AccessMode }).accessMode = 'insider';
+        (request as { insiderScopes?: NormalizedScopes | null }).insiderScopes = null; // unrestricted
+        return;
+      }
+    }
     // Utility endpoints handle their own scope checking (path is in body, not URL)
     if (request.url.startsWith('/api/util/')) {
       // Still need auth, but skip scope-based path verification
@@ -1117,6 +1128,66 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         authenticated: false,
         isInsider: false,
       });
+    },
+  );
+
+  // GET /api/capabilities — public endpoint for SPA to discover server features
+  fastify.get(
+    '/api/capabilities',
+    async (_request: FastifyRequest, reply: FastifyReply) => {
+      const config = getConfig();
+      return reply.send({
+        localMode: config.localMode ?? false,
+        mermaid: !!config.mermaidCliPath,
+        plantuml: !!config.plantuml,
+      });
+    },
+  );
+
+  // POST /api/open/* — open file/directory with OS default handler (localMode + insider only)
+  fastify.post(
+    '/api/open/*',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const config = getConfig();
+      if (!config.localMode) {
+        return reply.code(403).send({ error: 'Local mode is not enabled' });
+      }
+      if ((request as { accessMode?: string }).accessMode !== 'insider') {
+        return reply.code(403).send({ error: 'Insider access required' });
+      }
+
+      const reqPath = (request.params as { '*': string })['*'];
+      const fsPath = urlPathToFs(reqPath, _roots);
+      if (!fsPath) {
+        return reply.code(404).send({ error: 'Invalid path' });
+      }
+      const resolved = path.resolve(fsPath);
+
+      try {
+        await fs.promises.access(resolved);
+      } catch {
+        return reply.code(404).send({ error: 'File not found' });
+      }
+
+      // Open with OS default handler
+      const { exec } = await import('node:child_process');
+      const platform = process.platform;
+      let cmd: string;
+      if (platform === 'win32') {
+        cmd = `start "" "${resolved}"`;
+      } else if (platform === 'darwin') {
+        cmd = `open "${resolved}"`;
+      } else {
+        cmd = `xdg-open "${resolved}"`;
+      }
+
+      exec(cmd, (err) => {
+        if (err) {
+          console.error('[api/open] Failed to open:', err.message);
+        }
+      });
+
+      return reply.send({ ok: true, path: resolved });
     },
   );
 };

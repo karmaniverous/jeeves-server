@@ -47,6 +47,7 @@ export interface ResolvedInsider {
  */
 export interface RuntimeConfig {
   port: number;
+  localMode: boolean;
   eventTimeoutMs: number;
   eventLogPurgeMs: number;
   maxZipSizeMb: number;
