@@ -20,6 +20,7 @@ But in the business world, you can't share `.md` files — people expect PDFs an
 - **SVG rendering** — SVG files render as images with pan/zoom support (Panzoom)
 - **Mermaid diagrams** — `.mmd` files render as diagrams
 - **PlantUML diagrams** — `.puml`/`.pu`/`.plantuml` files render via fallback pipeline (local jar → configured servers → community server)
+- **Embedded diagrams** — Mermaid and PlantUML fenced code blocks in markdown render as inline SVG diagrams (GitHub convention: ` ```mermaid ` and ` ```plantuml ` blocks always rendered; use ` ```text ` to show source)
 - **Image viewing** — Direct display of image files
 - **Breadcrumb navigation** — Full path breadcrumbs with clickable segments
 
