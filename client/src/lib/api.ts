@@ -180,10 +180,13 @@ export async function getCapabilities(): Promise<Capabilities> {
   return { localMode: false, mermaid: false, plantuml: false };
 }
 
-export async function openLocally(path: string): Promise<{ ok: boolean }> {
-  return fetchJson<{ ok: boolean }>(`${API_BASE}/open/${path}`, {
+export async function openLocally(path: string): Promise<void> {
+  const result = await fetchJson<{ ok: boolean; fileUrl: string }>(`${API_BASE}/open/${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: '{}',
   });
+  if (result.fileUrl) {
+    window.open(result.fileUrl, '_blank');
+  }
 }

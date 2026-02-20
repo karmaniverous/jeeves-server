@@ -1169,37 +1169,11 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         return reply.code(404).send({ error: 'File not found' });
       }
 
-      // Open with OS default handler
-      const { exec, spawn } = await import('node:child_process');
-      const platform = process.platform;
+      // Return file:// URL for the client to open in the browser
+      // The browser handles launching the OS default handler (same interactive session)
+      const fileUrl = `file:///${resolved.replace(/\\/g, '/')}`;
 
-      if (platform === 'win32') {
-        // Use explorer.exe — works from services (session 0) unlike `start`
-        const child = spawn('explorer.exe', [resolved], { detached: true, stdio: 'ignore' });
-        child.unref();
-        child.on('error', (err) => {
-          console.error('[api/open] Failed to open:', err.message);
-        });
-      } else {
-        const cmd = platform === 'darwin' ? `open "${resolved}"` : `xdg-open "${resolved}"`;
-        exec(cmd, (err) => {
-          if (err) {
-            console.error('[api/open] Failed to open:', err.message);
-          }
-        });
-      }
-
-      const envInfo = {
-        platform: process.platform,
-        user: process.env.USERNAME ?? process.env.USER ?? null,
-        sessionName: process.env.SESSIONNAME ?? null,
-      };
-
-      const note = process.platform === 'win32'
-        ? 'On Windows this only shows a visible effect if jeeves-server is running in an interactive desktop session (not as a service).'
-        : null;
-
-      return reply.send({ ok: true, path: resolved, env: envInfo, note });
+      return reply.send({ ok: true, path: resolved, fileUrl });
     },
   );
 };
