@@ -94,10 +94,11 @@ export function loadConfig(): RuntimeConfig {
   const resolvedInsiders: ResolvedInsider[] = Object.entries(
     config.insiders as Record<string, InsiderEntry>,
   ).map((
-    [email, entry]: [string, InsiderEntry],
+    [rawEmail, entry]: [string, InsiderEntry],
   ) => {
+      const email = rawEmail.toLowerCase();
       const scopes = normalizeScopes(entry.scopes);
-      const stateKey = serverState.insiderKeys?.[email.toLowerCase()];
+      const stateKey = serverState.insiderKeys?.[email];
       return {
         email,
         seed: stateKey?.seed ?? '',
