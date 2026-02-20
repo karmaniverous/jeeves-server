@@ -186,3 +186,35 @@ pre:hover .code-copy-btn {
   color: var(--color-foreground);
   font-weight: 600;
 }
+
+/* Embedded diagram containers in markdown */
+.embedded-diagram-rendered {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.embedded-diagram-rendered svg {
+  max-width: 100%;
+  height: auto;
+  display: inline-block;
+}
+
+.embedded-diagram-error {
+  background: color-mix(in srgb, var(--color-destructive) 10%, transparent);
+  border: 1px solid var(--color-destructive);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.diagram-error-label {
+  color: var(--color-destructive);
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}

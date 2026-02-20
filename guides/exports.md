@@ -168,6 +168,49 @@ GET /api/plantuml-export/<path>?format=svg|png|pdf|eps
 
 Only the **local jar** method resolves `!include` directives. If your diagrams reference shared PlantUML libraries (e.g., AWS icons, company style files), you must configure `jarPath`. The jar runs with `cwd` set to the diagram's parent directory, so relative includes resolve naturally.
 
+## Embedded Diagrams in Markdown
+
+Markdown files can contain **inline diagram source** in fenced code blocks. Following the [GitHub convention](https://github.blog/2022-02-14-include-diagrams-markdown-files-mermaid/), code blocks tagged `mermaid` or `plantuml` (also `puml`) are rendered as inline SVG diagrams when the page is displayed.
+
+````markdown
+```mermaid
+graph TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Do it]
+    B -->|No| D[Skip]
+```
+
+```plantuml
+@startuml
+Alice -> Bob: Hello
+Bob --> Alice: Hi!
+@enduml
+```
+````
+
+### How it works
+
+Diagram blocks are detected during markdown parsing, replaced with placeholders, and rendered server-side after HTML generation:
+- **Mermaid** — rendered via Mermaid CLI (`mmdc`) to SVG
+- **PlantUML** — rendered via the same fallback pipeline as `.puml` files (jar → servers → community)
+
+If rendering fails, the source code is displayed with a small error label.
+
+### Showing source instead of rendering
+
+To display diagram source as a code block (without rendering), use a different language hint:
+
+````markdown
+```text
+graph TD
+    A --> B
+```
+````
+
+### PDF/DOCX export
+
+Embedded diagrams appear in PDF and DOCX exports as rendered SVGs — what you see in the browser is what you get in the export.
+
 ## ZIP Export
 
 Directories can be downloaded as ZIP archives. The header shows a ZIP download option when viewing a directory.

@@ -15,6 +15,7 @@ import { SvgViewer } from '@/components/SvgViewer';
 import type { BreadcrumbItem, DirectoryListing, DriveEntry, FileContent, ShareSettings } from '@/lib/api';
 import { getDrives, getDirectory, getFile, getFileRaw } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { initEmbeddedDiagramPanzoom } from '@/components/EmbeddedDiagramPanzoom';
 import { initInlineSvgPanzoom } from '@/components/InlineSvgPanzoom';
 import { injectCopyButtons } from '@/lib/codeBlockCopy';
 import { useTheme } from '@/lib/theme';
@@ -82,6 +83,15 @@ export function FileBrowser() {
   const params = useParams<{ '*': string }>();
   const reqPath = params['*'] ?? '';
   const [theme, toggleTheme] = useTheme();
+
+  // Browser tab title: <filename> - <site title>
+  useEffect(() => {
+    const siteTitle = 'Jeeves Server';
+    const segments = reqPath.split('/').filter(Boolean);
+    const last = segments.length ? segments[segments.length - 1] : '';
+    const decoded = last ? decodeURIComponent(last) : '';
+    document.title = decoded ? `${decoded} - ${siteTitle}` : siteTitle;
+  }, [reqPath]);
   const [shareSettings, setShareSettings] = useState<ShareSettings>(loadShareSettings);
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const [proseWidth, setProseWidth] = useState<'narrow' | 'medium' | 'wide'>(
@@ -366,7 +376,7 @@ export function FileBrowser() {
                       </aside>
                     )}
                     <article
-                      ref={(el) => { if (el) { injectCopyButtons(el); initInlineSvgPanzoom(el); } }}
+                      ref={(el) => { if (el) { injectCopyButtons(el); initInlineSvgPanzoom(el); initEmbeddedDiagramPanzoom(el); } }}
                       className={`prose bg-background p-6 rounded-lg border border-border min-w-0 flex-1 ${proseWidth === 'narrow' ? 'max-w-prose' : proseWidth === 'medium' ? 'max-w-5xl' : 'max-w-none'}`}
                       style={{ '--tw-prose-body': 'var(--foreground)', '--tw-prose-headings': 'var(--foreground)', '--tw-prose-bold': 'var(--foreground)', '--tw-prose-links': '#3b82f6', '--tw-prose-code': 'var(--foreground)', '--tw-prose-pre-bg': 'var(--muted)', '--tw-prose-pre-code': 'var(--foreground)', '--tw-prose-hr': 'var(--border)', '--tw-prose-quotes': 'var(--muted-foreground)', '--tw-prose-quote-borders': 'var(--border)', '--tw-prose-th-borders': 'var(--border)', '--tw-prose-td-borders': 'var(--border)' } as React.CSSProperties}
                       dangerouslySetInnerHTML={{ __html: fileRendered.html! }}

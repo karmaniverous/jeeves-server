@@ -50,8 +50,8 @@ async function addPrintStyles(page: Page): Promise<void> {
       /* Hide tab bar and other SPA controls */
       [role="tablist"], button { display: none !important; }
       main { padding-top: 0 !important; }
-      /* Inline SVG Panzoom: strip container chrome, show SVGs cleanly */
-      .inline-svg-panzoom { 
+      /* Inline SVG Panzoom & Embedded Diagrams: strip container chrome, show SVGs cleanly */
+      .inline-svg-panzoom, .embedded-diagram-panzoom, .embedded-diagram-rendered { 
         position: static !important; 
         background: white !important; 
         border: none !important; 
@@ -60,9 +60,9 @@ async function addPrintStyles(page: Page): Promise<void> {
         padding: 0 !important;
         margin: 1em 0 !important;
       }
-      .inline-svg-panzoom button { display: none !important; }
-      .inline-svg-panzoom .text-xs { display: none !important; }
-      .inline-svg-panzoom svg {
+      .inline-svg-panzoom button, .embedded-diagram-panzoom button { display: none !important; }
+      .inline-svg-panzoom .text-xs, .embedded-diagram-panzoom .text-xs { display: none !important; }
+      .inline-svg-panzoom svg, .embedded-diagram-panzoom svg, .embedded-diagram-rendered svg {
         max-width: 190mm !important;
         max-height: 250mm !important;
         width: auto !important;
@@ -159,7 +159,7 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
 
     const svgContents = await page.evaluate(() => {
       const containers = document.querySelectorAll(
-        '.svg-container, .zoomable-svg, .inline-svg-panzoom',
+        '.svg-container, .zoomable-svg, .inline-svg-panzoom, .embedded-diagram-panzoom, .embedded-diagram-rendered',
       );
       return Array.from(containers).map((container, i) => {
         const svg = container.querySelector('svg');
@@ -234,7 +234,7 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
 
         // Replace SVG containers with PNG images
         const svgContainers = contentClone.querySelectorAll(
-          '.svg-container, .zoomable-svg, .inline-svg-panzoom',
+          '.svg-container, .zoomable-svg, .inline-svg-panzoom, .embedded-diagram-panzoom, .embedded-diagram-rendered',
         );
         svgContainers.forEach((container, i) => {
           const pngInfo = pngUrls.find((p) => p.index === i);

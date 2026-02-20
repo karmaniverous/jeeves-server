@@ -29,6 +29,7 @@ import { appendEvent } from '../services/eventQueue.js';
 import hljs from 'highlight.js';
 
 import { rewriteLinksForDeepShare } from '../services/deepShareLinks.js';
+import { renderEmbeddedDiagrams } from '../services/embeddedDiagrams.js';
 import { parseMarkdown } from '../services/markdown.js';
 import { renderPlantUmlSvg, renderPlantUmlToBuffer, getPlantUmlFormats } from '../services/plantuml.js';
 import { getContentType, isInlineType, looksLikeText } from '../util/fileDetection.js';
@@ -391,6 +392,10 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
           linkWindowsPaths: true,
           basePath: urlDir,
         });
+
+        // Render embedded mermaid/plantuml diagrams
+        const fsDir = path.dirname(resolved);
+        html = await renderEmbeddedDiagrams(html, fsDir);
 
         // Deep share link rewriting for outsiders with depth > 0
         const deepShare = (request as { deepShareParams?: { d: string; dirs: string; s: string } }).deepShareParams;

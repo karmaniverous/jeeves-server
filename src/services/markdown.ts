@@ -7,6 +7,8 @@ import fs from 'node:fs';
 import hljs from 'highlight.js';
 import { marked } from 'marked';
 
+import { registerDiagram } from './embeddedDiagrams.js';
+
 export interface Heading {
   level: number;
   text: string;
@@ -128,12 +130,21 @@ export function parseMarkdown(
     };
   }
 
-  // Syntax-highlight fenced code blocks
+  // Syntax-highlight fenced code blocks; render mermaid/plantuml as diagrams
   renderer.code = function (
     args: string | { text: string; lang?: string; escaped?: boolean },
   ) {
     const text = typeof args === 'object' ? args.text : args;
-    const lang = typeof args === 'object' ? args.lang : undefined;
+    const lang = (typeof args === 'object' ? args.lang : undefined)?.toLowerCase();
+
+    // Diagram code blocks → register for async rendering (GitHub convention)
+    if (lang === 'mermaid') {
+      return registerDiagram('mermaid', text);
+    }
+    if (lang === 'plantuml' || lang === 'puml') {
+      return registerDiagram('plantuml', text);
+    }
+
     let highlighted: string;
     if (lang && hljs.getLanguage(lang)) {
       highlighted = hljs.highlight(text, { language: lang }).value;
