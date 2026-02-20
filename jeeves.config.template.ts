@@ -113,4 +113,17 @@ export default {
    * Linux example: '/opt/mermaid-cli'
    */
   // mermaidCliPath: '/opt/mermaid-cli',
+
+  /**
+   * PlantUML rendering configuration.
+   * - jarPath: local PlantUML jar (requires Java). Tried first — supports !include.
+   * - servers: fallback PlantUML server URLs, tried in order.
+   *   The public community server is always appended as last resort.
+   * If omitted, only the community server is used (no !include support).
+   */
+  // plantuml: {
+  //   jarPath: '/opt/plantuml/plantuml.jar',
+  //   javaPath: '/usr/bin/java',  // optional — defaults to 'java' on PATH
+  //   servers: ['https://internal.plantuml.example.com/plantuml'],
+  // },
 } satisfies JeevesConfig;

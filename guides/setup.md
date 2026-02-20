@@ -58,6 +58,11 @@ roots: {
   projects: '/opt/projects',
 },
 mermaidCliPath: '/opt/mermaid-cli',  // optional
+plantuml: {                          // optional
+  jarPath: '/opt/plantuml/plantuml.jar',
+  javaPath: '/usr/bin/java',         // defaults to 'java' on PATH
+  servers: [],                       // private servers; community server always appended
+},
 ```
 
 On Windows, `roots` is ignored. On Linux, if omitted, it defaults to `{ root: '/' }`.

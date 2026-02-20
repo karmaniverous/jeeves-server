@@ -89,6 +89,19 @@ export const jeevesConfigSchema = z
     /** Path to mermaid-cli (npx prefix directory). If not set, mermaid rendering is disabled. */
     mermaidCliPath: z.string().optional(),
     /**
+     * PlantUML rendering configuration.
+     * - jarPath: local PlantUML jar (requires Java). Tried first — supports !include.
+     * - servers: fallback PlantUML server URLs, tried in order.
+     *   The public community server (https://www.plantuml.com/plantuml) is always
+     *   appended as the last resort unless explicitly listed.
+     * If omitted entirely, only the community server is used.
+     */
+    plantuml: z.object({
+      jarPath: z.string().optional(),
+      javaPath: z.string().optional(),
+      servers: z.array(z.string().url()).optional(),
+    }).optional(),
+    /**
      * Global outsider policy — constrains which paths are eligible for outsider sharing.
      * Uses the same allow/deny model as insider scopes.
      * If omitted, all paths are shareable with outsiders.

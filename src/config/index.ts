@@ -119,6 +119,14 @@ export function loadConfig(): RuntimeConfig {
     chromePath: config.chromePath,
     roots: config.roots,
     mermaidCliPath: config.mermaidCliPath,
+    plantuml: (() => {
+      const puml = config.plantuml;
+      const COMMUNITY = 'https://www.plantuml.com/plantuml';
+      const servers = puml?.servers ? [...puml.servers] : [];
+      // Always append community server as last resort (unless already listed)
+      if (!servers.includes(COMMUNITY)) servers.push(COMMUNITY);
+      return { jarPath: puml?.jarPath, javaPath: puml?.javaPath, servers };
+    })(),
     outsiderPolicy: normalizeScopes(config.outsiderPolicy) ?? null,
     events: config.events,
     authModes: config.auth.modes,

@@ -53,6 +53,11 @@ export interface RuntimeConfig {
   chromePath: string;
   roots?: Record<string, string>;
   mermaidCliPath?: string;
+  plantuml: {
+    jarPath?: string;
+    javaPath?: string;
+    servers: string[];
+  };
   outsiderPolicy: NormalizedScopes | null;
   events: JeevesConfig['events'];
   authModes: AuthMode[];

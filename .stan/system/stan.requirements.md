@@ -19,6 +19,7 @@ But in the business world, you can't share `.md` files — people expect PDFs an
 - **Code highlighting** — Source files display with syntax highlighting (highlight.js)
 - **SVG rendering** — SVG files render as images with pan/zoom support (Panzoom)
 - **Mermaid diagrams** — `.mmd` files render as diagrams
+- **PlantUML diagrams** — `.puml`/`.pu`/`.plantuml` files render via fallback pipeline (local jar → configured servers → community server)
 - **Image viewing** — Direct display of image files
 - **Breadcrumb navigation** — Full path breadcrumbs with clickable segments
 
@@ -27,6 +28,8 @@ But in the business world, you can't share `.md` files — people expect PDFs an
 - **PDF export** — One-click export via Puppeteer (uses installed Chrome)
 - **DOCX export** — Word document generation via `@turbodocx/html-to-docx`
 - **ZIP directories** — Download entire directories as ZIP (configurable size limit via `maxZipSizeMb`)
+- **Mermaid export** — SVG/PNG/PDF via Mermaid CLI
+- **PlantUML export** — SVG/PNG/PDF/EPS via local jar or server fallback
 - **Raw file download** — Direct file download option
 - **Export UX** — Spinner → check icon transition, no layout shift
 
@@ -179,6 +182,7 @@ React SPA served at `/browse/*` with the following pages:
 - `CodeBlock` — Syntax-highlighted code with copy buttons
 - `SvgViewer` — Pan/zoom SVG rendering
 - `MermaidViewer` — Mermaid diagram rendering
+- `PlantUmlViewer` — PlantUML diagram rendering (wraps SvgViewer)
 
 ### Server-Rendered Pages (Removed)
 
@@ -360,6 +364,10 @@ All JS/CSS libraries are served locally:
 - `chromePath` — path to Chrome/Chromium binary (platform-dependent)
 - `roots` — filesystem root map for Linux file browser (ignored on Windows)
 - `mermaidCliPath` — path to mermaid-cli installation (optional, replaces hardcoded path)
+- `plantuml` — PlantUML rendering config (optional):
+  - `jarPath` — local PlantUML jar (supports `!include`)
+  - `javaPath` — Java binary path (defaults to `java` on PATH)
+  - `servers` — private PlantUML server URLs (community server always appended as last resort)
 
 **Platform-agnostic core:** Fastify, React SPA, HMAC auth model, markdown rendering, export service, event gateway.
 

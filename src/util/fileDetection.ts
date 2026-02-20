@@ -10,6 +10,9 @@ import mime from 'mime-types';
  */
 const OVERRIDES: Record<string, string> = {
   '.mmd': 'text/plain; charset=utf-8',
+  '.puml': 'text/plain; charset=utf-8',
+  '.plantuml': 'text/plain; charset=utf-8',
+  '.pu': 'text/plain; charset=utf-8',
   '.log': 'text/plain; charset=utf-8',
   '.jsonl': 'text/plain; charset=utf-8',
 };

@@ -30,6 +30,7 @@ import hljs from 'highlight.js';
 
 import { rewriteLinksForDeepShare } from '../services/deepShareLinks.js';
 import { parseMarkdown } from '../services/markdown.js';
+import { renderPlantUmlSvg, renderPlantUmlToBuffer, getPlantUmlFormats } from '../services/plantuml.js';
 import { getContentType, isInlineType, looksLikeText } from '../util/fileDetection.js';
 import { formatRelativeTime } from '../util/formatters.js';
 
@@ -455,6 +456,28 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         });
       }
 
+      // PlantUML — render to SVG via jar or server fallback
+      if (ext === '.puml' || ext === '.plantuml' || ext === '.pu') {
+        const content = fs.readFileSync(resolved, 'utf8');
+        if (rawOnly) {
+          return reply.send({ type: 'plantuml', content, fileName, breadcrumbs, isInsider });
+        }
+        let renderedSvg: string | null = null;
+        try {
+          renderedSvg = await renderPlantUmlSvg(resolved);
+        } catch {
+          // Fall back to raw content only
+        }
+        return reply.send({
+          type: 'plantuml',
+          content,
+          html: renderedSvg,
+          fileName,
+          breadcrumbs,
+          isInsider,
+        });
+      }
+
       // SVG
       if (ext === '.svg') {
         const content = fs.readFileSync(resolved, 'utf8');
@@ -793,7 +816,8 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         return reply.code(404).send({ error: 'Mermaid file not found' });
       }
 
-      const format = request.query.format === 'png' ? 'png' : 'svg';
+      const mermaidFormats = ['svg', 'png', 'pdf'];
+      const format = mermaidFormats.includes(request.query.format ?? '') ? request.query.format! : 'svg';
       const outFile = path.join(
         path.dirname(resolved),
         `${path.basename(resolved, '.mmd')}.${format}`,
@@ -815,13 +839,59 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       }
 
       const content = fs.readFileSync(outFile);
-      const contentType = format === 'png' ? 'image/png' : 'image/svg+xml';
+      const contentTypes: Record<string, string> = {
+        svg: 'image/svg+xml',
+        png: 'image/png',
+        pdf: 'application/pdf',
+      };
+      const contentType = contentTypes[format] ?? 'application/octet-stream';
       const downloadName = path.basename(outFile);
 
       return reply
         .header('Content-Type', contentType)
         .header('Content-Disposition', `attachment; filename="${downloadName}"`)
         .send(content);
+    },
+  );
+
+  // GET /api/plantuml-export/* — render .puml file to any supported format
+  fastify.get<{ Params: { '*': string }; Querystring: { format?: string } }>(
+    '/api/plantuml-export/*',
+    async (request, reply) => {
+      const reqPath = request.params['*'];
+      if (!reqPath) return reply.code(400).send({ error: 'Path required' });
+
+      const _pumlFsPath = urlPathToFs(reqPath, _roots);
+      if (!_pumlFsPath) return reply.code(404).send({ error: 'Invalid path' });
+      const resolved = path.resolve(_pumlFsPath);
+
+      const ext = path.extname(resolved).toLowerCase();
+      if (!fs.existsSync(resolved) || !['.puml', '.plantuml', '.pu'].includes(ext)) {
+        return reply.code(404).send({ error: 'PlantUML file not found' });
+      }
+
+      const supported = getPlantUmlFormats();
+      const format = supported.includes(request.query.format ?? '') ? request.query.format! : 'svg';
+      const buffer = await renderPlantUmlToBuffer(resolved, format);
+
+      if (!buffer) {
+        return reply.code(500).send({ error: 'PlantUML render failed' });
+      }
+
+      const baseName = path.basename(resolved, ext);
+      const contentTypes: Record<string, string> = {
+        svg: 'image/svg+xml',
+        png: 'image/png',
+        pdf: 'application/pdf',
+        eps: 'application/postscript',
+        txt: 'text/plain; charset=utf-8',
+        latex: 'application/x-latex',
+      };
+
+      return reply
+        .header('Content-Type', contentTypes[format] ?? 'application/octet-stream')
+        .header('Content-Disposition', `attachment; filename="${baseName}.${format}"`)
+        .send(buffer);
     },
   );
 
