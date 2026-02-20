@@ -211,7 +211,11 @@ export function FileBrowser() {
           keyAge={keyAge}
           onRotateKey={handleRotateKey}
           localMode={capabilities.localMode}
-          onOpenLocally={reqPath ? () => { openLocally(reqPath).catch(() => {}); } : undefined}
+          onOpenLocally={reqPath ? () => {
+            openLocally(reqPath)
+              .then((r) => { if (r.warning) console.warn('[open]', r.warning); })
+              .catch((err) => { console.error('[open] failed:', err); alert('Failed to open file locally'); });
+          } : undefined}
           downloadDropdown={
             file ? (
               <DownloadDropdown reqPath={reqPath} file={file} variant="header" />

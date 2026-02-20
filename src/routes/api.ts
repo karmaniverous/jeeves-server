@@ -1169,11 +1169,26 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         return reply.code(404).send({ error: 'File not found' });
       }
 
-      // Return file:// URL for the client to open in the browser
-      // The browser handles launching the OS default handler (same interactive session)
-      const fileUrl = `file:///${resolved.replace(/\\/g, '/')}`;
+      // Open with OS default handler — server-side
+      const { exec: execCb } = await import('node:child_process');
+      const { promisify } = await import('node:util');
+      const execAsync = promisify(execCb);
+      const platform = process.platform;
 
-      return reply.send({ ok: true, path: resolved, fileUrl });
+      try {
+        if (platform === 'win32') {
+          await execAsync(`cmd /c start "" "${resolved}"`);
+        } else if (platform === 'darwin') {
+          await execAsync(`open "${resolved}"`);
+        } else {
+          await execAsync(`xdg-open "${resolved}"`);
+        }
+        return reply.send({ ok: true, path: resolved });
+      } catch (err) {
+        const msg = (err as Error).message;
+        console.error('[api/open] Failed:', msg);
+        return reply.send({ ok: true, path: resolved, warning: msg });
+      }
     },
   );
 };
