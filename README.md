@@ -51,7 +51,7 @@ The gap has always been the last mile: getting Markdown into the hands of people
 - **Markdown Rendering** — Prose with TOC sidebar, adjustable reading width, dark/light themes
 - **PDF & DOCX Export** — One-click, perfectly rendered, business-ready
 - **Code Highlighting** — Syntax highlighting with copy buttons
-- **SVG & Mermaid Diagrams** — Rendered inline with pan/zoom
+- **SVG, Mermaid & PlantUML Diagrams** — Rendered inline with pan/zoom; PlantUML uses a fallback pipeline (local jar → private servers → community server)
 - **Secure Sharing** — Expiring links with HMAC signatures, scoped access
 - **Event Gateway** — Webhook receiver with JSON Schema validation and durable queue
 - **Zero CDN** — All assets served locally, no external dependencies

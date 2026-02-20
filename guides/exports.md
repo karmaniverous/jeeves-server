@@ -6,8 +6,11 @@ Jeeves Server can export files as PDF, DOCX, or ZIP — turning Markdown into bu
 
 | Format | Available For | How It Works |
 |--------|--------------|--------------|
-| **PDF** | Markdown files | Puppeteer renders the page in headless Chrome and prints to PDF |
+| **PDF** | Markdown, Mermaid, PlantUML | Puppeteer (Markdown) or diagram renderer (Mermaid/PlantUML) |
 | **DOCX** | Markdown files | HTML converted via `@turbodocx/html-to-docx` |
+| **SVG** | Mermaid (`.mmd`), PlantUML (`.puml`, `.pu`, `.plantuml`) | Rendered via Mermaid CLI or PlantUML jar/server |
+| **PNG** | Mermaid, PlantUML | Rendered via Mermaid CLI or PlantUML jar/server |
+| **EPS** | PlantUML (jar only) | Vector export via PlantUML jar |
 | **ZIP** | Directories | Entire directory tree compressed via [`archiver`](https://github.com/archiverjs/node-archiver) |
 | **Raw** | Any file | Direct file download |
 
@@ -101,6 +104,69 @@ DOCX exports:
 - Include code blocks (without syntax highlighting colors)
 - Embed images as inline content
 - Work independently of the `_internal` key (no Puppeteer needed)
+
+## Mermaid Export
+
+Mermaid diagrams (`.mmd` files) can be exported as SVG, PNG, or PDF via the [Mermaid CLI](https://github.com/mermaid-js/mermaid-cli) (`mmdc`).
+
+### Requirements
+
+- **Mermaid CLI** must be installed (via npm)
+- **`mermaidCliPath`** must point to the `mmdc` binary in `jeeves.config.ts`
+- **Puppeteer/Chrome** is required by Mermaid CLI for rendering
+
+```typescript
+mermaidCliPath: '/usr/local/bin/mmdc',
+```
+
+### Export endpoint
+
+```
+GET /api/mermaid-export/<path>?format=svg|png|pdf
+```
+
+## PlantUML Export
+
+PlantUML files (`.puml`, `.pu`, `.plantuml`) can be exported as SVG, PNG, PDF, or EPS.
+
+### Rendering pipeline
+
+PlantUML uses a **fallback rendering pipeline** — each method is tried in order until one succeeds:
+
+1. **Local Java jar** — fastest, supports `!include` directives for complex diagrams with shared libraries. Requires Java and the PlantUML jar.
+2. **Configured PlantUML servers** — self-hosted or private PlantUML server instances, tried in order.
+3. **Public community server** (`plantuml.com`) — always appended as the last resort. Cannot resolve `!include` directives.
+
+### Configuration
+
+```typescript
+plantuml: {
+  jarPath: '/opt/plantuml/plantuml.jar',   // Local jar path (optional)
+  javaPath: '/usr/bin/java',               // Java binary (optional, defaults to 'java')
+  servers: ['https://internal.plantuml.example.com/plantuml'],  // Private servers (optional)
+},
+```
+
+If `plantuml` is omitted entirely, only the public community server is used.
+
+### Export formats
+
+| Format | Jar | Server |
+|--------|-----|--------|
+| SVG | ✅ | ✅ |
+| PNG | ✅ | ✅ |
+| PDF | ✅ | ❌ |
+| EPS | ✅ | ❌ |
+
+### Export endpoint
+
+```
+GET /api/plantuml-export/<path>?format=svg|png|pdf|eps
+```
+
+### `!include` support
+
+Only the **local jar** method resolves `!include` directives. If your diagrams reference shared PlantUML libraries (e.g., AWS icons, company style files), you must configure `jarPath`. The jar runs with `cwd` set to the diagram's parent directory, so relative includes resolve naturally.
 
 ## ZIP Export
 
