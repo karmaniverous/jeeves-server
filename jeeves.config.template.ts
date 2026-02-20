@@ -113,4 +113,7 @@ export default {
    * Linux example: '/opt/mermaid-cli'
    */
   // mermaidCliPath: '/opt/mermaid-cli',
+
+  /** Path to PlantUML jar file. Required for .puml/.plantuml/.pu rendering. */
+  // plantumlJarPath: '/opt/plantuml/plantuml.jar',
 } satisfies JeevesConfig;

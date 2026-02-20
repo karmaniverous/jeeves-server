@@ -1,33 +1,79 @@
 /**
- * PlantUML rendering via the PlantUML community server.
+ * PlantUML rendering via local Java jar.
  *
- * Encodes diagram source into a URL and fetches the rendered SVG.
- * No local Java dependency required.
+ * Renders diagrams locally, supporting !include directives and all
+ * PlantUML features. Requires Java and the PlantUML jar on the server.
  */
 
-import plantumlEncoder from 'plantuml-encoder';
+import { execSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const PLANTUML_SERVER = 'https://www.plantuml.com/plantuml';
+import { getConfig } from '../config/index.js';
 
 /**
- * Encode PlantUML source into a server URL for the given format.
+ * Render a PlantUML file to SVG using the local jar.
+ * Returns the SVG string, or null on failure.
  */
-export function plantumlUrl(source: string, format: 'svg' | 'png' = 'svg'): string {
-  const encoded = plantumlEncoder.encode(source);
-  return `${PLANTUML_SERVER}/${format}/${encoded}`;
+export function renderPlantUml(filePath: string): string | null {
+  const config = getConfig();
+  const jarPath = config.plantumlJarPath;
+  if (!jarPath) return null;
+
+  const dir = path.dirname(filePath);
+  const ext = path.extname(filePath);
+  const base = path.basename(filePath, ext);
+  // PlantUML outputs {basename}.svg in the output directory
+  const outFile = path.join(dir, `${base}.svg`);
+
+  try {
+    execSync(
+      `java -jar "${jarPath}" -tsvg "${filePath}"`,
+      { timeout: 30_000, stdio: 'pipe', cwd: dir },
+    );
+
+    if (!fs.existsSync(outFile)) return null;
+
+    const svg = fs.readFileSync(outFile, 'utf8');
+    try { fs.unlinkSync(outFile); } catch { /* ignore */ }
+    return svg;
+  } catch (err) {
+    try { fs.unlinkSync(outFile); } catch { /* ignore */ }
+    return null;
+  }
 }
 
 /**
- * Render PlantUML source to SVG via the community server.
- * Returns the SVG string, or null on failure.
+ * Render PlantUML file to a specific format and return the buffer.
+ * Used for export endpoints.
  */
-export async function renderPlantUml(source: string): Promise<string | null> {
+export function renderPlantUmlToBuffer(
+  filePath: string,
+  format: 'svg' | 'png',
+): Buffer | null {
+  const config = getConfig();
+  const jarPath = config.plantumlJarPath;
+  if (!jarPath) return null;
+
+  const dir = path.dirname(filePath);
+  const ext = path.extname(filePath);
+  const base = path.basename(filePath, ext);
+  const outFile = path.join(dir, `${base}.${format}`);
+
   try {
-    const url = plantumlUrl(source, 'svg');
-    const resp = await fetch(url, { signal: AbortSignal.timeout(15_000) });
-    if (!resp.ok) return null;
-    return await resp.text();
+    const formatFlag = format === 'png' ? '-tpng' : '-tsvg';
+    execSync(
+      `java -jar "${jarPath}" ${formatFlag} "${filePath}"`,
+      { timeout: 30_000, stdio: 'pipe', cwd: dir },
+    );
+
+    if (!fs.existsSync(outFile)) return null;
+
+    const buffer = fs.readFileSync(outFile);
+    try { fs.unlinkSync(outFile); } catch { /* ignore */ }
+    return buffer;
   } catch {
+    try { fs.unlinkSync(outFile); } catch { /* ignore */ }
     return null;
   }
 }

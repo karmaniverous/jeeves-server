@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { Header } from '@/components/layout/Header';
-import { SvgViewer } from '@/components/SvgViewer';
 import type { BreadcrumbItem, FileContent } from '@/lib/api';
 import { getFile } from '@/lib/api';
 import { useTheme } from '@/lib/theme';
@@ -62,18 +61,11 @@ export function FileViewer() {
             </pre>
           )}
 
-          {(file?.type === 'mermaid' || file?.type === 'plantuml') && file.html && (
-            <SvgViewer content={file.html} />
-          )}
-
-          {(file?.type === 'mermaid' || file?.type === 'plantuml') && !file?.html && file?.content && (
-            <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
-              <code>{file.content}</code>
-            </pre>
-          )}
-
           {file?.type === 'svg' && file.content && (
-            <SvgViewer content={file.content} />
+            <div
+              className="flex justify-center p-4"
+              dangerouslySetInnerHTML={{ __html: file.content }}
+            />
           )}
 
           {file?.type === 'image' && (

@@ -10,6 +10,7 @@ import { DriveList } from '@/components/DriveList';
 import { Header } from '@/components/layout/Header';
 import { LinkDropdown } from '@/components/LinkDropdown';
 import { MermaidViewer } from '@/components/MermaidViewer';
+import { PlantUmlViewer } from '@/components/PlantUmlViewer';
 import { SvgViewer } from '@/components/SvgViewer';
 import type { BreadcrumbItem, DirectoryListing, DriveEntry, FileContent, ShareSettings } from '@/lib/api';
 import { getDrives, getDirectory, getFile, getFileRaw } from '@/lib/api';
@@ -66,10 +67,10 @@ function formatRelativeTime(isoDate: string): string {
 }
 
 function isRenderable(file: FileContent): boolean {
-  return file.type === 'markdown' || file.type === 'svg' || file.type === 'mermaid';
+  return file.type === 'markdown' || file.type === 'svg' || file.type === 'mermaid' || file.type === 'plantuml';
 }
 
-const RENDERABLE_EXTENSIONS = new Set(['.md', '.svg', '.mmd']);
+const RENDERABLE_EXTENSIONS = new Set(['.md', '.svg', '.mmd', '.puml', '.plantuml', '.pu']);
 
 function loadShareSettings(): ShareSettings {
   const saved = localStorage.getItem('jeeves-share-settings');
@@ -388,6 +389,10 @@ export function FileBrowser() {
 
                 {fileRendered?.type === 'mermaid' && activeTab === 'rendered' && (
                   <MermaidViewer html={fileRendered.html ?? null} content={fileRendered.content ?? ''} />
+                )}
+
+                {fileRendered?.type === 'plantuml' && activeTab === 'rendered' && (
+                  <PlantUmlViewer html={fileRendered.html ?? null} content={fileRendered.content ?? ''} />
                 )}
 
                 {file?.type === 'image' && (

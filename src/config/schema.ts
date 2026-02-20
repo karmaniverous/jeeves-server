@@ -88,6 +88,8 @@ export const jeevesConfigSchema = z
     roots: z.record(z.string(), z.string()).optional(),
     /** Path to mermaid-cli (npx prefix directory). If not set, mermaid rendering is disabled. */
     mermaidCliPath: z.string().optional(),
+    /** Path to PlantUML jar file. If not set, PlantUML rendering is disabled. */
+    plantumlJarPath: z.string().optional(),
     /**
      * Global outsider policy — constrains which paths are eligible for outsider sharing.
      * Uses the same allow/deny model as insider scopes.

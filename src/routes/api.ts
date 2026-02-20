@@ -30,7 +30,7 @@ import hljs from 'highlight.js';
 
 import { rewriteLinksForDeepShare } from '../services/deepShareLinks.js';
 import { parseMarkdown } from '../services/markdown.js';
-import { renderPlantUml, plantumlUrl } from '../services/plantuml.js';
+import { renderPlantUml, renderPlantUmlToBuffer } from '../services/plantuml.js';
 import { getContentType, isInlineType, looksLikeText } from '../util/fileDetection.js';
 import { formatRelativeTime } from '../util/formatters.js';
 
@@ -456,7 +456,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         });
       }
 
-      // PlantUML — render to SVG via PlantUML community server
+      // PlantUML — render to SVG via local PlantUML jar
       if (ext === '.puml' || ext === '.plantuml' || ext === '.pu') {
         const content = fs.readFileSync(resolved, 'utf8');
         if (rawOnly) {
@@ -464,7 +464,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         }
         let renderedSvg: string | null = null;
         try {
-          renderedSvg = await renderPlantUml(content);
+          renderedSvg = renderPlantUml(resolved);
         } catch {
           // Fall back to raw content only
         }
@@ -848,7 +848,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // GET /api/plantuml-export/* — render .puml file to SVG or PNG via PlantUML server
+  // GET /api/plantuml-export/* — render .puml file to SVG or PNG via local jar
   fastify.get<{ Params: { '*': string }; Querystring: { format?: string } }>(
     '/api/plantuml-export/*',
     async (request, reply) => {
@@ -865,27 +865,19 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       }
 
       const format = request.query.format === 'png' ? 'png' : 'svg';
-      const source = fs.readFileSync(resolved, 'utf8');
-      const url = plantumlUrl(source, format);
+      const buffer = renderPlantUmlToBuffer(resolved, format);
 
-      try {
-        const resp = await fetch(url, { signal: AbortSignal.timeout(15_000) });
-        if (!resp.ok) {
-          return reply.code(502).send({ error: `PlantUML server returned ${String(resp.status)}` });
-        }
-
-        const baseName = path.basename(resolved, ext);
-        const contentType = format === 'png' ? 'image/png' : 'image/svg+xml';
-        const buffer = Buffer.from(await resp.arrayBuffer());
-
-        return reply
-          .header('Content-Type', contentType)
-          .header('Content-Disposition', `attachment; filename="${baseName}.${format}"`)
-          .send(buffer);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'PlantUML render failed';
-        return reply.code(502).send({ error: message });
+      if (!buffer) {
+        return reply.code(500).send({ error: 'PlantUML render failed' });
       }
+
+      const baseName = path.basename(resolved, ext);
+      const contentType = format === 'png' ? 'image/png' : 'image/svg+xml';
+
+      return reply
+        .header('Content-Type', contentType)
+        .header('Content-Disposition', `attachment; filename="${baseName}.${format}"`)
+        .send(buffer);
     },
   );
 
