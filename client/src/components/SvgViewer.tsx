@@ -1,27 +1,21 @@
 import Panzoom from '@panzoom/panzoom';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface SvgViewerProps {
   content: string;
 }
 
-interface SvgDimensions {
-  html: string;
-  intrinsicWidth: number;
-  intrinsicHeight: number;
-}
-
 /**
- * Pre-process SVG content: extract intrinsic dimensions, ensure viewBox,
- * and set width/height to 100% for CSS-driven scaling.
+ * Pre-process SVG content: ensure viewBox exists, strip fixed sizing,
+ * set preserveAspectRatio so the SVG zoom-to-fits its container natively.
  */
-function prepareSvgContent(raw: string): SvgDimensions {
+function prepareSvgContent(raw: string): string {
   const parser = new DOMParser();
   const doc = parser.parseFromString(raw, 'image/svg+xml');
   const svg = doc.querySelector('svg');
-  if (!svg) return { html: raw, intrinsicWidth: 800, intrinsicHeight: 600 };
+  if (!svg) return raw;
 
-  // Extract intrinsic dimensions from viewBox or width/height attributes
+  // Extract intrinsic dimensions for viewBox if missing
   let w = 0, h = 0;
   const viewBox = svg.getAttribute('viewBox');
   if (viewBox) {
@@ -36,35 +30,40 @@ function prepareSvgContent(raw: string): SvgDimensions {
     h = parseFloat(svg.getAttribute('height') ?? '0');
   }
 
-  // Ensure viewBox exists
+  // Ensure viewBox exists (required for scaling)
   if (!svg.getAttribute('viewBox') && w > 0 && h > 0) {
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
   }
 
-  // Remove fixed dimensions — let CSS control size
+  // Strip ALL fixed sizing — attributes AND inline styles
   svg.removeAttribute('width');
   svg.removeAttribute('height');
+  svg.style.removeProperty('width');
+  svg.style.removeProperty('height');
+  svg.style.removeProperty('background');
+
+  // Fill container, maintain aspect ratio
   svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-  // Make SVG fill its container
-  svg.style.width = '100%';
-  svg.style.height = '100%';
+  svg.setAttribute('width', '100%');
+  svg.setAttribute('height', '100%');
   svg.style.display = 'block';
 
-  return {
-    html: new XMLSerializer().serializeToString(doc),
-    intrinsicWidth: w > 0 ? w : 800,
-    intrinsicHeight: h > 0 ? h : 600,
-  };
+  return new XMLSerializer().serializeToString(doc);
 }
 
 export function SvgViewer({ content }: SvgViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const panzoomRef = useRef<ReturnType<typeof Panzoom> | null>(null);
+  const wheelCleanupRef = useRef<(() => void) | null>(null);
+  const [ready, setReady] = useState(false);
 
-  const prepared = useMemo(() => prepareSvgContent(content), [content]);
+  const html = useMemo(() => prepareSvgContent(content), [content]);
 
   const initPanzoom = useCallback(() => {
+    // Clean up previous instance
+    wheelCleanupRef.current?.();
+    wheelCleanupRef.current = null;
     if (panzoomRef.current) {
       panzoomRef.current.destroy();
       panzoomRef.current = null;
@@ -78,28 +77,16 @@ export function SvgViewer({ content }: SvgViewerProps) {
 
     if (cw === 0 || ch === 0) return;
 
-    // Size the inner div to match the SVG's aspect ratio at a large base size.
-    // Panzoom transforms this div; the SVG inside scales via CSS 100%/100%.
-    const svgW = prepared.intrinsicWidth;
-    const svgH = prepared.intrinsicHeight;
-
-    // Set inner to intrinsic SVG size — panzoom will scale it
-    inner.style.width = `${svgW}px`;
-    inner.style.height = `${svgH}px`;
-    inner.style.transformOrigin = '0 0';
-
-    // Calculate zoom-to-fit scale
-    const scaleX = cw / svgW;
-    const scaleY = ch / svgH;
-    const fitScale = Math.min(scaleX, scaleY, 1); // don't upscale past 1:1
+    // Inner div fills the container; the SVG inside zoom-to-fits via
+    // viewBox + preserveAspectRatio. Panzoom then handles user zoom/pan
+    // starting from this natural fit.
+    inner.style.width = `${cw}px`;
+    inner.style.height = `${ch}px`;
 
     const pz = Panzoom(inner, {
       maxScale: 20,
-      minScale: fitScale * 0.5,
-      startScale: fitScale,
-      startX: (cw - svgW * fitScale) / 2,
-      startY: (ch - svgH * fitScale) / 2,
-      contain: 'outside',
+      minScale: 0.1,
+      startScale: 1,
     });
     panzoomRef.current = pz;
 
@@ -107,29 +94,25 @@ export function SvgViewer({ content }: SvgViewerProps) {
       pz.zoomWithWheel(e);
     };
     container.addEventListener('wheel', wheelHandler, { passive: false });
-    return () => container.removeEventListener('wheel', wheelHandler);
-  }, [prepared]);
+    wheelCleanupRef.current = () => container.removeEventListener('wheel', wheelHandler);
+
+    setReady(true);
+  }, [html]);
 
   useEffect(() => {
-    // Defer to ensure container has layout dimensions
-    let cleanupWheel: (() => void) | undefined;
-    const frameId = requestAnimationFrame(() => {
-      cleanupWheel = initPanzoom() ?? undefined;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver(() => {
+      initPanzoom();
     });
+    observer.observe(container);
+
     return () => {
-      cancelAnimationFrame(frameId);
-      cleanupWheel?.();
+      observer.disconnect();
+      wheelCleanupRef.current?.();
       panzoomRef.current?.destroy();
     };
-  }, [prepared, initPanzoom]);
-
-  // Re-init on window resize for responsive behavior
-  useEffect(() => {
-    const handleResize = () => {
-      requestAnimationFrame(() => initPanzoom());
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
   }, [initPanzoom]);
 
   return (
@@ -140,7 +123,8 @@ export function SvgViewer({ content }: SvgViewerProps) {
       >
         <div
           ref={innerRef}
-          dangerouslySetInnerHTML={{ __html: prepared.html }}
+          className={ready ? '' : 'invisible'}
+          dangerouslySetInnerHTML={{ __html: html }}
         />
       </div>
     </div>
