@@ -54,6 +54,11 @@ function getDownloadItems(reqPath: string, file: { fileName: string; type: strin
     items.push({ label: 'PNG', href: `/api/mermaid-export/${reqPath}?format=png`, filename: `${baseName}.png` });
   }
 
+  if (file.type === 'plantuml' || ['.puml', '.plantuml', '.pu'].includes(file.type)) {
+    items.push({ label: 'SVG', href: `/api/plantuml-export/${reqPath}?format=svg`, filename: `${baseName}.svg` });
+    items.push({ label: 'PNG', href: `/api/plantuml-export/${reqPath}?format=png`, filename: `${baseName}.png` });
+  }
+
   return items;
 }
 

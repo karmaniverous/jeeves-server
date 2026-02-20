@@ -1,0 +1,13 @@
+@startuml
+actor User
+participant "Web Browser" as Browser
+participant "Jeeves Server" as Server
+participant "PlantUML Server" as PUML
+
+User -> Browser: Open .puml file
+Browser -> Server: GET /api/file/path/to/file.puml
+Server -> PUML: GET /plantuml/svg/{encoded}
+PUML --> Server: SVG content
+Server --> Browser: { type: "plantuml", html: "<svg>..." }
+Browser --> User: Rendered diagram with panzoom
+@enduml
