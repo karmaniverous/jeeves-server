@@ -181,5 +181,9 @@ export async function getCapabilities(): Promise<Capabilities> {
 }
 
 export async function openLocally(path: string): Promise<{ ok: boolean }> {
-  return fetchJson<{ ok: boolean }>(`${API_BASE}/open/${path}`, { method: 'POST' });
+  return fetchJson<{ ok: boolean }>(`${API_BASE}/open/${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: '{}',
+  });
 }
