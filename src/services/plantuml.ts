@@ -34,14 +34,24 @@ function renderViaJar(
 
   try {
     const java = plantuml.javaPath ?? 'java';
+    // UNSECURE profile allows remote !include directives (e.g. AWS PuML from GitHub)
     execSync(
-      `"${java}" -jar "${plantuml.jarPath}" -t${format} -o "${tmpDir}" "${filePath}"`,
-      { timeout: 30_000, stdio: 'pipe', cwd: dir },
+      `"${java}" -DPLANTUML_SECURITY_PROFILE=UNSECURE -jar "${plantuml.jarPath}" -t${format} -o "${tmpDir}" "${filePath}"`,
+      { timeout: 60_000, stdio: 'pipe', cwd: dir },
     );
     if (!fs.existsSync(outFile)) return null;
     const buffer = fs.readFileSync(outFile);
     return buffer;
   } catch (err) {
+    // PlantUML may produce output even on non-zero exit (e.g. partial render with warnings).
+    // Check for output before giving up.
+    if (fs.existsSync(outFile)) {
+      console.warn('[PlantUML jar] render completed with warnings');
+      if (err && typeof err === 'object' && 'stderr' in err) {
+        console.warn('[PlantUML jar] stderr:', String((err as { stderr: unknown }).stderr));
+      }
+      return fs.readFileSync(outFile);
+    }
     console.error('[PlantUML jar] render failed:', (err as Error).message);
     if (err && typeof err === 'object' && 'stderr' in err) {
       console.error('[PlantUML jar] stderr:', String((err as { stderr: unknown }).stderr));
