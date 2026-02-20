@@ -52,11 +52,16 @@ function getDownloadItems(reqPath: string, file: { fileName: string; type: strin
   if (file.type === 'mermaid' || file.type === '.mmd') {
     items.push({ label: 'SVG', href: `/api/mermaid-export/${reqPath}?format=svg`, filename: `${baseName}.svg` });
     items.push({ label: 'PNG', href: `/api/mermaid-export/${reqPath}?format=png`, filename: `${baseName}.png` });
+    items.push({ label: 'PDF', href: `/api/mermaid-export/${reqPath}?format=pdf`, filename: `${baseName}.pdf` });
   }
 
   if (file.type === 'plantuml' || ['.puml', '.plantuml', '.pu'].includes(file.type)) {
     items.push({ label: 'SVG', href: `/api/plantuml-export/${reqPath}?format=svg`, filename: `${baseName}.svg` });
     items.push({ label: 'PNG', href: `/api/plantuml-export/${reqPath}?format=png`, filename: `${baseName}.png` });
+    items.push({ label: 'PDF', href: `/api/plantuml-export/${reqPath}?format=pdf`, filename: `${baseName}.pdf` });
+    items.push({ label: 'EPS', href: `/api/plantuml-export/${reqPath}?format=eps`, filename: `${baseName}.eps` });
+    items.push({ label: 'LaTeX', href: `/api/plantuml-export/${reqPath}?format=latex`, filename: `${baseName}.latex` });
+    items.push({ label: 'Text', href: `/api/plantuml-export/${reqPath}?format=txt`, filename: `${baseName}.txt` });
   }
 
   return items;

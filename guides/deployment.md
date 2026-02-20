@@ -7,9 +7,15 @@ How to run Jeeves Server in production.
 ## Prerequisites
 
 - **Node.js** ≥ 18
-- **Chrome or Chromium** — for PDF export
+- **Chrome or Chromium** — for PDF/DOCX export via Puppeteer
 - **A domain** with HTTPS — required for Google OAuth and secure sharing
 - **A reverse proxy** — nginx, Caddy, or similar (recommended)
+
+### Optional Dependencies
+
+- **Java** (JDK 11+) — required for local PlantUML rendering with `!include` support. Without Java, PlantUML falls back to the community server (no `!include` support).
+- **PlantUML jar** — download from [plantuml.com/download](https://plantuml.com/download). Configure the path in `jeeves.config.ts` under `plantuml.jarPath`.
+- **Mermaid CLI** — for server-side Mermaid diagram rendering. Install with `npm install @mermaid-js/mermaid-cli` and configure `mermaidCliPath` in `jeeves.config.ts`.
 
 ## Running the Server
 
