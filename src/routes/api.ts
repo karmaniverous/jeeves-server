@@ -1170,22 +1170,24 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       }
 
       // Open with OS default handler
-      const { exec } = await import('node:child_process');
+      const { exec, spawn } = await import('node:child_process');
       const platform = process.platform;
-      let cmd: string;
-      if (platform === 'win32') {
-        cmd = `start "" "${resolved}"`;
-      } else if (platform === 'darwin') {
-        cmd = `open "${resolved}"`;
-      } else {
-        cmd = `xdg-open "${resolved}"`;
-      }
 
-      exec(cmd, (err) => {
-        if (err) {
+      if (platform === 'win32') {
+        // Use explorer.exe — works from services (session 0) unlike `start`
+        const child = spawn('explorer.exe', [resolved], { detached: true, stdio: 'ignore' });
+        child.unref();
+        child.on('error', (err) => {
           console.error('[api/open] Failed to open:', err.message);
-        }
-      });
+        });
+      } else {
+        const cmd = platform === 'darwin' ? `open "${resolved}"` : `xdg-open "${resolved}"`;
+        exec(cmd, (err) => {
+          if (err) {
+            console.error('[api/open] Failed to open:', err.message);
+          }
+        });
+      }
 
       return reply.send({ ok: true, path: resolved });
     },
