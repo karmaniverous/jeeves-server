@@ -1056,6 +1056,45 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
     },
   );
 
+  // PUT /api/file/* — write file content (insider-only)
+  fastify.put(
+    '/api/file/*',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      if ((request as { accessMode?: string }).accessMode !== 'insider') {
+        return reply.code(403).send({ error: 'Insider access required' });
+      }
+
+      const reqPath = (request.params as { '*': string })['*'];
+      const fsPath = urlPathToFs(reqPath, _roots);
+      if (!fsPath) {
+        return reply.code(404).send({ error: 'Invalid path' });
+      }
+      const resolved = path.resolve(fsPath);
+
+      // Only allow writing to existing files (no creating new files)
+      try {
+        const stat = await fs.promises.stat(resolved);
+        if (!stat.isFile()) {
+          return reply.code(400).send({ error: 'Can only write to files' });
+        }
+      } catch {
+        return reply.code(404).send({ error: 'File not found' });
+      }
+
+      const body = request.body as { content?: string } | null;
+      if (!body || typeof body.content !== 'string') {
+        return reply.code(400).send({ error: 'Request body must include "content" string' });
+      }
+
+      try {
+        await fs.promises.writeFile(resolved, body.content, 'utf8');
+        return reply.send({ ok: true, path: resolved, size: Buffer.byteLength(body.content, 'utf8') });
+      } catch (err) {
+        return reply.code(500).send({ error: `Write failed: ${(err as Error).message}` });
+      }
+    },
+  );
+
   // GET /api/auth/status — check auth (bypasses preHandler, does its own check)
   fastify.get(
     '/api/auth/status',

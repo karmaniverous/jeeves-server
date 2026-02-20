@@ -1,0 +1,215 @@
+/**
+ * Lazy-loaded CodeMirror editor for in-browser text editing.
+ * Only imported when the user clicks Edit on a text file's Raw tab.
+ */
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { useTheme } from '@/lib/theme';
+
+// Lazy-load all CodeMirror dependencies
+async function loadCodeMirror() {
+  const [
+    { EditorView, basicSetup },
+    { EditorState },
+    { keymap },
+    { oneDark },
+  ] = await Promise.all([
+    import('codemirror'),
+    import('@codemirror/state'),
+    import('@codemirror/view'),
+    import('@codemirror/theme-one-dark'),
+  ]);
+  return { EditorView, EditorState, basicSetup, keymap, oneDark };
+}
+
+/** Map file extensions to CodeMirror language support (lazy-loaded) */
+async function getLanguageExtension(ext: string) {
+  switch (ext.toLowerCase()) {
+    case 'js':
+    case 'jsx':
+    case 'mjs':
+    case 'cjs':
+      return (await import('@codemirror/lang-javascript')).javascript({ jsx: ext.includes('x') });
+    case 'ts':
+    case 'tsx':
+    case 'mts':
+    case 'cts':
+      return (await import('@codemirror/lang-javascript')).javascript({ jsx: ext.includes('x'), typescript: true });
+    case 'html':
+    case 'htm':
+      return (await import('@codemirror/lang-html')).html();
+    case 'css':
+    case 'scss':
+      return (await import('@codemirror/lang-css')).css();
+    case 'json':
+    case 'jsonl':
+      return (await import('@codemirror/lang-json')).json();
+    case 'md':
+    case 'mdx':
+    case 'markdown':
+      return (await import('@codemirror/lang-markdown')).markdown();
+    case 'py':
+    case 'pyw':
+      return (await import('@codemirror/lang-python')).python();
+    case 'xml':
+    case 'svg':
+    case 'xsl':
+    case 'xhtml':
+      return (await import('@codemirror/lang-xml')).xml();
+    case 'yaml':
+    case 'yml':
+      return (await import('@codemirror/lang-yaml')).yaml();
+    case 'c':
+    case 'h':
+    case 'cpp':
+    case 'hpp':
+    case 'cc':
+    case 'cxx':
+      return (await import('@codemirror/lang-cpp')).cpp();
+    case 'java':
+      return (await import('@codemirror/lang-java')).java();
+    case 'rs':
+      return (await import('@codemirror/lang-rust')).rust();
+    case 'sql':
+      return (await import('@codemirror/lang-sql')).sql();
+    case 'php':
+      return (await import('@codemirror/lang-php')).php();
+    default:
+      return null;
+  }
+}
+
+interface CodeEditorProps {
+  content: string;
+  fileName: string;
+  onSave: (content: string) => Promise<void>;
+  onCancel: () => void;
+}
+
+export function CodeEditor({ content, fileName, onSave, onCancel }: CodeEditorProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<import('@codemirror/view').EditorView | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [theme] = useTheme();
+  const savedContentRef = useRef(content);
+
+  const handleSave = useCallback(async () => {
+    if (!viewRef.current) return;
+    const newContent = viewRef.current.state.doc.toString();
+    setSaving(true);
+    try {
+      await onSave(newContent);
+      savedContentRef.current = newContent;
+      setDirty(false);
+    } finally {
+      setSaving(false);
+    }
+  }, [onSave]);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    let destroyed = false;
+
+    (async () => {
+      const { EditorView, EditorState, basicSetup, keymap, oneDark } = await loadCodeMirror();
+      if (destroyed) return;
+
+      const ext = fileName.split('.').pop() ?? '';
+      const langExt = await getLanguageExtension(ext);
+      if (destroyed) return;
+
+      const extensions = [
+        basicSetup,
+        keymap.of([{
+          key: 'Mod-s',
+          run: () => {
+            handleSave();
+            return true;
+          },
+        }]),
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            const current = update.state.doc.toString();
+            setDirty(current !== savedContentRef.current);
+          }
+        }),
+        EditorView.theme({
+          '&': { fontSize: '14px', height: '100%' },
+          '.cm-scroller': { overflow: 'auto' },
+          '.cm-content': { fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace" },
+          '.cm-gutters': { fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace" },
+        }),
+      ];
+
+      if (theme === 'dark') {
+        extensions.push(oneDark);
+      }
+
+      if (langExt) {
+        extensions.push(langExt);
+      }
+
+      const state = EditorState.create({
+        doc: content,
+        extensions,
+      });
+
+      const view = new EditorView({
+        state,
+        parent: containerRef.current!,
+      });
+
+      viewRef.current = view;
+      setLoading(false);
+    })();
+
+    return () => {
+      destroyed = true;
+      if (viewRef.current) {
+        viewRef.current.destroy();
+        viewRef.current = null;
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/50">
+        <span className="text-sm font-medium text-foreground">Editing</span>
+        {dirty && (
+          <span className="text-xs px-1.5 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded">
+            unsaved
+          </span>
+        )}
+        <div className="flex-1" />
+        <button
+          onClick={onCancel}
+          className="px-3 py-1 text-sm rounded border border-border text-muted-foreground hover:bg-accent transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={saving || !dirty}
+          className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+        <span className="text-xs text-muted-foreground hidden sm:inline">Ctrl+S</span>
+      </div>
+
+      {/* Editor */}
+      <div ref={containerRef} className="flex-1 overflow-hidden">
+        {loading && (
+          <div className="flex items-center justify-center h-32 text-muted-foreground">
+            Loading editor…
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

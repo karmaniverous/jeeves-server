@@ -1,8 +1,9 @@
-import { Loader2, Menu, Minus, Minimize2, Maximize2, X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Loader2, Menu, Minus, Minimize2, Maximize2, Pencil, X } from 'lucide-react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import { CodeBlock } from '@/components/CodeBlock';
+const CodeEditor = lazy(() => import('@/components/CodeEditor').then(m => ({ default: m.CodeEditor })));
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { DirectoryTable } from '@/components/DirectoryTable';
 import { DownloadDropdown } from '@/components/DownloadDropdown';
@@ -13,7 +14,7 @@ import { MermaidViewer } from '@/components/MermaidViewer';
 import { PlantUmlViewer } from '@/components/PlantUmlViewer';
 import { SvgViewer } from '@/components/SvgViewer';
 import type { BreadcrumbItem, DirectoryListing, DriveEntry, FileContent, ShareSettings } from '@/lib/api';
-import { getDrives, getDirectory, getFile, getFileRaw } from '@/lib/api';
+import { getDrives, getDirectory, getFile, getFileRaw, saveFile } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { initEmbeddedDiagramPanzoom } from '@/components/EmbeddedDiagramPanzoom';
 import { initInlineSvgPanzoom } from '@/components/InlineSvgPanzoom';
@@ -108,6 +109,7 @@ export function FileBrowser() {
   const [fileRendered, setFileRendered] = useState<FileContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') === 'raw' ? 'raw' : 'rendered';
@@ -131,6 +133,7 @@ export function FileBrowser() {
     setDirectory(null);
     setFileRaw(null);
     setFileRendered(null);
+    setEditing(false);
     setViewTabState(searchParams.get('tab') === 'raw' ? 'raw' : 'rendered');
 
     if (!reqPath) {
@@ -202,26 +205,26 @@ export function FileBrowser() {
           isInsider={isInsider}
           theme={theme}
           onToggleTheme={toggleTheme}
-          keyAge={keyAge}
-          onRotateKey={handleRotateKey}
-          downloadDropdown={
+          keyAge={editing ? undefined : keyAge}
+          onRotateKey={editing ? undefined : handleRotateKey}
+          downloadDropdown={editing ? undefined :
             file ? (
               <DownloadDropdown reqPath={reqPath} file={file} variant="header" />
             ) : directory ? (
               <DownloadDropdown reqPath={reqPath} file={null} isDirectory variant="header" />
             ) : undefined
           }
-          downloadMenuItem={
+          downloadMenuItem={editing ? undefined :
             file ? (
               (onDismiss) => <DownloadDropdown reqPath={reqPath} file={file} variant="menuItem" onStateChange={(s) => { if (s === 'done') setTimeout(onDismiss, 800); }} />
             ) : directory ? (
               (onDismiss) => <DownloadDropdown reqPath={reqPath} file={null} isDirectory variant="menuItem" onStateChange={(s) => { if (s === 'done') setTimeout(onDismiss, 800); }} />
             ) : undefined
           }
-          linkControls={isInsider ? (
+          linkControls={editing ? undefined : isInsider ? (
             <LinkDropdown path={`/${reqPath}`} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} showEvent showRaw={!!file} variant="header" isDirectory={!file} />
           ) : undefined}
-          linkMenuItem={isInsider ? (
+          linkMenuItem={editing ? undefined : isInsider ? (
             (onDismiss) => <LinkDropdown path={`/${reqPath}`} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} showEvent showRaw={!!file} variant="menuItem" isDirectory={!file} onStateChange={(s) => { if (s === 'done') setTimeout(onDismiss, 800); }} />
           ) : undefined}
         />
@@ -279,6 +282,15 @@ export function FileBrowser() {
                     </button>
                   ))}
                 </div>
+              )}
+              {isInsider && activeTab === 'raw' && file?.content != null && !editing && (
+                <button
+                  onClick={() => setEditing(true)}
+                  className="ml-2 flex items-center gap-1 px-2 py-1 text-sm text-muted-foreground hover:text-foreground border border-border rounded transition-colors"
+                  title="Edit file"
+                >
+                  <Pencil className="h-3.5 w-3.5" /> Edit
+                </button>
               )}
             </div>
           );
@@ -341,12 +353,32 @@ export function FileBrowser() {
                   </div>
                 )}
 
-                {(fileRaw ?? file)?.content && activeTab === 'raw' && (
+                {(fileRaw ?? file)?.content && activeTab === 'raw' && !editing && (
                   <CodeBlock
                     content={(fileRaw ?? file)!.content!}
                     html={renderable ? null : (fileRendered ?? fileRaw)?.html}
                     language={renderable ? null : (fileRendered ?? fileRaw)?.language}
                   />
+                )}
+
+                {editing && (fileRaw ?? file)?.content != null && activeTab === 'raw' && (
+                  <Suspense fallback={<div className="flex items-center gap-2 text-muted-foreground text-sm py-8 justify-center"><Loader2 className="h-4 w-4 animate-spin" /> Loading editor…</div>}>
+                    <div style={{ height: `calc(100vh - ${topBarHeight + 16}px)` }}>
+                      <CodeEditor
+                        content={(fileRaw ?? file)!.content!}
+                        fileName={(fileRaw ?? file)!.fileName}
+                        onSave={async (content) => {
+                          await saveFile(reqPath, content);
+                          // Refresh the file to show updated content
+                          const refreshed = await getFileRaw(reqPath);
+                          setFileRaw(refreshed);
+                          // Also refresh rendered view if applicable
+                          try { const r = await getFile(reqPath); setFileRendered(r); } catch { /* ignore */ }
+                        }}
+                        onCancel={() => setEditing(false)}
+                      />
+                    </div>
+                  </Suspense>
                 )}
 
                 {!fileRendered && renderable && activeTab === 'rendered' && !fileLoading && (
