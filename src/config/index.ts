@@ -125,7 +125,7 @@ export function loadConfig(): RuntimeConfig {
       const servers = puml?.servers ? [...puml.servers] : [];
       // Always append community server as last resort (unless already listed)
       if (!servers.includes(COMMUNITY)) servers.push(COMMUNITY);
-      return { jarPath: puml?.jarPath, servers };
+      return { jarPath: puml?.jarPath, javaPath: puml?.javaPath, servers };
     })(),
     outsiderPolicy: normalizeScopes(config.outsiderPolicy) ?? null,
     events: config.events,

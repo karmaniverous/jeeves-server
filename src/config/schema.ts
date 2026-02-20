@@ -98,6 +98,7 @@ export const jeevesConfigSchema = z
      */
     plantuml: z.object({
       jarPath: z.string().optional(),
+      javaPath: z.string().optional(),
       servers: z.array(z.string().url()).optional(),
     }).optional(),
     /**

@@ -7,6 +7,7 @@
 
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 import plantumlEncoder from 'plantuml-encoder';
@@ -15,6 +16,7 @@ import { getConfig } from '../config/index.js';
 
 /**
  * Try rendering via local PlantUML jar.
+ * Output goes to a temp directory to avoid writing in the source tree.
  * Returns the output buffer, or null on failure.
  */
 function renderViaJar(
@@ -27,20 +29,27 @@ function renderViaJar(
   const dir = path.dirname(filePath);
   const ext = path.extname(filePath);
   const base = path.basename(filePath, ext);
-  const outFile = path.join(dir, `${base}.${format}`);
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'puml-'));
+  const outFile = path.join(tmpDir, `${base}.${format}`);
 
   try {
+    const java = plantuml.javaPath ?? 'java';
     execSync(
-      `java -jar "${plantuml.jarPath}" -t${format} "${filePath}"`,
+      `"${java}" -jar "${plantuml.jarPath}" -t${format} -o "${tmpDir}" "${filePath}"`,
       { timeout: 30_000, stdio: 'pipe', cwd: dir },
     );
     if (!fs.existsSync(outFile)) return null;
     const buffer = fs.readFileSync(outFile);
-    try { fs.unlinkSync(outFile); } catch { /* ignore */ }
     return buffer;
-  } catch {
-    try { fs.unlinkSync(outFile); } catch { /* ignore */ }
+  } catch (err) {
+    console.error('[PlantUML jar] render failed:', (err as Error).message);
+    if (err && typeof err === 'object' && 'stderr' in err) {
+      console.error('[PlantUML jar] stderr:', String((err as { stderr: unknown }).stderr));
+    }
     return null;
+  } finally {
+    // Clean up temp dir
+    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* ignore */ }
   }
 }
 
@@ -115,8 +124,8 @@ export function getPlantUmlFormats(): string[] {
   // PlantUML jar supports all these; server supports svg/png/txt
   const { plantuml } = getConfig();
   if (plantuml.jarPath) {
-    return ['svg', 'png', 'pdf', 'eps', 'txt', 'latex'];
+    return ['svg', 'png', 'pdf', 'eps'];
   }
   // Server-only: limited formats
-  return ['svg', 'png', 'txt'];
+  return ['svg', 'png'];
 }

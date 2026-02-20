@@ -55,6 +55,7 @@ export interface RuntimeConfig {
   mermaidCliPath?: string;
   plantuml: {
     jarPath?: string;
+    javaPath?: string;
     servers: string[];
   };
   outsiderPolicy: NormalizedScopes | null;

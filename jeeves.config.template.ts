@@ -123,6 +123,7 @@ export default {
    */
   // plantuml: {
   //   jarPath: '/opt/plantuml/plantuml.jar',
+  //   javaPath: '/usr/bin/java',  // optional — defaults to 'java' on PATH
   //   servers: ['https://internal.plantuml.example.com/plantuml'],
   // },
 } satisfies JeevesConfig;
