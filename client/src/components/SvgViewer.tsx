@@ -116,7 +116,7 @@ export function SvgViewer({ content }: SvgViewerProps) {
   }, [initPanzoom]);
 
   return (
-    <div className="relative bg-white dark:bg-zinc-900 rounded-lg border border-border overflow-hidden">
+    <div className="relative bg-white rounded-lg border border-border overflow-hidden">
       <div
         ref={containerRef}
         className="overflow-hidden cursor-grab active:cursor-grabbing w-full h-[calc(100vh-8rem)]"
