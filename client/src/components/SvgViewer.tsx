@@ -1,50 +1,25 @@
 import Panzoom from '@panzoom/panzoom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { normalizeSvg } from '@/lib/svg';
 
 interface SvgViewerProps {
   content: string;
 }
 
 /**
- * Pre-process SVG content: ensure viewBox exists, strip fixed sizing,
- * set preserveAspectRatio so the SVG zoom-to-fits its container natively.
+ * Pre-process SVG for the full-page viewer.
+ * Uses shared normalization then adds viewer-specific overrides.
  */
 function prepareSvgContent(raw: string): string {
+  // Use shared normalization (viewBox, preserveAspectRatio, strip sizing)
+  const normalized = normalizeSvg(raw);
   const parser = new DOMParser();
-  const doc = parser.parseFromString(raw, 'image/svg+xml');
+  const doc = parser.parseFromString(normalized, 'image/svg+xml');
   const svg = doc.querySelector('svg');
-  if (!svg) return raw;
+  if (!svg) return normalized;
 
-  // Extract intrinsic dimensions for viewBox if missing
-  let w = 0, h = 0;
-  const viewBox = svg.getAttribute('viewBox');
-  if (viewBox) {
-    const parts = viewBox.split(/[\s,]+/).map(Number);
-    if (parts.length === 4) {
-      w = parts[2];
-      h = parts[3];
-    }
-  }
-  if (w <= 0 || h <= 0) {
-    w = parseFloat(svg.getAttribute('width') ?? '0');
-    h = parseFloat(svg.getAttribute('height') ?? '0');
-  }
-
-  // Ensure viewBox exists (required for scaling)
-  if (!svg.getAttribute('viewBox') && w > 0 && h > 0) {
-    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-  }
-
-  // Strip ALL fixed sizing — attributes AND inline styles
-  svg.removeAttribute('width');
-  svg.removeAttribute('height');
-  svg.style.removeProperty('width');
-  svg.style.removeProperty('height');
-  svg.style.removeProperty('background');
-
-  // Fill container, maintain aspect ratio
+  // Viewer-specific: fill container in both dimensions
   svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-  svg.setAttribute('width', '100%');
   svg.setAttribute('height', '100%');
   svg.style.display = 'block';
 

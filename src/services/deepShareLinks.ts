@@ -90,7 +90,7 @@ export function computeSubLink(
 /**
  * Rewrite outgoing links in rendered HTML for deep share access.
  *
- * For outsiders with depth > 0:
+ * For outsiders with depth \> 0:
  * - Internal links get rewritten with sub-keys
  * - Links beyond depth get stripped (text preserved, link removed)
  * - External links (http/https) are left unchanged
@@ -107,7 +107,10 @@ export function rewriteLinksForDeepShare(
 ): string {
   const currentStack = decodeStack(stackCompressed);
   // Ensure current path is in the stack
-  if (currentStack.length === 0 || currentStack[currentStack.length - 1] !== currentPath) {
+  if (
+    currentStack.length === 0 ||
+    currentStack[currentStack.length - 1] !== currentPath
+  ) {
     currentStack.push(currentPath);
   }
 
@@ -151,7 +154,9 @@ export function rewriteLinksForDeepShare(
     } else {
       // Relative link — resolve against current path directory
       const dir = currentPath.substring(0, currentPath.lastIndexOf('/'));
-      targetPath = dir ? `${dir}/${href.split('?')[0]}` : `/${href.split('?')[0]}`;
+      targetPath = dir
+        ? `${dir}/${href.split('?')[0]}`
+        : `/${href.split('?')[0]}`;
     }
 
     // Normalize

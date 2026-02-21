@@ -35,7 +35,9 @@ import {
  */
 function pathMatchesPatterns(requestPath: string, patterns: string[]): boolean {
   const normalized = requestPath.toLowerCase().replace(/\/+$/, '');
-  const isMatch = picomatch(patterns.map((p) => p.toLowerCase().replace(/\/+$/, '')));
+  const isMatch = picomatch(
+    patterns.map((p) => p.toLowerCase().replace(/\/+$/, '')),
+  );
   return isMatch(normalized);
 }
 
@@ -43,9 +45,13 @@ function pathMatchesPatterns(requestPath: string, patterns: string[]): boolean {
  * Check whether a request path matches normalized scopes (allow/deny).
  * Path must match at least one allow rule AND NOT match any deny rule.
  */
-function pathMatchesScopes(requestPath: string, scopes: NormalizedScopes): boolean {
+function pathMatchesScopes(
+  requestPath: string,
+  scopes: NormalizedScopes,
+): boolean {
   if (!pathMatchesPatterns(requestPath, scopes.allow)) return false;
-  if (scopes.deny.length > 0 && pathMatchesPatterns(requestPath, scopes.deny)) return false;
+  if (scopes.deny.length > 0 && pathMatchesPatterns(requestPath, scopes.deny))
+    return false;
   return true;
 }
 
@@ -75,7 +81,7 @@ function checkOutsiderKey(
   deepParams?: { d: string; dirs: string; s: string },
 ): string | null {
   // Deep share key check (when d and s params are present)
-  if (deepParams?.d !== undefined && deepParams?.s !== undefined) {
+  if (deepParams) {
     const params: DeepShareParams = {
       depth: parseInt(deepParams.d, 10),
       dirs: deepParams.dirs === '1',
@@ -229,15 +235,17 @@ function directoryVisibleUnderScopes(
     // Strip trailing glob parts to get the "prefix" of the pattern
     const prefix = p.replace(/\/\*\*$/, '').replace(/\/\*$/, '');
     // Directory is above a scope (navigate toward it)
-    if (prefix.startsWith(normalized + '/') || prefix === normalized) return true;
+    if (prefix.startsWith(normalized + '/') || prefix === normalized)
+      return true;
     // Directory is under a scope (already inside an allowed area)
-    if (normalized.startsWith(prefix + '/') || normalized === prefix) return true;
+    if (normalized.startsWith(prefix + '/') || normalized === prefix)
+      return true;
   }
   return false;
 }
 
 export {
+  directoryVisibleUnderScopes as _directoryVisibleUnderScopes,
   pathMatchesPatterns as _pathMatchesPatterns,
   pathMatchesScopes as _pathMatchesScopes,
-  directoryVisibleUnderScopes as _directoryVisibleUnderScopes,
 };

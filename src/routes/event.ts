@@ -6,15 +6,11 @@ import { JsonMap } from '@karmaniverous/jsonmap';
 import Ajv from 'ajv';
 import type { FastifyPluginAsync } from 'fastify';
 import * as _ from 'radash';
-import { z } from 'zod';
 
 import { verifyKey } from '../auth/keys.js';
 import { getConfig } from '../config/index.js';
-import { eventConfigSchema } from '../config/schema.js';
 import { logEvent } from '../services/eventLog.js';
 import { enqueue } from '../services/eventQueue.js';
-
-type EventConfig = z.infer<typeof eventConfigSchema>;
 
 const ajv = new Ajv();
 
@@ -31,7 +27,7 @@ function matchEvent(
 ): { name: string; cmd: string; map?: object; timeoutMs: number } | null {
   const { events, eventTimeoutMs } = getConfig();
 
-  for (const [name, eventConfig] of Object.entries(events) as [string, EventConfig][]) {
+  for (const [name, eventConfig] of Object.entries(events)) {
     const validate = ajv.compile(eventConfig.schema);
 
     if (validate(body)) {

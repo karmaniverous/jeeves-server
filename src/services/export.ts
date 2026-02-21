@@ -1,12 +1,19 @@
 /**
- * Export service for PDF and DOCX generation
+ * Export service for PDF and DOCX generation.
+ *
+ * Orchestrates Puppeteer page loading, print styling, and format-specific
+ * export logic. Heavy lifting delegated to puppeteer.ts utilities.
  */
 
 import HtmlToDocx from '@turbodocx/html-to-docx';
-import type { Browser, Page } from 'puppeteer-core';
-import puppeteer from 'puppeteer-core';
 
-import { getConfig } from '../config/index.js';
+import {
+  addPrintStyles,
+  captureSvgsAsPng,
+  launchBrowser,
+  SVG_CONTAINER_SELECTORS,
+  waitForSpaContent,
+} from './puppeteer.js';
 
 export type ExportFormat = 'pdf' | 'docx';
 
@@ -16,105 +23,12 @@ export interface ExportOptions {
   format: ExportFormat;
 }
 
-/**
- * Launch Puppeteer browser
- */
-async function launchBrowser(): Promise<Browser> {
-  const { chromePath } = getConfig();
-  return await puppeteer.launch({
-    executablePath: chromePath,
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
-}
+// Max bounds for images in DOCX (6 inches × 8 inches at 96dpi)
+const MAX_WIDTH_PX = 576;
+const MAX_HEIGHT_PX = 768;
 
 /**
- * Add print styles to page for export
- */
-async function addPrintStyles(page: Page): Promise<void> {
-  await page.addStyleTag({
-    content: `
-      /* Hide chrome — works for both legacy server-rendered and SPA */
-      .header, .header-actions, .panzoom-container, .panzoom-hint,
-      header, nav, .toc-sidebar, [class*="sticky"], [class*="fixed"] { display: none !important; }
-      .toc { position: static !important; height: auto !important; page-break-after: always; }
-      .toc-spacer { display: none !important; }
-      .layout { display: block !important; }
-      body { background: #fff !important; font-size: 10pt !important; line-height: 1.5 !important; color: #000 !important; }
-      /* SPA layout: remove scroll containers so body grows to full content height */
-      html, body, #root { height: auto !important; overflow: visible !important; }
-      main, [class*="overflow-y"] { overflow: visible !important; height: auto !important; }
-      /* SPA article.prose */
-      article.prose { max-width: none !important; border: none !important; padding: 0 !important; }
-      .content, article.prose { font-size: 10pt !important; }
-      /* Hide tab bar and other SPA controls */
-      [role="tablist"], button { display: none !important; }
-      main { padding-top: 0 !important; }
-      /* Inline SVG Panzoom & Embedded Diagrams: strip container chrome, show SVGs cleanly */
-      .inline-svg-panzoom, .embedded-diagram-panzoom, .embedded-diagram-rendered { 
-        position: static !important; 
-        background: white !important; 
-        border: none !important; 
-        overflow: visible !important;
-        cursor: default !important;
-        padding: 0 !important;
-        margin: 1em 0 !important;
-      }
-      .inline-svg-panzoom button, .embedded-diagram-panzoom button { display: none !important; }
-      .inline-svg-panzoom .text-xs, .embedded-diagram-panzoom .text-xs { display: none !important; }
-      .inline-svg-panzoom svg, .embedded-diagram-panzoom svg, .embedded-diagram-rendered svg {
-        max-width: 190mm !important;
-        max-height: 250mm !important;
-        width: auto !important;
-        height: auto !important;
-        display: block !important;
-        page-break-inside: avoid !important;
-      }
-      h1 { font-size: 18pt !important; }
-      h2 { font-size: 14pt !important; }
-      h3 { font-size: 12pt !important; }
-      h4, h5, h6 { font-size: 10pt !important; }
-      code { font-size: 9pt !important; }
-      pre, pre code { font-size: 8pt !important; }
-      table { font-size: 10pt !important; }
-      a.anchor { display: none !important; }
-      img, svg, .svg-container, .zoomable-svg { 
-        max-width: 190mm !important; 
-        max-height: 250mm !important; 
-        width: auto !important; 
-        height: auto !important;
-        display: block !important;
-        page-break-inside: avoid !important; 
-      }
-      img { object-fit: contain !important; }
-    `,
-  });
-}
-
-/**
- * Wait for SPA content to fully render, including async SVG fetches.
- */
-async function waitForSpaContent(page: Page): Promise<void> {
-  // Wait for the article.prose element to appear (markdown rendered)
-  await page.waitForSelector('article.prose', { timeout: 15_000 }).catch(() => {});
-  // Wait for any inline SVG panzoom containers to finish loading
-  // (they start with "Loading SVG…" text, then get replaced with actual SVG content)
-  await page.waitForFunction(
-    () => {
-      const containers = document.querySelectorAll('.inline-svg-panzoom');
-      if (containers.length === 0) return true;
-      return Array.from(containers).every(
-        (c) => !c.textContent?.includes('Loading SVG')
-      );
-    },
-    { timeout: 15_000 },
-  ).catch(() => {});
-  // Small extra delay for any final rendering
-  await new Promise((r) => setTimeout(r, 1000));
-}
-
-/**
- * Export page as PDF
+ * Export page as PDF.
  */
 export async function exportPDF(options: ExportOptions): Promise<Buffer> {
   const browser = await launchBrowser();
@@ -137,7 +51,7 @@ export async function exportPDF(options: ExportOptions): Promise<Buffer> {
 }
 
 /**
- * Export page as DOCX
+ * Export page as DOCX.
  */
 export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
   const browser = await launchBrowser();
@@ -148,94 +62,48 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
     await waitForSpaContent(page);
     await addPrintStyles(page);
 
-    // Extract raw SVG content from panzoom containers, then render each
-    // in a clean isolated page to avoid panzoom transform/styling issues.
-    interface SVGPngData {
-      index: number;
-      dataUrl: string;
-      width: number;
-      height: number;
-    }
-
-    const svgContents = await page.evaluate(() => {
-      const containers = document.querySelectorAll(
-        '.svg-container, .zoomable-svg, .inline-svg-panzoom, .embedded-diagram-panzoom, .embedded-diagram-rendered',
-      );
-      return Array.from(containers).map((container, i) => {
-        const svg = container.querySelector('svg');
-        return { index: i, svgHtml: svg ? svg.outerHTML : null };
-      });
-    });
-
-    const svgPngDataUrls: SVGPngData[] = [];
-    for (const { index, svgHtml } of svgContents) {
-      if (!svgHtml) continue;
-
-      // Render SVG in a clean page at full width for high-quality capture
-      const svgPage = await browser.newPage();
-      await svgPage.setViewport({ width: 1200, height: 2000, deviceScaleFactor: 2 });
-      await svgPage.setContent(`<!DOCTYPE html>
-<html><head><style>
-  body { margin: 0; padding: 0; background: #fff; }
-  svg { width: 1152px; height: auto; display: block; }
-</style></head><body>${svgHtml}</body></html>`, { waitUntil: 'networkidle0' });
-
-      const svgHandle = await svgPage.$('svg');
-      if (svgHandle) {
-        const screenshot = await svgHandle.screenshot({ type: 'png' });
-        const box = await svgHandle.boundingBox();
-        if (box && box.width > 0 && box.height > 0) {
-          svgPngDataUrls.push({
-            index,
-            dataUrl: `data:image/png;base64,${Buffer.from(screenshot).toString('base64')}`,
-            width: Math.ceil(box.width),
-            height: Math.ceil(box.height),
-          });
-        }
-      }
-      await svgPage.close();
-    }
-
-    // Max bounds for images in DOCX
-    const MAX_WIDTH_PX = 576; // 6 inches at 96dpi
-    const MAX_HEIGHT_PX = 768; // 8 inches at 96dpi
+    // Capture SVGs as PNGs for DOCX embedding
+    const svgPngDataUrls = await captureSvgsAsPng(browser, page);
 
     // Get processed HTML with SVGs replaced by PNGs
     const processedHtml = await page.evaluate(
-      (pngUrls: SVGPngData[], maxW: number, maxH: number) => {
+      (
+        pngUrls: typeof svgPngDataUrls,
+        maxW: number,
+        maxH: number,
+        selectors: string,
+      ) => {
         function calcScaled(
           origW: number,
           origH: number,
         ): { width: number; height: number } {
-          let w = origW;
-          let h = origH;
+          let w = origW,
+            h = origH;
           if (w > maxW) {
-            const scale = maxW / w;
+            const s = maxW / w;
             w = maxW;
-            h = Math.round(h * scale);
+            h = Math.round(h * s);
           }
           if (h > maxH) {
-            const scale = maxH / h;
+            const s = maxH / h;
             h = maxH;
-            w = Math.round(w * scale);
+            w = Math.round(w * s);
           }
           return { width: w, height: h };
         }
 
-        const content = document.querySelector('article.prose') ?? document.querySelector('.content');
+        const content =
+          document.querySelector('article.prose') ??
+          document.querySelector('.content');
         if (!content) return '<p>No content</p>';
 
         const contentClone = content.cloneNode(true) as HTMLElement;
-
-        // Remove anchor links
         contentClone.querySelectorAll('a.anchor').forEach((el) => {
           el.remove();
         });
 
         // Replace SVG containers with PNG images
-        const svgContainers = contentClone.querySelectorAll(
-          '.svg-container, .zoomable-svg, .inline-svg-panzoom, .embedded-diagram-panzoom, .embedded-diagram-rendered',
-        );
+        const svgContainers = contentClone.querySelectorAll(selectors);
         svgContainers.forEach((container, i) => {
           const pngInfo = pngUrls.find((p) => p.index === i);
           if (pngInfo) {
@@ -247,10 +115,10 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
             img.setAttribute('height', String(dims.height));
             container.replaceWith(img);
           } else {
-            const placeholder = document.createElement('p');
-            placeholder.textContent = '[Diagram]';
-            placeholder.style.fontStyle = 'italic';
-            container.replaceWith(placeholder);
+            const p = document.createElement('p');
+            p.textContent = '[Diagram]';
+            p.style.fontStyle = 'italic';
+            container.replaceWith(p);
           }
         });
 
@@ -268,11 +136,11 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
           img.style.maxHeight = '';
         });
 
-        // Apply inline styles for tables
-        contentClone.querySelectorAll('table').forEach((table) => {
-          table.setAttribute('border', '1');
-          (table as HTMLElement).style.borderCollapse = 'collapse';
-          (table as HTMLElement).style.width = '100%';
+        // Inline styles for tables
+        contentClone.querySelectorAll('table').forEach((t) => {
+          t.setAttribute('border', '1');
+          (t as HTMLElement).style.borderCollapse = 'collapse';
+          (t as HTMLElement).style.width = '100%';
         });
         contentClone.querySelectorAll('th').forEach((th) => {
           (th as HTMLElement).style.backgroundColor = '#f0f0f0';
@@ -285,7 +153,7 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
           (td as HTMLElement).style.border = '1px solid #999';
         });
 
-        // Apply inline styles for code blocks
+        // Inline styles for code blocks
         contentClone.querySelectorAll('pre').forEach((pre) => {
           (pre as HTMLElement).style.fontFamily = 'Consolas, monospace';
           (pre as HTMLElement).style.fontSize = '9pt';
@@ -303,12 +171,43 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
       svgPngDataUrls,
       MAX_WIDTH_PX,
       MAX_HEIGHT_PX,
+      SVG_CONTAINER_SELECTORS,
     );
 
     await browser.close();
 
-    // Build clean HTML document
-    const fullHtml = `<!DOCTYPE html>
+    const fullHtml = buildDocxHtml(processedHtml);
+    const baseName = options.fileName.replace(/\.md$/i, '');
+
+    const docxBuffer = await HtmlToDocx(fullHtml, null, {
+      title: baseName,
+      creator: 'Jeeves Server',
+      table: { row: { cantSplit: true } },
+      imageProcessing: {
+        svgHandling: 'native',
+        maxRetries: 2,
+        downloadTimeout: 15000,
+      },
+    });
+
+    return Buffer.isBuffer(docxBuffer)
+      ? docxBuffer
+      : Buffer.from(docxBuffer as ArrayBuffer);
+  } finally {
+    await browser.close();
+  }
+}
+
+/**
+ * Export page based on format.
+ */
+export async function exportPage(options: ExportOptions): Promise<Buffer> {
+  return options.format === 'pdf' ? exportPDF(options) : exportDOCX(options);
+}
+
+/** Build a clean HTML document for DOCX conversion. */
+function buildDocxHtml(bodyContent: string): string {
+  return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -334,42 +233,7 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
   </style>
 </head>
 <body>
-${processedHtml}
+${bodyContent}
 </body>
 </html>`;
-
-    // Convert HTML to DOCX
-    const baseName = options.fileName.replace(/\.md$/i, '');
-    const docxBuffer = await HtmlToDocx(fullHtml, null, {
-      title: baseName,
-      creator: 'Jeeves Server',
-      table: {
-        row: {
-          cantSplit: true,
-        },
-      },
-      imageProcessing: {
-        svgHandling: 'native',
-        maxRetries: 2,
-        downloadTimeout: 15000,
-      },
-    });
-
-    return Buffer.isBuffer(docxBuffer)
-      ? docxBuffer
-      : Buffer.from(docxBuffer as ArrayBuffer);
-  } finally {
-    await browser.close();
-  }
-}
-
-/**
- * Export page based on format
- */
-export async function exportPage(options: ExportOptions): Promise<Buffer> {
-  if (options.format === 'pdf') {
-    return await exportPDF(options);
-  } else {
-    return await exportDOCX(options);
-  }
 }

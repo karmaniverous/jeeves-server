@@ -1,0 +1,29 @@
+/**
+ * API route registrar — composes all API sub-plugins.
+ */
+
+import type { FastifyPluginAsync } from 'fastify';
+
+import { authStatusRoutes } from './auth-status.js';
+import { diagramsRoutes } from './diagrams.js';
+import { directoryRoutes } from './directory.js';
+import { drivesRoutes } from './drives.js';
+import { exportRoutes } from './export.js';
+import { fileContentRoutes } from './fileContent.js';
+import { addAuthMiddleware } from './middleware.js';
+import { rawRoutes } from './raw.js';
+import { sharingRoutes } from './sharing.js';
+
+export const apiRoute: FastifyPluginAsync = async (fastify) => {
+  // Add auth hook directly to this context (not as a child plugin)
+  // so it applies to all routes registered below.
+  addAuthMiddleware(fastify);
+  await fastify.register(drivesRoutes);
+  await fastify.register(directoryRoutes);
+  await fastify.register(fileContentRoutes);
+  await fastify.register(rawRoutes);
+  await fastify.register(exportRoutes);
+  await fastify.register(diagramsRoutes);
+  await fastify.register(sharingRoutes);
+  await fastify.register(authStatusRoutes);
+};

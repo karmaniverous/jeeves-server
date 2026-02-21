@@ -31,7 +31,7 @@ const IS_WINDOWS = process.platform === 'win32';
 
 /**
  * Convert platform-native filesystem paths in markdown text to clickable browse links.
- * Windows: C:\foo\bar → [C:\foo\bar](/browse/c/foo/bar)
+ * Windows: C:\\foo\\bar → [C:\\foo\\bar](/browse/c/foo/bar)
  * Linux: /home/user/docs → [/home/user/docs](/browse/home/user/docs)
  */
 function linkifyFilesystemPaths(markdown: string): string {
@@ -46,7 +46,11 @@ function linkifyFilesystemPaths(markdown: string): string {
 
     let urlPath: string;
     if (IS_WINDOWS) {
-      urlPath = '/' + resolved.replace(/\\/g, '/').replace(/^([A-Z]):/, (_m: string, d: string) => d.toLowerCase());
+      urlPath =
+        '/' +
+        resolved
+          .replace(/\\/g, '/')
+          .replace(/^([A-Z]):/, (_m: string, d: string) => d.toLowerCase());
     } else {
       urlPath = resolved;
     }
@@ -135,7 +139,9 @@ export function parseMarkdown(
     args: string | { text: string; lang?: string; escaped?: boolean },
   ) {
     const text = typeof args === 'object' ? args.text : args;
-    const lang = (typeof args === 'object' ? args.lang : undefined)?.toLowerCase();
+    const lang = (
+      typeof args === 'object' ? args.lang : undefined
+    )?.toLowerCase();
 
     // Diagram code blocks → register for async rendering (GitHub convention)
     if (lang === 'mermaid') {

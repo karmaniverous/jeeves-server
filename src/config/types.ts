@@ -3,19 +3,13 @@
  * Config types are derived from Zod schema in schema.ts.
  */
 
-import type {
-  JeevesConfig,
-  AuthMode,
-} from './schema.js';
+import type { AuthMode, JeevesConfig } from './schema.js';
 
 // Re-export config types from schema
-export type {
-  JeevesConfig,
-  AuthMode,
-};
+export type { AuthMode, JeevesConfig };
 
 /**
- * Normalized scopes — always resolved to { allow, deny } form.
+ * Normalized scopes — always resolved to \{ allow, deny \} form.
  * null = unrestricted access.
  */
 export interface NormalizedScopes {

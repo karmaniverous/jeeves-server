@@ -1,51 +1,31 @@
 /**
  * Post-processes a rendered markdown article to add Panzoom to embedded SVG images.
- * 
+ *
  * Finds <img> elements with .svg sources, fetches the SVG content,
  * and replaces them with interactive Panzoom containers with fullscreen support.
  */
-import Panzoom from '@panzoom/panzoom';
-
 import { withKey } from '@/lib/api';
+import { createPanzoomWrapper } from './panzoom';
 
 export function initInlineSvgPanzoom(article: HTMLElement): () => void {
   const cleanups: (() => void)[] = [];
-  // Match SVG images — src may end with .svg, .svg?raw=1, .svg&raw=1, etc.
   const imgs = Array.from(article.querySelectorAll<HTMLImageElement>('img')).filter(
-    (img) => /\.svg(\?|&|$)/i.test(img.getAttribute('src') ?? '')
+    (img) => /\.svg(\?|&|$)/i.test(img.getAttribute('src') ?? ''),
   );
 
   for (const img of imgs) {
     const src = img.getAttribute('src');
     if (!src) continue;
 
-    // Build the raw URL (ensure it fetches the actual SVG content)
     const rawSrc = src.includes('raw=1') ? src : (src.includes('?') ? `${src}&raw=1` : `${src}?raw=1`);
 
-    // Create wrapper structure
-    const wrapper = document.createElement('div');
-    wrapper.className = 'inline-svg-panzoom relative bg-white rounded-lg border border-border overflow-hidden my-4';
-    wrapper.style.cursor = 'grab';
+    // Create a temporary placeholder
+    const placeholder = document.createElement('div');
+    placeholder.className = 'inline-svg-panzoom relative bg-white rounded-lg border border-border overflow-hidden my-4';
+    placeholder.style.cursor = 'grab';
+    placeholder.innerHTML = '<div class="overflow-hidden w-full min-h-[200px]"><div class="flex items-center justify-center p-4">Loading SVG…</div></div>';
 
-    const container = document.createElement('div');
-    container.className = 'overflow-hidden w-full min-h-[200px]';
-
-    const inner = document.createElement('div');
-    inner.className = 'flex items-center justify-center p-4 [&>svg]:max-w-full [&>svg]:h-auto';
-    inner.textContent = 'Loading SVG…';
-
-    // Fullscreen button
-    const fsBtn = document.createElement('button');
-    fsBtn.className = 'absolute top-2 right-2 z-10 p-1.5 bg-zinc-800/70 hover:bg-zinc-700 text-white rounded transition-colors';
-    fsBtn.title = 'Fullscreen';
-    fsBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
-
-    container.appendChild(inner);
-    wrapper.appendChild(container);
-    wrapper.appendChild(fsBtn);
-
-    // Replace the img with the wrapper
-    img.parentElement?.replaceChild(wrapper, img);
+    img.parentElement?.replaceChild(placeholder, img);
 
     // Fetch SVG content and init Panzoom
     fetch(withKey(rawSrc))
@@ -54,113 +34,23 @@ export function initInlineSvgPanzoom(article: HTMLElement): () => void {
         return r.text();
       })
       .then((svgContent) => {
-        inner.innerHTML = svgContent;
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = svgContent;
+        const svg = tempDiv.querySelector('svg');
+        if (!svg) throw new Error('No SVG element found');
 
-        let pz = Panzoom(inner, {
-          maxScale: 20,
-          contain: 'outside',
+        const { wrapper, initPanzoom, cleanup } = createPanzoomWrapper(svg, placeholder, {
+          wrapperExtraClass: 'inline-svg-panzoom',
+          viewportMinHeight: '200px',
         });
 
-        const wheelHandler = (e: WheelEvent) => {
-          pz.zoomWithWheel(e);
-        };
-        container.addEventListener('wheel', wheelHandler, { passive: false });
-
-        // Hint text
-        const hint = document.createElement('div');
-        hint.className = 'text-xs text-muted-foreground text-center py-1 opacity-60';
-        hint.textContent = 'Scroll to zoom · Drag to pan';
-        wrapper.appendChild(hint);
-
-        let isFullscreen = false;
-
-        const enterFullscreen = () => {
-          isFullscreen = true;
-          // Save original styles
-          wrapper.dataset.origClass = wrapper.className;
-          wrapper.className = 'fixed inset-0 z-[100] bg-white dark:bg-zinc-900 flex flex-col';
-          wrapper.style.cursor = 'grab';
-          container.className = 'overflow-hidden w-full h-full flex-1';
-          inner.className = 'p-4';
-          hint.textContent = 'Scroll to zoom · Drag to pan · Esc to close';
-          hint.className = 'text-muted-foreground text-xs text-center py-2 pointer-events-none';
-          fsBtn.title = 'Exit fullscreen';
-          fsBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
-          pz.destroy();
-          requestAnimationFrame(() => { requestAnimationFrame(() => { setTimeout(() => {
-            const svg = inner.querySelector('svg');
-            if (svg && container.clientWidth && container.clientHeight) {
-              const vb = svg.getAttribute('viewBox');
-              let svgW: number, svgH: number;
-              if (vb) {
-                const parts = vb.split(/[\s,]+/).map(Number);
-                svgW = parts[2] || 1000;
-                svgH = parts[3] || 800;
-              } else {
-                svgW = svg.clientWidth || 1000;
-                svgH = svg.clientHeight || 800;
-              }
-              const vw = container.clientWidth;
-              const vh = container.clientHeight;
-              const fitScale = Math.min(vw / svgW, vh / svgH, 1);
-              const fittedW = svgW * fitScale;
-              const fittedH = svgH * fitScale;
-              svg.setAttribute('width', String(Math.round(fittedW)));
-              svg.setAttribute('height', String(Math.round(fittedH)));
-              svg.style.width = `${String(Math.round(fittedW))}px`;
-              svg.style.height = `${String(Math.round(fittedH))}px`;
-              const startX = (vw - fittedW) / 2;
-              const startY = (vh - fittedH) / 2;
-              pz = Panzoom(inner, { maxScale: 20 / fitScale, minScale: 0.5, startScale: 1, startX, startY });
-            } else {
-              pz = Panzoom(inner, { maxScale: 20, minScale: 0.1 });
-            }
-          }, 50); }); });
-        };
-
-        const exitFullscreen = () => {
-          isFullscreen = false;
-          const svg = inner.querySelector('svg');
-          if (svg) {
-            svg.setAttribute('width', '100%');
-            svg.removeAttribute('height');
-            svg.style.width = '';
-            svg.style.height = '';
-          }
-          wrapper.className = wrapper.dataset.origClass ?? 'inline-svg-panzoom relative bg-white rounded-lg border border-border overflow-hidden my-4';
-          wrapper.style.cursor = 'grab';
-          container.className = 'overflow-hidden w-full min-h-[200px]';
-          inner.className = 'flex items-center justify-center p-4 [&>svg]:max-w-full [&>svg]:h-auto';
-          hint.textContent = 'Scroll to zoom · Drag to pan';
-          hint.className = 'text-xs text-muted-foreground text-center py-1 opacity-60';
-          fsBtn.title = 'Fullscreen';
-          fsBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
-          // Reinit panzoom for original inline size
-          pz.destroy();
-          pz = Panzoom(inner, { maxScale: 20, contain: 'outside', startScale: 1 });
-        };
-
-        fsBtn.addEventListener('click', () => {
-          if (isFullscreen) exitFullscreen();
-          else enterFullscreen();
-        });
-
-        const escHandler = (e: KeyboardEvent) => {
-          if (e.key === 'Escape' && isFullscreen) exitFullscreen();
-        };
-        document.addEventListener('keydown', escHandler);
-
-        cleanups.push(() => {
-          container.removeEventListener('wheel', wheelHandler);
-          document.removeEventListener('keydown', escHandler);
-          pz.destroy();
-        });
+        placeholder.replaceWith(wrapper);
+        initPanzoom();
+        cleanups.push(cleanup);
       })
       .catch(() => {
         // Fallback: put the img back
-        inner.innerHTML = '';
-        inner.appendChild(img);
-        fsBtn.remove();
+        placeholder.replaceWith(img);
       });
   }
 

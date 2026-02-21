@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Content-addressed diagram render cache.
  *
- * Cache key = sha256(type + '\0' + source). Cached artifacts are SVG strings
+ * Cache key = sha256(type + '\\0' + source). Cached artifacts are SVG strings
  * stored as files in a single directory. No timestamp comparison needed:
- * if the source changes, the hash changes → automatic cache miss.
+ * if the source changes, the hash changes â†’ automatic cache miss.
  */
 
 import crypto from 'node:crypto';
@@ -37,9 +37,13 @@ function cacheKey(type: string, source: string): string {
 
 /**
  * Look up a cached diagram. Returns the content as a string or null on miss.
- * @param format Output format extension (e.g. 'svg', 'png', 'pdf'). Defaults to 'svg'.
+ * @param format - Output format extension (e.g. 'svg', 'png', 'pdf'). Defaults to 'svg'.
  */
-export function getCachedDiagram(type: string, source: string, format: string = 'svg'): string | null {
+export function getCachedDiagram(
+  type: string,
+  source: string,
+  format: string = 'svg',
+): string | null {
   if (!cacheDir) return null;
   const file = path.join(cacheDir, `${cacheKey(type, source)}.${format}`);
   try {
@@ -51,9 +55,13 @@ export function getCachedDiagram(type: string, source: string, format: string = 
 
 /**
  * Look up a cached diagram as a Buffer (for binary formats like PNG/PDF).
- * @param format Output format extension (e.g. 'png', 'pdf').
+ * @param format - Output format extension (e.g. 'png', 'pdf').
  */
-export function getCachedDiagramBuffer(type: string, source: string, format: string): Buffer | null {
+export function getCachedDiagramBuffer(
+  type: string,
+  source: string,
+  format: string,
+): Buffer | null {
   if (!cacheDir) return null;
   const file = path.join(cacheDir, `${cacheKey(type, source)}.${format}`);
   try {
@@ -65,9 +73,14 @@ export function getCachedDiagramBuffer(type: string, source: string, format: str
 
 /**
  * Store a rendered diagram in the cache (string content).
- * @param format Output format extension. Defaults to 'svg'.
+ * @param format - Output format extension. Defaults to 'svg'.
  */
-export function cacheDiagram(type: string, source: string, content: string, format: string = 'svg'): void {
+export function cacheDiagram(
+  type: string,
+  source: string,
+  content: string,
+  format: string = 'svg',
+): void {
   if (!cacheDir) return;
   const file = path.join(cacheDir, `${cacheKey(type, source)}.${format}`);
   try {
@@ -79,9 +92,14 @@ export function cacheDiagram(type: string, source: string, content: string, form
 
 /**
  * Store a rendered diagram in the cache (binary content).
- * @param format Output format extension (e.g. 'png', 'pdf').
+ * @param format - Output format extension (e.g. 'png', 'pdf').
  */
-export function cacheDiagramBuffer(type: string, source: string, buffer: Buffer, format: string): void {
+export function cacheDiagramBuffer(
+  type: string,
+  source: string,
+  buffer: Buffer,
+  format: string,
+): void {
   if (!cacheDir) return;
   const file = path.join(cacheDir, `${cacheKey(type, source)}.${format}`);
   try {
@@ -89,4 +107,22 @@ export function cacheDiagramBuffer(type: string, source: string, buffer: Buffer,
   } catch (err) {
     console.error('[diagramCache] write failed:', (err as Error).message);
   }
+}
+
+/**
+ * Get a cached diagram or render it and cache the result.
+ * Eliminates the repeated getCachedDiagram â†’ render â†’ cacheDiagram pattern.
+ */
+export async function getOrRenderDiagram(
+  type: string,
+  source: string,
+  renderFn: () => string | null | Promise<string | null>,
+  format: string = 'svg',
+): Promise<string | null> {
+  const cached = getCachedDiagram(type, source, format);
+  if (cached) return cached;
+
+  const result = await renderFn();
+  if (result) cacheDiagram(type, source, result, format);
+  return result;
 }

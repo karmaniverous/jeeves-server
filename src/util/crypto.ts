@@ -54,7 +54,7 @@ export interface DeepShareParams {
 
 /**
  * Compute deep share key: HMAC-SHA256(seed, path + "|" + d + "|" + dirs + "|" + stack + "|" + exp)
- * Used for share links with depth > 0 or dirs enabled.
+ * Used for share links with depth \> 0 or dirs enabled.
  */
 export function computeDeepShareKey(
   seed: string,

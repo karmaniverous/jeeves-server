@@ -34,7 +34,7 @@ export default {
     /**
      * Google OAuth credentials.
      * Required if modes includes 'google'.
-     * Get these from Google Cloud Console > APIs & Services > Credentials.
+     * Get these from Google Cloud Console \> APIs & Services \> Credentials.
      */
     google: {
       clientId: 'your-google-client-id.apps.googleusercontent.com',
@@ -57,7 +57,7 @@ export default {
    *
    * Scopes restrict which paths the insider can access.
    * Uses standard glob syntax (picomatch): /** for recursive, /* for single-level.
-   * ['/**'] = full access. ['/d/docs/**'] = only files under D:\docs\.
+   * ['/**'] = full access. ['/d/docs/**'] = only files under D:/docs/.
    */
   insiders: {
     'user@example.com': {
@@ -69,7 +69,7 @@ export default {
    * Named API keys for machine access and outsider share links.
    *
    * Plain string = seed value, no scope restrictions.
-   * Object = { key: '...', scopes: [...] } for restricted access.
+   * Object = \{ key: '...', scopes: [...] \} for restricted access.
    *
    * Reserved names:
    * - '_internal': Server-side operations (Puppeteer export). Must NOT have scopes.
@@ -98,11 +98,11 @@ export default {
   /**
    * Filesystem roots for the file browser (Linux only — ignored on Windows).
    * Maps a URL-safe id to a filesystem path.
-   * Default (if omitted): { root: '/' }
+   * Default (if omitted): \{ root: '/' \}
    *
    * Examples:
-   *   { home: '/home/user', projects: '/opt/projects' }
-   *   { workspace: '/workspace' }
+   *   \{ home: '/home/user', projects: '/opt/projects' \}
+   *   \{ workspace: '/workspace' \}
    */
   // roots: { home: '/home/user' },
 

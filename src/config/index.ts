@@ -1,115 +1,64 @@
-import fs from 'node:fs';
+/**
+ * Config loading and singleton management.
+ *
+ * Loads jeeves.config.ts via jiti, validates with Zod, resolves runtime types
+ * via resolve.ts, and exposes getConfig()/resetConfig().
+ */
+
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 import { createJiti } from 'jiti';
-import { z } from 'zod';
 
-import type { ServerState } from './types.js';
-
-import { computeInsiderKey } from '../util/crypto.js';
-import { jeevesConfigSchema, insiderEntrySchema, keyEntrySchema } from './schema.js';
-import type { JeevesConfig, NormalizedScopes, ResolvedInsider, ResolvedKey, RuntimeConfig } from './types.js';
-
-type InsiderEntry = z.infer<typeof insiderEntrySchema>;
-type KeyEntry = z.infer<typeof keyEntrySchema>;
+import {
+  deriveInternalKey,
+  normalizeScopes,
+  resolveInsiders,
+  resolveKeys,
+  resolvePlantuml,
+} from './resolve.js';
+import { jeevesConfigSchema } from './schema.js';
+import type { RuntimeConfig } from './types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '../..');
-
 const CONFIG_FILENAME = 'jeeves.config';
 
-/**
- * Normalize any scopes format to { allow, deny }.
- * - undefined/null → null (unrestricted)
- * - string → { allow: [string], deny: [] }
- * - string[] → { allow: string[], deny: [] }
- * - { allow?, deny? } → { allow: allow ?? ['/**'], deny: deny ?? [] }
- */
-function normalizeScopes(raw: unknown): NormalizedScopes | null {
-  if (raw === undefined || raw === null) return null;
-  if (typeof raw === 'string') return { allow: [raw], deny: [] };
-  if (Array.isArray(raw)) return { allow: raw as string[], deny: [] };
-  if (typeof raw === 'object') {
-    const obj = raw as { allow?: string[]; deny?: string[] };
-    return {
-      allow: obj.allow ?? ['/**'],
-      deny: obj.deny ?? [],
-    };
-  }
-  return null;
-}
-
 export function loadConfig(): RuntimeConfig {
-  // Use jiti to load TypeScript config at runtime
   const jiti = createJiti(import.meta.url);
   const configPath = path.join(rootDir, CONFIG_FILENAME);
-  
+
   let rawConfig: unknown;
   try {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     const mod = jiti(configPath) as { default?: unknown };
     rawConfig = mod.default ?? mod;
   } catch (err) {
     throw new Error(
-      `Failed to load ${CONFIG_FILENAME}.ts. Copy ${CONFIG_FILENAME}.template.ts and configure.\n${String(err)}`
+      `Failed to load ${CONFIG_FILENAME}.ts. Copy ${CONFIG_FILENAME}.template.ts and configure.\n${String(err)}`,
     );
   }
 
-  // Validate with Zod
   const parseResult = jeevesConfigSchema.safeParse(rawConfig);
   if (!parseResult.success) {
     const issues = parseResult.error.issues
       .map((i) => `  - ${i.path.join('.')}: ${i.message}`)
       .join('\n');
-    throw new Error(`Invalid configuration in ${CONFIG_FILENAME}.ts:\n${issues}`);
+    throw new Error(
+      `Invalid configuration in ${CONFIG_FILENAME}.ts:\n${issues}`,
+    );
   }
 
   const config = parseResult.data;
-
-  // Resolve keys
-  const resolvedKeys: ResolvedKey[] = Object.entries(
-    config.keys as Record<string, KeyEntry>,
-  ).map((
-    [name, entry]: [string, KeyEntry],
-  ) => {
-      if (typeof entry === 'string') {
-        return { name, seed: entry, scopes: null };
-      }
-      const scopes = normalizeScopes(entry.scopes);
-      return { name, seed: entry.key, scopes };
-    },
-  );
-
-  // Load state for insider key merging (read file directly to avoid circular dep)
   const stateFile = path.join(rootDir, 'state.json');
-  let serverState: ServerState = {};
-  try {
-    if (fs.existsSync(stateFile)) {
-      serverState = JSON.parse(fs.readFileSync(stateFile, 'utf8')) as ServerState;
-    }
-  } catch {
-    // Ignore — empty state
-  }
 
-  // Resolve insiders (config defines identity + scopes, state provides keys)
-  const resolvedInsiders: ResolvedInsider[] = Object.entries(
-    config.insiders as Record<string, InsiderEntry>,
-  ).map((
-    [rawEmail, entry]: [string, InsiderEntry],
-  ) => {
-      const email = rawEmail.toLowerCase();
-      const scopes = normalizeScopes(entry.scopes);
-      const stateKey = serverState.insiderKeys?.[email];
-      return {
-        email,
-        seed: stateKey?.seed ?? '',
-        scopes,
-        keyCreatedAt: stateKey?.createdAt ?? null,
-      };
-    },
+  const resolvedKeys = resolveKeys(
+    config.keys as Record<string, string | { key: string; scopes?: unknown }>,
   );
-
-  // Derive internal insider key
-  const internalKey = resolvedKeys.find((k) => k.name === '_internal');
+  const resolvedInsiders = resolveInsiders(
+    config.insiders as Record<string, { scopes?: unknown }>,
+    stateFile,
+  );
 
   return {
     port: config.port,
@@ -119,14 +68,7 @@ export function loadConfig(): RuntimeConfig {
     chromePath: config.chromePath,
     roots: config.roots,
     mermaidCliPath: config.mermaidCliPath,
-    plantuml: (() => {
-      const puml = config.plantuml;
-      const COMMUNITY = 'https://www.plantuml.com/plantuml';
-      const servers = puml?.servers ? [...puml.servers] : [];
-      // Always append community server as last resort (unless already listed)
-      if (!servers.includes(COMMUNITY)) servers.push(COMMUNITY);
-      return { jarPath: puml?.jarPath, javaPath: puml?.javaPath, servers };
-    })(),
+    plantuml: resolvePlantuml(config.plantuml),
     outsiderPolicy: normalizeScopes(config.outsiderPolicy) ?? null,
     events: config.events,
     authModes: config.auth.modes,
@@ -134,11 +76,11 @@ export function loadConfig(): RuntimeConfig {
     resolvedInsiders,
     googleAuth: config.auth.google ?? null,
     sessionSecret: config.auth.sessionSecret ?? null,
-    internalInsiderKey: internalKey ? computeInsiderKey(internalKey.seed) : null,
+    internalInsiderKey: deriveInternalKey(resolvedKeys),
     diagramCachePath: config.diagramCachePath,
     configPath: path.join(rootDir, `${CONFIG_FILENAME}.ts`),
     eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),
-    stateFile: path.join(rootDir, 'state.json'),
+    stateFile,
     eventQueuePath: path.join(rootDir, 'logs', 'event-queue.jsonl'),
     eventQueueCursorPath: path.join(rootDir, 'logs', 'event-queue.cursor'),
     eventLogPath: path.join(rootDir, 'logs', 'event-log.jsonl'),

@@ -2,6 +2,12 @@
  * Injects copy buttons into all <pre> blocks within a container element.
  * Call after rendering markdown HTML.
  */
+import { createElement, Copy, Check } from 'lucide';
+
+function createIcon(iconData: typeof Copy, size = 14): SVGSVGElement {
+  return createElement(iconData, { size }) as unknown as SVGSVGElement;
+}
+
 export function injectCopyButtons(container: HTMLElement) {
   const pres = container.querySelectorAll('pre');
   pres.forEach((pre) => {
@@ -13,16 +19,20 @@ export function injectCopyButtons(container: HTMLElement) {
     const btn = document.createElement('button');
     btn.className = 'code-copy-btn';
     btn.title = 'Copy to clipboard';
-    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>`;
+    btn.innerHTML = '';
+    btn.appendChild(createIcon(Copy));
 
     btn.addEventListener('click', () => {
       const code = pre.querySelector('code');
       const text = code?.textContent ?? pre.textContent ?? '';
       void navigator.clipboard.writeText(text).then(() => {
-        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+        btn.innerHTML = '';
+        const checkIcon = createIcon(Check);
+        btn.appendChild(checkIcon);
         btn.style.color = '#4ade80';
         setTimeout(() => {
-          btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>`;
+          btn.innerHTML = '';
+          btn.appendChild(createIcon(Copy));
           btn.style.color = '';
         }, 1500);
       });

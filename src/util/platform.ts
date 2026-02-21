@@ -24,7 +24,9 @@ export interface RootEntry {
  * Windows: enumerate accessible drive letters.
  * Linux: return configured roots or default to '/'.
  */
-export function getRoots(configuredRoots?: Record<string, string>): RootEntry[] {
+export function getRoots(
+  configuredRoots?: Record<string, string>,
+): RootEntry[] {
   if (IS_WINDOWS) {
     const roots: RootEntry[] = [];
     for (let code = 65; code <= 90; code++) {
@@ -32,7 +34,11 @@ export function getRoots(configuredRoots?: Record<string, string>): RootEntry[] 
       const drivePath = `${letter}:\\`;
       try {
         fs.accessSync(drivePath, fs.constants.R_OK);
-        roots.push({ id: letter.toLowerCase(), label: `${letter}:`, fsPath: drivePath });
+        roots.push({
+          id: letter.toLowerCase(),
+          label: `${letter}:`,
+          fsPath: drivePath,
+        });
       } catch {
         // Drive not accessible
       }
@@ -56,18 +62,22 @@ export function getRoots(configuredRoots?: Record<string, string>): RootEntry[] 
  * Convert a URL path to a filesystem path.
  *
  * URL paths use forward slashes and start with the root id:
- *   Windows: /e/jeeves-server/README.md → E:\jeeves-server\README.md
+ *   Windows: /e/jeeves-server/README.md → E:\\jeeves-server\\README.md
  *   Linux:   /home/user/docs/README.md → /home/user/docs/README.md
  *            /root/docs/README.md       → /docs/README.md (if root id is "root" mapping to "/")
  */
-export function urlPathToFs(urlPath: string, roots: RootEntry[]): string | null {
+export function urlPathToFs(
+  urlPath: string,
+  roots: RootEntry[],
+): string | null {
   const normalized = urlPath.replace(/^\/+/, '');
   if (!normalized) return null;
 
   if (IS_WINDOWS) {
     // First segment is the drive letter
     const slashIdx = normalized.indexOf('/');
-    const driveLetter = slashIdx >= 0 ? normalized.substring(0, slashIdx) : normalized;
+    const driveLetter =
+      slashIdx >= 0 ? normalized.substring(0, slashIdx) : normalized;
     const rest = slashIdx >= 0 ? normalized.substring(slashIdx + 1) : '';
 
     if (driveLetter.length !== 1) return null;
@@ -91,14 +101,17 @@ export function urlPathToFs(urlPath: string, roots: RootEntry[]): string | null 
 /**
  * Convert a filesystem path to a URL path.
  *
- * Windows: E:\jeeves-server\README.md → /e/jeeves-server/README.md
+ * Windows: E:\\jeeves-server\\README.md → /e/jeeves-server/README.md
  * Linux:   /home/user/docs/README.md → /home/user/docs/README.md (root="root" → "/")
  */
 export function fsPathToUrl(fsPath: string, roots: RootEntry[]): string {
   if (IS_WINDOWS) {
-    return '/' + fsPath
-      .replace(/\\/g, '/')
-      .replace(/^([A-Za-z]):/, (_, d: string) => d.toLowerCase());
+    return (
+      '/' +
+      fsPath
+        .replace(/\\/g, '/')
+        .replace(/^([A-Za-z]):/, (_, d: string) => d.toLowerCase())
+    );
   }
 
   // Linux: find the matching root and prepend the root id
@@ -120,11 +133,17 @@ export function fsPathToUrl(fsPath: string, roots: RootEntry[]): string {
 
 /**
  * Split a filesystem path into breadcrumb parts.
- * Returns [{label, urlPath}] from root to leaf.
+ * Returns [\{label, urlPath\}] from root to leaf.
  */
-export function breadcrumbParts(fsPath: string, roots: RootEntry[]): { label: string; path: string }[] {
+export function breadcrumbParts(
+  fsPath: string,
+  roots: RootEntry[],
+): { label: string; path: string }[] {
   const urlPath = fsPathToUrl(fsPath, roots);
-  const parts = urlPath.replace(/^\/+/, '').split('/').filter(p => p);
+  const parts = urlPath
+    .replace(/^\/+/, '')
+    .split('/')
+    .filter((p) => p);
 
   return parts.map((_part, i) => {
     const accumulated = parts.slice(0, i + 1).join('/');
@@ -133,10 +152,39 @@ export function breadcrumbParts(fsPath: string, roots: RootEntry[]): { label: st
 }
 
 /**
+ * Recursively calculate total size of a directory in bytes.
+ */
+export function getDirSize(dirPath: string): number {
+  let totalSize = 0;
+  try {
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    for (const entry of entries) {
+      const entryPath = path.join(dirPath, entry.name);
+      try {
+        if (entry.isDirectory()) {
+          totalSize += getDirSize(entryPath);
+        } else {
+          const s = fs.statSync(entryPath);
+          totalSize += s.size;
+        }
+      } catch {
+        /* skip inaccessible */
+      }
+    }
+  } catch {
+    /* skip inaccessible */
+  }
+  return totalSize;
+}
+
+/**
  * Resolve a URL path to a real filesystem path, verifying it exists.
  * Returns null if the path doesn't resolve to an accessible location.
  */
-export function resolveUrlPath(urlPath: string, roots: RootEntry[]): string | null {
+export function resolveUrlPath(
+  urlPath: string,
+  roots: RootEntry[],
+): string | null {
   const fsPath = urlPathToFs(urlPath, roots);
   if (!fsPath) return null;
 

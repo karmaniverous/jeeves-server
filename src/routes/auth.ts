@@ -112,7 +112,11 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
     }
 
     // Set session cookie
-    const cookieValue = createSessionCookie(email, sessionSecret, userInfo.picture);
+    const cookieValue = createSessionCookie(
+      email,
+      sessionSecret,
+      userInfo.picture,
+    );
     void reply.setCookie(COOKIE_NAME, cookieValue, {
       path: '/',
       httpOnly: true,

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 
 /** Supported authentication methods */
 export const authModeSchema = z.enum(['google', 'keys']);
@@ -12,7 +12,9 @@ export const googleAuthSchema = z.object({
 /** Auth configuration */
 export const authSchema = z.object({
   /** Active authentication methods. Order determines priority. */
-  modes: z.array(authModeSchema).min(1, { message: 'At least one auth mode is required' }),
+  modes: z
+    .array(authModeSchema)
+    .min(1, { message: 'At least one auth mode is required' }),
   /** Google OAuth config. Required if modes includes "google". */
   google: googleAuthSchema.optional(),
   /** Session cookie signing secret. Required if modes includes "google". */
@@ -28,12 +30,12 @@ export const eventConfigSchema = z.object({
 });
 
 /**
- * Scopes configuration — controls which paths a user/key can access.
+ * Scopes configuration â€" controls which paths a user/key can access.
  *
  * Three forms:
- * - `string` — single allow pattern (e.g. '/d/*')
- * - `string[]` — array of allow patterns (shorthand for { allow: [...] })
- * - `{ allow?: string[], deny?: string[] }` — explicit allow/deny rules
+ * - `string` â€" single allow pattern (e.g. '/d/*')
+ * - `string[]` — array of allow patterns (shorthand for \{ allow: [...] \})
+ * - `\{ allow?: string[], deny?: string[] \}` — explicit allow/deny rules
  *
  * Semantics:
  * - Path must match at least one allow rule AND NOT match any deny rule
@@ -57,7 +59,7 @@ export const insiderEntrySchema = z.object({
   scopes: scopesSchema.optional(),
 });
 
-/** Key entry — plain string (seed, no scopes) or object with key + optional scopes */
+/** Key entry â€" plain string (seed, no scopes) or object with key + optional scopes */
 export const keyEntrySchema = z.union([
   z.string().min(1),
   z.object({
@@ -72,7 +74,7 @@ export const jeevesConfigSchema = z
     port: z.number().int().positive(),
     chromePath: z.string().min(1),
     auth: authSchema,
-    insiders: z.record(z.string().email(), insiderEntrySchema).default({}),
+    insiders: z.record(z.email(), insiderEntrySchema).default({}),
     keys: z.record(z.string(), keyEntrySchema).default({}),
     events: z.record(z.string(), eventConfigSchema).default({}),
     eventTimeoutMs: z.number().positive().default(30_000),
@@ -81,33 +83,35 @@ export const jeevesConfigSchema = z
     maxZipSizeMb: z.number().positive().default(100),
     /**
      * Filesystem roots for the file browser (Linux only).
-     * Map of id → filesystem path. On Windows this is ignored (drives are auto-discovered).
-     * Example: { home: '/home/user', projects: '/opt/projects' }
-     * Default: { root: '/' }
+     * Map of id â†' filesystem path. On Windows this is ignored (drives are auto-discovered).
+     * Example: \{ home: '/home/user', projects: '/opt/projects' \}
+     * Default: \{ root: '/' \}
      */
     roots: z.record(z.string(), z.string()).optional(),
     /** Path to mermaid-cli (npx prefix directory). If not set, mermaid rendering is disabled. */
     mermaidCliPath: z.string().optional(),
     /**
      * PlantUML rendering configuration.
-     * - jarPath: local PlantUML jar (requires Java). Tried first — supports !include.
+     * - jarPath: local PlantUML jar (requires Java). Tried first â€" supports !include.
      * - servers: fallback PlantUML server URLs, tried in order.
      *   The public community server (https://www.plantuml.com/plantuml) is always
      *   appended as the last resort unless explicitly listed.
      * If omitted entirely, only the community server is used.
      */
-    plantuml: z.object({
-      jarPath: z.string().optional(),
-      javaPath: z.string().optional(),
-      servers: z.array(z.string().url()).optional(),
-    }).optional(),
+    plantuml: z
+      .object({
+        jarPath: z.string().optional(),
+        javaPath: z.string().optional(),
+        servers: z.array(z.url()).optional(),
+      })
+      .optional(),
     /**
      * Directory for cached rendered diagrams (content-addressed by source hash).
      * Defaults to `.diagram-cache` in the server working directory.
      */
     diagramCachePath: z.string().optional(),
     /**
-     * Global outsider policy — constrains which paths are eligible for outsider sharing.
+     * Global outsider policy â€" constrains which paths are eligible for outsider sharing.
      * Uses the same allow/deny model as insider scopes.
      * If omitted, all paths are shareable with outsiders.
      */
@@ -118,24 +122,28 @@ export const jeevesConfigSchema = z
     if (config.auth.modes.includes('google')) {
       if (!config.auth.google) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: 'custom',
           message: 'auth.google is required when auth.modes includes "google"',
           path: ['auth', 'google'],
         });
       }
       if (!config.auth.sessionSecret) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'auth.sessionSecret is required when auth.modes includes "google"',
+          code: 'custom',
+          message:
+            'auth.sessionSecret is required when auth.modes includes "google"',
           path: ['auth', 'sessionSecret'],
         });
       }
     }
 
     // Keys auth mode requires at least one key
-    if (config.auth.modes.includes('keys') && Object.keys(config.keys).length === 0) {
+    if (
+      config.auth.modes.includes('keys') &&
+      Object.keys(config.keys).length === 0
+    ) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         message: 'At least one key is required when auth.modes includes "keys"',
         path: ['keys'],
       });
@@ -143,9 +151,14 @@ export const jeevesConfigSchema = z
 
     // _internal key must not have scopes
     const internal = config.keys['_internal'];
-    if (internal && typeof internal === 'object' && 'scopes' in internal && internal.scopes) {
+    if (
+      internal &&
+      typeof internal === 'object' &&
+      'scopes' in internal &&
+      internal.scopes
+    ) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         message: '_internal key must not have scopes (it is always unscoped)',
         path: ['keys', '_internal'],
       });

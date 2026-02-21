@@ -1,0 +1,145 @@
+/**
+ * Dispatches to the correct viewer based on file type.
+ */
+import { Loader2 } from 'lucide-react';
+import { lazy, Suspense, useEffect } from 'react';
+
+import { CodeBlock } from '@/components/CodeBlock';
+const CodeEditor = lazy(() => import('@/components/CodeEditor').then(m => ({ default: m.CodeEditor })));
+import { MermaidViewer } from '@/components/MermaidViewer';
+import { PlantUmlViewer } from '@/components/PlantUmlViewer';
+import { SvgViewer } from '@/components/SvgViewer';
+import { MarkdownView, scrollToIdInContainer } from '@/components/MarkdownView';
+import { isRenderable } from '@/components/TabBar';
+import type { FileContent } from '@/lib/api';
+
+interface FileContentViewProps {
+  reqPath: string;
+  file: FileContent | null;
+  fileRaw: FileContent | null;
+  fileRendered: FileContent | null;
+  viewTab: 'rendered' | 'raw';
+  editing: boolean;
+  setEditing: (editing: boolean) => void;
+  proseWidth: 'narrow' | 'medium' | 'wide';
+  topBarHeight: number;
+  mainRef: React.RefObject<HTMLElement | null>;
+  mobileTocOpen: boolean;
+  setMobileTocOpen: (open: boolean) => void;
+  onSave: (content: string) => Promise<void>;
+  loading: boolean;
+}
+
+export function FileContentView({
+  reqPath, file, fileRaw, fileRendered, viewTab,
+  editing, setEditing,
+  proseWidth, topBarHeight, mainRef,
+  mobileTocOpen, setMobileTocOpen,
+  onSave, loading,
+}: FileContentViewProps) {
+  const renderable = file ? isRenderable(file) : false;
+  const activeTab = renderable ? viewTab : 'raw';
+  const fileLoading = !file;
+
+  // Scroll to hash on file load
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash && file) {
+      const timer = setTimeout(() => scrollToIdInContainer(mainRef.current, hash), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [file, mainRef]);
+
+  return (
+    <div className="px-4 md:px-6 pt-4">
+      {/* Loading state */}
+      {fileLoading && (
+        <div className="flex items-center gap-2 text-muted-foreground text-sm py-8 justify-center">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading...
+        </div>
+      )}
+
+      {/* Raw view */}
+      {(fileRaw ?? file)?.content && activeTab === 'raw' && !editing && (
+        <CodeBlock
+          content={(fileRaw ?? file)!.content!}
+          html={renderable ? null : (fileRendered ?? fileRaw)?.html}
+          language={renderable ? null : (fileRendered ?? fileRaw)?.language}
+        />
+      )}
+
+      {/* Editor */}
+      {editing && (fileRaw ?? file)?.content != null && activeTab === 'raw' && (
+        <Suspense fallback={
+          <div className="flex items-center gap-2 text-muted-foreground text-sm py-8 justify-center">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading editor…
+          </div>
+        }>
+          <div style={{ height: `calc(100vh - ${topBarHeight + 16}px)` }}>
+            <CodeEditor
+              content={(fileRaw ?? file)!.content!}
+              fileName={(fileRaw ?? file)!.fileName}
+              onSave={onSave}
+              onCancel={() => setEditing(false)}
+            />
+          </div>
+        </Suspense>
+      )}
+
+      {/* Rendering spinner */}
+      {!fileRendered && renderable && activeTab === 'rendered' && !fileLoading && (
+        <div className="flex items-center gap-2 text-muted-foreground text-sm py-8 justify-center">
+          <Loader2 className="h-4 w-4 animate-spin" /> Rendering...
+        </div>
+      )}
+
+      {/* Markdown */}
+      {fileRendered?.type === 'markdown' && fileRendered.html && activeTab === 'rendered' && (
+        <MarkdownView
+          fileRendered={fileRendered}
+          proseWidth={proseWidth}
+          topBarHeight={topBarHeight}
+          mainRef={mainRef}
+          mobileTocOpen={mobileTocOpen}
+          setMobileTocOpen={setMobileTocOpen}
+        />
+      )}
+
+      {/* SVG */}
+      {fileRendered?.type === 'svg' && fileRendered.content && activeTab === 'rendered' && (
+        <SvgViewer content={fileRendered.content} />
+      )}
+
+      {/* Mermaid */}
+      {fileRendered?.type === 'mermaid' && activeTab === 'rendered' && (
+        <MermaidViewer html={fileRendered.html ?? null} content={fileRendered.content ?? ''} />
+      )}
+
+      {/* PlantUML */}
+      {fileRendered?.type === 'plantuml' && activeTab === 'rendered' && (
+        <PlantUmlViewer html={fileRendered.html ?? null} content={fileRendered.content ?? ''} />
+      )}
+
+      {/* Image */}
+      {file?.type === 'image' && (
+        <div className="flex justify-center p-4">
+          <img src={`/api/raw/${reqPath}`} alt={file.fileName} className="max-w-full rounded-lg shadow-md" />
+        </div>
+      )}
+
+      {/* Binary download */}
+      {file?.type === 'binary' && (
+        <div className="text-center p-8">
+          <p className="text-muted-foreground mb-4">{file.fileName}</p>
+          <a
+            href={`/api/raw/${reqPath}`}
+            download={file.fileName}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          >
+            Download
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -59,7 +59,11 @@ export function getInsiderKey(email: string): InsiderKeyState | null {
 /**
  * Set an insider's auto-generated key in state
  */
-export function setInsiderKey(email: string, seed: string, createdAt: string): void {
+export function setInsiderKey(
+  email: string,
+  seed: string,
+  createdAt: string,
+): void {
   const state = loadState();
   if (!state.insiderKeys) state.insiderKeys = {};
   state.insiderKeys[email.toLowerCase()] = { seed, createdAt };
