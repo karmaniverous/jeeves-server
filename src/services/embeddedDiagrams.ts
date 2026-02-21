@@ -11,6 +11,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { getConfig } from '../config/index.js';
+import { getCachedDiagram, cacheDiagram } from './diagramCache.js';
 import { renderPlantUmlSvg } from './plantuml.js';
 
 /** Placeholder format used by the markdown renderer */
@@ -52,15 +53,20 @@ export async function renderEmbeddedDiagrams(
     const source = diagramSources.get(hash);
     if (!source) continue;
 
-    let svg: string | null = null;
-    try {
-      if (type === 'mermaid') {
-        svg = renderMermaidSync(source);
-      } else if (type === 'plantuml') {
-        svg = await renderPlantUmlFromSource(source, contextDir);
+    let svg: string | null = getCachedDiagram(type!, source);
+    if (svg) {
+      // Cache hit — skip rendering
+    } else {
+      try {
+        if (type === 'mermaid') {
+          svg = renderMermaidSync(source);
+        } else if (type === 'plantuml') {
+          svg = await renderPlantUmlFromSource(source, contextDir);
+        }
+        if (svg) cacheDiagram(type!, source, svg);
+      } catch (err) {
+        console.error(`[embeddedDiagrams] ${type} render failed:`, (err as Error).message);
       }
-    } catch (err) {
-      console.error(`[embeddedDiagrams] ${type} render failed:`, (err as Error).message);
     }
 
     if (svg) {

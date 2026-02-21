@@ -18,6 +18,7 @@ import { eventRoute } from './routes/event.js';
 import { healthRoute } from './routes/health.js';
 import { keysRoute } from './routes/keys.js';
 import { pathRoute } from './routes/path/index.js';
+import { initDiagramCache } from './services/diagramCache.js';
 import { startQueueProcessor } from './services/eventQueue.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -91,6 +92,9 @@ async function start() {
         return reply.sendFile('index.html', clientDir);
       });
     }
+
+    // Initialize diagram render cache
+    initDiagramCache(config.diagramCachePath);
 
     // Start queue processor
     startQueueProcessor();

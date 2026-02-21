@@ -102,6 +102,11 @@ export const jeevesConfigSchema = z
       servers: z.array(z.string().url()).optional(),
     }).optional(),
     /**
+     * Directory for cached rendered diagrams (content-addressed by source hash).
+     * Defaults to `.diagram-cache` in the server working directory.
+     */
+    diagramCachePath: z.string().optional(),
+    /**
      * Global outsider policy — constrains which paths are eligible for outsider sharing.
      * Uses the same allow/deny model as insider scopes.
      * If omitted, all paths are shareable with outsiders.

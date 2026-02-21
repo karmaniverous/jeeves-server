@@ -31,6 +31,7 @@ import hljs from 'highlight.js';
 import { rewriteLinksForDeepShare } from '../services/deepShareLinks.js';
 import { renderEmbeddedDiagrams } from '../services/embeddedDiagrams.js';
 import { parseMarkdown } from '../services/markdown.js';
+import { getCachedDiagram, cacheDiagram } from '../services/diagramCache.js';
 import { renderPlantUmlSvg, renderPlantUmlToBuffer, getPlantUmlFormats } from '../services/plantuml.js';
 import { getContentType, isInlineType, looksLikeText } from '../util/fileDetection.js';
 import { formatRelativeTime } from '../util/formatters.js';
@@ -428,28 +429,31 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         });
       }
 
-      // Mermaid — render to SVG server-side via mmdc
+      // Mermaid — render to SVG server-side via mmdc (with cache)
       if (ext === '.mmd') {
         const content = fs.readFileSync(resolved, 'utf8');
         if (rawOnly) {
           return reply.send({ type: 'mermaid', content, fileName, breadcrumbs, isInsider });
         }
-        let renderedSvg: string | null = null;
-        try {
-          const tmpOut = path.join(
-            path.dirname(resolved),
-            `.${path.basename(resolved, '.mmd')}.tmp.svg`,
-          );
-          execSync(
-            `${mmcdCmd} -i "${resolved}" -o "${tmpOut}" -w 1600 -s 2 -b white -p puppeteer.json`,
-            { timeout: 30_000, stdio: 'pipe' },
-          );
-          if (fs.existsSync(tmpOut)) {
-            renderedSvg = fs.readFileSync(tmpOut, 'utf8');
-            fs.unlinkSync(tmpOut);
+        let renderedSvg: string | null = getCachedDiagram('mermaid', content);
+        if (!renderedSvg) {
+          try {
+            const tmpOut = path.join(
+              path.dirname(resolved),
+              `.${path.basename(resolved, '.mmd')}.tmp.svg`,
+            );
+            execSync(
+              `${mmcdCmd} -i "${resolved}" -o "${tmpOut}" -w 1600 -s 2 -b white -p puppeteer.json`,
+              { timeout: 30_000, stdio: 'pipe' },
+            );
+            if (fs.existsSync(tmpOut)) {
+              renderedSvg = fs.readFileSync(tmpOut, 'utf8');
+              fs.unlinkSync(tmpOut);
+            }
+          } catch {
+            // Fall back to raw content only
           }
-        } catch {
-          // Fall back to raw content only
+          if (renderedSvg) cacheDiagram('mermaid', content, renderedSvg);
         }
         return reply.send({
           type: 'mermaid',
@@ -461,17 +465,20 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         });
       }
 
-      // PlantUML — render to SVG via jar or server fallback
+      // PlantUML — render to SVG via jar or server fallback (with cache)
       if (ext === '.puml' || ext === '.plantuml' || ext === '.pu') {
         const content = fs.readFileSync(resolved, 'utf8');
         if (rawOnly) {
           return reply.send({ type: 'plantuml', content, fileName, breadcrumbs, isInsider });
         }
-        let renderedSvg: string | null = null;
-        try {
-          renderedSvg = await renderPlantUmlSvg(resolved);
-        } catch {
-          // Fall back to raw content only
+        let renderedSvg: string | null = getCachedDiagram('plantuml', content);
+        if (!renderedSvg) {
+          try {
+            renderedSvg = await renderPlantUmlSvg(resolved);
+          } catch {
+            // Fall back to raw content only
+          }
+          if (renderedSvg) cacheDiagram('plantuml', content, renderedSvg);
         }
         return reply.send({
           type: 'plantuml',
