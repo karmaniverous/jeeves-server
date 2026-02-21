@@ -1,13 +1,15 @@
 /**
- * Data fetching and state management for the file browser.
+ * Composition root for the file browser — combines focused hooks.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
-import type { BreadcrumbItem, DirectoryListing, DriveEntry, FileContent, ShareSettings } from '@/lib/api';
-import { getDrives, getDirectory, getFile, getFileRaw, saveFile } from '@/lib/api';
+import type { BreadcrumbItem } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
+import { useFileData } from './useFileData';
+import { useShareSettings } from './useShareSettings';
+import { useTopBar } from './useTopBar';
 
 function formatRelativeTime(isoDate: string): string {
   const ms = Date.now() - new Date(isoDate).getTime();
@@ -19,15 +21,10 @@ function formatRelativeTime(isoDate: string): string {
   return `${String(days)}d ago`;
 }
 
-function loadShareSettings(): ShareSettings {
-  const saved = localStorage.getItem('jeeves-share-settings');
-  if (saved) try { return JSON.parse(saved) as ShareSettings; } catch { /* ignore */ }
-  return { expiry: localStorage.getItem('jeeves-share-expiry') ?? '', depth: 0, dirs: false };
-}
-
 export function useFileBrowser() {
   const params = useParams<{ '*': string }>();
   const reqPath = params['*'] ?? '';
+  const [searchParams, setSearchParams] = useSearchParams();
   const [theme, toggleTheme] = useTheme();
 
   // Browser tab title
@@ -39,7 +36,29 @@ export function useFileBrowser() {
     document.title = decoded ? `${decoded} - ${siteTitle}` : siteTitle;
   }, [reqPath]);
 
-  const [shareSettings, setShareSettings] = useState<ShareSettings>(loadShareSettings);
+  // Data
+  const {
+    drives, directory, fileRaw, fileRendered, file,
+    loading, error, editing, setEditing,
+    viewTab, setViewTab: setViewTabInternal,
+    handleSave,
+  } = useFileData(reqPath, searchParams);
+
+  // Sync tab to URL
+  const setViewTab = (tab: 'rendered' | 'raw') => {
+    setViewTabInternal(tab);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (tab === 'rendered') next.delete('tab');
+      else next.set('tab', tab);
+      return next;
+    }, { replace: true });
+  };
+
+  // Sharing
+  const { shareSettings, setShareSettings } = useShareSettings();
+
+  // UI state
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const [proseWidth, setProseWidth] = useState<'narrow' | 'medium' | 'wide'>(
     () => (localStorage.getItem('jeeves-prose-width') as 'narrow' | 'medium' | 'wide') ?? 'medium',
@@ -49,72 +68,13 @@ export function useFileBrowser() {
     localStorage.setItem('jeeves-prose-width', w);
   };
 
-  const [drives, setDrives] = useState<DriveEntry[] | null>(null);
-  const [directory, setDirectory] = useState<DirectoryListing | null>(null);
-  const [fileRaw, setFileRaw] = useState<FileContent | null>(null);
-  const [fileRendered, setFileRendered] = useState<FileContent | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [editing, setEditing] = useState(false);
-
-  const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') === 'raw' ? 'raw' : 'rendered';
-  const [viewTab, setViewTabState] = useState<'rendered' | 'raw'>(initialTab);
-  const setViewTab = (tab: 'rendered' | 'raw') => {
-    setViewTabState(tab);
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      if (tab === 'rendered') next.delete('tab');
-      else next.set('tab', tab);
-      return next;
-    }, { replace: true });
-  };
-
-  const file = fileRendered ?? fileRaw;
-
-  // Data fetching
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    setDrives(null);
-    setDirectory(null);
-    setFileRaw(null);
-    setFileRendered(null);
-    setEditing(false);
-    setViewTabState(searchParams.get('tab') === 'raw' ? 'raw' : 'rendered');
-
-    if (!reqPath) {
-      getDrives()
-        .then(setDrives)
-        .catch((e: Error) => setError(e.message))
-        .finally(() => setLoading(false));
-    } else {
-      getDirectory(reqPath)
-        .then((data) => {
-          if ('entries' in data) {
-            setDirectory(data);
-            setLoading(false);
-          } else {
-            getFileRaw(reqPath).then((raw) => { setFileRaw(raw); setLoading(false); }).catch(() => {});
-            getFile(reqPath).then(setFileRendered).catch(() => {});
-          }
-        })
-        .catch(() => {
-          getFileRaw(reqPath).then((raw) => { setFileRaw(raw); setLoading(false); }).catch((e: Error) => { setError(e.message); setLoading(false); });
-          getFile(reqPath).then(setFileRendered).catch(() => {});
-        });
-    }
-  }, [reqPath]);
-
-  useEffect(() => {
-    localStorage.setItem('jeeves-share-settings', JSON.stringify(shareSettings));
-  }, [shareSettings]);
-
+  // Auth
   const { isInsider: authInsider, keyCreatedAt, rotateKey } = useAuth();
   const breadcrumbs: BreadcrumbItem[] = directory?.breadcrumbs ?? file?.breadcrumbs ?? [];
   const isInsider = directory?.isInsider ?? file?.isInsider ?? authInsider;
   const keyAge = keyCreatedAt ? formatRelativeTime(keyCreatedAt) : null;
 
+  // Key rotation dialog
   const [rotateKeyDialogOpen, setRotateKeyDialogOpen] = useState(false);
   const handleRotateKey = () => setRotateKeyDialogOpen(true);
   const confirmRotateKey = async () => {
@@ -122,27 +82,8 @@ export function useFileBrowser() {
     await rotateKey();
   };
 
-  // Top bar height measurement
-  const topBarRef = useRef<HTMLDivElement>(null);
-  const mainRef = useRef<HTMLElement>(null);
-  const [topBarHeight, setTopBarHeight] = useState(96);
-  const measureTopBar = useCallback(() => {
-    if (topBarRef.current) setTopBarHeight(topBarRef.current.offsetHeight);
-  }, []);
-  useEffect(() => {
-    measureTopBar();
-    window.addEventListener('resize', measureTopBar);
-    return () => window.removeEventListener('resize', measureTopBar);
-  }, [measureTopBar]);
-  useEffect(() => { measureTopBar(); }, [file, directory, drives, measureTopBar]);
-
-  // Save handler for editor
-  const handleSave = async (content: string) => {
-    await saveFile(reqPath, content);
-    const refreshed = await getFileRaw(reqPath);
-    setFileRaw(refreshed);
-    try { const r = await getFile(reqPath); setFileRendered(r); } catch { /* ignore */ }
-  };
+  // Layout
+  const { topBarRef, mainRef, topBarHeight } = useTopBar([file, directory, drives]);
 
   return {
     reqPath, theme, toggleTheme,
