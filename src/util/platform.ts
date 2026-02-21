@@ -133,6 +133,28 @@ export function breadcrumbParts(fsPath: string, roots: RootEntry[]): { label: st
 }
 
 /**
+ * Recursively calculate total size of a directory in bytes.
+ */
+export function getDirSize(dirPath: string): number {
+  let totalSize = 0;
+  try {
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    for (const entry of entries) {
+      const entryPath = path.join(dirPath, entry.name);
+      try {
+        if (entry.isDirectory()) {
+          totalSize += getDirSize(entryPath);
+        } else {
+          const s = fs.statSync(entryPath);
+          totalSize += s.size;
+        }
+      } catch { /* skip inaccessible */ }
+    }
+  } catch { /* skip inaccessible */ }
+  return totalSize;
+}
+
+/**
  * Resolve a URL path to a real filesystem path, verifying it exists.
  * Returns null if the path doesn't resolve to an accessible location.
  */

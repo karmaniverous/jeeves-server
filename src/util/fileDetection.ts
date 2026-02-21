@@ -39,6 +39,46 @@ export function getContentType(ext: string): string {
 }
 
 /**
+ * Standard content-type map for diagram export formats.
+ */
+export const DIAGRAM_CONTENT_TYPES: Record<string, string> = {
+  svg: 'image/svg+xml',
+  png: 'image/png',
+  pdf: 'application/pdf',
+  eps: 'application/postscript',
+  txt: 'text/plain; charset=utf-8',
+  latex: 'application/x-latex',
+};
+
+/**
+ * Map file extensions to highlight.js language identifiers.
+ */
+const EXT_LANG_MAP: Record<string, string> = {
+  '.js': 'javascript', '.mjs': 'javascript', '.cjs': 'javascript',
+  '.ts': 'typescript', '.mts': 'typescript', '.tsx': 'typescript', '.jsx': 'javascript',
+  '.json': 'json', '.jsonl': 'json',
+  '.yaml': 'yaml', '.yml': 'yaml',
+  '.xml': 'xml', '.html': 'xml', '.htm': 'xml',
+  '.css': 'css', '.scss': 'scss', '.less': 'less',
+  '.py': 'python', '.rb': 'ruby', '.go': 'go', '.rs': 'rust',
+  '.java': 'java', '.c': 'c', '.cpp': 'cpp', '.h': 'c', '.hpp': 'cpp',
+  '.cs': 'csharp', '.sh': 'bash', '.bash': 'bash', '.zsh': 'bash',
+  '.ps1': 'powershell', '.bat': 'dos', '.cmd': 'dos',
+  '.sql': 'sql', '.md': 'markdown', '.ini': 'ini', '.toml': 'ini',
+  '.graphql': 'graphql', '.gql': 'graphql',
+  '.swift': 'swift', '.kt': 'kotlin', '.lua': 'lua',
+  '.php': 'php', '.r': 'r', '.pl': 'perl',
+};
+
+/**
+ * Get the highlight.js language identifier for a file extension.
+ * Returns null if not in the known map.
+ */
+export function getLanguageForExt(ext: string): string | null {
+  return EXT_LANG_MAP[ext.toLowerCase()] ?? null;
+}
+
+/**
  * Check if a content type should be displayed inline
  */
 export function isInlineType(contentType: string): boolean {
