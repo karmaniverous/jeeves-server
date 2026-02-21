@@ -17,6 +17,7 @@ import type { BreadcrumbItem, DirectoryListing, DriveEntry, FileContent, ShareSe
 import { getDrives, getDirectory, getFile, getFileRaw, saveFile } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { initEmbeddedDiagramPanzoom } from '@/components/EmbeddedDiagramPanzoom';
+import { initLazyDiagrams } from '@/components/LazyDiagram';
 import { initInlineSvgPanzoom } from '@/components/InlineSvgPanzoom';
 import { injectCopyButtons } from '@/lib/codeBlockCopy';
 import { useTheme } from '@/lib/theme';
@@ -408,7 +409,7 @@ export function FileBrowser() {
                       </aside>
                     )}
                     <article
-                      ref={(el) => { if (el) { injectCopyButtons(el); initInlineSvgPanzoom(el); initEmbeddedDiagramPanzoom(el); } }}
+                      ref={(el) => { if (el) { injectCopyButtons(el); initInlineSvgPanzoom(el); initEmbeddedDiagramPanzoom(el); initLazyDiagrams(el); } }}
                       className={`prose bg-background p-6 rounded-lg border border-border min-w-0 flex-1 ${proseWidth === 'narrow' ? 'max-w-prose' : proseWidth === 'medium' ? 'max-w-5xl' : 'max-w-none'}`}
                       style={{ '--tw-prose-body': 'var(--foreground)', '--tw-prose-headings': 'var(--foreground)', '--tw-prose-bold': 'var(--foreground)', '--tw-prose-links': '#3b82f6', '--tw-prose-code': 'var(--foreground)', '--tw-prose-pre-bg': 'var(--muted)', '--tw-prose-pre-code': 'var(--foreground)', '--tw-prose-hr': 'var(--border)', '--tw-prose-quotes': 'var(--muted-foreground)', '--tw-prose-quote-borders': 'var(--border)', '--tw-prose-th-borders': 'var(--border)', '--tw-prose-td-borders': 'var(--border)' } as React.CSSProperties}
                       dangerouslySetInnerHTML={{ __html: fileRendered.html! }}

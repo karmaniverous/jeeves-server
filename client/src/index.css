@@ -188,6 +188,34 @@ pre:hover .code-copy-btn {
 }
 
 /* Embedded diagram containers in markdown */
+/* Lazy diagram loading placeholder */
+.embedded-diagram-lazy,
+.embedded-diagram-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem 1rem;
+  margin: 1rem 0;
+  border: 1px dashed var(--border);
+  border-radius: 0.5rem;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+.diagram-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--border);
+  border-top-color: var(--foreground);
+  border-radius: 50%;
+  animation: diagram-spin 0.8s linear infinite;
+}
+
+@keyframes diagram-spin {
+  to { transform: rotate(360deg); }
+}
+
 .embedded-diagram-rendered {
   background: white;
   border: 1px solid var(--border);

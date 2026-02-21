@@ -29,7 +29,7 @@ import { appendEvent } from '../services/eventQueue.js';
 import hljs from 'highlight.js';
 
 import { rewriteLinksForDeepShare } from '../services/deepShareLinks.js';
-import { renderEmbeddedDiagrams } from '../services/embeddedDiagrams.js';
+import { renderEmbeddedDiagrams, setDiagramContext, getDiagramSource, renderDiagramToSvg, diagramHash } from '../services/embeddedDiagrams.js';
 import { parseMarkdown } from '../services/markdown.js';
 import { getCachedDiagram, cacheDiagram, getCachedDiagramBuffer, cacheDiagramBuffer } from '../services/diagramCache.js';
 import { renderPlantUmlSvg, renderPlantUmlToBuffer, getPlantUmlFormats } from '../services/plantuml.js';
@@ -389,14 +389,18 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
           return reply.send({ type: 'markdown', content: markdown, fileName, breadcrumbs, isInsider });
         }
         const urlDir = reqPath.includes('/') ? reqPath.substring(0, reqPath.lastIndexOf('/')) : '';
+        const fsDir = path.dirname(resolved);
+        setDiagramContext(fsDir);
         let { html, headings } = parseMarkdown(markdown, {
           linkWindowsPaths: true,
           basePath: urlDir,
         });
 
-        // Render embedded mermaid/plantuml diagrams
-        const fsDir = path.dirname(resolved);
-        html = await renderEmbeddedDiagrams(html, fsDir);
+        // For export (render_diagrams=1), render embedded diagrams server-side.
+        // Otherwise, leave lazy placeholders for client-side loading.
+        if ((request.query as { render_diagrams?: string }).render_diagrams === '1') {
+          html = await renderEmbeddedDiagrams(html, fsDir);
+        }
 
         // Deep share link rewriting for outsiders with depth > 0
         const deepShare = (request as { deepShareParams?: { d: string; dirs: string; s: string } }).deepShareParams;
@@ -709,7 +713,8 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       }
 
       // Navigate Puppeteer to the SPA browse page for rendering
-      const exportUrl = `http://localhost:${String(port)}/browse/${reqPath}?key=${exportKey}`;
+      // render_diagrams=1 tells the API to inline diagrams server-side for export
+      const exportUrl = `http://localhost:${String(port)}/browse/${reqPath}?key=${exportKey}&render_diagrams=1`;
       const fileName = path.basename(resolved);
       const baseName = fileName.replace(/\.md$/i, '');
 
@@ -810,6 +815,43 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       }
 
       return reply.send({ url: shareUrl, path: targetPath, exp: expiry ?? null, depth: depth ?? 0, dirs: dirs ?? false });
+    },
+  );
+
+  // GET /api/diagram/:type/:hash.svg — lazy diagram rendering endpoint
+  fastify.get<{ Params: { type: string; hash: string } }>(
+    '/api/diagram/:type/:hash',
+    async (request, reply) => {
+      const { type, hash: hashWithExt } = request.params;
+      const hash = hashWithExt.replace(/\.svg$/, '');
+
+      if (!['mermaid', 'plantuml'].includes(type)) {
+        return reply.code(400).send({ error: 'Invalid diagram type' });
+      }
+      if (!/^[a-f0-9]{64}$/.test(hash)) {
+        return reply.code(400).send({ error: 'Invalid hash' });
+      }
+
+      // Look up registered source
+      const entry = getDiagramSource(hash);
+      if (!entry) {
+        // Source not in memory — check if it's in the cache anyway
+        // (The cache uses the same hash, so we can serve directly)
+        const { getCachedDiagram: getFromCache } = await import('../services/diagramCache.js');
+        // We can't look up by hash alone since the cache key is computed from type+source.
+        // If the source isn't registered, we can't serve it.
+        return reply.code(404).send({ error: 'Diagram source not found (may have expired)' });
+      }
+
+      const svg = await renderDiagramToSvg(type, entry.source, entry.contextDir);
+      if (!svg) {
+        return reply.code(500).send({ error: `${type} render failed` });
+      }
+
+      return reply
+        .header('Content-Type', 'image/svg+xml')
+        .header('Cache-Control', 'public, max-age=86400, immutable')
+        .send(svg);
     },
   );
 
