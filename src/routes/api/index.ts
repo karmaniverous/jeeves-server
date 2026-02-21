@@ -10,12 +10,14 @@ import { directoryRoutes } from './directory.js';
 import { drivesRoutes } from './drives.js';
 import { exportRoutes } from './export.js';
 import { fileContentRoutes } from './fileContent.js';
-import { authMiddleware } from './middleware.js';
+import { addAuthMiddleware } from './middleware.js';
 import { rawRoutes } from './raw.js';
 import { sharingRoutes } from './sharing.js';
 
 export const apiRoute: FastifyPluginAsync = async (fastify) => {
-  await fastify.register(authMiddleware);
+  // Add auth hook directly to this context (not as a child plugin)
+  // so it applies to all routes registered below.
+  addAuthMiddleware(fastify);
   await fastify.register(drivesRoutes);
   await fastify.register(directoryRoutes);
   await fastify.register(fileContentRoutes);

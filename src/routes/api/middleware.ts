@@ -2,7 +2,7 @@
  * API authentication middleware (preHandler hook).
  */
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyInstance } from 'fastify';
 
 import {
   resolveInsiderKeyAuth,
@@ -12,8 +12,12 @@ import {
 import { getConfig } from '../../config/index.js';
 import { decodeStack } from '../../services/deepShareLinks.js';
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const authMiddleware: FastifyPluginAsync = async (fastify) => {
+/**
+ * Add the API auth preHandler hook directly to a Fastify instance.
+ * Must be called on the parent context (not via register()) so the hook
+ * applies to all sibling and child routes.
+ */
+export function addAuthMiddleware(fastify: FastifyInstance): void {
   fastify.addHook('preHandler', async (request, reply) => {
     if (!request.url.startsWith('/api')) return;
     if (request.url.startsWith('/api/readme-link')) return;
@@ -147,4 +151,4 @@ export const authMiddleware: FastifyPluginAsync = async (fastify) => {
     reply.code(401).send({ error: 'Unauthorized' });
     return;
   });
-};
+}
