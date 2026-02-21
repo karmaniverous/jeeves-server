@@ -39,12 +39,13 @@ export function initInlineSvgPanzoom(article: HTMLElement): () => void {
         const svg = tempDiv.querySelector('svg');
         if (!svg) throw new Error('No SVG element found');
 
-        const { wrapper, cleanup } = createPanzoomWrapper(svg, placeholder, {
+        const { wrapper, initPanzoom, cleanup } = createPanzoomWrapper(svg, placeholder, {
           wrapperExtraClass: 'inline-svg-panzoom',
           viewportMinHeight: '200px',
         });
 
         placeholder.replaceWith(wrapper);
+        initPanzoom();
         cleanups.push(cleanup);
       })
       .catch(() => {

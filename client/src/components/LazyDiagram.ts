@@ -60,11 +60,12 @@ async function loadDiagram(
     }
 
     // Use shared panzoom wrapper
-    const { wrapper, cleanup } = createPanzoomWrapper(svg, container, {
+    const { wrapper, initPanzoom, cleanup } = createPanzoomWrapper(svg, container, {
       wrapperExtraClass: 'embedded-diagram-panzoom',
     });
 
     placeholder.replaceWith(wrapper);
+    initPanzoom();
     cleanups.push(cleanup);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';

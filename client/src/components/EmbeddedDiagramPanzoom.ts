@@ -15,11 +15,12 @@ export function initEmbeddedDiagramPanzoom(article: HTMLElement): () => void {
     const svg = container.querySelector('svg');
     if (!svg) continue;
 
-    const { wrapper, cleanup } = createPanzoomWrapper(svg, container, {
+    const { wrapper, initPanzoom, cleanup } = createPanzoomWrapper(svg, container, {
       wrapperExtraClass: 'embedded-diagram-panzoom',
     });
 
     container.replaceWith(wrapper);
+    initPanzoom();
     cleanups.push(cleanup);
   }
 

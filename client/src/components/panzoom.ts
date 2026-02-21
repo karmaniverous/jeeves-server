@@ -63,6 +63,8 @@ export interface PanzoomWrapperOptions {
 
 export interface PanzoomWrapperResult {
   wrapper: HTMLDivElement;
+  /** Call after attaching wrapper to the DOM to initialize Panzoom. */
+  initPanzoom: () => void;
   enterFullscreen: () => void;
   exitFullscreen: () => void;
   cleanup: () => void;
@@ -112,11 +114,17 @@ export function createPanzoomWrapper(
   wrapper.appendChild(fsBtn);
   wrapper.appendChild(hint);
 
-  // Init panzoom
-  let pz = Panzoom(inner, { maxScale: 20, contain: 'outside' });
+  // Panzoom init is deferred until the wrapper is in the DOM.
+  // Callers must invoke initPanzoom() after attaching the wrapper.
+  let pz: ReturnType<typeof Panzoom> | null = null;
 
-  const wheelHandler = (e: WheelEvent) => { pz.zoomWithWheel(e); };
+  const wheelHandler = (e: WheelEvent) => { pz?.zoomWithWheel(e); };
   viewport.addEventListener('wheel', wheelHandler, { passive: false });
+
+  const initPanzoom = () => {
+    if (pz) return; // already initialized
+    pz = Panzoom(inner, { maxScale: 20, contain: 'outside' });
+  };
 
   let isFullscreen = false;
 
@@ -132,7 +140,8 @@ export function createPanzoomWrapper(
     hint.className = HINT_FULLSCREEN_CLASS;
     fsBtn.title = 'Exit fullscreen';
     setButtonIcon(fsBtn, Minimize);
-    pz.destroy();
+    pz?.destroy();
+    pz = null;
 
     requestAnimationFrame(() => { requestAnimationFrame(() => { setTimeout(() => {
       const s = inner.querySelector('svg');
@@ -171,7 +180,7 @@ export function createPanzoomWrapper(
     hint.className = HINT_CLASS;
     fsBtn.title = 'Fullscreen';
     setButtonIcon(fsBtn, Maximize);
-    pz.destroy();
+    pz?.destroy();
     pz = Panzoom(inner, { maxScale: 20, contain: 'outside', startScale: 1 });
   };
 
@@ -187,8 +196,8 @@ export function createPanzoomWrapper(
   const cleanup = () => {
     viewport.removeEventListener('wheel', wheelHandler);
     document.removeEventListener('keydown', escHandler);
-    pz.destroy();
+    pz?.destroy();
   };
 
-  return { wrapper, enterFullscreen, exitFullscreen, cleanup };
+  return { wrapper, initPanzoom, enterFullscreen, exitFullscreen, cleanup };
 }
