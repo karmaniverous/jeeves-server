@@ -55,7 +55,7 @@ export const authStatusRoutes: FastifyPluginAsync = async (fastify) => {
 
       // Try key-based auth
       if (config.authModes.includes('keys')) {
-        const query = request.query as Record<string, string>;
+        const query = request.query as Record<string, string | undefined>;
         const deepParams =
           query.d !== undefined && query.s !== undefined
             ? { d: query.d, dirs: query.dirs ?? '0', s: query.s }
@@ -71,7 +71,7 @@ export const authStatusRoutes: FastifyPluginAsync = async (fastify) => {
         if (keyResult.valid) {
           return reply.send({
             authenticated: true,
-            email: `key:${keyResult.keyName}`,
+            email: `key:${String(keyResult.keyName)}`,
             isInsider: keyResult.mode === 'insider',
             keyCreatedAt: null,
           });

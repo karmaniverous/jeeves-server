@@ -188,7 +188,9 @@ export const fileContentRoutes: FastifyPluginAsync = async (fastify) => {
       try {
         const stat = await fs.promises.stat(resolved);
         if (!stat.isFile())
-          return reply.code(400).send({ error: 'Can only write to files' });
+          return await reply
+            .code(400)
+            .send({ error: 'Can only write to files' });
       } catch {
         return reply.code(404).send({ error: 'File not found' });
       }
@@ -202,7 +204,7 @@ export const fileContentRoutes: FastifyPluginAsync = async (fastify) => {
 
       try {
         await fs.promises.writeFile(resolved, body.content, 'utf8');
-        return reply.send({
+        return await reply.send({
           ok: true,
           path: resolved,
           size: Buffer.byteLength(body.content, 'utf8'),
@@ -242,10 +244,11 @@ async function handleMarkdown(
     : '';
   const fsDir = path.dirname(resolved);
   setDiagramContext(fsDir);
-  let { html, headings } = parseMarkdown(markdown, {
+  const { headings, html: parsedHtml } = parseMarkdown(markdown, {
     linkWindowsPaths: true,
     basePath: urlDir,
   });
+  let html = parsedHtml;
 
   if ((request.query as { render_diagrams?: string }).render_diagrams === '1') {
     html = await renderEmbeddedDiagrams(html, fsDir);

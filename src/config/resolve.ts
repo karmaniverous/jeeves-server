@@ -16,11 +16,11 @@ import type {
 } from './types.js';
 
 /**
- * Normalize any scopes format to { allow, deny }.
+ * Normalize any scopes format to \{ allow, deny \}.
  * - undefined/null → null (unrestricted)
- * - string → { allow: [string], deny: [] }
- * - string[] → { allow: string[], deny: [] }
- * - { allow?, deny? } → { allow: allow ?? ['/**'], deny: deny ?? [] }
+ * - string → \{ allow: [string], deny: [] \}
+ * - string[] → \{ allow: string[], deny: [] \}
+ * - \{ allow?, deny? \} → \{ allow: allow ?? ['/**'], deny: deny ?? [] \}
  */
 export function normalizeScopes(raw: unknown): NormalizedScopes | null {
   if (raw === undefined || raw === null) return null;

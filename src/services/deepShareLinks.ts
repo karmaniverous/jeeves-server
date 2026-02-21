@@ -90,7 +90,7 @@ export function computeSubLink(
 /**
  * Rewrite outgoing links in rendered HTML for deep share access.
  *
- * For outsiders with depth > 0:
+ * For outsiders with depth \> 0:
  * - Internal links get rewritten with sub-keys
  * - Links beyond depth get stripped (text preserved, link removed)
  * - External links (http/https) are left unchanged

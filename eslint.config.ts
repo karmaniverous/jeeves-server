@@ -43,6 +43,7 @@ export default [
       'logs/**/*',
       'node_modules/**/*',
       'client/**/*',
+      'test-docs/**/*',
       'server.js',
       '*.pdf',
       '*.docx',

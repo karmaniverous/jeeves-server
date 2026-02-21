@@ -23,12 +23,7 @@ import {
   renderPlantUmlToBuffer,
 } from '../../services/plantuml.js';
 import { DIAGRAM_CONTENT_TYPES } from '../../util/fileDetection.js';
-import {
-  getDirSize,
-  getRoots,
-  type RootEntry,
-  urlPathToFs,
-} from '../../util/platform.js';
+import { getDirSize, getRoots, urlPathToFs } from '../../util/platform.js';
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const exportRoutes: FastifyPluginAsync = async (fastify) => {
@@ -68,7 +63,7 @@ export const exportRoutes: FastifyPluginAsync = async (fastify) => {
         const maxSizeBytes = config.maxZipSizeMb * 1024 * 1024;
         if (totalSize > maxSizeBytes) {
           return reply.code(413).send({
-            error: `Directory too large for ZIP export (${Math.round(totalSize / 1024 / 1024)}MB, max ${config.maxZipSizeMb}MB)`,
+            error: `Directory too large for ZIP export (${String(Math.round(totalSize / 1024 / 1024))}MB, max ${String(config.maxZipSizeMb)}MB)`,
           });
         }
 
@@ -123,7 +118,7 @@ export const exportRoutes: FastifyPluginAsync = async (fastify) => {
             : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
         const fileExt = format === 'pdf' ? 'pdf' : 'docx';
 
-        return reply
+        return await reply
           .header('Content-Type', contentType)
           .header(
             'Content-Disposition',

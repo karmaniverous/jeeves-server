@@ -6,15 +6,11 @@ import { JsonMap } from '@karmaniverous/jsonmap';
 import Ajv from 'ajv';
 import type { FastifyPluginAsync } from 'fastify';
 import * as _ from 'radash';
-import type { z } from 'zod';
 
 import { verifyKey } from '../auth/keys.js';
 import { getConfig } from '../config/index.js';
-import type { eventConfigSchema } from '../config/schema.js';
 import { logEvent } from '../services/eventLog.js';
 import { enqueue } from '../services/eventQueue.js';
-
-type EventConfig = z.infer<typeof eventConfigSchema>;
 
 const ajv = new Ajv();
 

@@ -31,7 +31,7 @@ const IS_WINDOWS = process.platform === 'win32';
 
 /**
  * Convert platform-native filesystem paths in markdown text to clickable browse links.
- * Windows: C:\foo\bar → [C:\foo\bar](/browse/c/foo/bar)
+ * Windows: C:\\foo\\bar → [C:\\foo\\bar](/browse/c/foo/bar)
  * Linux: /home/user/docs → [/home/user/docs](/browse/home/user/docs)
  */
 function linkifyFilesystemPaths(markdown: string): string {

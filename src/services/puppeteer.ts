@@ -97,7 +97,7 @@ export async function waitForSpaContent(page: Page): Promise<void> {
         const containers = document.querySelectorAll('.inline-svg-panzoom');
         if (containers.length === 0) return true;
         return Array.from(containers).every(
-          (c) => !c.textContent?.includes('Loading SVG'),
+          (c) => !c.textContent.includes('Loading SVG'),
         );
       },
       { timeout: 15_000 },
@@ -112,7 +112,7 @@ export const SVG_CONTAINER_SELECTORS =
 
 /**
  * Capture each SVG in a page as a high-quality PNG screenshot.
- * Returns array of { index, dataUrl, width, height }.
+ * Returns array of \{ index, dataUrl, width, height \}.
  */
 export async function captureSvgsAsPng(
   browser: Browser,

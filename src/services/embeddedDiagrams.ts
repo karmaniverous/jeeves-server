@@ -44,7 +44,7 @@ function startCleanup(): void {
     }
   }, 60_000);
   // Don't keep process alive just for cleanup
-  if (cleanupInterval.unref) cleanupInterval.unref();
+  cleanupInterval.unref();
 }
 
 /**
@@ -103,7 +103,8 @@ export function getDiagramSource(
 export async function renderDiagramToSvg(
   type: string,
   source: string,
-  contextDir?: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _contextDir?: string,
 ): Promise<string | null> {
   try {
     return await getOrRenderDiagram(type, source, () => {
@@ -135,13 +136,14 @@ export async function renderEmbeddedDiagrams(
   for (const match of matches) {
     const [placeholder, type, hash] = match;
     const entry = diagramSources.get(hash);
-    const source = entry?.source;
+    if (!entry) continue;
+    const source = entry.source;
     if (!source) continue;
 
     const svg = await renderDiagramToSvg(
       type,
       source,
-      contextDir ?? entry?.contextDir,
+      contextDir ?? entry.contextDir,
     );
 
     if (svg) {

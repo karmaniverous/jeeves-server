@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Content-addressed diagram render cache.
  *
- * Cache key = sha256(type + '\0' + source). Cached artifacts are SVG strings
+ * Cache key = sha256(type + '\\0' + source). Cached artifacts are SVG strings
  * stored as files in a single directory. No timestamp comparison needed:
- * if the source changes, the hash changes → automatic cache miss.
+ * if the source changes, the hash changes â†’ automatic cache miss.
  */
 
 import crypto from 'node:crypto';
@@ -37,7 +37,7 @@ function cacheKey(type: string, source: string): string {
 
 /**
  * Look up a cached diagram. Returns the content as a string or null on miss.
- * @param format Output format extension (e.g. 'svg', 'png', 'pdf'). Defaults to 'svg'.
+ * @param format - Output format extension (e.g. 'svg', 'png', 'pdf'). Defaults to 'svg'.
  */
 export function getCachedDiagram(
   type: string,
@@ -55,7 +55,7 @@ export function getCachedDiagram(
 
 /**
  * Look up a cached diagram as a Buffer (for binary formats like PNG/PDF).
- * @param format Output format extension (e.g. 'png', 'pdf').
+ * @param format - Output format extension (e.g. 'png', 'pdf').
  */
 export function getCachedDiagramBuffer(
   type: string,
@@ -73,7 +73,7 @@ export function getCachedDiagramBuffer(
 
 /**
  * Store a rendered diagram in the cache (string content).
- * @param format Output format extension. Defaults to 'svg'.
+ * @param format - Output format extension. Defaults to 'svg'.
  */
 export function cacheDiagram(
   type: string,
@@ -92,7 +92,7 @@ export function cacheDiagram(
 
 /**
  * Store a rendered diagram in the cache (binary content).
- * @param format Output format extension (e.g. 'png', 'pdf').
+ * @param format - Output format extension (e.g. 'png', 'pdf').
  */
 export function cacheDiagramBuffer(
   type: string,
@@ -111,7 +111,7 @@ export function cacheDiagramBuffer(
 
 /**
  * Get a cached diagram or render it and cache the result.
- * Eliminates the repeated getCachedDiagram → render → cacheDiagram pattern.
+ * Eliminates the repeated getCachedDiagram â†’ render â†’ cacheDiagram pattern.
  */
 export async function getOrRenderDiagram(
   type: string,

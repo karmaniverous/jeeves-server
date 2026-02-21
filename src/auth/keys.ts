@@ -81,7 +81,7 @@ function checkOutsiderKey(
   deepParams?: { d: string; dirs: string; s: string },
 ): string | null {
   // Deep share key check (when d and s params are present)
-  if (deepParams?.d !== undefined && deepParams?.s !== undefined) {
+  if (deepParams) {
     const params: DeepShareParams = {
       depth: parseInt(deepParams.d, 10),
       dirs: deepParams.dirs === '1',

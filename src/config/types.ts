@@ -9,7 +9,7 @@ import type { AuthMode, JeevesConfig } from './schema.js';
 export type { AuthMode, JeevesConfig };
 
 /**
- * Normalized scopes — always resolved to { allow, deny } form.
+ * Normalized scopes — always resolved to \{ allow, deny \} form.
  * null = unrestricted access.
  */
 export interface NormalizedScopes {

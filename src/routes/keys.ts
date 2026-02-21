@@ -22,7 +22,6 @@ import {
   computePathKey,
   timingSafeEqual,
 } from '../util/crypto.js';
-import { nowIso } from '../util/formatters.js';
 import { setInsiderKey, setKeyRotationTimestamp } from '../util/state.js';
 
 // eslint-disable-next-line @typescript-eslint/require-await

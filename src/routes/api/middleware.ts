@@ -4,7 +4,6 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 
-import { verifyKey } from '../../auth/keys.js';
 import {
   resolveInsiderKeyAuth,
   resolveKeyAuth,

@@ -30,6 +30,7 @@ export function loadConfig(): RuntimeConfig {
 
   let rawConfig: unknown;
   try {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     const mod = jiti(configPath) as { default?: unknown };
     rawConfig = mod.default ?? mod;
   } catch (err) {

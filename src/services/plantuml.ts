@@ -92,7 +92,7 @@ async function renderViaServer(
 
 /**
  * Render a PlantUML file with the full fallback pipeline.
- * Returns { buffer, method } or null if all methods fail.
+ * Returns \{ buffer, method \} or null if all methods fail.
  */
 export async function renderPlantUml(
   filePath: string,

@@ -62,7 +62,7 @@ export function getRoots(
  * Convert a URL path to a filesystem path.
  *
  * URL paths use forward slashes and start with the root id:
- *   Windows: /e/jeeves-server/README.md → E:\jeeves-server\README.md
+ *   Windows: /e/jeeves-server/README.md → E:\\jeeves-server\\README.md
  *   Linux:   /home/user/docs/README.md → /home/user/docs/README.md
  *            /root/docs/README.md       → /docs/README.md (if root id is "root" mapping to "/")
  */
@@ -101,7 +101,7 @@ export function urlPathToFs(
 /**
  * Convert a filesystem path to a URL path.
  *
- * Windows: E:\jeeves-server\README.md → /e/jeeves-server/README.md
+ * Windows: E:\\jeeves-server\\README.md → /e/jeeves-server/README.md
  * Linux:   /home/user/docs/README.md → /home/user/docs/README.md (root="root" → "/")
  */
 export function fsPathToUrl(fsPath: string, roots: RootEntry[]): string {
@@ -133,7 +133,7 @@ export function fsPathToUrl(fsPath: string, roots: RootEntry[]): string {
 
 /**
  * Split a filesystem path into breadcrumb parts.
- * Returns [{label, urlPath}] from root to leaf.
+ * Returns [\{label, urlPath\}] from root to leaf.
  */
 export function breadcrumbParts(
   fsPath: string,

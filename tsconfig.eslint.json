@@ -1,4 +1,4 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src/**/*", "*.config.ts"]
+  "include": ["src/**/*", "*.config.ts", "jeeves.config.template.ts"]
 }

@@ -21,7 +21,7 @@ import {
   computePathKey,
   type DeepShareParams,
 } from '../../util/crypto.js';
-import { fsPathToUrl, getRoots, type RootEntry } from '../../util/platform.js';
+import { fsPathToUrl, getRoots } from '../../util/platform.js';
 import { setInsiderKey } from '../../util/state.js';
 
 // eslint-disable-next-line @typescript-eslint/require-await
@@ -134,7 +134,7 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
       enforceOutsiderPolicy,
     } = request.body;
     if (!targetPath) return reply.code(400).send({ error: 'path is required' });
-    if (!audienceIds || !Array.isArray(audienceIds))
+    if (!Array.isArray(audienceIds))
       return reply.code(400).send({ error: 'insiders array is required' });
 
     if (sharerScopes && !_pathMatchesScopes(targetPath, sharerScopes)) {
@@ -172,8 +172,10 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
     const hasOutsiders = unknownIds.length > 0;
 
     if (!hasOutsiders) {
-      const proto = request.headers['x-forwarded-proto'] || 'https';
-      const host = request.headers['x-forwarded-host'] || request.headers.host;
+      const proto = String(request.headers['x-forwarded-proto'] || 'https');
+      const host = String(
+        request.headers['x-forwarded-host'] || request.headers.host,
+      );
       return reply.send({
         url: `${proto}://${host}/browse${targetPath}`,
         type: 'insider',
@@ -202,12 +204,14 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
       stack,
     };
     const outsiderKey = computeDeepShareKey(sharerSeed, targetPath, deepParams);
-    const proto = request.headers['x-forwarded-proto'] || 'https';
-    const host = request.headers['x-forwarded-host'] || request.headers.host;
+    const proto = String(request.headers['x-forwarded-proto'] || 'https');
+    const host = String(
+      request.headers['x-forwarded-host'] || request.headers.host,
+    );
 
     let shareUrl = `${proto}://${host}/browse${targetPath}?key=${outsiderKey}`;
-    if (shareDepth > 0) shareUrl += `&d=${shareDepth}`;
-    shareUrl += `&dirs=${shareDirs ? 1 : 0}`;
+    if (shareDepth > 0) shareUrl += `&d=${String(shareDepth)}`;
+    shareUrl += `&dirs=${shareDirs ? '1' : '0'}`;
     if (stack) shareUrl += `&s=${stack}`;
 
     const response: Record<string, unknown> = {
