@@ -46,11 +46,26 @@ async function loadDiagram(
     }
     const svgText = await resp.text();
 
-    // Parse SVG and insert into a panzoom container
+    // Parse SVG, fix PlantUML sizing issues, and insert into panzoom container
     const container = document.createElement('div');
     container.className = 'embedded-diagram-rendered';
     container.dataset.type = type;
     container.innerHTML = svgText;
+
+    // Fix PlantUML SVGs: they ship with preserveAspectRatio="none" which
+    // causes vertical stretching when CSS constrains width.
+    const svg = container.querySelector('svg');
+    if (svg) {
+      if (svg.getAttribute('preserveAspectRatio') === 'none') {
+        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      }
+      // Remove inline width/height styles that conflict with responsive sizing
+      svg.style.removeProperty('width');
+      svg.style.removeProperty('height');
+      // Set width="100%" and let viewBox + aspect ratio handle the rest
+      svg.setAttribute('width', '100%');
+      svg.removeAttribute('height');
+    }
 
     placeholder.replaceWith(container);
 
@@ -109,12 +124,12 @@ function initPanzoomOnContainer(
   const enterFullscreen = () => {
     isFullscreen = true;
     wrapper.dataset.origClass = wrapper.className;
-    wrapper.className = 'fixed inset-0 z-[100] bg-black/90 flex flex-col';
+    wrapper.className = 'fixed inset-0 z-[100] bg-white dark:bg-zinc-900 flex flex-col';
     wrapper.style.cursor = 'grab';
     viewport.className = 'overflow-hidden w-full h-full flex-1';
     inner.className = 'p-4 [&>svg]:max-w-full [&>svg]:h-auto';
     hint.textContent = 'Scroll to zoom · Drag to pan · Esc to close';
-    hint.className = 'text-zinc-400 text-xs text-center py-2 pointer-events-none';
+    hint.className = 'text-muted-foreground text-xs text-center py-2 pointer-events-none';
     fsBtn.title = 'Exit fullscreen';
     fsBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
     pz.destroy();
