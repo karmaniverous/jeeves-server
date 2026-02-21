@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import type { FastifyPluginAsync } from 'fastify';
 
 import { _pathMatchesScopes } from '../../auth/keys.js';
+import { findInsider } from '../../auth/resolve.js';
 import {
   computeDeepShareKey,
   computeOutsiderKeyWithExpiry,
@@ -19,7 +20,6 @@ import {
   type DeepShareParams,
 } from '../../util/crypto.js';
 import { getConfig, resetConfig } from '../../config/index.js';
-import type { NormalizedScopes } from '../../config/types.js';
 import { setInsiderKey } from '../../util/state.js';
 import { getRoots, fsPathToUrl, type RootEntry } from '../../util/platform.js';
 import { encodeStack } from '../../services/deepShareLinks.js';
@@ -85,9 +85,7 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
     if (!insiderEmail) return reply.code(403).send({ error: 'Insider auth required' });
 
     const config = getConfig();
-    const insider = config.resolvedInsiders.find(
-      (i) => i.email.toLowerCase() === insiderEmail.toLowerCase(),
-    );
+    const insider = findInsider(config.resolvedInsiders, insiderEmail);
     if (!insider) return reply.code(403).send({ error: 'Not an insider' });
 
     const newSeed = crypto.randomBytes(32).toString('hex');
@@ -125,9 +123,7 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
     const unknownIds: string[] = [];
 
     for (const id of audienceIds) {
-      const insider = config.resolvedInsiders.find(
-        (ri) => ri.email.toLowerCase() === id.toLowerCase(),
-      );
+      const insider = findInsider(config.resolvedInsiders, id);
       if (!insider || !insider.seed) { unknownIds.push(id); continue; }
       if (insider.scopes && !_pathMatchesScopes(targetPath, insider.scopes)) {
         blockedInsiders.push(id);

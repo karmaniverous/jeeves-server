@@ -6,52 +6,59 @@
 
 import type { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 
-import { verifyKey } from '../../auth/keys.js';
-import { COOKIE_NAME, verifySessionCookie } from '../../auth/session.js';
+import { resolveKeyAuth, resolveSessionAuth, findInsider } from '../../auth/resolve.js';
 import { getConfig } from '../../config/index.js';
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const authStatusRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/api/auth/status', async (request: FastifyRequest, reply: FastifyReply) => {
     const config = getConfig();
-    const sessionSecret = config.sessionSecret;
 
-    if (sessionSecret) {
-      const cookieValue = (request.cookies as Record<string, string> | undefined)?.[COOKIE_NAME];
+    // Try session cookie first
+    const sessionResult = resolveSessionAuth(config, request);
+    if (sessionResult.valid) {
+      const insider = findInsider(config.resolvedInsiders, sessionResult.email!);
+      // Get picture from session cookie directly
+      const cookieValue = (request.cookies as Record<string, string> | undefined)?.['jeeves_session'];
+      let picture: string | undefined;
       if (cookieValue) {
-        const session = verifySessionCookie(cookieValue, sessionSecret);
-        if (session) {
-          const insider = config.resolvedInsiders.find(
-            (i) => i.email.toLowerCase() === session.email.toLowerCase(),
-          );
-          return reply.send({
-            authenticated: true,
-            email: session.email,
-            picture: session.picture,
-            isInsider: !!insider?.seed,
-            keyCreatedAt: insider?.keyCreatedAt ?? null,
-          });
-        }
+        try {
+          const b64 = cookieValue.slice(0, cookieValue.lastIndexOf('.'));
+          const payload = JSON.parse(Buffer.from(b64, 'base64url').toString()) as { picture?: string };
+          picture = payload.picture;
+        } catch { /* ignore */ }
       }
+
+      return reply.send({
+        authenticated: true,
+        email: sessionResult.email,
+        picture,
+        isInsider: !!insider?.seed,
+        keyCreatedAt: insider?.keyCreatedAt ?? null,
+      });
     }
 
+    // Try key-based auth
     if (config.authModes.includes('keys')) {
       const query = request.query as Record<string, string>;
-      const providedKey = query.key;
-      if (providedKey) {
-        const verifyPath = query.path ?? '/';
-        const deepParams = query.d !== undefined && query.s !== undefined
-          ? { d: query.d, dirs: query.dirs ?? '0', s: query.s }
-          : undefined;
-        const result = verifyKey(config.resolvedKeys, verifyPath, providedKey, query.exp, config.resolvedInsiders, deepParams);
-        if (result.valid) {
-          return reply.send({
-            authenticated: true,
-            email: `key:${result.keyName}`,
-            isInsider: result.mode === 'insider',
-            keyCreatedAt: null,
-          });
-        }
+      const deepParams = query.d !== undefined && query.s !== undefined
+        ? { d: query.d, dirs: query.dirs ?? '0', s: query.s }
+        : undefined;
+
+      const keyResult = resolveKeyAuth(
+        config,
+        query.path ?? '/',
+        query.key,
+        query.exp,
+        deepParams,
+      );
+      if (keyResult.valid) {
+        return reply.send({
+          authenticated: true,
+          email: `key:${keyResult.keyName}`,
+          isInsider: keyResult.mode === 'insider',
+          keyCreatedAt: null,
+        });
       }
     }
 

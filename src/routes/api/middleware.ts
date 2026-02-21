@@ -4,15 +4,10 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 
-import {
-  _pathMatchesScopes,
-  verifyKey,
-} from '../../auth/keys.js';
-import { computeInsiderKey, timingSafeEqual } from '../../util/crypto.js';
-import { COOKIE_NAME, verifySessionCookie } from '../../auth/session.js';
+import { resolveKeyAuth, resolveInsiderKeyAuth, resolveSessionAuth } from '../../auth/resolve.js';
 import { getConfig } from '../../config/index.js';
-import { formatRelativeTime } from '../../util/formatters.js';
 import { decodeStack } from '../../services/deepShareLinks.js';
+import { verifyKey } from '../../auth/keys.js';
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const authMiddleware: FastifyPluginAsync = async (fastify) => {
@@ -22,62 +17,49 @@ export const authMiddleware: FastifyPluginAsync = async (fastify) => {
     if (request.url.startsWith('/api/auth/status')) return;
     if (request.url.startsWith('/api/diagram/')) return;
 
+    const config = getConfig();
+
     // Utility endpoints handle their own scope checking
     if (request.url.startsWith('/api/util/')) {
-      const config = getConfig();
       const query = request.query as { key?: string; exp?: string };
-      const provided = query.key;
 
-      if (provided) {
-        const result = verifyKey(config.resolvedKeys, '/', provided, query.exp, config.resolvedInsiders);
-        if (result.valid && result.mode === 'insider') {
+      // Try key-based auth
+      if (query.key) {
+        const keyResult = resolveKeyAuth(config, '/', query.key, query.exp);
+        if (keyResult.valid && keyResult.mode === 'insider') {
           request.accessMode = 'insider';
-          request.authSeed = result.seed!;
-          request.insiderScopes =
-            config.resolvedKeys.find(k => k.seed === result.seed)?.scopes ?? null;
+          request.authSeed = keyResult.seed;
+          request.insiderScopes = keyResult.scopes ?? null;
           return;
         }
-        for (const ri of config.resolvedInsiders) {
-          if (!ri.seed) continue;
-          const insiderKey = computeInsiderKey(ri.seed);
-          if (timingSafeEqual(provided, insiderKey)) {
-            request.accessMode = 'insider';
-            request.authSeed = ri.seed;
-            request.insiderScopes = ri.scopes;
-            request.insiderEmail = ri.email;
-            return;
-          }
+
+        // Try as a direct insider key
+        const insiderResult = resolveInsiderKeyAuth(config, query.key);
+        if (insiderResult.valid) {
+          request.accessMode = 'insider';
+          request.authSeed = insiderResult.seed;
+          request.insiderScopes = insiderResult.scopes ?? null;
+          request.insiderEmail = insiderResult.email;
+          return;
         }
       }
 
-      const sessionSecret = config.sessionSecret;
-      if (sessionSecret) {
-        const cookieValue = (request.cookies as Record<string, string> | undefined)?.[COOKIE_NAME];
-        if (cookieValue) {
-          const session = verifySessionCookie(cookieValue, sessionSecret);
-          if (session) {
-            const insider = config.resolvedInsiders.find(
-              (i) => i.email.toLowerCase() === session.email.toLowerCase(),
-            );
-            if (insider?.seed) {
-              request.accessMode = 'insider';
-              request.authSeed = insider.seed;
-              request.insiderScopes = insider.scopes;
-              request.insiderEmail = insider.email;
-              return;
-            }
-          }
-        }
+      // Try session cookie
+      const sessionResult = resolveSessionAuth(config, request);
+      if (sessionResult.valid) {
+        request.accessMode = 'insider';
+        request.authSeed = sessionResult.seed;
+        request.insiderScopes = sessionResult.scopes ?? null;
+        request.insiderEmail = sessionResult.email;
+        return;
       }
 
       reply.code(401).send({ error: 'Insider auth required for utility endpoints' });
       return;
     }
 
-    const config = getConfig();
+    // General API auth
     const query = request.query as { key?: string; exp?: string; d?: string; dirs?: string; s?: string };
-    const provided = query.key;
-    const expParam = query.exp;
     const deepParams = query.d !== undefined && query.s !== undefined
       ? { d: query.d!, dirs: query.dirs ?? '0', s: query.s! }
       : undefined;
@@ -90,61 +72,35 @@ export const authMiddleware: FastifyPluginAsync = async (fastify) => {
       .replace('/api/raw', '')
       .replace('/api/export', '');
 
-    let authResult = verifyKey(
-      config.resolvedKeys,
-      urlPath || '/',
-      provided,
-      expParam,
-      config.resolvedInsiders,
-      deepParams,
-    );
+    // Try key-based auth
+    let authResult = resolveKeyAuth(config, urlPath || '/', query.key, query.exp, deepParams);
 
-    if (!authResult.valid && deepParams && deepParams.dirs === '1' && provided) {
+    // Retry with dirs fallback (directory shares)
+    if (!authResult.valid && deepParams && deepParams.dirs === '1' && query.key) {
       const stack = decodeStack(deepParams.s);
       const lastStackEntry = stack[stack.length - 1];
       if (lastStackEntry && lastStackEntry !== urlPath) {
-        authResult = verifyKey(
-          config.resolvedKeys,
-          lastStackEntry,
-          provided,
-          expParam,
-          config.resolvedInsiders,
-          deepParams,
-        );
+        authResult = resolveKeyAuth(config, lastStackEntry, query.key, query.exp, deepParams);
       }
     }
 
     if (authResult.valid) {
-      request.accessMode = authResult.mode ?? undefined;
-      request.authSeed = authResult.seed ?? undefined;
-      request.deepShareParams = deepParams;
+      request.accessMode = authResult.mode;
+      request.authSeed = authResult.seed;
+      request.deepShareParams = authResult.deepShareParams;
       request.authMatchedPath = authResult.matchedPath;
       return;
     }
 
-    const sessionSecret = config.sessionSecret;
-    if (sessionSecret) {
-      const cookieValue = (
-        request.cookies as Record<string, string> | undefined
-      )?.[COOKIE_NAME];
-      if (cookieValue) {
-        const session = verifySessionCookie(cookieValue, sessionSecret);
-        if (session) {
-          const insider = config.resolvedInsiders.find(
-            (i) => i.email.toLowerCase() === session.email.toLowerCase(),
-          );
-          if (insider?.seed) {
-            request.accessMode = 'insider';
-            request.authSeed = insider.seed;
-            request.insiderEmail = insider.email;
-            request.insiderScopes = insider.scopes ?? null;
-            request.keyAge = insider.keyCreatedAt
-              ? formatRelativeTime(insider.keyCreatedAt)
-              : null;
-            return;
-          }
-        }
-      }
+    // Try session cookie
+    const sessionResult = resolveSessionAuth(config, request);
+    if (sessionResult.valid) {
+      request.accessMode = 'insider';
+      request.authSeed = sessionResult.seed;
+      request.insiderEmail = sessionResult.email;
+      request.insiderScopes = sessionResult.scopes ?? null;
+      request.keyAge = sessionResult.keyAge;
+      return;
     }
 
     reply.code(401).send({ error: 'Unauthorized' });
