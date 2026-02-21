@@ -24,11 +24,9 @@ import { setInsiderKey } from '../../util/state.js';
 import { getRoots, fsPathToUrl, type RootEntry } from '../../util/platform.js';
 import { encodeStack } from '../../services/deepShareLinks.js';
 
-let _roots: RootEntry[] = [];
-
 // eslint-disable-next-line @typescript-eslint/require-await
 export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
-  _roots = getRoots(getConfig().roots);
+  const roots = getRoots(getConfig().roots);
 
   // GET /api/readme-link
   fastify.get('/api/readme-link', async (_request, reply) => {
@@ -42,7 +40,7 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
     const readmePath = path.join(serverRoot, 'README.md');
     if (!fs.existsSync(readmePath)) return reply.code(404).send({ error: 'README.md not found' });
 
-    const urlPath = fsPathToUrl(readmePath, _roots);
+    const urlPath = fsPathToUrl(readmePath, roots);
     const stack = encodeStack([urlPath]);
     const deepParams = { depth: 2, dirs: false, stack, exp: undefined };
     const key = computeDeepShareKey(seed, urlPath, deepParams);

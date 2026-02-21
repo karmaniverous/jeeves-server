@@ -19,20 +19,18 @@ import { getCachedDiagramBuffer, cacheDiagramBuffer } from '../../services/diagr
 import { renderMermaidToFile } from '../../services/mermaid.js';
 import { renderPlantUmlToBuffer, getPlantUmlFormats } from '../../services/plantuml.js';
 
-let _roots: RootEntry[] = [];
-
 // eslint-disable-next-line @typescript-eslint/require-await
 export const exportRoutes: FastifyPluginAsync = async (fastify) => {
-  _roots = getRoots(getConfig().roots);
+  const roots = getRoots(getConfig().roots);
 
   // GET /api/export/*
   fastify.get<{ Params: { '*': string }; Querystring: { format?: string } }>('/api/export/*', async (request, reply) => {
     const reqPath = request.params['*'];
     if (!reqPath) return reply.code(400).send({ error: 'Path required' });
 
-    const _exportFsPath = urlPathToFs(reqPath, _roots);
-    if (!_exportFsPath) return reply.code(404).send({ error: 'Invalid path' });
-    const resolved = path.resolve(_exportFsPath);
+    const exportFsPath = urlPathToFs(reqPath, roots);
+    if (!exportFsPath) return reply.code(404).send({ error: 'Invalid path' });
+    const resolved = path.resolve(exportFsPath);
 
     if (!fs.existsSync(resolved)) return reply.code(404).send({ error: 'Not found', path: resolved });
 
@@ -105,9 +103,9 @@ export const exportRoutes: FastifyPluginAsync = async (fastify) => {
     const reqPath = request.params['*'];
     if (!reqPath) return reply.code(400).send({ error: 'Path required' });
 
-    const _mmdFsPath = urlPathToFs(reqPath, _roots);
-    if (!_mmdFsPath) return reply.code(404).send({ error: 'Invalid path' });
-    const resolved = path.resolve(_mmdFsPath);
+    const mmdFsPath = urlPathToFs(reqPath, roots);
+    if (!mmdFsPath) return reply.code(404).send({ error: 'Invalid path' });
+    const resolved = path.resolve(mmdFsPath);
 
     if (!fs.existsSync(resolved) || !resolved.toLowerCase().endsWith('.mmd')) {
       return reply.code(404).send({ error: 'Mermaid file not found' });
@@ -145,9 +143,9 @@ export const exportRoutes: FastifyPluginAsync = async (fastify) => {
     const reqPath = request.params['*'];
     if (!reqPath) return reply.code(400).send({ error: 'Path required' });
 
-    const _pumlFsPath = urlPathToFs(reqPath, _roots);
-    if (!_pumlFsPath) return reply.code(404).send({ error: 'Invalid path' });
-    const resolved = path.resolve(_pumlFsPath);
+    const pumlFsPath = urlPathToFs(reqPath, roots);
+    if (!pumlFsPath) return reply.code(404).send({ error: 'Invalid path' });
+    const resolved = path.resolve(pumlFsPath);
 
     const ext = path.extname(resolved).toLowerCase();
     if (!fs.existsSync(resolved) || !['.puml', '.plantuml', '.pu'].includes(ext)) {

@@ -27,16 +27,13 @@ import { rewriteLinksForDeepShare } from '../../services/deepShareLinks.js';
 import { renderEmbeddedDiagrams, setDiagramContext } from '../../services/embeddedDiagrams.js';
 import { parseMarkdown } from '../../services/markdown.js';
 
-let _roots: RootEntry[] = [];
-
 // eslint-disable-next-line @typescript-eslint/require-await
 export const filesRoutes: FastifyPluginAsync = async (fastify) => {
-  const config = getConfig();
-  _roots = getRoots(config.roots);
+  const roots = getRoots(getConfig().roots);
 
   // GET /api/drives
   fastify.get('/api/drives', async (_request: FastifyRequest, reply: FastifyReply) => {
-    const drives = _roots.map(r => ({ letter: r.id, label: r.label }));
+    const drives = roots.map(r => ({ letter: r.id, label: r.label }));
     return reply.send(drives);
   });
 
@@ -45,7 +42,7 @@ export const filesRoutes: FastifyPluginAsync = async (fastify) => {
     const reqPath = request.params['*'];
     if (!reqPath) return reply.redirect('/api/drives');
 
-    const fsPath = urlPathToFs(reqPath, _roots);
+    const fsPath = urlPathToFs(reqPath, roots);
     if (!fsPath) return reply.code(404).send({ error: 'Invalid path' });
     const resolved = path.resolve(fsPath);
 
@@ -73,7 +70,7 @@ export const filesRoutes: FastifyPluginAsync = async (fastify) => {
     const entries = insiderScopes
       ? allEntries.filter((entry) => {
           const entryPath = path.join(resolved, entry.name);
-          const entryUrlPath = fsPathToUrl(entryPath, _roots);
+          const entryUrlPath = fsPathToUrl(entryPath, roots);
           if (insiderScopes.deny.length > 0) {
             if (_pathMatchesPatterns(entryUrlPath, insiderScopes.deny)) return false;
           }
@@ -103,7 +100,7 @@ export const filesRoutes: FastifyPluginAsync = async (fastify) => {
       return { name: entry.name, type: entry.isDirectory() ? 'directory' : 'file', ext, size, mtime };
     });
 
-    const breadcrumbs = breadcrumbParts(resolved, _roots);
+    const breadcrumbs = breadcrumbParts(resolved, roots);
     const matchedPath = request.authMatchedPath ?? null;
     const filteredBreadcrumbs = filterBreadcrumbsForOutsider(breadcrumbs, isInsider, matchedPath, true);
 
@@ -116,7 +113,7 @@ export const filesRoutes: FastifyPluginAsync = async (fastify) => {
     const reqPath = request.params['*'];
     if (!reqPath) return reply.code(400).send({ error: 'Path required' });
 
-    const fsFilePath = urlPathToFs(reqPath, _roots);
+    const fsFilePath = urlPathToFs(reqPath, roots);
     if (!fsFilePath) return reply.code(404).send({ error: 'Invalid path' });
     const resolved = path.resolve(fsFilePath);
 
@@ -130,7 +127,7 @@ export const filesRoutes: FastifyPluginAsync = async (fastify) => {
     const isInsider = request.accessMode === 'insider';
     const matchedPath = request.authMatchedPath ?? null;
     const breadcrumbs = filterBreadcrumbsForOutsider(
-      breadcrumbParts(resolved, _roots), isInsider, matchedPath, false,
+      breadcrumbParts(resolved, roots), isInsider, matchedPath, false,
     );
 
     // Markdown
@@ -228,9 +225,9 @@ export const filesRoutes: FastifyPluginAsync = async (fastify) => {
     const reqPath = request.params['*'];
     if (!reqPath) return reply.code(400).send({ error: 'Path required' });
 
-    const _rawFsPath = urlPathToFs(reqPath, _roots);
-    if (!_rawFsPath) return reply.code(404).send({ error: 'Invalid path' });
-    const resolved = path.resolve(_rawFsPath);
+    const rawFsPath = urlPathToFs(reqPath, roots);
+    if (!rawFsPath) return reply.code(404).send({ error: 'Invalid path' });
+    const resolved = path.resolve(rawFsPath);
 
     if (!fs.existsSync(resolved)) return reply.code(404).send({ error: 'Not found', path: resolved });
 
@@ -257,7 +254,7 @@ export const filesRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const reqPath = (request.params as { '*': string })['*'];
-    const fsPath = urlPathToFs(reqPath, _roots);
+    const fsPath = urlPathToFs(reqPath, roots);
     if (!fsPath) return reply.code(404).send({ error: 'Invalid path' });
     const resolved = path.resolve(fsPath);
 
