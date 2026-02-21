@@ -20,7 +20,7 @@ import type { AccessMode, NormalizedScopes } from '../../config/types.js';
 import { getRoots, urlPathToFs, fsPathToUrl, breadcrumbParts, type RootEntry } from '../../util/platform.js';
 import { getContentType, isInlineType, looksLikeText, getLanguageForExt } from '../../util/fileDetection.js';
 import { filterBreadcrumbsForOutsider } from '../../util/breadcrumbs.js';
-import { getCachedDiagram, cacheDiagram } from '../../services/diagramCache.js';
+import { getOrRenderDiagram } from '../../services/diagramCache.js';
 import { renderPlantUmlSvg } from '../../services/plantuml.js';
 import { renderMermaidSvg } from '../../services/mermaid.js';
 import { rewriteLinksForDeepShare } from '../../services/deepShareLinks.js';
@@ -169,12 +169,8 @@ export const filesRoutes: FastifyPluginAsync = async (fastify) => {
       const content = fs.readFileSync(resolved, 'utf8');
       if (rawOnly) return reply.send({ type: 'mermaid', content, fileName, breadcrumbs, isInsider });
 
-      let renderedSvg: string | null = getCachedDiagram('mermaid', content);
-      if (!renderedSvg) {
-        renderedSvg = renderMermaidSvg(resolved);
-        if (renderedSvg) cacheDiagram('mermaid', content, renderedSvg);
-      }
-      return reply.send({ type: 'mermaid', content, html: renderedSvg, fileName, breadcrumbs, isInsider });
+      const renderedMermaid = await getOrRenderDiagram('mermaid', content, () => renderMermaidSvg(resolved));
+      return reply.send({ type: 'mermaid', content, html: renderedMermaid, fileName, breadcrumbs, isInsider });
     }
 
     // PlantUML
@@ -182,12 +178,8 @@ export const filesRoutes: FastifyPluginAsync = async (fastify) => {
       const content = fs.readFileSync(resolved, 'utf8');
       if (rawOnly) return reply.send({ type: 'plantuml', content, fileName, breadcrumbs, isInsider });
 
-      let renderedSvg: string | null = getCachedDiagram('plantuml', content);
-      if (!renderedSvg) {
-        try { renderedSvg = await renderPlantUmlSvg(resolved); } catch { /* fallback */ }
-        if (renderedSvg) cacheDiagram('plantuml', content, renderedSvg);
-      }
-      return reply.send({ type: 'plantuml', content, html: renderedSvg, fileName, breadcrumbs, isInsider });
+      const renderedPuml = await getOrRenderDiagram('plantuml', content, () => renderPlantUmlSvg(resolved));
+      return reply.send({ type: 'plantuml', content, html: renderedPuml, fileName, breadcrumbs, isInsider });
     }
 
     // SVG

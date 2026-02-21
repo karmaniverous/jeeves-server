@@ -6,6 +6,7 @@
  */
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 
@@ -19,31 +20,50 @@ function getMmcdCmd(): string {
 }
 
 /**
+ * Render Mermaid source string to SVG.
+ * Writes to a temp file, renders, reads output, cleans up.
+ * Returns null on failure.
+ */
+export function renderMermaidFromSource(source: string): string | null {
+  const config = getConfig();
+  const cliPath = config.mermaidCliPath;
+  if (!cliPath) return null;
+
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mmd-'));
+  const inFile = path.join(tmpDir, 'diagram.mmd');
+  const outFile = path.join(tmpDir, 'diagram.svg');
+
+  try {
+    fs.writeFileSync(inFile, source, 'utf8');
+
+    const puppeteerConfig = path.resolve('puppeteer.json');
+    const puppeteerArg = fs.existsSync(puppeteerConfig)
+      ? ` -p "${puppeteerConfig}"`
+      : '';
+
+    const mmcdCmd = getMmcdCmd();
+    execSync(
+      `${mmcdCmd} -i "${inFile}" -o "${outFile}" -w 1600 -s 2 -b white${puppeteerArg}`,
+      { timeout: 30_000, stdio: 'pipe' },
+    );
+
+    if (!fs.existsSync(outFile)) return null;
+    return fs.readFileSync(outFile, 'utf8');
+  } catch (err) {
+    console.error('[mermaid] render failed:', (err as Error).message);
+    return null;
+  } finally {
+    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* ignore */ }
+  }
+}
+
+/**
  * Render a .mmd file to SVG string.
  * Returns null on failure.
  */
 export function renderMermaidSvg(inputPath: string): string | null {
-  const mmcdCmd = getMmcdCmd();
-  const resolved = path.resolve(inputPath);
-  const tmpOut = path.join(
-    path.dirname(resolved),
-    `.${path.basename(resolved, '.mmd')}.tmp.svg`,
-  );
-  try {
-    execSync(
-      `${mmcdCmd} -i "${resolved}" -o "${tmpOut}" -w 1600 -s 2 -b white -p puppeteer.json`,
-      { timeout: 30_000, stdio: 'pipe' },
-    );
-    if (fs.existsSync(tmpOut)) {
-      const svg = fs.readFileSync(tmpOut, 'utf8');
-      fs.unlinkSync(tmpOut);
-      return svg;
-    }
-  } catch {
-    // Clean up temp file if it exists
-    try { if (fs.existsSync(tmpOut)) fs.unlinkSync(tmpOut); } catch { /* ignore */ }
-  }
-  return null;
+  const source = fs.readFileSync(inputPath, 'utf8');
+  return renderMermaidFromSource(source);
 }
 
 /**

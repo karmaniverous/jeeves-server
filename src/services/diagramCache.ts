@@ -90,3 +90,21 @@ export function cacheDiagramBuffer(type: string, source: string, buffer: Buffer,
     console.error('[diagramCache] write failed:', (err as Error).message);
   }
 }
+
+/**
+ * Get a cached diagram or render it and cache the result.
+ * Eliminates the repeated getCachedDiagram → render → cacheDiagram pattern.
+ */
+export async function getOrRenderDiagram(
+  type: string,
+  source: string,
+  renderFn: () => string | null | Promise<string | null>,
+  format: string = 'svg',
+): Promise<string | null> {
+  const cached = getCachedDiagram(type, source, format);
+  if (cached) return cached;
+
+  const result = await renderFn();
+  if (result) cacheDiagram(type, source, result, format);
+  return result;
+}

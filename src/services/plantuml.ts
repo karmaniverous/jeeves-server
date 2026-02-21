@@ -108,6 +108,22 @@ export async function renderPlantUml(
 }
 
 /**
+ * Render PlantUML source string to SVG.
+ * Writes to a temp file, renders via the full pipeline, cleans up.
+ */
+export async function renderPlantUmlFromSource(source: string): Promise<string | null> {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'puml-src-'));
+  const inFile = path.join(tmpDir, 'diagram.puml');
+
+  try {
+    fs.writeFileSync(inFile, source, 'utf8');
+    return await renderPlantUmlSvg(inFile);
+  } finally {
+    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* ignore */ }
+  }
+}
+
+/**
  * Render PlantUML to SVG string (convenience for file API).
  */
 export async function renderPlantUmlSvg(filePath: string): Promise<string | null> {

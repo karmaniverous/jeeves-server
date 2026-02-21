@@ -10,14 +10,10 @@
  */
 
 import crypto from 'node:crypto';
-import { execSync } from 'node:child_process';
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 
-import { getConfig } from '../config/index.js';
-import { getCachedDiagram, cacheDiagram } from './diagramCache.js';
-import { renderPlantUmlSvg } from './plantuml.js';
+import { getOrRenderDiagram } from './diagramCache.js';
+import { renderMermaidFromSource } from './mermaid.js';
+import { renderPlantUmlFromSource } from './plantuml.js';
 
 /** Placeholder format used by the markdown renderer */
 const PLACEHOLDER_RE =
@@ -101,22 +97,16 @@ export async function renderDiagramToSvg(
   source: string,
   contextDir?: string,
 ): Promise<string | null> {
-  // Check cache first
-  const cached = getCachedDiagram(type, source);
-  if (cached) return cached;
-
-  let svg: string | null = null;
   try {
-    if (type === 'mermaid') {
-      svg = renderMermaidSync(source);
-    } else if (type === 'plantuml') {
-      svg = await renderPlantUmlFromSource(source, contextDir);
-    }
-    if (svg) cacheDiagram(type, source, svg);
+    return await getOrRenderDiagram(type, source, () => {
+      if (type === 'mermaid') return renderMermaidFromSource(source);
+      if (type === 'plantuml') return renderPlantUmlFromSource(source);
+      return null;
+    });
   } catch (err) {
     console.error(`[embeddedDiagrams] ${type} render failed:`, (err as Error).message);
+    return null;
   }
-  return svg;
 }
 
 /**
@@ -150,61 +140,6 @@ export async function renderEmbeddedDiagrams(
   }
 
   return result;
-}
-
-/**
- * Render Mermaid source to SVG synchronously via CLI.
- */
-function renderMermaidSync(source: string): string | null {
-  const config = getConfig();
-  const cliPath = config.mermaidCliPath;
-  if (!cliPath) return null;
-
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mmd-'));
-  const inFile = path.join(tmpDir, 'diagram.mmd');
-  const outFile = path.join(tmpDir, 'diagram.svg');
-
-  try {
-    fs.writeFileSync(inFile, source, 'utf8');
-
-    const puppeteerConfig = path.resolve('puppeteer.json');
-    const puppeteerArg = fs.existsSync(puppeteerConfig)
-      ? ` -p "${puppeteerConfig}"`
-      : '';
-
-    const mmcdCmd = `npx --prefix "${cliPath}" mmdc`;
-    execSync(
-      `${mmcdCmd} -i "${inFile}" -o "${outFile}" -w 1600 -s 2 -b white${puppeteerArg}`,
-      { timeout: 30_000, stdio: 'pipe' },
-    );
-
-    if (!fs.existsSync(outFile)) return null;
-    return fs.readFileSync(outFile, 'utf8');
-  } catch (err) {
-    console.error('[embeddedDiagrams] Mermaid CLI error:', (err as Error).message);
-    return null;
-  } finally {
-    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* ignore */ }
-  }
-}
-
-/**
- * Render PlantUML source string to SVG.
- */
-async function renderPlantUmlFromSource(
-  source: string,
-  contextDir?: string,
-): Promise<string | null> {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'puml-embed-'));
-  const inFile = path.join(tmpDir, 'diagram.puml');
-
-  try {
-    fs.writeFileSync(inFile, source, 'utf8');
-    const svg = await renderPlantUmlSvg(inFile);
-    return svg;
-  } finally {
-    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* ignore */ }
-  }
 }
 
 function escapeHtml(str: string): string {
