@@ -12,7 +12,7 @@ import fastifyStatic from '@fastify/static';
 import Fastify from 'fastify';
 
 import { getConfig } from './config/index.js';
-import { apiRoute } from './routes/api.js';
+import { apiRoute } from './routes/api/index.js';
 import { authRoute } from './routes/auth.js';
 import { eventRoute } from './routes/event.js';
 import { healthRoute } from './routes/health.js';
