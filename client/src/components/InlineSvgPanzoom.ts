@@ -78,40 +78,55 @@ export function initInlineSvgPanzoom(article: HTMLElement): () => void {
           isFullscreen = true;
           // Save original styles
           wrapper.dataset.origClass = wrapper.className;
-          wrapper.className = 'fixed inset-0 z-[100] bg-black/90 flex flex-col';
+          wrapper.className = 'fixed inset-0 z-[100] bg-white dark:bg-zinc-900 flex flex-col';
           wrapper.style.cursor = 'grab';
           container.className = 'overflow-hidden w-full h-full flex-1';
-          inner.className = 'p-4 [&>svg]:max-w-full [&>svg]:h-auto';
+          inner.className = 'p-4';
           hint.textContent = 'Scroll to zoom · Drag to pan · Esc to close';
-          hint.className = 'text-zinc-400 text-xs text-center py-2 pointer-events-none';
+          hint.className = 'text-muted-foreground text-xs text-center py-2 pointer-events-none';
           fsBtn.title = 'Exit fullscreen';
           fsBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
-          // Reinit panzoom — fit SVG to viewport
           pz.destroy();
-          requestAnimationFrame(() => {
+          requestAnimationFrame(() => { requestAnimationFrame(() => { setTimeout(() => {
             const svg = inner.querySelector('svg');
             if (svg && container.clientWidth && container.clientHeight) {
-              const svgW = svg.getBoundingClientRect().width || svg.clientWidth || 1000;
-              const svgH = svg.getBoundingClientRect().height || svg.clientHeight || 800;
-              const fitScale = Math.min(
-                container.clientWidth / svgW,
-                container.clientHeight / svgH,
-                1 // Don't upscale beyond 1x
-              );
-              // Center vertically: offset by half the difference between container and scaled SVG
-              const scaledH = svgH * fitScale;
-              const startY = (container.clientHeight - scaledH) / 2;
-              const scaledW = svgW * fitScale;
-              const startX = (container.clientWidth - scaledW) / 2;
-              pz = Panzoom(inner, { maxScale: 20, minScale: fitScale * 0.5, startScale: fitScale, startX, startY });
+              const vb = svg.getAttribute('viewBox');
+              let svgW: number, svgH: number;
+              if (vb) {
+                const parts = vb.split(/[\s,]+/).map(Number);
+                svgW = parts[2] || 1000;
+                svgH = parts[3] || 800;
+              } else {
+                svgW = svg.clientWidth || 1000;
+                svgH = svg.clientHeight || 800;
+              }
+              const vw = container.clientWidth;
+              const vh = container.clientHeight;
+              const fitScale = Math.min(vw / svgW, vh / svgH, 1);
+              const fittedW = svgW * fitScale;
+              const fittedH = svgH * fitScale;
+              svg.setAttribute('width', String(Math.round(fittedW)));
+              svg.setAttribute('height', String(Math.round(fittedH)));
+              svg.style.width = `${String(Math.round(fittedW))}px`;
+              svg.style.height = `${String(Math.round(fittedH))}px`;
+              const startX = (vw - fittedW) / 2;
+              const startY = (vh - fittedH) / 2;
+              pz = Panzoom(inner, { maxScale: 20 / fitScale, minScale: 0.5, startScale: 1, startX, startY });
             } else {
               pz = Panzoom(inner, { maxScale: 20, minScale: 0.1 });
             }
-          });
+          }, 50); }); });
         };
 
         const exitFullscreen = () => {
           isFullscreen = false;
+          const svg = inner.querySelector('svg');
+          if (svg) {
+            svg.setAttribute('width', '100%');
+            svg.removeAttribute('height');
+            svg.style.width = '';
+            svg.style.height = '';
+          }
           wrapper.className = wrapper.dataset.origClass ?? 'inline-svg-panzoom relative bg-white rounded-lg border border-border overflow-hidden my-4';
           wrapper.style.cursor = 'grab';
           container.className = 'overflow-hidden w-full min-h-[200px]';
