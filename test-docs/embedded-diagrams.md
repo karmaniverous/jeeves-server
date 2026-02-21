@@ -19,7 +19,7 @@ graph TD
 
 ```plantuml
 @startuml
-actor User
+actor UserFoo
 participant "Web App" as App
 database "Database" as DB
 

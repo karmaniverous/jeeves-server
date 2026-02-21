@@ -126,4 +126,11 @@ export default {
   //   javaPath: '/usr/bin/java',  // optional — defaults to 'java' on PATH
   //   servers: ['https://internal.plantuml.example.com/plantuml'],
   // },
+
+  /**
+   * Directory for cached rendered diagrams (content-addressed by source hash).
+   * Both standalone .mmd/.puml files and embedded diagram code blocks are cached.
+   * Defaults to `.diagram-cache` in the server working directory.
+   */
+  // diagramCachePath: '/var/cache/jeeves/diagrams',
 } satisfies JeevesConfig;

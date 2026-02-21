@@ -123,7 +123,11 @@ export async function getDirectory(path: string): Promise<DirectoryListing> {
 }
 
 export async function getFile(path: string): Promise<FileContent> {
-  return fetchJson<FileContent>(`${API_BASE}/file/${path}`);
+  // Forward render_diagrams param from page URL (used by PDF/DOCX export via Puppeteer)
+  const pageParams = new URLSearchParams(window.location.search);
+  const renderDiagrams = pageParams.get('render_diagrams');
+  const qs = renderDiagrams ? `?render_diagrams=${renderDiagrams}` : '';
+  return fetchJson<FileContent>(`${API_BASE}/file/${path}${qs}`);
 }
 
 export async function getFileRaw(path: string): Promise<FileContent> {

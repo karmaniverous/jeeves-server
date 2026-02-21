@@ -58,6 +58,7 @@ export interface RuntimeConfig {
     javaPath?: string;
     servers: string[];
   };
+  diagramCachePath?: string;
   outsiderPolicy: NormalizedScopes | null;
   events: JeevesConfig['events'];
   authModes: AuthMode[];

@@ -29,8 +29,9 @@ import { appendEvent } from '../services/eventQueue.js';
 import hljs from 'highlight.js';
 
 import { rewriteLinksForDeepShare } from '../services/deepShareLinks.js';
-import { renderEmbeddedDiagrams } from '../services/embeddedDiagrams.js';
+import { renderEmbeddedDiagrams, setDiagramContext, getDiagramSource, renderDiagramToSvg, diagramHash } from '../services/embeddedDiagrams.js';
 import { parseMarkdown } from '../services/markdown.js';
+import { getCachedDiagram, cacheDiagram, getCachedDiagramBuffer, cacheDiagramBuffer } from '../services/diagramCache.js';
 import { renderPlantUmlSvg, renderPlantUmlToBuffer, getPlantUmlFormats } from '../services/plantuml.js';
 import { getContentType, isInlineType, looksLikeText } from '../util/fileDetection.js';
 import { formatRelativeTime } from '../util/formatters.js';
@@ -80,6 +81,10 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
     if (!request.url.startsWith('/api')) return;
     if (request.url.startsWith('/api/readme-link')) return;
     if (request.url.startsWith('/api/auth/status')) return;
+    // Diagram endpoint uses content-addressed hashes — no path-based auth needed.
+    // The hash is unpredictable (sha256) and the source is only registered when
+    // an authenticated user loads a page containing the diagram.
+    if (request.url.startsWith('/api/diagram/')) return;
     // Utility endpoints handle their own scope checking (path is in body, not URL)
     if (request.url.startsWith('/api/util/')) {
       // Still need auth, but skip scope-based path verification
@@ -388,14 +393,18 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
           return reply.send({ type: 'markdown', content: markdown, fileName, breadcrumbs, isInsider });
         }
         const urlDir = reqPath.includes('/') ? reqPath.substring(0, reqPath.lastIndexOf('/')) : '';
+        const fsDir = path.dirname(resolved);
+        setDiagramContext(fsDir);
         let { html, headings } = parseMarkdown(markdown, {
           linkWindowsPaths: true,
           basePath: urlDir,
         });
 
-        // Render embedded mermaid/plantuml diagrams
-        const fsDir = path.dirname(resolved);
-        html = await renderEmbeddedDiagrams(html, fsDir);
+        // For export (render_diagrams=1), render embedded diagrams server-side.
+        // Otherwise, leave lazy placeholders for client-side loading.
+        if ((request.query as { render_diagrams?: string }).render_diagrams === '1') {
+          html = await renderEmbeddedDiagrams(html, fsDir);
+        }
 
         // Deep share link rewriting for outsiders with depth > 0
         const deepShare = (request as { deepShareParams?: { d: string; dirs: string; s: string } }).deepShareParams;
@@ -428,28 +437,31 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         });
       }
 
-      // Mermaid — render to SVG server-side via mmdc
+      // Mermaid — render to SVG server-side via mmdc (with cache)
       if (ext === '.mmd') {
         const content = fs.readFileSync(resolved, 'utf8');
         if (rawOnly) {
           return reply.send({ type: 'mermaid', content, fileName, breadcrumbs, isInsider });
         }
-        let renderedSvg: string | null = null;
-        try {
-          const tmpOut = path.join(
-            path.dirname(resolved),
-            `.${path.basename(resolved, '.mmd')}.tmp.svg`,
-          );
-          execSync(
-            `${mmcdCmd} -i "${resolved}" -o "${tmpOut}" -w 1600 -s 2 -b white -p puppeteer.json`,
-            { timeout: 30_000, stdio: 'pipe' },
-          );
-          if (fs.existsSync(tmpOut)) {
-            renderedSvg = fs.readFileSync(tmpOut, 'utf8');
-            fs.unlinkSync(tmpOut);
+        let renderedSvg: string | null = getCachedDiagram('mermaid', content);
+        if (!renderedSvg) {
+          try {
+            const tmpOut = path.join(
+              path.dirname(resolved),
+              `.${path.basename(resolved, '.mmd')}.tmp.svg`,
+            );
+            execSync(
+              `${mmcdCmd} -i "${resolved}" -o "${tmpOut}" -w 1600 -s 2 -b white -p puppeteer.json`,
+              { timeout: 30_000, stdio: 'pipe' },
+            );
+            if (fs.existsSync(tmpOut)) {
+              renderedSvg = fs.readFileSync(tmpOut, 'utf8');
+              fs.unlinkSync(tmpOut);
+            }
+          } catch {
+            // Fall back to raw content only
           }
-        } catch {
-          // Fall back to raw content only
+          if (renderedSvg) cacheDiagram('mermaid', content, renderedSvg);
         }
         return reply.send({
           type: 'mermaid',
@@ -461,17 +473,20 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
         });
       }
 
-      // PlantUML — render to SVG via jar or server fallback
+      // PlantUML — render to SVG via jar or server fallback (with cache)
       if (ext === '.puml' || ext === '.plantuml' || ext === '.pu') {
         const content = fs.readFileSync(resolved, 'utf8');
         if (rawOnly) {
           return reply.send({ type: 'plantuml', content, fileName, breadcrumbs, isInsider });
         }
-        let renderedSvg: string | null = null;
-        try {
-          renderedSvg = await renderPlantUmlSvg(resolved);
-        } catch {
-          // Fall back to raw content only
+        let renderedSvg: string | null = getCachedDiagram('plantuml', content);
+        if (!renderedSvg) {
+          try {
+            renderedSvg = await renderPlantUmlSvg(resolved);
+          } catch {
+            // Fall back to raw content only
+          }
+          if (renderedSvg) cacheDiagram('plantuml', content, renderedSvg);
         }
         return reply.send({
           type: 'plantuml',
@@ -702,7 +717,8 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       }
 
       // Navigate Puppeteer to the SPA browse page for rendering
-      const exportUrl = `http://localhost:${String(port)}/browse/${reqPath}?key=${exportKey}`;
+      // render_diagrams=1 tells the API to inline diagrams server-side for export
+      const exportUrl = `http://localhost:${String(port)}/browse/${reqPath}?key=${exportKey}&render_diagrams=1`;
       const fileName = path.basename(resolved);
       const baseName = fileName.replace(/\.md$/i, '');
 
@@ -806,6 +822,43 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
     },
   );
 
+  // GET /api/diagram/:type/:hash.svg — lazy diagram rendering endpoint
+  fastify.get<{ Params: { type: string; hash: string } }>(
+    '/api/diagram/:type/:hash',
+    async (request, reply) => {
+      const { type, hash: hashWithExt } = request.params;
+      const hash = hashWithExt.replace(/\.svg$/, '');
+
+      if (!['mermaid', 'plantuml'].includes(type)) {
+        return reply.code(400).send({ error: 'Invalid diagram type' });
+      }
+      if (!/^[a-f0-9]{64}$/.test(hash)) {
+        return reply.code(400).send({ error: 'Invalid hash' });
+      }
+
+      // Look up registered source
+      const entry = getDiagramSource(hash);
+      if (!entry) {
+        // Source not in memory — check if it's in the cache anyway
+        // (The cache uses the same hash, so we can serve directly)
+        const { getCachedDiagram: getFromCache } = await import('../services/diagramCache.js');
+        // We can't look up by hash alone since the cache key is computed from type+source.
+        // If the source isn't registered, we can't serve it.
+        return reply.code(404).send({ error: 'Diagram source not found (may have expired)' });
+      }
+
+      const svg = await renderDiagramToSvg(type, entry.source, entry.contextDir);
+      if (!svg) {
+        return reply.code(500).send({ error: `${type} render failed` });
+      }
+
+      return reply
+        .header('Content-Type', 'image/svg+xml')
+        .header('Cache-Control', 'public, max-age=86400, immutable')
+        .send(svg);
+    },
+  );
+
   // GET /api/mermaid-export/* — render .mmd file to SVG or PNG
   fastify.get<{ Params: { '*': string }; Querystring: { format?: string } }>(
     '/api/mermaid-export/*',
@@ -823,6 +876,19 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
 
       const mermaidFormats = ['svg', 'png', 'pdf'];
       const format = mermaidFormats.includes(request.query.format ?? '') ? request.query.format! : 'svg';
+      const source = fs.readFileSync(resolved, 'utf8');
+
+      // Check cache first
+      const cachedBuffer = getCachedDiagramBuffer('mermaid', source, format);
+      if (cachedBuffer) {
+        const contentTypes: Record<string, string> = { svg: 'image/svg+xml', png: 'image/png', pdf: 'application/pdf' };
+        const downloadName = `${path.basename(resolved, '.mmd')}.${format}`;
+        return reply
+          .header('Content-Type', contentTypes[format] ?? 'application/octet-stream')
+          .header('Content-Disposition', `attachment; filename="${downloadName}"`)
+          .send(cachedBuffer);
+      }
+
       const outFile = path.join(
         path.dirname(resolved),
         `${path.basename(resolved, '.mmd')}.${format}`,
@@ -844,6 +910,8 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       }
 
       const content = fs.readFileSync(outFile);
+      cacheDiagramBuffer('mermaid', source, content, format);
+
       const contentTypes: Record<string, string> = {
         svg: 'image/svg+xml',
         png: 'image/png',
@@ -877,12 +945,26 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
 
       const supported = getPlantUmlFormats();
       const format = supported.includes(request.query.format ?? '') ? request.query.format! : 'svg';
+      const source = fs.readFileSync(resolved, 'utf8');
+
+      // Check cache first
+      const cachedBuffer = getCachedDiagramBuffer('plantuml', source, format);
+      if (cachedBuffer) {
+        const baseName = path.basename(resolved, ext);
+        const contentTypes: Record<string, string> = { svg: 'image/svg+xml', png: 'image/png', pdf: 'application/pdf', eps: 'application/postscript' };
+        return reply
+          .header('Content-Type', contentTypes[format] ?? 'application/octet-stream')
+          .header('Content-Disposition', `attachment; filename="${baseName}.${format}"`)
+          .send(cachedBuffer);
+      }
+
       const buffer = await renderPlantUmlToBuffer(resolved, format);
 
       if (!buffer) {
         return reply.code(500).send({ error: 'PlantUML render failed' });
       }
 
+      cacheDiagramBuffer('plantuml', source, buffer, format);
       const baseName = path.basename(resolved, ext);
       const contentTypes: Record<string, string> = {
         svg: 'image/svg+xml',

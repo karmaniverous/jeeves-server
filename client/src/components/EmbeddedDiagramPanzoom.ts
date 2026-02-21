@@ -59,34 +59,55 @@ export function initEmbeddedDiagramPanzoom(article: HTMLElement): () => void {
     const enterFullscreen = () => {
       isFullscreen = true;
       wrapper.dataset.origClass = wrapper.className;
-      wrapper.className = 'fixed inset-0 z-[100] bg-black/90 flex flex-col';
+      wrapper.className = 'fixed inset-0 z-[100] bg-white dark:bg-zinc-900 flex flex-col';
       wrapper.style.cursor = 'grab';
       viewport.className = 'overflow-hidden w-full h-full flex-1';
-      inner.className = 'p-4 [&>svg]:max-w-full [&>svg]:h-auto';
+      inner.className = 'p-4';
       hint.textContent = 'Scroll to zoom · Drag to pan · Esc to close';
-      hint.className = 'text-zinc-400 text-xs text-center py-2 pointer-events-none';
+      hint.className = 'text-muted-foreground text-xs text-center py-2 pointer-events-none';
       fsBtn.title = 'Exit fullscreen';
       fsBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
       pz.destroy();
-      requestAnimationFrame(() => {
+      requestAnimationFrame(() => { requestAnimationFrame(() => { setTimeout(() => {
         const s = inner.querySelector('svg');
         if (s && viewport.clientWidth && viewport.clientHeight) {
-          const svgW = s.getBoundingClientRect().width || s.clientWidth || 1000;
-          const svgH = s.getBoundingClientRect().height || s.clientHeight || 800;
-          const fitScale = Math.min(viewport.clientWidth / svgW, viewport.clientHeight / svgH, 1);
-          const scaledH = svgH * fitScale;
-          const startY = (viewport.clientHeight - scaledH) / 2;
-          const scaledW = svgW * fitScale;
-          const startX = (viewport.clientWidth - scaledW) / 2;
-          pz = Panzoom(inner, { maxScale: 20, minScale: fitScale * 0.5, startScale: fitScale, startX, startY });
+          const vb = s.getAttribute('viewBox');
+          let svgW: number, svgH: number;
+          if (vb) {
+            const parts = vb.split(/[\s,]+/).map(Number);
+            svgW = parts[2] || 1000;
+            svgH = parts[3] || 800;
+          } else {
+            svgW = s.clientWidth || 1000;
+            svgH = s.clientHeight || 800;
+          }
+          const vw = viewport.clientWidth;
+          const vh = viewport.clientHeight;
+          const fitScale = Math.min(vw / svgW, vh / svgH, 1);
+          const fittedW = svgW * fitScale;
+          const fittedH = svgH * fitScale;
+          s.setAttribute('width', String(Math.round(fittedW)));
+          s.setAttribute('height', String(Math.round(fittedH)));
+          s.style.width = `${String(Math.round(fittedW))}px`;
+          s.style.height = `${String(Math.round(fittedH))}px`;
+          const startX = (vw - fittedW) / 2;
+          const startY = (vh - fittedH) / 2;
+          pz = Panzoom(inner, { maxScale: 20 / fitScale, minScale: 0.5, startScale: 1, startX, startY });
         } else {
           pz = Panzoom(inner, { maxScale: 20, minScale: 0.1 });
         }
-      });
+      }, 50); }); });
     };
 
     const exitFullscreen = () => {
       isFullscreen = false;
+      const s = inner.querySelector('svg');
+      if (s) {
+        s.setAttribute('width', '100%');
+        s.removeAttribute('height');
+        s.style.width = '';
+        s.style.height = '';
+      }
       wrapper.className = wrapper.dataset.origClass ?? 'embedded-diagram-panzoom relative bg-white rounded-lg border border-border overflow-hidden my-4';
       wrapper.style.cursor = 'grab';
       viewport.className = 'overflow-hidden w-full';
