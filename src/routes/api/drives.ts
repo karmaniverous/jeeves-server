@@ -13,8 +13,11 @@ import { getRoots } from '../../util/platform.js';
 export const drivesRoutes: FastifyPluginAsync = async (fastify) => {
   const roots = getRoots(getConfig().roots);
 
-  fastify.get('/api/drives', async (_request: FastifyRequest, reply: FastifyReply) => {
-    const drives = roots.map(r => ({ letter: r.id, label: r.label }));
-    return reply.send(drives);
-  });
+  fastify.get(
+    '/api/drives',
+    async (_request: FastifyRequest, reply: FastifyReply) => {
+      const drives = roots.map((r) => ({ letter: r.id, label: r.label }));
+      return reply.send(drives);
+    },
+  );
 };

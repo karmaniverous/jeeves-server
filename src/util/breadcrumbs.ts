@@ -19,12 +19,13 @@ export function filterBreadcrumbsForOutsider(
   isDirectoryView: boolean,
 ): Breadcrumb[] {
   if (isInsider) return breadcrumbs;
-  if (!isDirectoryView) return breadcrumbs.length > 0 ? [breadcrumbs[breadcrumbs.length - 1]] : [];
+  if (!isDirectoryView)
+    return breadcrumbs.length > 0 ? [breadcrumbs[breadcrumbs.length - 1]] : [];
   // For directory views, trim breadcrumbs to the matched (shared) path root
   if (matchedPath) {
     const normalizedMatch = matchedPath.replace(/^\/+|\/+$/g, '').toLowerCase();
     const matchIdx = breadcrumbs.findIndex(
-      b => b.path.replace(/^\/+|\/+$/g, '').toLowerCase() === normalizedMatch,
+      (b) => b.path.replace(/^\/+|\/+$/g, '').toLowerCase() === normalizedMatch,
     );
     if (matchIdx >= 0) return breadcrumbs.slice(matchIdx);
   }

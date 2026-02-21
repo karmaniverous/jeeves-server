@@ -12,7 +12,9 @@ export const googleAuthSchema = z.object({
 /** Auth configuration */
 export const authSchema = z.object({
   /** Active authentication methods. Order determines priority. */
-  modes: z.array(authModeSchema).min(1, { message: 'At least one auth mode is required' }),
+  modes: z
+    .array(authModeSchema)
+    .min(1, { message: 'At least one auth mode is required' }),
   /** Google OAuth config. Required if modes includes "google". */
   google: googleAuthSchema.optional(),
   /** Session cookie signing secret. Required if modes includes "google". */
@@ -96,11 +98,13 @@ export const jeevesConfigSchema = z
      *   appended as the last resort unless explicitly listed.
      * If omitted entirely, only the community server is used.
      */
-    plantuml: z.object({
-      jarPath: z.string().optional(),
-      javaPath: z.string().optional(),
-      servers: z.array(z.string().url()).optional(),
-    }).optional(),
+    plantuml: z
+      .object({
+        jarPath: z.string().optional(),
+        javaPath: z.string().optional(),
+        servers: z.array(z.string().url()).optional(),
+      })
+      .optional(),
     /**
      * Directory for cached rendered diagrams (content-addressed by source hash).
      * Defaults to `.diagram-cache` in the server working directory.
@@ -126,14 +130,18 @@ export const jeevesConfigSchema = z
       if (!config.auth.sessionSecret) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'auth.sessionSecret is required when auth.modes includes "google"',
+          message:
+            'auth.sessionSecret is required when auth.modes includes "google"',
           path: ['auth', 'sessionSecret'],
         });
       }
     }
 
     // Keys auth mode requires at least one key
-    if (config.auth.modes.includes('keys') && Object.keys(config.keys).length === 0) {
+    if (
+      config.auth.modes.includes('keys') &&
+      Object.keys(config.keys).length === 0
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'At least one key is required when auth.modes includes "keys"',
@@ -143,7 +151,12 @@ export const jeevesConfigSchema = z
 
     // _internal key must not have scopes
     const internal = config.keys['_internal'];
-    if (internal && typeof internal === 'object' && 'scopes' in internal && internal.scopes) {
+    if (
+      internal &&
+      typeof internal === 'object' &&
+      'scopes' in internal &&
+      internal.scopes
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: '_internal key must not have scopes (it is always unscoped)',

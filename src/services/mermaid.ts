@@ -5,17 +5,19 @@
  * and export endpoints.
  */
 
+import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
 
 import { getConfig } from '../config/index.js';
 
 /** Build the mmdc command prefix from config. */
 function getMmcdCmd(): string {
   const config = getConfig();
-  const prefix = config.mermaidCliPath ? `npx --prefix ${config.mermaidCliPath}` : 'npx';
+  const prefix = config.mermaidCliPath
+    ? `npx --prefix ${config.mermaidCliPath}`
+    : 'npx';
   return `${prefix} mmdc`;
 }
 
@@ -53,7 +55,11 @@ export function renderMermaidFromSource(source: string): string | null {
     console.error('[mermaid] render failed:', (err as Error).message);
     return null;
   } finally {
-    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* ignore */ }
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -71,7 +77,10 @@ export function renderMermaidSvg(inputPath: string): string | null {
  * The caller is responsible for reading and cleaning up the output file.
  * Returns null on failure.
  */
-export function renderMermaidToFile(inputPath: string, format: string): string | null {
+export function renderMermaidToFile(
+  inputPath: string,
+  format: string,
+): string | null {
   const mmcdCmd = getMmcdCmd();
   const resolved = path.resolve(inputPath);
   const outFile = path.join(

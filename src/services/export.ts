@@ -8,11 +8,11 @@
 import HtmlToDocx from '@turbodocx/html-to-docx';
 
 import {
-  launchBrowser,
   addPrintStyles,
-  waitForSpaContent,
   captureSvgsAsPng,
+  launchBrowser,
   SVG_CONTAINER_SELECTORS,
+  waitForSpaContent,
 } from './puppeteer.js';
 
 export type ExportFormat = 'pdf' | 'docx';
@@ -67,19 +67,40 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
 
     // Get processed HTML with SVGs replaced by PNGs
     const processedHtml = await page.evaluate(
-      (pngUrls: typeof svgPngDataUrls, maxW: number, maxH: number, selectors: string) => {
-        function calcScaled(origW: number, origH: number): { width: number; height: number } {
-          let w = origW, h = origH;
-          if (w > maxW) { const s = maxW / w; w = maxW; h = Math.round(h * s); }
-          if (h > maxH) { const s = maxH / h; h = maxH; w = Math.round(w * s); }
+      (
+        pngUrls: typeof svgPngDataUrls,
+        maxW: number,
+        maxH: number,
+        selectors: string,
+      ) => {
+        function calcScaled(
+          origW: number,
+          origH: number,
+        ): { width: number; height: number } {
+          let w = origW,
+            h = origH;
+          if (w > maxW) {
+            const s = maxW / w;
+            w = maxW;
+            h = Math.round(h * s);
+          }
+          if (h > maxH) {
+            const s = maxH / h;
+            h = maxH;
+            w = Math.round(w * s);
+          }
           return { width: w, height: h };
         }
 
-        const content = document.querySelector('article.prose') ?? document.querySelector('.content');
+        const content =
+          document.querySelector('article.prose') ??
+          document.querySelector('.content');
         if (!content) return '<p>No content</p>';
 
         const contentClone = content.cloneNode(true) as HTMLElement;
-        contentClone.querySelectorAll('a.anchor').forEach((el) => el.remove());
+        contentClone.querySelectorAll('a.anchor').forEach((el) => {
+          el.remove();
+        });
 
         // Replace SVG containers with PNG images
         const svgContainers = contentClone.querySelectorAll(selectors);
@@ -162,10 +183,16 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
       title: baseName,
       creator: 'Jeeves Server',
       table: { row: { cantSplit: true } },
-      imageProcessing: { svgHandling: 'native', maxRetries: 2, downloadTimeout: 15000 },
+      imageProcessing: {
+        svgHandling: 'native',
+        maxRetries: 2,
+        downloadTimeout: 15000,
+      },
     });
 
-    return Buffer.isBuffer(docxBuffer) ? docxBuffer : Buffer.from(docxBuffer as ArrayBuffer);
+    return Buffer.isBuffer(docxBuffer)
+      ? docxBuffer
+      : Buffer.from(docxBuffer as ArrayBuffer);
   } finally {
     await browser.close();
   }

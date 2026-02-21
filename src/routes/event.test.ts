@@ -152,10 +152,16 @@ describe('event route', () => {
 
       const map = {
         authorName: {
-          $: { method: '$.lib._.get', params: ['$.input', 'metadata.author.name'] },
+          $: {
+            method: '$.lib._.get',
+            params: ['$.input', 'metadata.author.name'],
+          },
         },
         authorEmail: {
-          $: { method: '$.lib._.get', params: ['$.input', 'metadata.author.email'] },
+          $: {
+            method: '$.lib._.get',
+            params: ['$.input', 'metadata.author.email'],
+          },
         },
       };
 

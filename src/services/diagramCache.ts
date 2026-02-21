@@ -39,7 +39,11 @@ function cacheKey(type: string, source: string): string {
  * Look up a cached diagram. Returns the content as a string or null on miss.
  * @param format Output format extension (e.g. 'svg', 'png', 'pdf'). Defaults to 'svg'.
  */
-export function getCachedDiagram(type: string, source: string, format: string = 'svg'): string | null {
+export function getCachedDiagram(
+  type: string,
+  source: string,
+  format: string = 'svg',
+): string | null {
   if (!cacheDir) return null;
   const file = path.join(cacheDir, `${cacheKey(type, source)}.${format}`);
   try {
@@ -53,7 +57,11 @@ export function getCachedDiagram(type: string, source: string, format: string = 
  * Look up a cached diagram as a Buffer (for binary formats like PNG/PDF).
  * @param format Output format extension (e.g. 'png', 'pdf').
  */
-export function getCachedDiagramBuffer(type: string, source: string, format: string): Buffer | null {
+export function getCachedDiagramBuffer(
+  type: string,
+  source: string,
+  format: string,
+): Buffer | null {
   if (!cacheDir) return null;
   const file = path.join(cacheDir, `${cacheKey(type, source)}.${format}`);
   try {
@@ -67,7 +75,12 @@ export function getCachedDiagramBuffer(type: string, source: string, format: str
  * Store a rendered diagram in the cache (string content).
  * @param format Output format extension. Defaults to 'svg'.
  */
-export function cacheDiagram(type: string, source: string, content: string, format: string = 'svg'): void {
+export function cacheDiagram(
+  type: string,
+  source: string,
+  content: string,
+  format: string = 'svg',
+): void {
   if (!cacheDir) return;
   const file = path.join(cacheDir, `${cacheKey(type, source)}.${format}`);
   try {
@@ -81,7 +94,12 @@ export function cacheDiagram(type: string, source: string, content: string, form
  * Store a rendered diagram in the cache (binary content).
  * @param format Output format extension (e.g. 'png', 'pdf').
  */
-export function cacheDiagramBuffer(type: string, source: string, buffer: Buffer, format: string): void {
+export function cacheDiagramBuffer(
+  type: string,
+  source: string,
+  buffer: Buffer,
+  format: string,
+): void {
   if (!cacheDir) return;
   const file = path.join(cacheDir, `${cacheKey(type, source)}.${format}`);
   try {

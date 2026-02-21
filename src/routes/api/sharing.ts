@@ -13,16 +13,16 @@ import type { FastifyPluginAsync } from 'fastify';
 
 import { _pathMatchesScopes } from '../../auth/keys.js';
 import { findInsider } from '../../auth/resolve.js';
+import { getConfig, resetConfig } from '../../config/index.js';
+import { encodeStack } from '../../services/deepShareLinks.js';
 import {
   computeDeepShareKey,
   computeOutsiderKeyWithExpiry,
   computePathKey,
   type DeepShareParams,
 } from '../../util/crypto.js';
-import { getConfig, resetConfig } from '../../config/index.js';
+import { fsPathToUrl, getRoots, type RootEntry } from '../../util/platform.js';
 import { setInsiderKey } from '../../util/state.js';
-import { getRoots, fsPathToUrl, type RootEntry } from '../../util/platform.js';
-import { encodeStack } from '../../services/deepShareLinks.js';
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
@@ -31,14 +31,16 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /api/readme-link
   fastify.get('/api/readme-link', async (_request, reply) => {
     const config = getConfig();
-    const internalKey = config.resolvedKeys.find(k => k.name === '_internal');
-    if (!internalKey?.seed) return reply.code(503).send({ error: 'No _internal key configured' });
+    const internalKey = config.resolvedKeys.find((k) => k.name === '_internal');
+    if (!internalKey?.seed)
+      return reply.code(503).send({ error: 'No _internal key configured' });
 
     const seed = internalKey.seed;
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const serverRoot = path.resolve(__dirname, '..', '..', '..');
     const readmePath = path.join(serverRoot, 'README.md');
-    if (!fs.existsSync(readmePath)) return reply.code(404).send({ error: 'README.md not found' });
+    if (!fs.existsSync(readmePath))
+      return reply.code(404).send({ error: 'README.md not found' });
 
     const urlPath = fsPathToUrl(readmePath, roots);
     const stack = encodeStack([urlPath]);
@@ -50,7 +52,9 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // POST /api/share
-  fastify.post<{ Body: { path: string; expiry?: string; depth?: number; dirs?: boolean } }>('/api/share', async (request, reply) => {
+  fastify.post<{
+    Body: { path: string; expiry?: string; depth?: number; dirs?: boolean };
+  }>('/api/share', async (request, reply) => {
     const seed = request.authSeed;
     if (!seed) return reply.code(401).send({ error: 'Insider auth required' });
 
@@ -62,7 +66,12 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
 
     if ((depth && depth > 0) || dirs) {
       const stack = encodeStack([targetPath]);
-      const deepParams: DeepShareParams = { depth: depth ?? 0, dirs: dirs ?? false, stack, exp: expiry };
+      const deepParams: DeepShareParams = {
+        depth: depth ?? 0,
+        dirs: dirs ?? false,
+        stack,
+        exp: expiry,
+      };
       outsiderKey = computeDeepShareKey(seed, targetPath, deepParams);
       shareUrl = `/browse${targetPath}?key=${outsiderKey}&d=${String(depth ?? 0)}&dirs=${dirs ? '1' : '0'}&s=${stack}`;
       if (expiry) shareUrl += `&exp=${expiry}`;
@@ -74,13 +83,20 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
       shareUrl = `/browse${targetPath}?key=${outsiderKey}`;
     }
 
-    return reply.send({ url: shareUrl, path: targetPath, exp: expiry ?? null, depth: depth ?? 0, dirs: dirs ?? false });
+    return reply.send({
+      url: shareUrl,
+      path: targetPath,
+      exp: expiry ?? null,
+      depth: depth ?? 0,
+      dirs: dirs ?? false,
+    });
   });
 
   // POST /api/rotate-key
   fastify.post('/api/rotate-key', async (request, reply) => {
     const insiderEmail = request.insiderEmail;
-    if (!insiderEmail) return reply.code(403).send({ error: 'Insider auth required' });
+    if (!insiderEmail)
+      return reply.code(403).send({ error: 'Insider auth required' });
 
     const config = getConfig();
     const insider = findInsider(config.resolvedInsiders, insiderEmail);
@@ -107,14 +123,27 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
     const config = getConfig();
     const sharerSeed = request.authSeed;
     const sharerScopes = request.insiderScopes ?? null;
-    if (!sharerSeed) return reply.code(401).send({ error: 'Authentication required' });
+    if (!sharerSeed)
+      return reply.code(401).send({ error: 'Authentication required' });
 
-    const { path: targetPath, insiders: audienceIds, depth, dirs, enforceOutsiderPolicy } = request.body;
+    const {
+      path: targetPath,
+      insiders: audienceIds,
+      depth,
+      dirs,
+      enforceOutsiderPolicy,
+    } = request.body;
     if (!targetPath) return reply.code(400).send({ error: 'path is required' });
-    if (!audienceIds || !Array.isArray(audienceIds)) return reply.code(400).send({ error: 'insiders array is required' });
+    if (!audienceIds || !Array.isArray(audienceIds))
+      return reply.code(400).send({ error: 'insiders array is required' });
 
     if (sharerScopes && !_pathMatchesScopes(targetPath, sharerScopes)) {
-      return reply.send({ url: null, type: 'blocked', reason: 'Sharer does not have access to this path', blocked: [] });
+      return reply.send({
+        url: null,
+        type: 'blocked',
+        reason: 'Sharer does not have access to this path',
+        blocked: [],
+      });
     }
 
     const blockedInsiders: string[] = [];
@@ -122,14 +151,22 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
 
     for (const id of audienceIds) {
       const insider = findInsider(config.resolvedInsiders, id);
-      if (!insider || !insider.seed) { unknownIds.push(id); continue; }
+      if (!insider || !insider.seed) {
+        unknownIds.push(id);
+        continue;
+      }
       if (insider.scopes && !_pathMatchesScopes(targetPath, insider.scopes)) {
         blockedInsiders.push(id);
       }
     }
 
     if (blockedInsiders.length > 0) {
-      return reply.send({ url: null, type: 'blocked', reason: 'Insider(s) do not have access to this path', blocked: blockedInsiders });
+      return reply.send({
+        url: null,
+        type: 'blocked',
+        reason: 'Insider(s) do not have access to this path',
+        blocked: blockedInsiders,
+      });
     }
 
     const hasOutsiders = unknownIds.length > 0;
@@ -137,7 +174,10 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
     if (!hasOutsiders) {
       const proto = request.headers['x-forwarded-proto'] || 'https';
       const host = request.headers['x-forwarded-host'] || request.headers.host;
-      return reply.send({ url: `${proto}://${host}/browse${targetPath}`, type: 'insider' });
+      return reply.send({
+        url: `${proto}://${host}/browse${targetPath}`,
+        type: 'insider',
+      });
     }
 
     const outsiderPolicy = config.outsiderPolicy;
@@ -145,14 +185,22 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
 
     if (outsiderPolicy && policyEnforced) {
       if (!_pathMatchesScopes(targetPath, outsiderPolicy)) {
-        return reply.send({ url: null, type: 'policy-denied', reason: 'Outsider policy does not allow sharing this path' });
+        return reply.send({
+          url: null,
+          type: 'policy-denied',
+          reason: 'Outsider policy does not allow sharing this path',
+        });
       }
     }
 
     const shareDepth = depth ?? 0;
     const shareDirs = dirs ?? false;
     const stack = encodeStack([targetPath]);
-    const deepParams: DeepShareParams = { depth: shareDepth, dirs: shareDirs, stack };
+    const deepParams: DeepShareParams = {
+      depth: shareDepth,
+      dirs: shareDirs,
+      stack,
+    };
     const outsiderKey = computeDeepShareKey(sharerSeed, targetPath, deepParams);
     const proto = request.headers['x-forwarded-proto'] || 'https';
     const host = request.headers['x-forwarded-host'] || request.headers.host;
@@ -162,9 +210,16 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
     shareUrl += `&dirs=${shareDirs ? 1 : 0}`;
     if (stack) shareUrl += `&s=${stack}`;
 
-    const response: Record<string, unknown> = { url: shareUrl, type: 'outsider-share' };
+    const response: Record<string, unknown> = {
+      url: shareUrl,
+      type: 'outsider-share',
+    };
 
-    if (outsiderPolicy && !policyEnforced && !_pathMatchesScopes(targetPath, outsiderPolicy)) {
+    if (
+      outsiderPolicy &&
+      !policyEnforced &&
+      !_pathMatchesScopes(targetPath, outsiderPolicy)
+    ) {
       response.warning = 'Outsider policy would deny this path';
     }
 

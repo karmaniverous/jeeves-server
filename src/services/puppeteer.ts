@@ -88,17 +88,21 @@ export async function addPrintStyles(page: Page): Promise<void> {
  * Wait for SPA content to fully render, including async SVG fetches.
  */
 export async function waitForSpaContent(page: Page): Promise<void> {
-  await page.waitForSelector('article.prose', { timeout: 15_000 }).catch(() => {});
-  await page.waitForFunction(
-    () => {
-      const containers = document.querySelectorAll('.inline-svg-panzoom');
-      if (containers.length === 0) return true;
-      return Array.from(containers).every(
-        (c) => !c.textContent?.includes('Loading SVG')
-      );
-    },
-    { timeout: 15_000 },
-  ).catch(() => {});
+  await page
+    .waitForSelector('article.prose', { timeout: 15_000 })
+    .catch(() => {});
+  await page
+    .waitForFunction(
+      () => {
+        const containers = document.querySelectorAll('.inline-svg-panzoom');
+        if (containers.length === 0) return true;
+        return Array.from(containers).every(
+          (c) => !c.textContent?.includes('Loading SVG'),
+        );
+      },
+      { timeout: 15_000 },
+    )
+    .catch(() => {});
   await new Promise((r) => setTimeout(r, 1000));
 }
 
@@ -113,7 +117,9 @@ export const SVG_CONTAINER_SELECTORS =
 export async function captureSvgsAsPng(
   browser: Browser,
   page: Page,
-): Promise<{ index: number; dataUrl: string; width: number; height: number }[]> {
+): Promise<
+  { index: number; dataUrl: string; width: number; height: number }[]
+> {
   const svgContents = await page.evaluate((selectors: string) => {
     const containers = document.querySelectorAll(selectors);
     return Array.from(containers).map((container, i) => {
@@ -122,18 +128,30 @@ export async function captureSvgsAsPng(
     });
   }, SVG_CONTAINER_SELECTORS);
 
-  const results: { index: number; dataUrl: string; width: number; height: number }[] = [];
+  const results: {
+    index: number;
+    dataUrl: string;
+    width: number;
+    height: number;
+  }[] = [];
 
   for (const { index, svgHtml } of svgContents) {
     if (!svgHtml) continue;
 
     const svgPage = await browser.newPage();
-    await svgPage.setViewport({ width: 1200, height: 2000, deviceScaleFactor: 2 });
-    await svgPage.setContent(`<!DOCTYPE html>
+    await svgPage.setViewport({
+      width: 1200,
+      height: 2000,
+      deviceScaleFactor: 2,
+    });
+    await svgPage.setContent(
+      `<!DOCTYPE html>
 <html><head><style>
   body { margin: 0; padding: 0; background: #fff; }
   svg { width: 1152px; height: auto; display: block; }
-</style></head><body>${svgHtml}</body></html>`, { waitUntil: 'networkidle0' });
+</style></head><body>${svgHtml}</body></html>`,
+      { waitUntil: 'networkidle0' },
+    );
 
     const svgHandle = await svgPage.$('svg');
     if (svgHandle) {

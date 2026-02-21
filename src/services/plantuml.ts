@@ -19,10 +19,7 @@ import { getConfig } from '../config/index.js';
  * Output goes to a temp directory to avoid writing in the source tree.
  * Returns the output buffer, or null on failure.
  */
-function renderViaJar(
-  filePath: string,
-  format: string,
-): Buffer | null {
+function renderViaJar(filePath: string, format: string): Buffer | null {
   const { plantuml } = getConfig();
   if (!plantuml.jarPath) return null;
 
@@ -48,18 +45,28 @@ function renderViaJar(
     if (fs.existsSync(outFile)) {
       console.warn('[PlantUML jar] render completed with warnings');
       if (err && typeof err === 'object' && 'stderr' in err) {
-        console.warn('[PlantUML jar] stderr:', String((err as { stderr: unknown }).stderr));
+        console.warn(
+          '[PlantUML jar] stderr:',
+          String((err as { stderr: unknown }).stderr),
+        );
       }
       return fs.readFileSync(outFile);
     }
     console.error('[PlantUML jar] render failed:', (err as Error).message);
     if (err && typeof err === 'object' && 'stderr' in err) {
-      console.error('[PlantUML jar] stderr:', String((err as { stderr: unknown }).stderr));
+      console.error(
+        '[PlantUML jar] stderr:',
+        String((err as { stderr: unknown }).stderr),
+      );
     }
     return null;
   } finally {
     // Clean up temp dir
-    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* ignore */ }
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -111,7 +118,9 @@ export async function renderPlantUml(
  * Render PlantUML source string to SVG.
  * Writes to a temp file, renders via the full pipeline, cleans up.
  */
-export async function renderPlantUmlFromSource(source: string): Promise<string | null> {
+export async function renderPlantUmlFromSource(
+  source: string,
+): Promise<string | null> {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'puml-src-'));
   const inFile = path.join(tmpDir, 'diagram.puml');
 
@@ -119,14 +128,20 @@ export async function renderPlantUmlFromSource(source: string): Promise<string |
     fs.writeFileSync(inFile, source, 'utf8');
     return await renderPlantUmlSvg(inFile);
   } finally {
-    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* ignore */ }
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    } catch {
+      /* ignore */
+    }
   }
 }
 
 /**
  * Render PlantUML to SVG string (convenience for file API).
  */
-export async function renderPlantUmlSvg(filePath: string): Promise<string | null> {
+export async function renderPlantUmlSvg(
+  filePath: string,
+): Promise<string | null> {
   const result = await renderPlantUml(filePath, 'svg');
   if (!result) return null;
   return result.buffer.toString('utf8');

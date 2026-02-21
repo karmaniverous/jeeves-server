@@ -8,11 +8,16 @@
 
 import type { FastifyRequest } from 'fastify';
 
-import { verifyKey } from './keys.js';
-import { COOKIE_NAME, verifySessionCookie } from './session.js';
+import type {
+  AccessMode,
+  NormalizedScopes,
+  ResolvedInsider,
+  RuntimeConfig,
+} from '../config/types.js';
 import { computeInsiderKey, timingSafeEqual } from '../util/crypto.js';
 import { formatRelativeTime } from '../util/formatters.js';
-import type { AccessMode, NormalizedScopes, ResolvedInsider, RuntimeConfig } from '../config/types.js';
+import { verifyKey } from './keys.js';
+import { COOKIE_NAME, verifySessionCookie } from './session.js';
 
 export interface AuthResult {
   valid: boolean;
@@ -116,7 +121,9 @@ export function resolveSessionAuth(
   const { sessionSecret } = config;
   if (!sessionSecret) return FAIL;
 
-  const cookieValue = (request.cookies as Record<string, string> | undefined)?.[COOKIE_NAME];
+  const cookieValue = (request.cookies as Record<string, string> | undefined)?.[
+    COOKIE_NAME
+  ];
   if (!cookieValue) return FAIL;
 
   const session = verifySessionCookie(cookieValue, sessionSecret);
@@ -133,7 +140,9 @@ export function resolveSessionAuth(
     seed: insider.seed,
     scopes: insider.scopes,
     email: insider.email,
-    keyAge: insider.keyCreatedAt ? formatRelativeTime(insider.keyCreatedAt) : null,
+    keyAge: insider.keyCreatedAt
+      ? formatRelativeTime(insider.keyCreatedAt)
+      : null,
   };
 }
 
@@ -144,7 +153,5 @@ export function findInsider(
   insiders: ResolvedInsider[],
   email: string,
 ): ResolvedInsider | undefined {
-  return insiders.find(
-    (i) => i.email.toLowerCase() === email.toLowerCase(),
-  );
+  return insiders.find((i) => i.email.toLowerCase() === email.toLowerCase());
 }

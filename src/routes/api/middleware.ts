@@ -4,10 +4,14 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 
-import { resolveKeyAuth, resolveInsiderKeyAuth, resolveSessionAuth } from '../../auth/resolve.js';
+import { verifyKey } from '../../auth/keys.js';
+import {
+  resolveInsiderKeyAuth,
+  resolveKeyAuth,
+  resolveSessionAuth,
+} from '../../auth/resolve.js';
 import { getConfig } from '../../config/index.js';
 import { decodeStack } from '../../services/deepShareLinks.js';
-import { verifyKey } from '../../auth/keys.js';
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const authMiddleware: FastifyPluginAsync = async (fastify) => {
@@ -54,15 +58,24 @@ export const authMiddleware: FastifyPluginAsync = async (fastify) => {
         return;
       }
 
-      reply.code(401).send({ error: 'Insider auth required for utility endpoints' });
+      reply
+        .code(401)
+        .send({ error: 'Insider auth required for utility endpoints' });
       return;
     }
 
     // General API auth
-    const query = request.query as { key?: string; exp?: string; d?: string; dirs?: string; s?: string };
-    const deepParams = query.d !== undefined && query.s !== undefined
-      ? { d: query.d!, dirs: query.dirs ?? '0', s: query.s! }
-      : undefined;
+    const query = request.query as {
+      key?: string;
+      exp?: string;
+      d?: string;
+      dirs?: string;
+      s?: string;
+    };
+    const deepParams =
+      query.d !== undefined && query.s !== undefined
+        ? { d: query.d, dirs: query.dirs ?? '0', s: query.s }
+        : undefined;
 
     const urlPath = request.url
       .split('?')[0]
@@ -73,14 +86,31 @@ export const authMiddleware: FastifyPluginAsync = async (fastify) => {
       .replace('/api/export', '');
 
     // Try key-based auth
-    let authResult = resolveKeyAuth(config, urlPath || '/', query.key, query.exp, deepParams);
+    let authResult = resolveKeyAuth(
+      config,
+      urlPath || '/',
+      query.key,
+      query.exp,
+      deepParams,
+    );
 
     // Retry with dirs fallback (directory shares)
-    if (!authResult.valid && deepParams && deepParams.dirs === '1' && query.key) {
+    if (
+      !authResult.valid &&
+      deepParams &&
+      deepParams.dirs === '1' &&
+      query.key
+    ) {
       const stack = decodeStack(deepParams.s);
       const lastStackEntry = stack[stack.length - 1];
       if (lastStackEntry && lastStackEntry !== urlPath) {
-        authResult = resolveKeyAuth(config, lastStackEntry, query.key, query.exp, deepParams);
+        authResult = resolveKeyAuth(
+          config,
+          lastStackEntry,
+          query.key,
+          query.exp,
+          deepParams,
+        );
       }
     }
 

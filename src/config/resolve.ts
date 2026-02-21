@@ -8,7 +8,12 @@
 import fs from 'node:fs';
 
 import { computeInsiderKey } from '../util/crypto.js';
-import type { NormalizedScopes, ResolvedInsider, ResolvedKey, ServerState } from './types.js';
+import type {
+  NormalizedScopes,
+  ResolvedInsider,
+  ResolvedKey,
+  ServerState,
+} from './types.js';
 
 /**
  * Normalize any scopes format to { allow, deny }.
@@ -55,9 +60,13 @@ export function resolveInsiders(
   let serverState: ServerState = {};
   try {
     if (fs.existsSync(stateFile)) {
-      serverState = JSON.parse(fs.readFileSync(stateFile, 'utf8')) as ServerState;
+      serverState = JSON.parse(
+        fs.readFileSync(stateFile, 'utf8'),
+      ) as ServerState;
     }
-  } catch { /* empty state */ }
+  } catch {
+    /* empty state */
+  }
 
   return Object.entries(insiders).map(([rawEmail, entry]) => {
     const email = rawEmail.toLowerCase();
@@ -75,9 +84,11 @@ export function resolveInsiders(
 /**
  * Resolve PlantUML config with community server fallback.
  */
-export function resolvePlantuml(
-  config?: { jarPath?: string; javaPath?: string; servers?: string[] },
-): { jarPath?: string; javaPath?: string; servers: string[] } {
+export function resolvePlantuml(config?: {
+  jarPath?: string;
+  javaPath?: string;
+  servers?: string[];
+}): { jarPath?: string; javaPath?: string; servers: string[] } {
   const COMMUNITY = 'https://www.plantuml.com/plantuml';
   const servers = config?.servers ? [...config.servers] : [];
   if (!servers.includes(COMMUNITY)) servers.push(COMMUNITY);

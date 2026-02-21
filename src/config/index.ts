@@ -10,8 +10,14 @@ import { fileURLToPath } from 'node:url';
 
 import { createJiti } from 'jiti';
 
+import {
+  deriveInternalKey,
+  normalizeScopes,
+  resolveInsiders,
+  resolveKeys,
+  resolvePlantuml,
+} from './resolve.js';
 import { jeevesConfigSchema } from './schema.js';
-import { resolveKeys, resolveInsiders, resolvePlantuml, deriveInternalKey, normalizeScopes } from './resolve.js';
 import type { RuntimeConfig } from './types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -21,14 +27,14 @@ const CONFIG_FILENAME = 'jeeves.config';
 export function loadConfig(): RuntimeConfig {
   const jiti = createJiti(import.meta.url);
   const configPath = path.join(rootDir, CONFIG_FILENAME);
-  
+
   let rawConfig: unknown;
   try {
     const mod = jiti(configPath) as { default?: unknown };
     rawConfig = mod.default ?? mod;
   } catch (err) {
     throw new Error(
-      `Failed to load ${CONFIG_FILENAME}.ts. Copy ${CONFIG_FILENAME}.template.ts and configure.\n${String(err)}`
+      `Failed to load ${CONFIG_FILENAME}.ts. Copy ${CONFIG_FILENAME}.template.ts and configure.\n${String(err)}`,
     );
   }
 
@@ -37,13 +43,17 @@ export function loadConfig(): RuntimeConfig {
     const issues = parseResult.error.issues
       .map((i) => `  - ${i.path.join('.')}: ${i.message}`)
       .join('\n');
-    throw new Error(`Invalid configuration in ${CONFIG_FILENAME}.ts:\n${issues}`);
+    throw new Error(
+      `Invalid configuration in ${CONFIG_FILENAME}.ts:\n${issues}`,
+    );
   }
 
   const config = parseResult.data;
   const stateFile = path.join(rootDir, 'state.json');
 
-  const resolvedKeys = resolveKeys(config.keys as Record<string, string | { key: string; scopes?: unknown }>);
+  const resolvedKeys = resolveKeys(
+    config.keys as Record<string, string | { key: string; scopes?: unknown }>,
+  );
   const resolvedInsiders = resolveInsiders(
     config.insiders as Record<string, { scopes?: unknown }>,
     stateFile,

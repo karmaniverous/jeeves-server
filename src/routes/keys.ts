@@ -9,7 +9,11 @@ import crypto from 'node:crypto';
 
 import type { FastifyPluginAsync } from 'fastify';
 
-import { resolveInsiderKeyAuth, resolveSessionAuth, findInsider } from '../auth/resolve.js';
+import {
+  findInsider,
+  resolveInsiderKeyAuth,
+  resolveSessionAuth,
+} from '../auth/resolve.js';
 import { getConfig, resetConfig } from '../config/index.js';
 import { appendEvent } from '../services/eventQueue.js';
 import {
@@ -92,8 +96,9 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
         );
         if (matched) {
           return reply.code(501).send({
-            error: 'Machine key rotation is not supported with TypeScript config. ' +
-                   'Update the key manually in jeeves.config.ts and restart the server.',
+            error:
+              'Machine key rotation is not supported with TypeScript config. ' +
+              'Update the key manually in jeeves.config.ts and restart the server.',
           });
         }
       }
@@ -122,14 +127,22 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
       if (request.query.key) {
         const insiderResult = resolveInsiderKeyAuth(config, request.query.key);
         if (insiderResult.valid && insiderResult.seed) {
-          return buildShareResponse(insiderResult.seed, targetPath, request.query.exp);
+          return buildShareResponse(
+            insiderResult.seed,
+            targetPath,
+            request.query.exp,
+          );
         }
       }
 
       // Try session cookie
       const sessionResult = resolveSessionAuth(config, request);
       if (sessionResult.valid && sessionResult.seed) {
-        return buildShareResponse(sessionResult.seed, targetPath, request.query.exp);
+        return buildShareResponse(
+          sessionResult.seed,
+          targetPath,
+          request.query.exp,
+        );
       }
 
       return reply.code(401).send({ error: 'Invalid insider key' });
@@ -137,7 +150,10 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
   );
 };
 
-function rotateInsiderSeed(email: string, config: ReturnType<typeof getConfig>) {
+function rotateInsiderSeed(
+  email: string,
+  config: ReturnType<typeof getConfig>,
+) {
   const insider = findInsider(config.resolvedInsiders, email);
   if (!insider?.seed) return { ok: false, error: 'Insider not found' };
 
@@ -145,7 +161,11 @@ function rotateInsiderSeed(email: string, config: ReturnType<typeof getConfig>) 
   const timestamp = new Date().toISOString();
 
   setInsiderKey(insider.email, rotatedSeed, timestamp);
-  appendEvent({ kind: 'insider_key_rotated', email: insider.email, at: timestamp });
+  appendEvent({
+    kind: 'insider_key_rotated',
+    email: insider.email,
+    at: timestamp,
+  });
   setKeyRotationTimestamp(timestamp);
   resetConfig();
 
@@ -164,5 +184,10 @@ function buildShareResponse(seed: string, targetPath: string, expiry?: string) {
     shareUrl = `/browse${targetPath}?key=${outsiderKey}`;
   }
 
-  return { path: targetPath, key: outsiderKey, exp: expiry ?? null, url: shareUrl };
+  return {
+    path: targetPath,
+    key: outsiderKey,
+    exp: expiry ?? null,
+    url: shareUrl,
+  };
 }

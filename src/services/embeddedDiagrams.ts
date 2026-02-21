@@ -16,14 +16,16 @@ import { renderMermaidFromSource } from './mermaid.js';
 import { renderPlantUmlFromSource } from './plantuml.js';
 
 /** Placeholder format used by the markdown renderer */
-const PLACEHOLDER_RE =
-  /<!--DIAGRAM:(mermaid|plantuml):([a-f0-9]{64})-->/g;
+const PLACEHOLDER_RE = /<!--DIAGRAM:(mermaid|plantuml):([a-f0-9]{64})-->/g;
 
 /**
  * In-flight diagram sources, keyed by content hash.
  * Entries are cleaned up after a TTL to prevent unbounded growth.
  */
-const diagramSources = new Map<string, { source: string; contextDir?: string; createdAt: number }>();
+const diagramSources = new Map<
+  string,
+  { source: string; contextDir?: string; createdAt: number }
+>();
 
 /** TTL for source map entries (10 minutes) */
 const SOURCE_TTL_MS = 10 * 60 * 1000;
@@ -72,7 +74,11 @@ export function registerDiagram(
   source: string,
 ): string {
   const hash = diagramHash(type, source);
-  diagramSources.set(hash, { source, contextDir: currentContextDir, createdAt: Date.now() });
+  diagramSources.set(hash, {
+    source,
+    contextDir: currentContextDir,
+    createdAt: Date.now(),
+  });
   startCleanup();
 
   // Emit a client-side placeholder that the LazyDiagram component will hydrate
@@ -83,7 +89,9 @@ export function registerDiagram(
  * Look up a registered diagram source by hash.
  * Used by the /api/diagram endpoint for on-demand rendering.
  */
-export function getDiagramSource(hash: string): { type: string; source: string; contextDir?: string } | null {
+export function getDiagramSource(
+  hash: string,
+): { type: string; source: string; contextDir?: string } | null {
   const entry = diagramSources.get(hash);
   if (!entry) return null;
   return { type: '', source: entry.source, contextDir: entry.contextDir };
@@ -104,7 +112,10 @@ export async function renderDiagramToSvg(
       return null;
     });
   } catch (err) {
-    console.error(`[embeddedDiagrams] ${type} render failed:`, (err as Error).message);
+    console.error(
+      `[embeddedDiagrams] ${type} render failed:`,
+      (err as Error).message,
+    );
     return null;
   }
 }
@@ -127,7 +138,11 @@ export async function renderEmbeddedDiagrams(
     const source = entry?.source;
     if (!source) continue;
 
-    const svg = await renderDiagramToSvg(type!, source, contextDir ?? entry?.contextDir);
+    const svg = await renderDiagramToSvg(
+      type,
+      source,
+      contextDir ?? entry?.contextDir,
+    );
 
     if (svg) {
       const wrapped = `<div class="embedded-diagram-rendered" data-type="${type}">${svg}</div>`;

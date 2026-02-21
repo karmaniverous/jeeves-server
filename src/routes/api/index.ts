@@ -4,15 +4,15 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 
-import { authMiddleware } from './middleware.js';
-import { drivesRoutes } from './drives.js';
-import { directoryRoutes } from './directory.js';
-import { fileContentRoutes } from './fileContent.js';
-import { rawRoutes } from './raw.js';
-import { exportRoutes } from './export.js';
-import { diagramsRoutes } from './diagrams.js';
-import { sharingRoutes } from './sharing.js';
 import { authStatusRoutes } from './auth-status.js';
+import { diagramsRoutes } from './diagrams.js';
+import { directoryRoutes } from './directory.js';
+import { drivesRoutes } from './drives.js';
+import { exportRoutes } from './export.js';
+import { fileContentRoutes } from './fileContent.js';
+import { authMiddleware } from './middleware.js';
+import { rawRoutes } from './raw.js';
+import { sharingRoutes } from './sharing.js';
 
 export const apiRoute: FastifyPluginAsync = async (fastify) => {
   await fastify.register(authMiddleware);

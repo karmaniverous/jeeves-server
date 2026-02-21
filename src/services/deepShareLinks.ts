@@ -107,7 +107,10 @@ export function rewriteLinksForDeepShare(
 ): string {
   const currentStack = decodeStack(stackCompressed);
   // Ensure current path is in the stack
-  if (currentStack.length === 0 || currentStack[currentStack.length - 1] !== currentPath) {
+  if (
+    currentStack.length === 0 ||
+    currentStack[currentStack.length - 1] !== currentPath
+  ) {
     currentStack.push(currentPath);
   }
 
@@ -151,7 +154,9 @@ export function rewriteLinksForDeepShare(
     } else {
       // Relative link — resolve against current path directory
       const dir = currentPath.substring(0, currentPath.lastIndexOf('/'));
-      targetPath = dir ? `${dir}/${href.split('?')[0]}` : `/${href.split('?')[0]}`;
+      targetPath = dir
+        ? `${dir}/${href.split('?')[0]}`
+        : `/${href.split('?')[0]}`;
     }
 
     // Normalize
