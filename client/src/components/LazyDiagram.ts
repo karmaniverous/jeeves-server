@@ -18,26 +18,13 @@ export function initLazyDiagrams(article: HTMLElement): () => void {
 
   if (placeholders.length === 0) return () => {};
 
-  const observer = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        const el = entry.target as HTMLDivElement;
-        observer.unobserve(el);
-        void loadDiagram(el, cleanups);
-      }
-    },
-    { rootMargin: '200px' }, // Start loading 200px before visible
-  );
-
+  // Load all diagrams immediately — text is already visible,
+  // diagrams render in parallel so they're ready when scrolled to.
   for (const placeholder of placeholders) {
-    // Show loading indicator
     const type = placeholder.dataset.diagramType ?? 'diagram';
     placeholder.innerHTML = `<div class="embedded-diagram-loading"><div class="diagram-spinner"></div><span>Rendering ${type} diagram…</span></div>`;
-    observer.observe(placeholder);
+    void loadDiagram(placeholder, cleanups);
   }
-
-  cleanups.push(() => observer.disconnect());
 
   return () => { for (const cleanup of cleanups) cleanup(); };
 }
