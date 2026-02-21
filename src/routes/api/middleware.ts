@@ -113,6 +113,20 @@ export const authMiddleware: FastifyPluginAsync = async (fastify) => {
       }
     }
 
+    // Try session cookie (always check — insiders visiting outsider links
+    // should be upgraded to insider access)
+    const sessionResult = resolveSessionAuth(config, request);
+
+    if (authResult.valid && sessionResult.valid) {
+      // Both key and session are valid — prefer insider session
+      request.accessMode = 'insider';
+      request.authSeed = sessionResult.seed;
+      request.insiderEmail = sessionResult.email;
+      request.insiderScopes = sessionResult.scopes ?? null;
+      request.keyAge = sessionResult.keyAge;
+      return;
+    }
+
     if (authResult.valid) {
       request.accessMode = authResult.mode;
       request.authSeed = authResult.seed;
@@ -121,8 +135,6 @@ export const authMiddleware: FastifyPluginAsync = async (fastify) => {
       return;
     }
 
-    // Try session cookie
-    const sessionResult = resolveSessionAuth(config, request);
     if (sessionResult.valid) {
       request.accessMode = 'insider';
       request.authSeed = sessionResult.seed;
