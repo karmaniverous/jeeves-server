@@ -36,11 +36,12 @@ function cacheKey(type: string, source: string): string {
 }
 
 /**
- * Look up a cached SVG. Returns the SVG string or null on miss.
+ * Look up a cached diagram. Returns the content as a string or null on miss.
+ * @param format Output format extension (e.g. 'svg', 'png', 'pdf'). Defaults to 'svg'.
  */
-export function getCachedDiagram(type: string, source: string): string | null {
+export function getCachedDiagram(type: string, source: string, format: string = 'svg'): string | null {
   if (!cacheDir) return null;
-  const file = path.join(cacheDir, `${cacheKey(type, source)}.svg`);
+  const file = path.join(cacheDir, `${cacheKey(type, source)}.${format}`);
   try {
     return fs.readFileSync(file, 'utf8');
   } catch {
@@ -49,13 +50,42 @@ export function getCachedDiagram(type: string, source: string): string | null {
 }
 
 /**
- * Store a rendered SVG in the cache.
+ * Look up a cached diagram as a Buffer (for binary formats like PNG/PDF).
+ * @param format Output format extension (e.g. 'png', 'pdf').
  */
-export function cacheDiagram(type: string, source: string, svg: string): void {
-  if (!cacheDir) return;
-  const file = path.join(cacheDir, `${cacheKey(type, source)}.svg`);
+export function getCachedDiagramBuffer(type: string, source: string, format: string): Buffer | null {
+  if (!cacheDir) return null;
+  const file = path.join(cacheDir, `${cacheKey(type, source)}.${format}`);
   try {
-    fs.writeFileSync(file, svg, 'utf8');
+    return fs.readFileSync(file);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Store a rendered diagram in the cache (string content).
+ * @param format Output format extension. Defaults to 'svg'.
+ */
+export function cacheDiagram(type: string, source: string, content: string, format: string = 'svg'): void {
+  if (!cacheDir) return;
+  const file = path.join(cacheDir, `${cacheKey(type, source)}.${format}`);
+  try {
+    fs.writeFileSync(file, content, 'utf8');
+  } catch (err) {
+    console.error('[diagramCache] write failed:', (err as Error).message);
+  }
+}
+
+/**
+ * Store a rendered diagram in the cache (binary content).
+ * @param format Output format extension (e.g. 'png', 'pdf').
+ */
+export function cacheDiagramBuffer(type: string, source: string, buffer: Buffer, format: string): void {
+  if (!cacheDir) return;
+  const file = path.join(cacheDir, `${cacheKey(type, source)}.${format}`);
+  try {
+    fs.writeFileSync(file, buffer);
   } catch (err) {
     console.error('[diagramCache] write failed:', (err as Error).message);
   }

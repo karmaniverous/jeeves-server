@@ -31,7 +31,7 @@ import hljs from 'highlight.js';
 import { rewriteLinksForDeepShare } from '../services/deepShareLinks.js';
 import { renderEmbeddedDiagrams } from '../services/embeddedDiagrams.js';
 import { parseMarkdown } from '../services/markdown.js';
-import { getCachedDiagram, cacheDiagram } from '../services/diagramCache.js';
+import { getCachedDiagram, cacheDiagram, getCachedDiagramBuffer, cacheDiagramBuffer } from '../services/diagramCache.js';
 import { renderPlantUmlSvg, renderPlantUmlToBuffer, getPlantUmlFormats } from '../services/plantuml.js';
 import { getContentType, isInlineType, looksLikeText } from '../util/fileDetection.js';
 import { formatRelativeTime } from '../util/formatters.js';
@@ -830,6 +830,19 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
 
       const mermaidFormats = ['svg', 'png', 'pdf'];
       const format = mermaidFormats.includes(request.query.format ?? '') ? request.query.format! : 'svg';
+      const source = fs.readFileSync(resolved, 'utf8');
+
+      // Check cache first
+      const cachedBuffer = getCachedDiagramBuffer('mermaid', source, format);
+      if (cachedBuffer) {
+        const contentTypes: Record<string, string> = { svg: 'image/svg+xml', png: 'image/png', pdf: 'application/pdf' };
+        const downloadName = `${path.basename(resolved, '.mmd')}.${format}`;
+        return reply
+          .header('Content-Type', contentTypes[format] ?? 'application/octet-stream')
+          .header('Content-Disposition', `attachment; filename="${downloadName}"`)
+          .send(cachedBuffer);
+      }
+
       const outFile = path.join(
         path.dirname(resolved),
         `${path.basename(resolved, '.mmd')}.${format}`,
@@ -851,6 +864,8 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
       }
 
       const content = fs.readFileSync(outFile);
+      cacheDiagramBuffer('mermaid', source, content, format);
+
       const contentTypes: Record<string, string> = {
         svg: 'image/svg+xml',
         png: 'image/png',
@@ -884,12 +899,26 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
 
       const supported = getPlantUmlFormats();
       const format = supported.includes(request.query.format ?? '') ? request.query.format! : 'svg';
+      const source = fs.readFileSync(resolved, 'utf8');
+
+      // Check cache first
+      const cachedBuffer = getCachedDiagramBuffer('plantuml', source, format);
+      if (cachedBuffer) {
+        const baseName = path.basename(resolved, ext);
+        const contentTypes: Record<string, string> = { svg: 'image/svg+xml', png: 'image/png', pdf: 'application/pdf', eps: 'application/postscript' };
+        return reply
+          .header('Content-Type', contentTypes[format] ?? 'application/octet-stream')
+          .header('Content-Disposition', `attachment; filename="${baseName}.${format}"`)
+          .send(cachedBuffer);
+      }
+
       const buffer = await renderPlantUmlToBuffer(resolved, format);
 
       if (!buffer) {
         return reply.code(500).send({ error: 'PlantUML render failed' });
       }
 
+      cacheDiagramBuffer('plantuml', source, buffer, format);
       const baseName = path.basename(resolved, ext);
       const contentTypes: Record<string, string> = {
         svg: 'image/svg+xml',
