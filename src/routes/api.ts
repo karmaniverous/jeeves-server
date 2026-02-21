@@ -81,6 +81,10 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
     if (!request.url.startsWith('/api')) return;
     if (request.url.startsWith('/api/readme-link')) return;
     if (request.url.startsWith('/api/auth/status')) return;
+    // Diagram endpoint uses content-addressed hashes — no path-based auth needed.
+    // The hash is unpredictable (sha256) and the source is only registered when
+    // an authenticated user loads a page containing the diagram.
+    if (request.url.startsWith('/api/diagram/')) return;
     // Utility endpoints handle their own scope checking (path is in body, not URL)
     if (request.url.startsWith('/api/util/')) {
       // Still need auth, but skip scope-based path verification
