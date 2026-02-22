@@ -39,7 +39,9 @@ export const diagramsRoutes: FastifyPluginAsync = async (fastify) => {
         entry.contextDir,
       );
       if (!svg) {
-        return reply.code(500).send({ error: 'Renderer returned empty result' });
+        return reply
+          .code(500)
+          .send({ error: 'Renderer returned empty result' });
       }
 
       return reply

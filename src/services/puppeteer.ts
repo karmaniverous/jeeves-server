@@ -63,7 +63,8 @@ const PRINT_CSS = `
   h3 { font-size: 12pt !important; }
   h4, h5, h6 { font-size: 10pt !important; }
   code { font-size: 9pt !important; }
-  pre, pre code { font-size: 8pt !important; }
+  pre { font-size: 8pt !important; background: #f5f5f5 !important; border: 1px solid #e0e0e0 !important; border-radius: 4px !important; padding: 8px !important; overflow-wrap: break-word !important; white-space: pre-wrap !important; }
+  pre code { font-size: 8pt !important; }
   table { font-size: 10pt !important; }
   a.anchor { display: none !important; }
   img, svg, .svg-container, .zoomable-svg { 
@@ -99,6 +100,20 @@ export async function waitForSpaContent(page: Page): Promise<void> {
         return Array.from(containers).every(
           (c) => !c.textContent.includes('Loading SVG'),
         );
+      },
+      { timeout: 15_000 },
+    )
+    .catch(() => {});
+  // Wait for CM6 code blocks to mount
+  await page
+    .waitForFunction(
+      () => {
+        const article = document.querySelector('article.prose');
+        if (!article) return true;
+        // If there are no code blocks, or CM6 has signaled ready
+        const codeBlocks = article.querySelectorAll('.cm6-embedded-code');
+        if (codeBlocks.length === 0) return true;
+        return article.getAttribute('data-cm6-ready') === 'true';
       },
       { timeout: 15_000 },
     )
