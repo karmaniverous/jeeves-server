@@ -157,7 +157,7 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
         // consistent block background in DOCX (html-to-docx doesn't support
         // background-color on pre as a block fill)
         contentClone.querySelectorAll('pre').forEach((pre) => {
-          const text = pre.textContent ?? '';
+          const text = pre.textContent || '';
           const table = document.createElement('table');
           table.setAttribute('border', '1');
           table.style.borderCollapse = 'collapse';
