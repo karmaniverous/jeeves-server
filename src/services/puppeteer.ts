@@ -63,7 +63,8 @@ const PRINT_CSS = `
   h3 { font-size: 12pt !important; }
   h4, h5, h6 { font-size: 10pt !important; }
   code { font-size: 9pt !important; }
-  pre, pre code { font-size: 8pt !important; }
+  pre { font-size: 8pt !important; background: #f5f5f5 !important; border: 1px solid #e0e0e0 !important; border-radius: 4px !important; padding: 8px !important; overflow-wrap: break-word !important; white-space: pre-wrap !important; }
+  pre code { font-size: 8pt !important; }
   table { font-size: 10pt !important; }
   a.anchor { display: none !important; }
   img, svg, .svg-container, .zoomable-svg { 
