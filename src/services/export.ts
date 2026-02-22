@@ -153,17 +153,45 @@ export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
           (td as HTMLElement).style.border = '1px solid #999';
         });
 
-        // Inline styles for code blocks
+        // Inline styles for code blocks — wrap in single-cell table for
+        // consistent block background in DOCX (html-to-docx doesn't support
+        // background-color on pre as a block fill)
         contentClone.querySelectorAll('pre').forEach((pre) => {
-          (pre as HTMLElement).style.fontFamily = 'Consolas, monospace';
-          (pre as HTMLElement).style.fontSize = '9pt';
-          (pre as HTMLElement).style.backgroundColor = '#f5f5f5';
-          (pre as HTMLElement).style.padding = '12px';
-          (pre as HTMLElement).style.border = '1px solid #ddd';
-          pre.innerHTML = pre.innerHTML.replace(/\n/g, '<br>');
-        });
-        contentClone.querySelectorAll('code').forEach((code) => {
-          code.style.fontFamily = 'Consolas, monospace';
+          const text = pre.textContent ?? '';
+          const table = document.createElement('table');
+          table.setAttribute('border', '1');
+          table.style.borderCollapse = 'collapse';
+          table.style.width = '100%';
+          table.style.marginTop = '8px';
+          table.style.marginBottom = '8px';
+          const tr = document.createElement('tr');
+          const td = document.createElement('td');
+          td.style.backgroundColor = '#f5f5f5';
+          td.style.border = '1px solid #ddd';
+          td.style.padding = '12px';
+          // Build one <p> per line with monospace styling and &nbsp; for
+          // indentation. html-to-docx converts each <p> to a Word paragraph
+          // cleanly, without the double-spacing that <br> causes.
+          const lines = text.split('\n');
+          lines.forEach((line) => {
+            const p = document.createElement('p');
+            p.style.fontFamily = 'Consolas, monospace';
+            p.style.fontSize = '9pt';
+            p.style.margin = '0';
+            p.style.lineHeight = '1.3';
+            // Preserve leading whitespace with &nbsp;
+            const leadingSpaces = line.match(/^( +)/);
+            if (leadingSpaces) {
+              const nbsp = '\u00A0'.repeat(leadingSpaces[1].length);
+              p.textContent = nbsp + line.slice(leadingSpaces[1].length);
+            } else {
+              p.textContent = line || '\u00A0'; // empty lines need content
+            }
+            td.appendChild(p);
+          });
+          tr.appendChild(td);
+          table.appendChild(tr);
+          pre.replaceWith(table);
         });
 
         return contentClone.innerHTML;
