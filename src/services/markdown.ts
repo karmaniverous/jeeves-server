@@ -4,7 +4,6 @@
 
 import fs from 'node:fs';
 
-import hljs from 'highlight.js';
 import { marked } from 'marked';
 
 import { registerDiagram } from './embeddedDiagrams.js';
@@ -151,15 +150,12 @@ export function parseMarkdown(
       return registerDiagram('plantuml', text);
     }
 
-    let highlighted: string;
-    if (lang && hljs.getLanguage(lang)) {
-      highlighted = hljs.highlight(text, { language: lang }).value;
-    } else {
-      const auto = hljs.highlightAuto(text);
-      highlighted = auto.relevance > 5 ? auto.value : text;
-    }
+    const escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
     const langClass = lang ? ` class="language-${lang}"` : '';
-    return `<pre class="hljs"><code${langClass}>${highlighted}</code></pre>\n`;
+    return `<pre><code${langClass}>${escaped}</code></pre>\n`;
   };
 
   marked.setOptions({ renderer });

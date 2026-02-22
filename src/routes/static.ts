@@ -51,24 +51,4 @@ export const staticRoutes: FastifyPluginAsync = async (fastify) => {
     );
     return reply.type('application/javascript').send(fs.readFileSync(filePath));
   });
-
-  // highlight.js themes
-  fastify.get('/static/hljs/:theme', async (request, reply) => {
-    const { theme } = request.params as { theme: string };
-    if (!/^[\w-]+\.min\.css$/.test(theme)) {
-      return reply.code(404).send('Not found');
-    }
-    const themePath = path.join(
-      __dirname,
-      '..',
-      'node_modules',
-      'highlight.js',
-      'styles',
-      theme,
-    );
-    if (!fs.existsSync(themePath)) {
-      return reply.code(404).send('Not found');
-    }
-    return reply.type('text/css').send(fs.readFileSync(themePath));
-  });
 };

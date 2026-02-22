@@ -8,7 +8,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
-import hljs from 'highlight.js';
 
 import { getConfig } from '../../config/index.js';
 import { rewriteLinksForDeepShare } from '../../services/deepShareLinks.js';
@@ -21,7 +20,7 @@ import { parseMarkdown } from '../../services/markdown.js';
 import { renderMermaidSvg } from '../../services/mermaid.js';
 import { renderPlantUmlSvg } from '../../services/plantuml.js';
 import { filterBreadcrumbsForOutsider } from '../../util/breadcrumbs.js';
-import { getLanguageForExt, looksLikeText } from '../../util/fileDetection.js';
+import { looksLikeText } from '../../util/fileDetection.js';
 import { breadcrumbParts, getRoots, urlPathToFs } from '../../util/platform.js';
 
 /** Image extensions recognized for type detection. */
@@ -304,29 +303,9 @@ function handleText(
       isInsider,
     });
 
-  let highlightedHtml: string | null = null;
-  let detectedLang: string | null = null;
-  try {
-    const knownLang = getLanguageForExt(ext);
-    if (knownLang) {
-      const result = hljs.highlight(textContent, { language: knownLang });
-      highlightedHtml = result.value;
-      detectedLang = knownLang;
-    } else {
-      const result = hljs.highlightAuto(textContent);
-      if (result.relevance > 5) {
-        highlightedHtml = result.value;
-        detectedLang = result.language ?? null;
-      }
-    }
-  } catch {
-    /* fallback */
-  }
   return reply.send({
     type: 'text',
     content: textContent,
-    html: highlightedHtml,
-    language: detectedLang,
     fileName,
     breadcrumbs,
     isInsider,

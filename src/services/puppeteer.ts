@@ -103,6 +103,20 @@ export async function waitForSpaContent(page: Page): Promise<void> {
       { timeout: 15_000 },
     )
     .catch(() => {});
+  // Wait for CM6 code blocks to mount
+  await page
+    .waitForFunction(
+      () => {
+        const article = document.querySelector('article.prose');
+        if (!article) return true;
+        // If there are no code blocks, or CM6 has signaled ready
+        const codeBlocks = article.querySelectorAll('.cm6-embedded-code');
+        if (codeBlocks.length === 0) return true;
+        return article.getAttribute('data-cm6-ready') === 'true';
+      },
+      { timeout: 15_000 },
+    )
+    .catch(() => {});
   await new Promise((r) => setTimeout(r, 1000));
 }
 
