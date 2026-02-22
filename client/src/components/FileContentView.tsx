@@ -4,8 +4,8 @@
 import { Loader2 } from 'lucide-react';
 import { lazy, Suspense, useEffect } from 'react';
 
-import { CodeBlock } from '@/components/CodeBlock';
 const CodeEditor = lazy(() => import('@/components/CodeEditor').then(m => ({ default: m.CodeEditor })));
+const CodeViewer = lazy(() => import('@/components/CodeViewer').then(m => ({ default: m.CodeViewer })));
 import { MermaidViewer } from '@/components/MermaidViewer';
 import { PlantUmlViewer } from '@/components/PlantUmlViewer';
 import { SvgViewer } from '@/components/SvgViewer';
@@ -61,11 +61,16 @@ export function FileContentView({
 
       {/* Raw view */}
       {(fileRaw ?? file)?.content && activeTab === 'raw' && !editing && (
-        <CodeBlock
-          content={(fileRaw ?? file)!.content!}
-          html={renderable ? null : (fileRendered ?? fileRaw)?.html}
-          language={renderable ? null : (fileRendered ?? fileRaw)?.language}
-        />
+        <Suspense fallback={
+          <pre className="rounded-lg overflow-x-auto text-sm border border-border p-4 bg-muted text-foreground">
+            <code>{(fileRaw ?? file)!.content!.slice(0, 500)}…</code>
+          </pre>
+        }>
+          <CodeViewer
+            content={(fileRaw ?? file)!.content!}
+            fileName={(fileRaw ?? file)!.fileName}
+          />
+        </Suspense>
       )}
 
       {/* Editor */}
