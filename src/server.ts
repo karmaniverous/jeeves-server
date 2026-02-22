@@ -67,9 +67,6 @@ async function start() {
       fastify.get('/browse/*', async (_request, reply) => {
         return reply.sendFile('index.html', clientDir);
       });
-      fastify.get('/content/:file', async (_request, reply) => {
-        return reply.sendFile('index.html', clientDir);
-      });
     }
 
     // Initialize diagram render cache

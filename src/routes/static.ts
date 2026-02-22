@@ -9,8 +9,6 @@ import { fileURLToPath } from 'node:url';
 
 import type { FastifyPluginAsync } from 'fastify';
 
-import { parseMarkdown } from '../services/markdown.js';
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // eslint-disable-next-line @typescript-eslint/require-await
@@ -18,29 +16,6 @@ export const staticRoutes: FastifyPluginAsync = async (fastify) => {
   // robots.txt — block all crawlers
   fastify.get('/robots.txt', async (_request, reply) => {
     reply.type('text/plain').send('User-agent: *\nDisallow: /\n');
-  });
-
-  // Serve content/*.md as JSON with rendered HTML (no auth — public legal docs)
-  fastify.get('/api/content/:file', async (request, reply) => {
-    const { file } = request.params as { file: string };
-    if (!/^[\w-]+$/.test(file)) {
-      return reply.code(404).send({ error: 'Not found' });
-    }
-    const contentDir = path.resolve(__dirname, '..', '..', 'content');
-    const filePath = path.join(contentDir, `${file}.md`);
-    if (!fs.existsSync(filePath)) {
-      return reply.code(404).send({ error: 'Not found' });
-    }
-    const markdown = fs.readFileSync(filePath, 'utf8');
-    const { html } = parseMarkdown(markdown, {});
-    return reply.send({
-      type: 'markdown',
-      content: markdown,
-      html,
-      fileName: `${file}.md`,
-      breadcrumbs: [],
-      isInsider: false,
-    });
   });
 
   // Favicon

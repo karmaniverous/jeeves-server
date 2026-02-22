@@ -39,6 +39,20 @@ export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
   const { authenticated, email, picture } = useAuth();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [privacyUrl, setPrivacyUrl] = useState<string | null>(null);
+  const [termsUrl, setTermsUrl] = useState<string | null>(null);
+
+  // Fetch content share links on mount
+  useEffect(() => {
+    fetch('/api/content-link/privacy')
+      .then((r) => r.json())
+      .then((data: { url?: string }) => { if (data.url) setPrivacyUrl(data.url); })
+      .catch(() => {});
+    fetch('/api/content-link/terms')
+      .then((r) => r.json())
+      .then((data: { url?: string }) => { if (data.url) setTermsUrl(data.url); })
+      .catch(() => {});
+  }, []);
 
   // Track whether a nested Radix dropdown is currently open
   const nestedDropdownOpen = useCallback(() => {
@@ -119,27 +133,33 @@ export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
             Sign out
           </a>
 
-          {/* Legal links */}
-          <div className="border-t border-border mt-1 pt-1">
-            <a
-              href="/content/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent transition-colors"
-            >
-              <ExternalLink className="h-3 w-3" />
-              Privacy
-            </a>
-            <a
-              href="/content/terms"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent transition-colors"
-            >
-              <ExternalLink className="h-3 w-3" />
-              Terms
-            </a>
-          </div>
+          {/* Legal links — share links to content/*.md */}
+          {(privacyUrl ?? termsUrl) && (
+            <div className="border-t border-border mt-1 pt-1">
+              {privacyUrl && (
+                <a
+                  href={privacyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent transition-colors"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Privacy
+                </a>
+              )}
+              {termsUrl && (
+                <a
+                  href={termsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent transition-colors"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Terms
+                </a>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
