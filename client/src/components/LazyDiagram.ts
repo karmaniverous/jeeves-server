@@ -69,10 +69,16 @@ async function loadDiagram(
     cleanups.push(cleanup);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    placeholder.innerHTML = `<div class="embedded-diagram-error" data-type="${type}"><div class="diagram-error-label">${type} render failed: ${escapeHtml(message)}</div><button class="diagram-retry-btn">Retry</button></div>`;
+    const label = type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Diagram';
+    const retries = Number(placeholder.dataset.retryCount ?? '0');
+    const reloadHint = retries > 0
+      ? '<div class="diagram-reload-hint">Still failing? Try reloading the page — the diagram source may have changed.</div>'
+      : '';
+    placeholder.innerHTML = `<div class="embedded-diagram-error" data-type="${type}"><div class="diagram-error-label">${label} render failed: ${escapeHtml(message)}</div>${reloadHint}<button class="diagram-retry-btn">Retry</button></div>`;
 
     const retryBtn = placeholder.querySelector('.diagram-retry-btn');
     retryBtn?.addEventListener('click', () => {
+      placeholder.dataset.retryCount = String(retries + 1);
       placeholder.innerHTML = `<div class="embedded-diagram-loading"><div class="diagram-spinner"></div><span>Rendering ${type} diagram…</span></div>`;
       void loadDiagram(placeholder, cleanups);
     });
