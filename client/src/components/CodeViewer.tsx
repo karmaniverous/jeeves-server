@@ -5,7 +5,7 @@
 import { Check, Copy } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-import { getLanguageExtension, loadCodeMirror, loadFoldExtensions } from '@/lib/codemirror';
+import { getLanguageExtension, loadCodeMirror } from '@/lib/codemirror';
 import { useTheme } from '@/lib/theme';
 
 interface CodeViewerProps {
@@ -31,13 +31,7 @@ export function CodeViewer({ content, fileName }: CodeViewerProps) {
     let destroyed = false;
 
     (async () => {
-      const [
-        { EditorView, EditorState, basicSetup, oneDark },
-        { foldGutter, foldKeymap, keymap },
-      ] = await Promise.all([
-        loadCodeMirror(),
-        loadFoldExtensions(),
-      ]);
+      const { EditorView, EditorState, basicSetup, oneDark } = await loadCodeMirror();
       if (destroyed) return;
 
       const ext = fileName.split('.').pop() ?? '';
@@ -48,8 +42,6 @@ export function CodeViewer({ content, fileName }: CodeViewerProps) {
         basicSetup,
         EditorState.readOnly.of(true),
         EditorView.editable.of(false),
-        foldGutter(),
-        keymap.of(foldKeymap),
         EditorView.theme({
           '&': { fontSize: '14px' },
           '.cm-scroller': { overflow: 'auto' },

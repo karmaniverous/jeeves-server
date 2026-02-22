@@ -19,13 +19,6 @@ export async function loadCodeMirror() {
   return { EditorView, EditorState, basicSetup, keymap, oneDark };
 }
 
-/** Lazy-load fold extensions */
-export async function loadFoldExtensions() {
-  const { foldGutter, foldKeymap } = await import('@codemirror/language');
-  const { keymap } = await import('@codemirror/view');
-  return { foldGutter, foldKeymap, keymap };
-}
-
 /** Map file extensions to CodeMirror language support (lazy-loaded) */
 export async function getLanguageExtension(ext: string) {
   switch (ext.toLowerCase()) {
