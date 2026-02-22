@@ -13,6 +13,14 @@ import path from 'node:path';
 
 let cacheDir: string | null = null;
 
+/** Diagram type for a given file extension. */
+const DIAGRAM_EXT_MAP: Record<string, string> = {
+  '.mmd': 'mermaid',
+  '.puml': 'plantuml',
+  '.plantuml': 'plantuml',
+  '.pu': 'plantuml',
+};
+
 /** Initialize the export cache directory. Call once at startup. */
 export function initExportCache(dir?: string): void {
   cacheDir = dir ?? path.resolve('.export-cache');
@@ -90,6 +98,45 @@ export function clearExportCache(fsPath: string): number {
       } catch {
         // Not cached, that's fine
       }
+    }
+  }
+  return count;
+}
+
+/**
+ * Clear standalone diagram cache entries for a diagram source file.
+ * Reads the file, computes the content-addressed hash, and removes
+ * all format variants (svg, png, pdf, eps) from the diagram cache.
+ */
+export function clearStandaloneDiagramCache(
+  fsPath: string,
+  diagramCacheDir: string | null,
+): number {
+  if (!diagramCacheDir) return 0;
+
+  const ext = path.extname(fsPath).toLowerCase();
+  const diagramType = DIAGRAM_EXT_MAP[ext];
+  if (!diagramType) return 0;
+
+  let source: string;
+  try {
+    source = fs.readFileSync(fsPath, 'utf8');
+  } catch {
+    return 0;
+  }
+
+  const hash = crypto
+    .createHash('sha256')
+    .update(`${diagramType}\0${source}`)
+    .digest('hex');
+
+  let count = 0;
+  for (const fmt of ['svg', 'png', 'pdf', 'eps']) {
+    try {
+      fs.unlinkSync(path.join(diagramCacheDir, `${hash}.${fmt}`));
+      count++;
+    } catch {
+      // Not present
     }
   }
   return count;

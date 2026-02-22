@@ -21,6 +21,7 @@ import {
   cacheExport,
   clearDiagramCacheForFile,
   clearExportCache,
+  clearStandaloneDiagramCache,
   getCachedExport,
 } from '../../services/exportCache.js';
 import { renderMermaidToFile } from '../../services/mermaid.js';
@@ -176,14 +177,19 @@ export const exportRoutes: FastifyPluginAsync = async (fastify) => {
 
       const { getDiagramCacheDir } =
         await import('../../services/diagramCache.js');
+      const diagCacheDir = getDiagramCacheDir();
       const exportCount = clearExportCache(resolved);
-      const diagramCount = clearDiagramCacheForFile(
+      const embeddedCount = clearDiagramCacheForFile(resolved, diagCacheDir);
+      const standaloneCount = clearStandaloneDiagramCache(
         resolved,
-        getDiagramCacheDir(),
+        diagCacheDir,
       );
 
       return reply.send({
-        cleared: { exports: exportCount, diagrams: diagramCount },
+        cleared: {
+          exports: exportCount,
+          diagrams: embeddedCount + standaloneCount,
+        },
       });
     },
   );

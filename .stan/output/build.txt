@@ -1,0 +1,8 @@
+
+> @karmaniverous/jeeves-server@2.7.4 prebuild
+> node -e "const fs=require('fs');['dist','.tsbuildinfo'].forEach(p=>{try{fs.rmSync(p,{recursive:true,force:true})}catch{}})"
+
+
+> @karmaniverous/jeeves-server@2.7.4 build
+> tsc
+

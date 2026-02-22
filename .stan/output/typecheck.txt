@@ -1,0 +1,4 @@
+
+> @karmaniverous/jeeves-server@2.7.4 typecheck
+> cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc --noEmit --noErrorTruncation
+
