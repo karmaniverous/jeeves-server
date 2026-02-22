@@ -171,3 +171,10 @@ export async function saveFile(path: string, content: string): Promise<{ ok: boo
     body: JSON.stringify({ content }),
   });
 }
+
+export async function clearCache(path: string): Promise<{ cleared: { exports: number; diagrams: number } }> {
+  return fetchJson<{ cleared: { exports: number; diagrams: number } }>(
+    `${API_BASE}/export-cache/${path}`,
+    { method: 'DELETE' },
+  );
+}

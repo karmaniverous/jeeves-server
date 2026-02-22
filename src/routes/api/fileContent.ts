@@ -16,6 +16,7 @@ import {
   renderEmbeddedDiagrams,
   setDiagramContext,
 } from '../../services/embeddedDiagrams.js';
+import { registerDiagramHashes } from '../../services/exportCache.js';
 import { parseMarkdown } from '../../services/markdown.js';
 import { renderMermaidSvg } from '../../services/mermaid.js';
 import { renderPlantUmlSvg } from '../../services/plantuml.js';
@@ -248,6 +249,17 @@ async function handleMarkdown(
     basePath: urlDir,
   });
   let html = parsedHtml;
+
+  // Register diagram hashes for cache-clear reverse index
+  const diagramHashMatches = [
+    ...html.matchAll(/data-diagram-hash="([a-f0-9]{64})"/g),
+  ];
+  if (diagramHashMatches.length > 0) {
+    registerDiagramHashes(
+      resolved,
+      diagramHashMatches.map((m) => m[1]),
+    );
+  }
 
   if ((request.query as { render_diagrams?: string }).render_diagrams === '1') {
     html = await renderEmbeddedDiagrams(html, fsDir);
