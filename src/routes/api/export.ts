@@ -17,6 +17,13 @@ import {
 } from '../../services/diagramCache.js';
 import { appendEvent } from '../../services/eventQueue.js';
 import { type ExportFormat, exportPage } from '../../services/export.js';
+import {
+  cacheExport,
+  clearDiagramCacheForFile,
+  clearExportCache,
+  clearStandaloneDiagramCache,
+  getCachedExport,
+} from '../../services/exportCache.js';
 import { renderMermaidToFile } from '../../services/mermaid.js';
 import {
   getPlantUmlFormats,
@@ -107,16 +114,33 @@ export const exportRoutes: FastifyPluginAsync = async (fastify) => {
       const baseName = fileName.replace(/\.md$/i, '');
 
       try {
-        const buffer = await exportPage({
-          url: exportUrl,
-          fileName,
-          format: format as ExportFormat,
-        });
         const contentType =
           format === 'pdf'
             ? 'application/pdf'
             : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
         const fileExt = format === 'pdf' ? 'pdf' : 'docx';
+
+        // Check export cache
+        const cached = getCachedExport(resolved, format);
+        if (cached) {
+          return await reply
+            .header('Content-Type', contentType)
+            .header(
+              'Content-Disposition',
+              `attachment; filename="${baseName}.${fileExt}"`,
+            )
+            .header('Content-Length', cached.length)
+            .send(cached);
+        }
+
+        const buffer = await exportPage({
+          url: exportUrl,
+          fileName,
+          format: format as ExportFormat,
+        });
+
+        // Cache the result
+        cacheExport(resolved, format, buffer);
 
         return await reply
           .header('Content-Type', contentType)
@@ -133,6 +157,40 @@ export const exportRoutes: FastifyPluginAsync = async (fastify) => {
           details: String(err),
         });
       }
+    },
+  );
+
+  // DELETE /api/export-cache/* — clear all caches for a file (insider-only)
+  fastify.delete<{ Params: { '*': string } }>(
+    '/api/export-cache/*',
+    async (request, reply) => {
+      if (request.accessMode !== 'insider') {
+        return reply.code(403).send({ error: 'Insider access required' });
+      }
+
+      const reqPath = request.params['*'];
+      if (!reqPath) return reply.code(400).send({ error: 'Path required' });
+
+      const fsPath = urlPathToFs(reqPath, roots);
+      if (!fsPath) return reply.code(404).send({ error: 'Invalid path' });
+      const resolved = path.resolve(fsPath);
+
+      const { getDiagramCacheDir } =
+        await import('../../services/diagramCache.js');
+      const diagCacheDir = getDiagramCacheDir();
+      const exportCount = clearExportCache(resolved);
+      const embeddedCount = clearDiagramCacheForFile(resolved, diagCacheDir);
+      const standaloneCount = clearStandaloneDiagramCache(
+        resolved,
+        diagCacheDir,
+      );
+
+      return reply.send({
+        cleared: {
+          exports: exportCount,
+          diagrams: embeddedCount + standaloneCount,
+        },
+      });
     },
   );
 

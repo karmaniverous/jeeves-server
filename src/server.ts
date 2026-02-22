@@ -21,6 +21,7 @@ import { pathRoute } from './routes/path/index.js';
 import { staticRoutes } from './routes/static.js';
 import { initDiagramCache } from './services/diagramCache.js';
 import { startQueueProcessor } from './services/eventQueue.js';
+import { initExportCache } from './services/exportCache.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -69,8 +70,9 @@ async function start() {
       });
     }
 
-    // Initialize diagram render cache
+    // Initialize caches
     initDiagramCache(config.diagramCachePath);
+    initExportCache();
 
     // Start queue processor
     startQueueProcessor();

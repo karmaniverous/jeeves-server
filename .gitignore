@@ -38,3 +38,6 @@ cloud-init-linux-test.yaml
 
 # Diagram render cache
 .diagram-cache/
+
+# Export render cache
+.export-cache/

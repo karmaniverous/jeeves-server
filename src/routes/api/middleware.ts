@@ -87,6 +87,7 @@ export function addAuthMiddleware(fastify: FastifyInstance): void {
       .replace('/api/drives', '/')
       .replace('/api/file', '')
       .replace('/api/raw', '')
+      .replace('/api/export-cache', '')
       .replace('/api/export', '');
 
     // Try key-based auth

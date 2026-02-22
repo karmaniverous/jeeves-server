@@ -1,13 +1,14 @@
 import { CloudDownload } from 'lucide-react';
 
-import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { DropdownMenuSeparator, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { ActionDropdown, DropdownErrorBanner, useActionState, type ActionState } from '@/components/ActionDropdown';
-import { withKey } from '@/lib/api';
+import { clearCache, withKey } from '@/lib/api';
 
 interface DownloadDropdownProps {
   reqPath: string;
   file: { fileName: string; type: string } | null;
   isDirectory?: boolean;
+  isInsider?: boolean;
   compact?: boolean;
   variant?: 'header' | 'default' | 'menuItem';
   onError?: (error: string) => void;
@@ -69,7 +70,7 @@ async function downloadBlob(href: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function DownloadDropdown({ reqPath, file, isDirectory, compact, variant = 'default', onError, onStateChange }: DownloadDropdownProps) {
+export function DownloadDropdown({ reqPath, file, isDirectory, isInsider, compact, variant = 'default', onError, onStateChange }: DownloadDropdownProps) {
   const { state, errorMsg, handleAction, resetOnClose } = useActionState(
     (msg) => { onError?.(msg); alert(`Download failed: ${msg}`); },
     onStateChange,
@@ -98,6 +99,17 @@ export function DownloadDropdown({ reqPath, file, isDirectory, compact, variant 
           {item.label}
         </DropdownMenuItem>
       ))}
+      {isInsider && !isDirectory && (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() => void handleAction(async () => { await clearCache(reqPath); })}
+            className="cursor-pointer text-muted-foreground"
+          >
+            Clear Cache
+          </DropdownMenuItem>
+        </>
+      )}
     </ActionDropdown>
   );
 }
