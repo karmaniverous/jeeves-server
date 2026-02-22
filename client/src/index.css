@@ -246,3 +246,22 @@ pre:hover .code-copy-btn {
   font-weight: 500;
   margin-bottom: 0.5rem;
 }
+
+.diagram-retry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-foreground);
+  background: var(--color-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background 150ms;
+}
+
+.diagram-retry-btn:hover {
+  background: var(--color-accent);
+}

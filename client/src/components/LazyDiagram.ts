@@ -69,7 +69,13 @@ async function loadDiagram(
     cleanups.push(cleanup);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    placeholder.innerHTML = `<div class="embedded-diagram-error" data-type="${type}"><div class="diagram-error-label">${type} render failed: ${escapeHtml(message)}</div></div>`;
+    placeholder.innerHTML = `<div class="embedded-diagram-error" data-type="${type}"><div class="diagram-error-label">${type} render failed: ${escapeHtml(message)}</div><button class="diagram-retry-btn">Retry</button></div>`;
+
+    const retryBtn = placeholder.querySelector('.diagram-retry-btn');
+    retryBtn?.addEventListener('click', () => {
+      placeholder.innerHTML = `<div class="embedded-diagram-loading"><div class="diagram-spinner"></div><span>Rendering ${type} diagram…</span></div>`;
+      void loadDiagram(placeholder, cleanups);
+    });
   }
 }
 
