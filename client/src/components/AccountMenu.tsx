@@ -1,4 +1,4 @@
-import { LogOut, User } from 'lucide-react';
+import { ExternalLink, LogOut, User } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAuth } from '@/lib/auth';
@@ -118,6 +118,28 @@ export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
             <LogOut className="h-4 w-4" />
             Sign out
           </a>
+
+          {/* Legal links */}
+          <div className="border-t border-border mt-1 pt-1">
+            <a
+              href="/content/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent transition-colors"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Privacy
+            </a>
+            <a
+              href="/content/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent transition-colors"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Terms
+            </a>
+          </div>
         </div>
       )}
     </div>

@@ -35,6 +35,11 @@ async function start() {
     // Register plugins
     await fastify.register(cookie);
 
+    // X-Robots-Tag on all responses — invisible to search engines
+    fastify.addHook('onSend', async (_request, reply) => {
+      void reply.header('X-Robots-Tag', 'noindex, nofollow');
+    });
+
     // Register routes
     await fastify.register(staticRoutes);
     await fastify.register(healthRoute);
@@ -60,6 +65,9 @@ async function start() {
         return reply.sendFile('index.html', clientDir);
       });
       fastify.get('/browse/*', async (_request, reply) => {
+        return reply.sendFile('index.html', clientDir);
+      });
+      fastify.get('/content/:file', async (_request, reply) => {
         return reply.sendFile('index.html', clientDir);
       });
     }

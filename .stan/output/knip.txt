@@ -1,4 +1,4 @@
 
-> @karmaniverous/jeeves-server@2.7.0 knip
+> @karmaniverous/jeeves-server@2.7.1 knip
 > knip
 
