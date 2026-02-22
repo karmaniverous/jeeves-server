@@ -13,6 +13,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const staticRoutes: FastifyPluginAsync = async (fastify) => {
+  // robots.txt — block all crawlers
+  fastify.get('/robots.txt', async (_request, reply) => {
+    reply.type('text/plain').send('User-agent: *\nDisallow: /\n');
+  });
+
   // Favicon
   fastify.get('/favicon.svg', async (_request, reply) => {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="0.9em" font-size="90">🎩</text></svg>`;

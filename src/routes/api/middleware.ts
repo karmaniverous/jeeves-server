@@ -21,6 +21,7 @@ export function addAuthMiddleware(fastify: FastifyInstance): void {
   fastify.addHook('preHandler', async (request, reply) => {
     if (!request.url.startsWith('/api')) return;
     if (request.url.startsWith('/api/readme-link')) return;
+    if (request.url.startsWith('/api/content-link/')) return;
     if (request.url.startsWith('/api/auth/status')) return;
     if (request.url.startsWith('/api/diagram/')) return;
 

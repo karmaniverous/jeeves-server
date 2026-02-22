@@ -51,6 +51,33 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send({ url: shareUrl });
   });
 
+  // GET /api/content-link/:file — share link for content/*.md (terms, privacy)
+  fastify.get('/api/content-link/:file', async (request, reply) => {
+    const config = getConfig();
+    const internalKey = config.resolvedKeys.find((k) => k.name === '_internal');
+    if (!internalKey?.seed)
+      return reply.code(503).send({ error: 'No _internal key configured' });
+
+    const { file } = request.params as { file: string };
+    if (!/^[\w-]+$/.test(file))
+      return reply.code(400).send({ error: 'Invalid file name' });
+
+    const seed = internalKey.seed;
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const serverRoot = path.resolve(__dirname, '..', '..', '..');
+    const contentPath = path.join(serverRoot, 'content', `${file}.md`);
+    if (!fs.existsSync(contentPath))
+      return reply.code(404).send({ error: `${file}.md not found` });
+
+    const urlPath = fsPathToUrl(contentPath, roots);
+    const stack = encodeStack([urlPath]);
+    const deepParams = { depth: 0, dirs: false, stack, exp: undefined };
+    const key = computeDeepShareKey(seed, urlPath, deepParams);
+    const shareUrl = `/browse${urlPath}?key=${key}&d=0&dirs=0&s=${stack}`;
+
+    return reply.send({ url: shareUrl });
+  });
+
   // POST /api/share
   fastify.post<{
     Body: { path: string; expiry?: string; depth?: number; dirs?: boolean };
