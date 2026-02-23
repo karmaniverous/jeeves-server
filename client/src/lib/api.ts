@@ -88,6 +88,7 @@ export interface AuthStatus {
   picture?: string;
   isInsider: boolean;
   keyCreatedAt?: string | null;
+  searchEnabled?: boolean;
 }
 
 /** Rotate insider key — invalidates all existing shares */
@@ -169,6 +170,47 @@ export async function saveFile(path: string, content: string): Promise<{ ok: boo
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content }),
+  });
+}
+
+export interface SearchChunk {
+  text: string;
+  index: number;
+  score: number;
+}
+
+export interface SearchResult {
+  filePath: string;
+  browsePath: string;
+  fileName: string;
+  bestScore: number;
+  domain?: string;
+  title?: string;
+  author?: string;
+  participants?: string;
+  chunks: SearchChunk[];
+}
+
+export interface SearchMetadata {
+  domains: string[];
+  authors: string[];
+  participants: string[];
+}
+
+export interface SearchResponse {
+  results: SearchResult[];
+  metadata: SearchMetadata;
+}
+
+export async function searchDocuments(
+  query: string,
+  limit = 20,
+  filter?: Record<string, unknown>,
+): Promise<SearchResponse> {
+  return fetchJson<SearchResponse>(`${API_BASE}/search`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, limit, filter }),
   });
 }
 

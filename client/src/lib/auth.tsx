@@ -9,6 +9,7 @@ interface AuthState {
   email?: string;
   picture?: string;
   isInsider: boolean;
+  searchEnabled: boolean;
   keyCreatedAt?: string | null;
   rotateKey: () => Promise<void>;
 }
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthState>({
   loading: true,
   authenticated: false,
   isInsider: false,
+  searchEnabled: false,
   rotateKey: async () => {},
 });
 
@@ -27,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [picture, setPicture] = useState<string | undefined>();
   const [isInsider, setIsInsider] = useState(false);
   const [keyCreatedAt, setKeyCreatedAt] = useState<string | null | undefined>();
+  const [searchEnabled, setSearchEnabled] = useState(false);
 
   useEffect(() => {
     // Extract the browsed path from the URL for outsider key verification
@@ -37,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setEmail(status.email);
         setPicture(status.picture);
         setIsInsider(status.isInsider);
+        setSearchEnabled(!!status.searchEnabled);
         setKeyCreatedAt(status.keyCreatedAt);
       })
       .catch(() => {
@@ -54,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ loading, authenticated, email, picture, isInsider, keyCreatedAt, rotateKey }}
+      value={{ loading, authenticated, email, picture, isInsider, searchEnabled, keyCreatedAt, rotateKey }}
     >
       {children}
     </AuthContext.Provider>

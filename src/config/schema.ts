@@ -111,6 +111,11 @@ export const jeevesConfigSchema = z
      */
     diagramCachePath: z.string().optional(),
     /**
+     * URL of the jeeves-watcher API for semantic search.
+     * When set, the search UI appears in the header. Example: 'http://localhost:3458'
+     */
+    watcherUrl: z.url().optional(),
+    /**
      * Global outsider policy â€" constrains which paths are eligible for outsider sharing.
      * Uses the same allow/deny model as insider scopes.
      * If omitted, all paths are shareable with outsiders.

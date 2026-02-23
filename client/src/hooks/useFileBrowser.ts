@@ -69,7 +69,7 @@ export function useFileBrowser() {
   };
 
   // Auth
-  const { isInsider: authInsider, keyCreatedAt, rotateKey } = useAuth();
+  const { isInsider: authInsider, searchEnabled, keyCreatedAt, rotateKey } = useAuth();
   const breadcrumbs: BreadcrumbItem[] = directory?.breadcrumbs ?? file?.breadcrumbs ?? [];
   const isInsider = directory?.isInsider ?? file?.isInsider ?? authInsider;
   const keyAge = keyCreatedAt ? formatRelativeTime(keyCreatedAt) : null;
@@ -93,7 +93,7 @@ export function useFileBrowser() {
     drives, directory, fileRaw, fileRendered, file,
     loading, error, editing, setEditing,
     viewTab, setViewTab,
-    breadcrumbs, isInsider, keyAge,
+    breadcrumbs, isInsider, searchEnabled, keyAge,
     rotateKeyDialogOpen, setRotateKeyDialogOpen,
     handleRotateKey, confirmRotateKey,
     topBarRef, mainRef, topBarHeight,

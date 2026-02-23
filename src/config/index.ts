@@ -77,6 +77,7 @@ export function loadConfig(): RuntimeConfig {
     googleAuth: config.auth.google ?? null,
     sessionSecret: config.auth.sessionSecret ?? null,
     internalInsiderKey: deriveInternalKey(resolvedKeys),
+    watcherUrl: config.watcherUrl,
     diagramCachePath: config.diagramCachePath,
     configPath: path.join(rootDir, `${CONFIG_FILENAME}.ts`),
     eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),
