@@ -7,7 +7,7 @@ import { useTheme } from '@/lib/theme';
 export function Home() {
   const { loading, authenticated } = useAuth();
   const navigate = useNavigate();
-  const [theme] = useTheme();
+  const [_theme] = useTheme();
 
   useEffect(() => {
     if (!loading && authenticated) {

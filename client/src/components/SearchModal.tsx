@@ -141,7 +141,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   const [dateTo, setDateTo] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     if (open) {

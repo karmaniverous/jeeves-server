@@ -35,7 +35,7 @@ export function FileContentView({
   editing, setEditing,
   proseWidth, topBarHeight, mainRef,
   mobileTocOpen, setMobileTocOpen,
-  onSave, loading,
+  onSave, loading: _loading,
 }: FileContentViewProps) {
   const renderable = file ? isRenderable(file) : false;
   const activeTab = renderable ? viewTab : 'raw';

@@ -37,6 +37,7 @@ function pathMatchesPatterns(requestPath: string, patterns: string[]): boolean {
   const normalized = requestPath.toLowerCase().replace(/\/+$/, '');
   const isMatch = picomatch(
     patterns.map((p) => p.toLowerCase().replace(/\/+$/, '')),
+    { dot: true },
   );
   return isMatch(normalized);
 }

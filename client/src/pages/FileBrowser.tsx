@@ -8,7 +8,7 @@ import { DriveList } from '@/components/DriveList';
 import { FileContentView } from '@/components/FileContentView';
 import { Header } from '@/components/layout/Header';
 import { LinkDropdown } from '@/components/LinkDropdown';
-import { TabBar, isRenderableExt } from '@/components/TabBar';
+import { TabBar } from '@/components/TabBar';
 import { useFileBrowser } from '@/hooks/useFileBrowser';
 
 export function FileBrowser() {
