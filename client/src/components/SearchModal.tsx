@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, FileText, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, FileText, RotateCcw, Search, X } from 'lucide-react';
 
 import { searchDocuments, type SearchResult, type SearchMetadata } from '@/lib/api';
 
@@ -120,16 +120,19 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 50);
-    } else {
-      setQuery('');
-      setResults([]);
-      setMetadata({ domains: [], authors: [], participants: [] });
-      setError(null);
-      setDomainFilter(new Set());
-      setAuthorFilter(new Set());
-      setExtFilter(new Set());
     }
   }, [open]);
+
+  const resetSearch = useCallback(() => {
+    setQuery('');
+    setResults([]);
+    setMetadata({ domains: [], authors: [], participants: [] });
+    setError(null);
+    setDomainFilter(new Set());
+    setAuthorFilter(new Set());
+    setExtFilter(new Set());
+    inputRef.current?.focus();
+  }, []);
 
   const doSearch = useCallback(async (q: string) => {
     if (!q.trim()) {
@@ -217,7 +220,12 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
             className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
           />
           {loading && <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />}
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+          {(query || results.length > 0) && (
+            <button onClick={resetSearch} className="text-muted-foreground hover:text-foreground" title="Reset search">
+              <RotateCcw className="h-4 w-4" />
+            </button>
+          )}
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground" title="Close (Esc)">
             <X className="h-5 w-5" />
           </button>
         </div>
