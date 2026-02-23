@@ -112,6 +112,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   const [error, setError] = useState<string | null>(null);
   const [domainFilter, setDomainFilter] = useState<Set<string>>(new Set());
   const [authorFilter, setAuthorFilter] = useState<Set<string>>(new Set());
+  const [extFilter, setExtFilter] = useState<Set<string>>(new Set());
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
@@ -126,6 +127,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
       setError(null);
       setDomainFilter(new Set());
       setAuthorFilter(new Set());
+      setExtFilter(new Set());
     }
   }, [open]);
 
@@ -175,10 +177,21 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     [],
   );
 
+  // Extract extensions from results
+  const extensions = [...new Set(results.map((r) => {
+    const dot = r.fileName.lastIndexOf('.');
+    return dot > 0 ? r.fileName.slice(dot).toLowerCase() : '(none)';
+  }))].sort();
+
   // Apply client-side filters
   const filtered = results.filter((r) => {
     if (domainFilter.size > 0 && (!r.domain || !domainFilter.has(r.domain))) return false;
     if (authorFilter.size > 0 && (!r.author || !authorFilter.has(r.author))) return false;
+    if (extFilter.size > 0) {
+      const dot = r.fileName.lastIndexOf('.');
+      const ext = dot > 0 ? r.fileName.slice(dot).toLowerCase() : '(none)';
+      if (!extFilter.has(ext)) return false;
+    }
     return true;
   });
 
@@ -209,9 +222,15 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
           </button>
         </div>
 
-        {/* Filter chips */}
-        {(metadata.domains.length > 0 || metadata.authors.length > 0) && (
+        {/* Filter chips — Type always shown when results exist */}
+        {results.length > 0 && (
           <div className="px-4 py-2 border-b border-border flex flex-col gap-1.5">
+            <FilterChips
+              label="Type"
+              values={extensions}
+              selected={extFilter}
+              onToggle={(v) => toggleFilter(extFilter, setExtFilter, v)}
+            />
             <FilterChips
               label="Domain"
               values={metadata.domains}
