@@ -87,16 +87,16 @@ function readEntriesFromCursor(): {
   }
 
   const cursor = readCursor();
-  const content = fs.readFileSync(eventQueuePath, 'utf8');
+  const buf = fs.readFileSync(eventQueuePath);
 
-  // Read from cursor position
-  const remaining = content.slice(cursor);
+  // Read from cursor position (byte-based to match writeCursor)
+  const remaining = buf.subarray(cursor).toString('utf8');
   const lines = remaining
     .split('\n')
     .filter((line) => line.trim())
     .map((line) => JSON.parse(line) as QueueEntry);
 
-  const newPosition = Buffer.byteLength(content, 'utf8');
+  const newPosition = buf.length;
 
   return { entries: lines, newPosition };
 }

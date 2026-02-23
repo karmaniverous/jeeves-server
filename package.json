@@ -25,6 +25,7 @@
     "dev": "tsx watch src/server.ts",
     "prebuild": "node -e \"const fs=require('fs');['dist','.tsbuildinfo'].forEach(p=>{try{fs.rmSync(p,{recursive:true,force:true})}catch{}})\"",
     "build": "tsc",
+    "postbuild": "cd client && npm run build",
     "typecheck": "cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc --noEmit",
     "lint": "node -e \"require('fs').mkdirSync('dist',{recursive:true})\" && eslint .",
     "lint:fix": "node -e \"require('fs').mkdirSync('dist',{recursive:true})\" && eslint --fix .",
