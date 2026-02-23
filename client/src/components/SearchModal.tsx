@@ -201,10 +201,10 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh]" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[5vh]" onClick={onClose}>
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
       <div
-        className="relative bg-background border border-border rounded-lg shadow-2xl w-full max-w-2xl max-h-[70vh] flex flex-col"
+        className="relative bg-background border border-border rounded-lg shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input */}
