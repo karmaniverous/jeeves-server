@@ -184,6 +184,7 @@ export interface SearchResult {
   browsePath: string;
   fileName: string;
   bestScore: number;
+  mtime?: string;
   domain?: string;
   title?: string;
   author?: string;

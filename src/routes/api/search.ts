@@ -5,6 +5,9 @@
  * Insider-only. Results filtered by insider's scope.
  */
 
+import { stat } from 'node:fs/promises';
+import path from 'node:path';
+
 import type { FastifyPluginAsync } from 'fastify';
 import picomatch from 'picomatch';
 
@@ -53,6 +56,7 @@ interface GroupedResult {
   browsePath: string;
   fileName: string;
   bestScore: number;
+  mtime?: string;
   domain?: string;
   title?: string;
   author?: string;
@@ -62,6 +66,31 @@ interface GroupedResult {
     index: number;
     score: number;
   }>;
+}
+
+/**
+ * Resolve a browse path back to a filesystem path using roots config.
+ * Inverse of fsPathToBrowsePath.
+ */
+function browsePathToFsPath(
+  browsePath: string,
+  roots: Record<string, string>,
+): string | null {
+  const parts = browsePath.split('/');
+  const label = parts[0];
+  const rest = parts.slice(1).join('/');
+
+  // Check if label matches a root
+  if (roots[label]) {
+    return path.join(roots[label], rest);
+  }
+
+  // Windows drive letter: j/foo/bar → J:\foo\bar
+  if (/^[a-zA-Z]$/.test(label)) {
+    return `${label.toUpperCase()}:\\${rest.replace(/\//g, '\\')}`;
+  }
+
+  return null;
 }
 
 /**
@@ -190,10 +219,21 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
         .sort((a, b) => b.bestScore - a.bestScore)
         .slice(0, limit);
 
-      // Sort chunks within each group by index
-      for (const g of grouped) {
-        g.chunks.sort((a, b) => a.index - b.index);
-      }
+      // Sort chunks within each group by index, and fetch mtime
+      await Promise.all(
+        grouped.map(async (g) => {
+          g.chunks.sort((a, b) => a.index - b.index);
+          const fsPath = browsePathToFsPath(g.browsePath, roots);
+          if (fsPath) {
+            try {
+              const s = await stat(fsPath);
+              g.mtime = s.mtime.toISOString();
+            } catch {
+              /* file may not be accessible */
+            }
+          }
+        }),
+      );
 
       // Extract distinct metadata values for filter chips
       const metadata = {

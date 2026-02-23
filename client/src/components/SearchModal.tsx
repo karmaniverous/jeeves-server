@@ -4,6 +4,24 @@ import { ChevronDown, ChevronRight, FileText, RotateCcw, Search, X } from 'lucid
 
 import { searchDocuments, type SearchResult, type SearchMetadata } from '@/lib/api';
 
+type DatePreset = '24h' | '7d' | '30d' | 'custom' | null;
+
+const DATE_PRESETS: { label: string; value: DatePreset }[] = [
+  { label: '24h', value: '24h' },
+  { label: '7 days', value: '7d' },
+  { label: '30 days', value: '30d' },
+  { label: 'Custom', value: 'custom' },
+];
+
+function getPresetDate(preset: DatePreset): Date | null {
+  if (!preset || preset === 'custom') return null;
+  const now = new Date();
+  if (preset === '24h') return new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  if (preset === '7d') return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  if (preset === '30d') return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  return null;
+}
+
 interface SearchModalProps {
   open: boolean;
   onClose: () => void;
@@ -70,6 +88,11 @@ function ResultRow({ result, onNavigate }: { result: SearchResult; onNavigate: (
             <span className="text-[10px] text-muted-foreground shrink-0">
               {result.chunks.length} chunk{result.chunks.length !== 1 ? 's' : ''}
             </span>
+            {result.mtime && (
+              <span className="text-[10px] text-muted-foreground shrink-0">
+                {new Date(result.mtime).toLocaleDateString()}
+              </span>
+            )}
             <button
               onClick={() => setExpanded(!expanded)}
               className="ml-auto text-muted-foreground hover:text-foreground shrink-0"
@@ -113,6 +136,9 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   const [domainFilter, setDomainFilter] = useState<Set<string>>(new Set());
   const [authorFilter, setAuthorFilter] = useState<Set<string>>(new Set());
   const [extFilter, setExtFilter] = useState<Set<string>>(new Set());
+  const [datePreset, setDatePreset] = useState<DatePreset>(null);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
@@ -131,6 +157,9 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     setDomainFilter(new Set());
     setAuthorFilter(new Set());
     setExtFilter(new Set());
+    setDatePreset(null);
+    setDateFrom('');
+    setDateTo('');
     inputRef.current?.focus();
   }, []);
 
@@ -186,6 +215,13 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     return dot > 0 ? r.fileName.slice(dot).toLowerCase() : '(none)';
   }))].sort();
 
+  // Compute effective date range
+  const effectiveDateFrom = datePreset && datePreset !== 'custom'
+    ? getPresetDate(datePreset)
+    : dateFrom ? new Date(dateFrom) : null;
+  const effectiveDateTo = datePreset === 'custom' && dateTo
+    ? new Date(dateTo + 'T23:59:59.999Z') : null;
+
   // Apply client-side filters
   const filtered = results.filter((r) => {
     if (domainFilter.size > 0 && (!r.domain || !domainFilter.has(r.domain))) return false;
@@ -194,6 +230,12 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
       const dot = r.fileName.lastIndexOf('.');
       const ext = dot > 0 ? r.fileName.slice(dot).toLowerCase() : '(none)';
       if (!extFilter.has(ext)) return false;
+    }
+    if (effectiveDateFrom && r.mtime) {
+      if (new Date(r.mtime) < effectiveDateFrom) return false;
+    }
+    if (effectiveDateTo && r.mtime) {
+      if (new Date(r.mtime) > effectiveDateTo) return false;
     }
     return true;
   });
@@ -251,6 +293,42 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
               selected={authorFilter}
               onToggle={(v) => toggleFilter(authorFilter, setAuthorFilter, v)}
             />
+            {/* Date range filter */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs text-muted-foreground font-medium">Date:</span>
+              {DATE_PRESETS.map((p) => (
+                <button
+                  key={p.value}
+                  onClick={() => setDatePreset(datePreset === p.value ? null : p.value)}
+                  className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                    datePreset === p.value
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-muted text-muted-foreground border-border hover:bg-accent'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+              {datePreset === 'custom' && (
+                <>
+                  <input
+                    type="month"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value ? e.target.value + '-01' : '')}
+                    className="text-xs px-1.5 py-0.5 rounded border border-border bg-muted text-foreground w-28"
+                    placeholder="From"
+                  />
+                  <span className="text-xs text-muted-foreground">to</span>
+                  <input
+                    type="month"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value ? e.target.value + '-28' : '')}
+                    className="text-xs px-1.5 py-0.5 rounded border border-border bg-muted text-foreground w-28"
+                    placeholder="To"
+                  />
+                </>
+              )}
+            </div>
           </div>
         )}
 
