@@ -57,7 +57,7 @@ export interface DriveEntry {
 }
 
 export interface FileContent {
-  type: 'markdown' | 'text' | 'svg' | 'mermaid' | 'image' | 'binary';
+  type: 'markdown' | 'text' | 'svg' | 'mermaid' | 'plantuml' | 'image' | 'binary';
   content?: string;
   html?: string;
   headings?: { level: number; text: string; slug: string }[];

@@ -5,13 +5,6 @@ import { DownloadDropdown } from '@/components/DownloadDropdown';
 import { LinkDropdown } from '@/components/LinkDropdown';
 import type { DirectoryEntry, ShareSettings } from '@/lib/api';
 
-/** Extensions that render a page view */
-const PAGE_EXTENSIONS = new Set([
-  '.md', '.svg', '.txt', '.json', '.yaml', '.yml', '.html', '.css', '.js', '.ts',
-  '.xml', '.csv', '.jsonl', '.log', '.mmd', '.ps1', '.bat', '.cmd', '.sh', '.py',
-  '.rb', '.go', '.rs', '.java', '.c', '.cpp', '.h', '.hpp',
-]);
-
 function formatSize(bytes: number | null): string {
   if (bytes === null) return '-';
   if (bytes === 0) return '0 B';
