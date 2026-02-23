@@ -43,15 +43,15 @@ function FilterChips({
 
 function ResultRow({ result, onNavigate }: { result: SearchResult; onNavigate: (path: string) => void }) {
   const [expanded, setExpanded] = useState(false);
-  const allText = result.chunks.map((c) => c.text).join(' … ');
-  const truncated = allText.length > 200 ? allText.slice(0, 200) : allText;
-  const needsExpand = allText.length > 200;
+  const preview = result.chunks[0]?.text ?? '';
+  const truncatedPreview = preview.length > 150 ? preview.slice(0, 150) + '…' : preview;
 
   return (
-    <div className="border-b border-border last:border-0 px-4 py-3 hover:bg-accent/50 transition-colors">
+    <div className="border-b border-border last:border-0 px-4 py-2">
       <div className="flex items-start gap-2">
-        <FileText className="h-4 w-4 text-zinc-400 shrink-0 mt-0.5" />
+        <FileText className="h-4 w-4 text-zinc-400 shrink-0 mt-1" />
         <div className="min-w-0 flex-1">
+          {/* Header row: file name, domain, score, expand toggle */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => onNavigate(`/browse/${result.browsePath}`)}
@@ -64,28 +64,40 @@ function ResultRow({ result, onNavigate }: { result: SearchResult; onNavigate: (
                 {result.domain}
               </span>
             )}
-            <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
+            <span className="text-[10px] text-muted-foreground shrink-0">
               {(result.bestScore * 100).toFixed(0)}%
             </span>
+            <span className="text-[10px] text-muted-foreground shrink-0">
+              {result.chunks.length} chunk{result.chunks.length !== 1 ? 's' : ''}
+            </span>
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="ml-auto text-muted-foreground hover:text-foreground shrink-0"
+              title={expanded ? 'Collapse chunks' : 'Expand chunks'}
+            >
+              {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </button>
           </div>
           <div className="text-xs text-muted-foreground mt-0.5 break-words leading-relaxed">
             {result.browsePath}
           </div>
-          <div className="text-sm text-foreground/80 mt-1 leading-relaxed">
-            {expanded ? allText : truncated}
-            {needsExpand && (
-              <button
-                onClick={() => setExpanded(!expanded)}
-                className="inline-flex items-center gap-0.5 text-blue-500 hover:underline ml-1 text-xs"
-              >
-                {expanded ? (
-                  <>less <ChevronRight className="h-3 w-3" /></>
-                ) : (
-                  <>more <ChevronDown className="h-3 w-3" /></>
-                )}
-              </button>
-            )}
-          </div>
+          {/* Collapsed: one-line preview */}
+          {!expanded && (
+            <div className="text-sm text-foreground/70 mt-1 truncate">
+              {truncatedPreview}
+            </div>
+          )}
+          {/* Expanded: scrollable chunk accordion */}
+          {expanded && (
+            <div className="mt-2 max-h-48 overflow-y-auto border border-border rounded bg-muted/30 divide-y divide-border">
+              {result.chunks.map((chunk, i) => (
+                <div key={i} className="px-3 py-2 text-sm text-foreground/80 leading-relaxed">
+                  <span className="text-[10px] text-muted-foreground mr-2">#{chunk.index}</span>
+                  {chunk.text}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
