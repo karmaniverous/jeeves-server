@@ -1,8 +1,9 @@
-import { Moon, Sun, BookOpen, KeyRound, Github } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Moon, Sun, BookOpen, KeyRound, Github, Search } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { AccountMenu, type CollapsedItem } from '@/components/AccountMenu';
+import { SearchModal } from '@/components/SearchModal';
 import { Button } from '@/components/ui/button';
 import type { BreadcrumbItem } from '@/lib/api';
 
@@ -11,6 +12,7 @@ const GITHUB_URL = 'https://github.com/karmaniverous/jeeves-server';
 interface HeaderProps {
   breadcrumbs?: BreadcrumbItem[];
   isInsider: boolean;
+  searchEnabled?: boolean;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   keyAge?: string | null;
@@ -28,6 +30,7 @@ interface HeaderProps {
 export function Header({
   breadcrumbs = [],
   isInsider,
+  searchEnabled,
   theme,
   onToggleTheme,
   keyAge,
@@ -39,6 +42,22 @@ export function Header({
 }: HeaderProps) {
   const hasKeyMgmt = isInsider && onRotateKey;
   const [readmeUrl, setReadmeUrl] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Ctrl/Cmd+K keyboard shortcut
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      setSearchOpen(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (searchEnabled && isInsider) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [searchEnabled, isInsider, handleKeyDown]);
 
   useEffect(() => {
     fetch('/api/readme-link')
@@ -147,6 +166,19 @@ export function Header({
 
         {/* Controls — progressively hidden via responsive classes */}
         <div className="flex items-center gap-1 shrink-0">
+          {/* Search: visible when configured, always shown */}
+          {searchEnabled && isInsider && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-zinc-300 hover:text-white hover:bg-white/10 h-8 w-8"
+              title="Search (Ctrl+K)"
+              onClick={() => setSearchOpen(true)}
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+          )}
+
           {/* Link controls: visible 400px+ */}
           {linkControls && (
             <div className="hidden min-[400px]:flex items-center">{linkControls}</div>
@@ -208,6 +240,9 @@ export function Header({
           />
         </div>
       </div>
+      {searchEnabled && isInsider && (
+        <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+      )}
     </header>
   );
 }

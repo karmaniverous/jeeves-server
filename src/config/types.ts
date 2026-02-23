@@ -53,6 +53,7 @@ export interface RuntimeConfig {
     servers: string[];
   };
   diagramCachePath?: string;
+  watcherUrl?: string;
   outsiderPolicy: NormalizedScopes | null;
   events: JeevesConfig['events'];
   authModes: AuthMode[];

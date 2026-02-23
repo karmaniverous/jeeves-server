@@ -20,7 +20,7 @@ export function FileBrowser() {
     drives, directory, fileRaw, fileRendered, file,
     loading, error, editing, setEditing,
     viewTab, setViewTab,
-    breadcrumbs, isInsider, keyAge,
+    breadcrumbs, isInsider, searchEnabled, keyAge,
     rotateKeyDialogOpen, setRotateKeyDialogOpen,
     handleRotateKey, confirmRotateKey,
     topBarRef, mainRef, topBarHeight,
@@ -36,6 +36,7 @@ export function FileBrowser() {
         <Header
           breadcrumbs={breadcrumbs}
           isInsider={isInsider}
+          searchEnabled={searchEnabled}
           theme={theme}
           onToggleTheme={toggleTheme}
           keyAge={editing ? undefined : keyAge}

@@ -1,0 +1,365 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronRight, FileText, RotateCcw, Search, X } from 'lucide-react';
+
+import { searchDocuments, type SearchResult, type SearchMetadata } from '@/lib/api';
+
+type DatePreset = '24h' | '7d' | '30d' | 'custom' | null;
+
+const DATE_PRESETS: { label: string; value: DatePreset }[] = [
+  { label: '24h', value: '24h' },
+  { label: '7 days', value: '7d' },
+  { label: '30 days', value: '30d' },
+  { label: 'Custom', value: 'custom' },
+];
+
+function getPresetDate(preset: DatePreset): Date | null {
+  if (!preset || preset === 'custom') return null;
+  const now = new Date();
+  if (preset === '24h') return new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  if (preset === '7d') return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  if (preset === '30d') return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  return null;
+}
+
+interface SearchModalProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+function FilterChips({
+  label,
+  values,
+  selected,
+  onToggle,
+}: {
+  label: string;
+  values: string[];
+  selected: Set<string>;
+  onToggle: (value: string) => void;
+}) {
+  if (values.length === 0) return null;
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <span className="text-xs text-muted-foreground font-medium">{label}:</span>
+      {values.map((v) => (
+        <button
+          key={v}
+          onClick={() => onToggle(v)}
+          className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+            selected.has(v)
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'bg-muted text-muted-foreground border-border hover:bg-accent'
+          }`}
+        >
+          {v}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ResultRow({ result, onNavigate }: { result: SearchResult; onNavigate: (path: string) => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const preview = result.chunks[0]?.text ?? '';
+  const truncatedPreview = preview.length > 150 ? preview.slice(0, 150) + '…' : preview;
+
+  return (
+    <div className="border-b border-border last:border-0 px-4 py-2">
+      <div className="flex items-start gap-2">
+        <FileText className="h-4 w-4 text-zinc-400 shrink-0 mt-1" />
+        <div className="min-w-0 flex-1">
+          {/* Header row: file name, domain, score, expand toggle */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onNavigate(`/browse/${result.browsePath}`)}
+              className="text-blue-500 hover:underline text-sm font-medium truncate"
+            >
+              {result.fileName}
+            </button>
+            {result.domain && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                {result.domain}
+              </span>
+            )}
+            <span className="text-[10px] text-muted-foreground shrink-0">
+              {(result.bestScore * 100).toFixed(0)}%
+            </span>
+            <span className="text-[10px] text-muted-foreground shrink-0">
+              {result.chunks.length} chunk{result.chunks.length !== 1 ? 's' : ''}
+            </span>
+            {result.mtime && (
+              <span className="text-[10px] text-muted-foreground shrink-0">
+                {new Date(result.mtime).toLocaleDateString()}
+              </span>
+            )}
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="ml-auto text-muted-foreground hover:text-foreground shrink-0"
+              title={expanded ? 'Collapse chunks' : 'Expand chunks'}
+            >
+              {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </button>
+          </div>
+          <div className="text-xs text-muted-foreground mt-0.5 break-words leading-relaxed">
+            {result.browsePath}
+          </div>
+          {/* Collapsed: one-line preview */}
+          {!expanded && (
+            <div className="text-sm text-foreground/70 mt-1 truncate">
+              {truncatedPreview}
+            </div>
+          )}
+          {/* Expanded: scrollable chunk accordion */}
+          {expanded && (
+            <div className="mt-2 max-h-48 overflow-y-auto border border-border rounded bg-muted/30 divide-y divide-border">
+              {result.chunks.map((chunk, i) => (
+                <div key={i} className="px-3 py-2 text-sm text-foreground/80 leading-relaxed">
+                  <span className="text-[10px] text-muted-foreground mr-2">#{chunk.index}</span>
+                  {chunk.text}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function SearchModal({ open, onClose }: SearchModalProps) {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [metadata, setMetadata] = useState<SearchMetadata>({ domains: [], authors: [], participants: [] });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [domainFilter, setDomainFilter] = useState<Set<string>>(new Set());
+  const [authorFilter, setAuthorFilter] = useState<Set<string>>(new Set());
+  const [extFilter, setExtFilter] = useState<Set<string>>(new Set());
+  const [datePreset, setDatePreset] = useState<DatePreset>(null);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [open]);
+
+  const resetSearch = useCallback(() => {
+    setQuery('');
+    setResults([]);
+    setMetadata({ domains: [], authors: [], participants: [] });
+    setError(null);
+    setDomainFilter(new Set());
+    setAuthorFilter(new Set());
+    setExtFilter(new Set());
+    setDatePreset(null);
+    setDateFrom('');
+    setDateTo('');
+    inputRef.current?.focus();
+  }, []);
+
+  const doSearch = useCallback(async (q: string) => {
+    if (!q.trim()) {
+      setResults([]);
+      setMetadata({ domains: [], authors: [], participants: [] });
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await searchDocuments(q, 30);
+      setResults(res.results);
+      setMetadata(res.metadata);
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleInputChange = useCallback(
+    (value: string) => {
+      setQuery(value);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => void doSearch(value), 400);
+    },
+    [doSearch],
+  );
+
+  const handleNavigate = useCallback(
+    (path: string) => {
+      onClose();
+      navigate(path);
+    },
+    [navigate, onClose],
+  );
+
+  const toggleFilter = useCallback(
+    (set: Set<string>, setFn: React.Dispatch<React.SetStateAction<Set<string>>>, value: string) => {
+      const next = new Set(set);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      setFn(next);
+    },
+    [],
+  );
+
+  // Extract extensions from results
+  const extensions = [...new Set(results.map((r) => {
+    const dot = r.fileName.lastIndexOf('.');
+    return dot > 0 ? r.fileName.slice(dot).toLowerCase() : '(none)';
+  }))].sort();
+
+  // Compute effective date range
+  const effectiveDateFrom = datePreset && datePreset !== 'custom'
+    ? getPresetDate(datePreset)
+    : dateFrom ? new Date(dateFrom) : null;
+  const effectiveDateTo = datePreset === 'custom' && dateTo
+    ? new Date(dateTo + 'T23:59:59.999Z') : null;
+
+  // Apply client-side filters
+  const filtered = results.filter((r) => {
+    if (domainFilter.size > 0 && (!r.domain || !domainFilter.has(r.domain))) return false;
+    if (authorFilter.size > 0 && (!r.author || !authorFilter.has(r.author))) return false;
+    if (extFilter.size > 0) {
+      const dot = r.fileName.lastIndexOf('.');
+      const ext = dot > 0 ? r.fileName.slice(dot).toLowerCase() : '(none)';
+      if (!extFilter.has(ext)) return false;
+    }
+    if (effectiveDateFrom && r.mtime) {
+      if (new Date(r.mtime) < effectiveDateFrom) return false;
+    }
+    if (effectiveDateTo && r.mtime) {
+      if (new Date(r.mtime) > effectiveDateTo) return false;
+    }
+    return true;
+  });
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[5vh]" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div
+        className="relative bg-background border border-border rounded-lg shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Search input */}
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+          <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+            placeholder="Search documents..."
+            className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
+          />
+          {loading && <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />}
+          {(query || results.length > 0) && (
+            <button onClick={resetSearch} className="text-muted-foreground hover:text-foreground" title="Reset search">
+              <RotateCcw className="h-4 w-4" />
+            </button>
+          )}
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground" title="Close (Esc)">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Filter chips — Type always shown when results exist */}
+        {results.length > 0 && (
+          <div className="px-4 py-2 border-b border-border flex flex-col gap-1.5">
+            <FilterChips
+              label="Type"
+              values={extensions}
+              selected={extFilter}
+              onToggle={(v) => toggleFilter(extFilter, setExtFilter, v)}
+            />
+            <FilterChips
+              label="Domain"
+              values={metadata.domains}
+              selected={domainFilter}
+              onToggle={(v) => toggleFilter(domainFilter, setDomainFilter, v)}
+            />
+            <FilterChips
+              label="Author"
+              values={metadata.authors}
+              selected={authorFilter}
+              onToggle={(v) => toggleFilter(authorFilter, setAuthorFilter, v)}
+            />
+            {/* Date range filter */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs text-muted-foreground font-medium">Date:</span>
+              {DATE_PRESETS.map((p) => (
+                <button
+                  key={p.value}
+                  onClick={() => setDatePreset(datePreset === p.value ? null : p.value)}
+                  className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                    datePreset === p.value
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-muted text-muted-foreground border-border hover:bg-accent'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+              {datePreset === 'custom' && (
+                <>
+                  <input
+                    type="month"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value ? e.target.value + '-01' : '')}
+                    className="text-xs px-1.5 py-0.5 rounded border border-border bg-muted text-foreground w-28"
+                    placeholder="From"
+                  />
+                  <span className="text-xs text-muted-foreground">to</span>
+                  <input
+                    type="month"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value ? e.target.value + '-28' : '')}
+                    className="text-xs px-1.5 py-0.5 rounded border border-border bg-muted text-foreground w-28"
+                    placeholder="To"
+                  />
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Results */}
+        <div className="overflow-y-auto flex-1">
+          {error && (
+            <div className="px-4 py-3 text-sm text-red-500">{error}</div>
+          )}
+          {!error && filtered.length === 0 && query.trim() && !loading && (
+            <div className="px-4 py-8 text-center text-muted-foreground text-sm">
+              No results found
+            </div>
+          )}
+          {!error && !query.trim() && !loading && (
+            <div className="px-4 py-8 text-center text-muted-foreground text-sm">
+              Type a query to search across all documents
+            </div>
+          )}
+          {filtered.map((r) => (
+            <ResultRow key={r.browsePath} result={r} onNavigate={handleNavigate} />
+          ))}
+        </div>
+
+        {/* Footer */}
+        {filtered.length > 0 && (
+          <div className="px-4 py-2 border-t border-border text-xs text-muted-foreground">
+            {filtered.length} result{filtered.length !== 1 ? 's' : ''}
+            {filtered.length < results.length && ` (${results.length} total, ${results.length - filtered.length} filtered)`}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

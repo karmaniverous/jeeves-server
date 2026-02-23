@@ -50,6 +50,7 @@ export const authStatusRoutes: FastifyPluginAsync = async (fastify) => {
           picture,
           isInsider: !!insider?.seed,
           keyCreatedAt: insider?.keyCreatedAt ?? null,
+          searchEnabled: !!config.watcherUrl,
         });
       }
 
