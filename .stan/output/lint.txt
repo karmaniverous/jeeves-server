@@ -1,4 +1,0 @@
-
-> @karmaniverous/jeeves-server@2.7.5 lint:fix
-> node -e "require('fs').mkdirSync('dist',{recursive:true})" && eslint --fix .
-

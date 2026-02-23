@@ -41,3 +41,9 @@ cloud-init-linux-test.yaml
 
 # Export render cache
 .export-cache/
+.stan/output/
+.stan/diff/
+.stan/patch/
+.stan/imports/
+.stan/context/
+.stan/system/.docs.meta.json
