@@ -12,6 +12,7 @@ import { exportRoutes } from './export.js';
 import { fileContentRoutes } from './fileContent.js';
 import { addAuthMiddleware } from './middleware.js';
 import { rawRoutes } from './raw.js';
+import { runnerRoutes } from './runner.js';
 import { searchRoutes } from './search.js';
 import { sharingRoutes } from './sharing.js';
 
@@ -25,6 +26,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
   await fastify.register(rawRoutes);
   await fastify.register(exportRoutes);
   await fastify.register(diagramsRoutes);
+  await fastify.register(runnerRoutes);
   await fastify.register(searchRoutes);
   await fastify.register(sharingRoutes);
   await fastify.register(authStatusRoutes);

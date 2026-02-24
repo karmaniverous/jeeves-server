@@ -77,6 +77,7 @@ export function loadConfig(): RuntimeConfig {
     googleAuth: config.auth.google ?? null,
     sessionSecret: config.auth.sessionSecret ?? null,
     internalInsiderKey: deriveInternalKey(resolvedKeys),
+    runnerUrl: config.runnerUrl,
     watcherUrl: config.watcherUrl,
     diagramCachePath: config.diagramCachePath,
     configPath: path.join(rootDir, `${CONFIG_FILENAME}.ts`),
