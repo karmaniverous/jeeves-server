@@ -88,6 +88,11 @@ export const jeevesConfigSchema = z
      * Default: \{ root: '/' \}
      */
     roots: z.record(z.string(), z.string()).optional(),
+    /**
+     * URL of the jeeves-runner API for process dashboard proxy.
+     * Default: 'http://127.0.0.1:3100'
+     */
+    runnerUrl: z.url().optional(),
     /** Path to mermaid-cli (npx prefix directory). If not set, mermaid rendering is disabled. */
     mermaidCliPath: z.string().optional(),
     /**
