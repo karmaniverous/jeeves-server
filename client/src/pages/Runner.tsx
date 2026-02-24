@@ -114,7 +114,7 @@ export function Runner() {
           ) : (
             <>
               <StatsBar stats={stats} />
-              <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <div className="bg-card border border-border rounded-lg">
                 <JobTable jobs={jobs} onRunNow={(id) => void handleRunNow(id)} />
               </div>
             </>
