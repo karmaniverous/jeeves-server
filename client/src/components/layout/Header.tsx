@@ -1,4 +1,4 @@
-import { Moon, Sun, BookOpen, KeyRound, Github, Search } from 'lucide-react';
+import { Moon, Sun, BookOpen, KeyRound, Github, Search, Activity } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -98,6 +98,19 @@ export function Header({
           <KeyRound className="h-4 w-4 shrink-0" />
           Rotate key{keyAge ? ` (${keyAge})` : ''}
         </button>
+      ),
+    });
+  }
+
+  // Runner — hidden below md (768px)
+  if (isInsider) {
+    collapsedItems.push({
+      breakpoint: 'md',
+      node: (
+        <Link to="/runner" className={menuItemClass}>
+          <Activity className="h-4 w-4 shrink-0" />
+          Runner
+        </Link>
       ),
     });
   }
@@ -203,6 +216,15 @@ export function Header({
               </Button>
               {keyAge && <span className="text-xs text-zinc-500">{keyAge}</span>}
             </div>
+          )}
+
+          {/* Runner: visible md+ (768px) */}
+          {isInsider && (
+            <Link to="/runner" title="Runner Dashboard" className="hidden md:inline-flex">
+              <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white hover:bg-white/10 h-8 w-8">
+                <Activity className="h-4 w-4" />
+              </Button>
+            </Link>
           )}
 
           {/* README: visible md+ (768px) */}
