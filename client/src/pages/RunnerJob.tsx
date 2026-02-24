@@ -71,8 +71,8 @@ export function RunnerJob() {
   }, [job, fetchData]);
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''}`}>
-      <div className="min-h-screen bg-background text-foreground">
+    <div className={`h-screen overflow-hidden ${theme === 'dark' ? 'dark' : ''}`}>
+      <div className="h-full flex flex-col bg-background text-foreground">
         {/* Header */}
         <header className="bg-zinc-800 text-white px-4 py-2">
           <div className="flex items-center gap-2">
@@ -88,7 +88,7 @@ export function RunnerJob() {
           </div>
         </header>
 
-        <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        <div className="flex-1 overflow-y-auto max-w-4xl mx-auto px-4 py-6 space-y-6 w-full">
           <Link
             to="/runner"
             className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
