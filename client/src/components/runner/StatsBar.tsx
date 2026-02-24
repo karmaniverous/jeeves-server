@@ -35,10 +35,9 @@ export function StatsBar({ stats }: StatsBarProps) {
   return (
     <div className="flex flex-wrap items-center gap-2 p-2 bg-muted/50 rounded-lg">
       <StatCard label="Total" value={stats.totalJobs} color="text-foreground" />
-      <StatCard label="Running" value={stats.runningJobs} color="text-yellow-600 dark:text-yellow-400" />
-      <StatCard label="OK" value={stats.okJobs} color="text-green-600 dark:text-green-400" />
-      <StatCard label="Error" value={stats.errorJobs} color="text-red-600 dark:text-red-400" />
-      <StatCard label="Disabled" value={stats.disabledJobs} color="text-zinc-500" />
+      <StatCard label="Running" value={stats.running} color="text-yellow-600 dark:text-yellow-400" />
+      <StatCard label="OK (1h)" value={stats.okLastHour} color="text-green-600 dark:text-green-400" />
+      <StatCard label="Errors (1h)" value={stats.errorsLastHour} color="text-red-600 dark:text-red-400" />
     </div>
   );
 }

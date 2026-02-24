@@ -13,14 +13,15 @@ const statusStyles: Record<string, string> = {
 const fallbackStyle = 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300';
 
 interface StatusPillProps {
-  status: string;
+  status: string | null;
 }
 
 export function StatusPill({ status }: StatusPillProps) {
-  const style = statusStyles[status] ?? fallbackStyle;
+  const display = status ?? 'pending';
+  const style = statusStyles[display] ?? fallbackStyle;
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${style}`}>
-      {status}
+      {display}
     </span>
   );
 }

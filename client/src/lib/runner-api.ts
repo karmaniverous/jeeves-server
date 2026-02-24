@@ -1,5 +1,6 @@
 /**
  * API client for jeeves-runner proxy endpoints.
+ * Unwraps runner API responses and maps snake_case to camelCase.
  */
 
 import { withKey } from './api';
@@ -25,13 +26,47 @@ async function runnerFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+// --- Raw runner API shapes (snake_case) ---
+
+interface RawJob {
+  id: string;
+  name: string;
+  type: string;
+  schedule: string;
+  enabled: number;
+  overlap_policy: string;
+  last_status: string | null;
+  last_run: string | null;
+  description: string | null;
+}
+
+interface RawRun {
+  id: number;
+  job_id: string;
+  status: string;
+  trigger: string;
+  started_at: string;
+  finished_at: string | null;
+  duration_ms: number | null;
+  exit_code: number | null;
+  stdout_tail: string;
+  stderr_tail: string;
+}
+
+interface RawStats {
+  totalJobs: number;
+  running: number;
+  okLastHour: number;
+  errorsLastHour: number;
+}
+
+// --- Public types (camelCase) ---
+
 export interface RunnerStats {
   totalJobs: number;
-  enabledJobs: number;
-  disabledJobs: number;
-  runningJobs: number;
-  okJobs: number;
-  errorJobs: number;
+  running: number;
+  okLastHour: number;
+  errorsLastHour: number;
 }
 
 export interface RunnerJob {
@@ -41,23 +76,22 @@ export interface RunnerJob {
   schedule: string;
   enabled: boolean;
   overlapPolicy: string;
-  status: string;
+  status: string | null;
   lastRun: string | null;
-  lastDuration: number | null;
-  nextRun: string | null;
+  description: string | null;
 }
 
 export interface RunEntry {
-  id: string;
+  id: number;
   jobId: string;
   status: string;
   trigger: string;
   startedAt: string;
   finishedAt: string | null;
-  duration: number | null;
+  durationMs: number | null;
   exitCode: number | null;
-  stdout_tail: string;
-  stderr_tail: string;
+  stdoutTail: string;
+  stderrTail: string;
 }
 
 export interface RunnerHealth {
@@ -66,29 +100,64 @@ export interface RunnerHealth {
   version: string;
 }
 
+function mapJob(raw: RawJob): RunnerJob {
+  return {
+    id: raw.id,
+    name: raw.name,
+    type: raw.type,
+    schedule: raw.schedule,
+    enabled: raw.enabled === 1,
+    overlapPolicy: raw.overlap_policy,
+    status: raw.last_status,
+    lastRun: raw.last_run,
+    description: raw.description,
+  };
+}
+
+function mapRun(raw: RawRun): RunEntry {
+  return {
+    id: raw.id,
+    jobId: raw.job_id,
+    status: raw.status,
+    trigger: raw.trigger,
+    startedAt: raw.started_at,
+    finishedAt: raw.finished_at,
+    durationMs: raw.duration_ms,
+    exitCode: raw.exit_code,
+    stdoutTail: raw.stdout_tail,
+    stderrTail: raw.stderr_tail,
+  };
+}
+
 export async function getRunnerHealth(): Promise<RunnerHealth> {
   return runnerFetch<RunnerHealth>('/health');
 }
 
 export async function getRunnerStats(): Promise<RunnerStats> {
-  return runnerFetch<RunnerStats>('/stats');
+  const raw = await runnerFetch<RawStats>('/stats');
+  return raw;
 }
 
 export async function getRunnerJobs(): Promise<RunnerJob[]> {
-  return runnerFetch<RunnerJob[]>('/jobs');
+  const raw = await runnerFetch<{ jobs: RawJob[] }>('/jobs');
+  return raw.jobs.map(mapJob);
 }
 
 export async function getRunnerJob(id: string): Promise<RunnerJob> {
-  return runnerFetch<RunnerJob>(`/jobs/${encodeURIComponent(id)}`);
+  const raw = await runnerFetch<{ job: RawJob }>(
+    `/jobs/${encodeURIComponent(id)}`,
+  );
+  return mapJob(raw.job);
 }
 
 export async function getJobRuns(
   id: string,
   limit = 20,
 ): Promise<RunEntry[]> {
-  return runnerFetch<RunEntry[]>(
+  const raw = await runnerFetch<{ runs: RawRun[] }>(
     `/jobs/${encodeURIComponent(id)}/runs?limit=${String(limit)}`,
   );
+  return raw.runs.map(mapRun);
 }
 
 export async function triggerJobRun(id: string): Promise<{ ok: boolean }> {

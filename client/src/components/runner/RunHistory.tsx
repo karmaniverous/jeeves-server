@@ -35,11 +35,12 @@ function formatTime(iso: string | null): string {
 export function RunHistory({ runs }: RunHistoryProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  const toggle = (id: string) => {
+  const toggle = (id: number) => {
+    const key = String(id);
     setExpanded((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   };
@@ -70,7 +71,7 @@ export function RunHistory({ runs }: RunHistoryProps) {
             <RunRow
               key={run.id}
               run={run}
-              isExpanded={expanded.has(run.id)}
+              isExpanded={expanded.has(String(run.id))}
               onToggle={() => toggle(run.id)}
             />
           ))}
@@ -87,7 +88,7 @@ interface RunRowProps {
 }
 
 function RunRow({ run, isExpanded, onToggle }: RunRowProps) {
-  const hasOutput = run.stdout_tail || run.stderr_tail;
+  const hasOutput = run.stdoutTail || run.stderrTail;
 
   return (
     <>
@@ -108,7 +109,7 @@ function RunRow({ run, isExpanded, onToggle }: RunRowProps) {
           {formatTime(run.startedAt)}
         </td>
         <td className="px-3 py-2 text-muted-foreground text-xs">
-          {formatDuration(run.duration)}
+          {formatDuration(run.durationMs)}
         </td>
         <td className="px-3 py-2 font-mono text-xs">
           {run.exitCode !== null ? String(run.exitCode) : '—'}
@@ -117,8 +118,8 @@ function RunRow({ run, isExpanded, onToggle }: RunRowProps) {
       {isExpanded && hasOutput && (
         <tr>
           <td colSpan={6} className="px-3 py-2 bg-muted/30">
-            <OutputBlock label="stdout" content={run.stdout_tail} />
-            <OutputBlock label="stderr" content={run.stderr_tail} />
+            <OutputBlock label="stdout" content={run.stdoutTail} />
+            <OutputBlock label="stderr" content={run.stderrTail} />
           </td>
         </tr>
       )}

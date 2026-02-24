@@ -15,16 +15,6 @@ interface JobTableProps {
   onRunNow: (id: string) => void;
 }
 
-function formatDuration(ms: number | null): string {
-  if (ms === null) return '—';
-  if (ms < 1000) return `${String(ms)}ms`;
-  const s = ms / 1000;
-  if (s < 60) return `${s.toFixed(1)}s`;
-  const m = Math.floor(s / 60);
-  const rem = Math.round(s % 60);
-  return `${String(m)}m ${String(rem)}s`;
-}
-
 function formatTime(iso: string | null): string {
   if (!iso) return '—';
   try {
@@ -55,7 +45,7 @@ export function JobTable({ jobs, onRunNow }: JobTableProps) {
             <th className="px-3 py-2 font-medium text-muted-foreground">Schedule</th>
             <th className="px-3 py-2 font-medium text-muted-foreground">Status</th>
             <th className="px-3 py-2 font-medium text-muted-foreground">Last Run</th>
-            <th className="px-3 py-2 font-medium text-muted-foreground">Duration</th>
+            {/* Duration not available in job list */}
             <th className="px-3 py-2 font-medium text-muted-foreground" />
           </tr>
         </thead>
@@ -77,9 +67,7 @@ export function JobTable({ jobs, onRunNow }: JobTableProps) {
               <td className="px-3 py-2 text-muted-foreground text-xs">
                 {formatTime(job.lastRun)}
               </td>
-              <td className="px-3 py-2 text-muted-foreground text-xs">
-                {formatDuration(job.lastDuration)}
-              </td>
+              {/* Duration shown in detail view */}
               <td className="px-3 py-2">
                 <Button
                   variant="ghost"
