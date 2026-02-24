@@ -68,6 +68,12 @@ async function start() {
       fastify.get('/browse/*', async (_request, reply) => {
         return reply.sendFile('index.html', clientDir);
       });
+      fastify.get('/runner', async (_request, reply) => {
+        return reply.sendFile('index.html', clientDir);
+      });
+      fastify.get('/runner/*', async (_request, reply) => {
+        return reply.sendFile('index.html', clientDir);
+      });
     }
 
     // Initialize caches
