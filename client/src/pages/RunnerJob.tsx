@@ -6,9 +6,11 @@ import { ArrowLeft, Play, Power, PowerOff } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
+import { Header } from '@/components/layout/Header';
 import { RunHistory } from '@/components/runner/RunHistory';
 import { StatusPill } from '@/components/runner/StatusPill';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/auth';
 import type { RunEntry, RunnerJob as RunnerJobType } from '@/lib/runner-api';
 import {
   disableJob,
@@ -25,7 +27,12 @@ export function RunnerJob() {
   const [runs, setRuns] = useState<RunEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [theme] = useTheme();
+  const [theme, toggleTheme] = useTheme();
+  const { isInsider, searchEnabled, keyCreatedAt, rotateKey } = useAuth();
+
+  const keyAge = keyCreatedAt
+    ? `${Math.floor((Date.now() - new Date(keyCreatedAt).getTime()) / 86_400_000)}d`
+    : null;
 
   const fetchData = useCallback(async () => {
     if (!jobId) return;
@@ -63,32 +70,32 @@ export function RunnerJob() {
     if (!job) return;
     try {
       await triggerJobRun(job.id);
-      // Brief delay then refresh to catch the new run
       setTimeout(() => void fetchData(), 500);
     } catch {
       await fetchData();
     }
   }, [job, fetchData]);
 
+  const breadcrumbs = [
+    { label: 'Runner', path: 'runner' },
+    { label: job?.name ?? jobId ?? '', path: `runner/${jobId}` },
+  ];
+
   return (
     <div className={`h-screen overflow-hidden ${theme === 'dark' ? 'dark' : ''}`}>
       <div className="h-full flex flex-col bg-background text-foreground">
-        {/* Header */}
-        <header className="bg-zinc-800 text-white px-4 py-2">
-          <div className="flex items-center gap-2">
-            <Link to="/browse" className="text-3xl no-underline shrink-0" title="Jeeves Server">
-              🎩
-            </Link>
-            <span className="text-zinc-500 mx-0.5">/</span>
-            <Link to="/runner" className="text-blue-400 hover:underline text-sm">
-              Runner
-            </Link>
-            <span className="text-zinc-500 mx-0.5">/</span>
-            <span className="text-zinc-300 text-sm truncate">{job?.name ?? jobId}</span>
-          </div>
-        </header>
+        {/* Shared header */}
+        <Header
+          breadcrumbs={breadcrumbs}
+          isInsider={isInsider}
+          searchEnabled={searchEnabled}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          keyAge={keyAge}
+          onRotateKey={rotateKey}
+        />
 
-        <div className="flex-1 overflow-y-auto max-w-4xl mx-auto px-4 py-6 space-y-6 w-full">
+        <div className="flex-1 overflow-y-auto max-w-4xl mx-auto px-4 py-6 pb-32 space-y-6 w-full">
           <Link
             to="/runner"
             className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"

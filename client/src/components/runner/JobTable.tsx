@@ -1,5 +1,6 @@
 /**
  * Job list table for runner dashboard.
+ * Split into header and body so the header can be pinned outside the scroll area.
  */
 
 import { Play } from 'lucide-react';
@@ -15,6 +16,16 @@ interface JobTableProps {
   onRunNow: (id: string) => void;
 }
 
+/** Shared column widths so header and body stay aligned. */
+const colClass = {
+  name: 'w-[30%] px-3 py-2',
+  type: 'w-[10%] px-3 py-2',
+  schedule: 'w-[15%] px-3 py-2',
+  status: 'w-[12%] px-3 py-2',
+  lastRun: 'w-[25%] px-3 py-2',
+  action: 'w-[8%] px-3 py-2',
+};
+
 function formatTime(iso: string | null): string {
   if (!iso) return '—';
   try {
@@ -24,7 +35,26 @@ function formatTime(iso: string | null): string {
   }
 }
 
-export function JobTable({ jobs, onRunNow }: JobTableProps) {
+export function JobTableHeader() {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-border text-left">
+            <th className={`${colClass.name} font-medium text-muted-foreground`}>Name</th>
+            <th className={`${colClass.type} font-medium text-muted-foreground`}>Type</th>
+            <th className={`${colClass.schedule} font-medium text-muted-foreground`}>Schedule</th>
+            <th className={`${colClass.status} font-medium text-muted-foreground`}>Status</th>
+            <th className={`${colClass.lastRun} font-medium text-muted-foreground`}>Last Run</th>
+            <th className={`${colClass.action} font-medium text-muted-foreground`} />
+          </tr>
+        </thead>
+      </table>
+    </div>
+  );
+}
+
+export function JobTableBody({ jobs, onRunNow }: JobTableProps) {
   const navigate = useNavigate();
 
   if (jobs.length === 0) {
@@ -38,17 +68,6 @@ export function JobTable({ jobs, onRunNow }: JobTableProps) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border text-left">
-            <th className="px-3 py-2 font-medium text-muted-foreground">Name</th>
-            <th className="px-3 py-2 font-medium text-muted-foreground">Type</th>
-            <th className="px-3 py-2 font-medium text-muted-foreground">Schedule</th>
-            <th className="px-3 py-2 font-medium text-muted-foreground">Status</th>
-            <th className="px-3 py-2 font-medium text-muted-foreground">Last Run</th>
-            {/* Duration not available in job list */}
-            <th className="px-3 py-2 font-medium text-muted-foreground" />
-          </tr>
-        </thead>
         <tbody>
           {jobs.map((job) => (
             <tr
@@ -56,19 +75,18 @@ export function JobTable({ jobs, onRunNow }: JobTableProps) {
               className="border-b border-border hover:bg-muted/50 cursor-pointer transition-colors"
               onClick={() => navigate(`/runner/${job.id}`)}
             >
-              <td className="px-3 py-2 font-medium">{job.name}</td>
-              <td className="px-3 py-2 text-muted-foreground">{job.type}</td>
-              <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
+              <td className={`${colClass.name} font-medium`}>{job.name}</td>
+              <td className={`${colClass.type} text-muted-foreground`}>{job.type}</td>
+              <td className={`${colClass.schedule} font-mono text-xs text-muted-foreground`}>
                 {job.schedule}
               </td>
-              <td className="px-3 py-2">
+              <td className={colClass.status}>
                 <StatusPill status={job.enabled ? job.status : 'disabled'} />
               </td>
-              <td className="px-3 py-2 text-muted-foreground text-xs">
+              <td className={`${colClass.lastRun} text-muted-foreground text-xs`}>
                 {formatTime(job.lastRun)}
               </td>
-              {/* Duration shown in detail view */}
-              <td className="px-3 py-2">
+              <td className={colClass.action}>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -87,5 +105,15 @@ export function JobTable({ jobs, onRunNow }: JobTableProps) {
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** Legacy combined export for backward compatibility. */
+export function JobTable({ jobs, onRunNow }: JobTableProps) {
+  return (
+    <>
+      <JobTableHeader />
+      <JobTableBody jobs={jobs} onRunNow={onRunNow} />
+    </>
   );
 }

@@ -2,13 +2,14 @@
  * Runner dashboard — job list view with stats summary and auto-refresh.
  */
 
-import { Activity, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 
-import { JobTable } from '@/components/runner/JobTable';
+import { Header } from '@/components/layout/Header';
+import { JobTableBody, JobTableHeader } from '@/components/runner/JobTable';
 import { StatsBar } from '@/components/runner/StatsBar';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/auth';
 import type { RunnerJob, RunnerStats } from '@/lib/runner-api';
 import { getRunnerJobs, getRunnerStats, triggerJobRun } from '@/lib/runner-api';
 import { useTheme } from '@/lib/theme';
@@ -22,7 +23,13 @@ export function Runner() {
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [theme] = useTheme();
+  const [theme, toggleTheme] = useTheme();
+  const { isInsider, searchEnabled, keyCreatedAt, rotateKey } = useAuth();
+
+  // Compute key age string
+  const keyAge = keyCreatedAt
+    ? `${Math.floor((Date.now() - new Date(keyCreatedAt).getTime()) / 86_400_000)}d`
+    : null;
 
   const fetchData = useCallback(async () => {
     try {
@@ -58,68 +65,77 @@ export function Runner() {
       await triggerJobRun(id);
       await fetchData();
     } catch {
-      // Refresh anyway to show current state
       await fetchData();
     }
   }, [fetchData]);
 
+  const breadcrumbs = [{ label: 'Runner', path: 'runner' }];
+
   return (
     <div className={`h-screen overflow-hidden ${theme === 'dark' ? 'dark' : ''}`}>
       <div className="h-full flex flex-col bg-background text-foreground">
-        {/* Header */}
-        <header className="bg-zinc-800 text-white px-4 py-2">
-          <div className="flex items-center gap-2">
-            <Link to="/browse" className="text-3xl no-underline shrink-0" title="Jeeves Server">
-              🎩
-            </Link>
-            <span className="text-zinc-500 mx-0.5">/</span>
-            <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-zinc-400" />
-              <span className="text-zinc-300 font-medium">Runner</span>
-            </div>
-            <div className="flex-1" />
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-1.5 text-xs text-zinc-400 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={autoRefresh}
-                  onChange={(e) => setAutoRefresh(e.target.checked)}
-                  className="rounded"
-                />
-                Auto-refresh
-              </label>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-zinc-300 hover:text-white hover:bg-white/10 h-8 w-8"
-                title="Refresh now"
-                onClick={() => void fetchData()}
-              >
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </header>
+        {/* Shared header */}
+        <Header
+          breadcrumbs={breadcrumbs}
+          isInsider={isInsider}
+          searchEnabled={searchEnabled}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          keyAge={keyAge}
+          onRotateKey={rotateKey}
+        />
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto max-w-6xl mx-auto px-4 py-6 space-y-6 w-full">
-          {error && (
+        {/* Runner controls bar */}
+        <div className="shrink-0 max-w-6xl mx-auto w-full px-4 pt-2 pb-1 flex items-center justify-between">
+          {!loading && <StatsBar stats={stats} />}
+          <div className="flex items-center gap-2 shrink-0">
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+              <input
+                type="checkbox"
+                checked={autoRefresh}
+                onChange={(e) => setAutoRefresh(e.target.checked)}
+                className="rounded"
+              />
+              Auto-refresh
+            </label>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              title="Refresh now"
+              onClick={() => void fetchData()}
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Error banner */}
+        {error && (
+          <div className="shrink-0 max-w-6xl mx-auto w-full px-4 pt-2">
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
-          )}
+          </div>
+        )}
 
-          {loading ? (
-            <div className="text-center py-12 text-muted-foreground">Loading...</div>
-          ) : (
-            <>
-              <StatsBar stats={stats} />
-              <div className="bg-card border border-border rounded-lg">
-                <JobTable jobs={jobs} onRunNow={(id) => void handleRunNow(id)} />
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center text-muted-foreground">Loading...</div>
+        ) : (
+          /* Single card: header pinned, body scrolls, scrollbar inside card */
+          <div className="flex-1 min-h-0 max-w-6xl mx-auto w-full px-4 pt-1 flex flex-col">
+            <div className="flex-1 min-h-0 bg-card border border-border rounded-lg flex flex-col">
+              {/* Pinned table header */}
+              <div className="shrink-0">
+                <JobTableHeader />
               </div>
-            </>
-          )}
-        </div>
+              {/* Scrollable table body — padding inside the scroll for mobile bottom space */}
+              <div className="flex-1 overflow-y-auto pb-32">
+                <JobTableBody jobs={jobs} onRunNow={(id) => void handleRunNow(id)} />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
