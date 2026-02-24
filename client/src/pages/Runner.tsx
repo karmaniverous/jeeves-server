@@ -3,10 +3,16 @@
  */
 
 import { RefreshCw } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Header } from '@/components/layout/Header';
-import { JobTableBody, JobTableHeader } from '@/components/runner/JobTable';
+import {
+  JobTableBody,
+  JobTableHeader,
+  nextSort,
+  sortJobs,
+} from '@/components/runner/JobTable';
+import type { SortColumn, SortState } from '@/components/runner/JobTable';
 import { StatsBar } from '@/components/runner/StatsBar';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
@@ -22,6 +28,7 @@ export function Runner() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [sort, setSort] = useState<SortState>({ column: null, direction: 'desc' });
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [theme, toggleTheme] = useTheme();
   const { isInsider, searchEnabled, keyCreatedAt, rotateKey } = useAuth();
@@ -68,6 +75,12 @@ export function Runner() {
       await fetchData();
     }
   }, [fetchData]);
+
+  const handleSort = useCallback((column: SortColumn) => {
+    setSort((prev) => nextSort(prev, column));
+  }, []);
+
+  const sortedJobs = useMemo(() => sortJobs(jobs, sort), [jobs, sort]);
 
   const breadcrumbs = [{ label: 'Runner', path: 'runner' }];
 
@@ -127,11 +140,11 @@ export function Runner() {
             <div className="flex-1 min-h-0 bg-card border border-border rounded-lg flex flex-col">
               {/* Pinned table header */}
               <div className="shrink-0">
-                <JobTableHeader />
+                <JobTableHeader sort={sort} onSort={handleSort} />
               </div>
               {/* Scrollable table body — padding inside the scroll for mobile bottom space */}
               <div className="flex-1 overflow-y-auto pb-32">
-                <JobTableBody jobs={jobs} onRunNow={(id) => void handleRunNow(id)} />
+                <JobTableBody jobs={sortedJobs} onRunNow={(id) => void handleRunNow(id)} />
               </div>
             </div>
           </div>

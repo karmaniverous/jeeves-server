@@ -47,3 +47,4 @@ cloud-init-linux-test.yaml
 .stan/imports/
 .stan/context/
 .stan/system/.docs.meta.json
+_do.cjs 

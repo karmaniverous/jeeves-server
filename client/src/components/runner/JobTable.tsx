@@ -1,9 +1,10 @@
 /**
  * Job list table for runner dashboard.
  * Split into header and body so the header can be pinned outside the scroll area.
+ * Supports column sorting with tri-state cycle: asc → desc → clear.
  */
 
-import { Play } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,20 @@ import type { RunnerJob } from '@/lib/runner-api';
 
 import { StatusPill } from './StatusPill';
 
-interface JobTableProps {
+/** Sortable column keys. */
+export type SortColumn = 'name' | 'type' | 'schedule' | 'status' | 'lastRun';
+export type SortDirection = 'asc' | 'desc';
+export interface SortState {
+  column: SortColumn | null;
+  direction: SortDirection;
+}
+
+interface JobTableHeaderProps {
+  sort: SortState;
+  onSort: (column: SortColumn) => void;
+}
+
+interface JobTableBodyProps {
   jobs: RunnerJob[];
   onRunNow: (id: string) => void;
 }
@@ -35,17 +49,46 @@ function formatTime(iso: string | null): string {
   }
 }
 
-export function JobTableHeader() {
+function SortIcon({ column, sort }: { column: SortColumn; sort: SortState }) {
+  if (sort.column !== column) {
+    return <ArrowUpDown className="h-3 w-3 opacity-40" />;
+  }
+  return sort.direction === 'asc'
+    ? <ArrowUp className="h-3 w-3" />
+    : <ArrowDown className="h-3 w-3" />;
+}
+
+interface ColumnDef {
+  key: SortColumn;
+  label: string;
+}
+
+const columns: ColumnDef[] = [
+  { key: 'name', label: 'Name' },
+  { key: 'type', label: 'Type' },
+  { key: 'schedule', label: 'Schedule' },
+  { key: 'status', label: 'Status' },
+  { key: 'lastRun', label: 'Last Run' },
+];
+
+export function JobTableHeader({ sort, onSort }: JobTableHeaderProps) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border text-left">
-            <th className={`${colClass.name} font-medium text-muted-foreground`}>Name</th>
-            <th className={`${colClass.type} font-medium text-muted-foreground`}>Type</th>
-            <th className={`${colClass.schedule} font-medium text-muted-foreground`}>Schedule</th>
-            <th className={`${colClass.status} font-medium text-muted-foreground`}>Status</th>
-            <th className={`${colClass.lastRun} font-medium text-muted-foreground`}>Last Run</th>
+            {columns.map((col) => (
+              <th
+                key={col.key}
+                className={`${colClass[col.key]} font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors`}
+                onClick={() => onSort(col.key)}
+              >
+                <span className="inline-flex items-center gap-1">
+                  {col.label}
+                  <SortIcon column={col.key} sort={sort} />
+                </span>
+              </th>
+            ))}
             <th className={`${colClass.action} font-medium text-muted-foreground`} />
           </tr>
         </thead>
@@ -54,7 +97,7 @@ export function JobTableHeader() {
   );
 }
 
-export function JobTableBody({ jobs, onRunNow }: JobTableProps) {
+export function JobTableBody({ jobs, onRunNow }: JobTableBodyProps) {
   const navigate = useNavigate();
 
   if (jobs.length === 0) {
@@ -108,12 +151,61 @@ export function JobTableBody({ jobs, onRunNow }: JobTableProps) {
   );
 }
 
-/** Legacy combined export for backward compatibility. */
-export function JobTable({ jobs, onRunNow }: JobTableProps) {
-  return (
-    <>
-      <JobTableHeader />
-      <JobTableBody jobs={jobs} onRunNow={onRunNow} />
-    </>
-  );
+/**
+ * Sort jobs by chosen column, then by lastRun desc, then by name asc.
+ * Null lastRun values sort to the end.
+ */
+export function sortJobs(jobs: RunnerJob[], sort: SortState): RunnerJob[] {
+  return [...jobs].sort((a, b) => {
+    // Primary: chosen sort column
+    if (sort.column) {
+      const cmp = compareByColumn(a, b, sort.column);
+      if (cmp !== 0) return sort.direction === 'asc' ? cmp : -cmp;
+    }
+
+    // Secondary: lastRun desc (nulls last)
+    const lastRunCmp = compareNullableDate(a.lastRun, b.lastRun);
+    if (lastRunCmp !== 0) return -lastRunCmp; // negative for desc
+
+    // Tertiary: name asc
+    return a.name.localeCompare(b.name);
+  });
+}
+
+function compareByColumn(a: RunnerJob, b: RunnerJob, col: SortColumn): number {
+  switch (col) {
+    case 'name':
+      return a.name.localeCompare(b.name);
+    case 'type':
+      return a.type.localeCompare(b.type);
+    case 'schedule':
+      return a.schedule.localeCompare(b.schedule);
+    case 'status': {
+      const sa = a.enabled ? (a.status ?? '') : 'disabled';
+      const sb = b.enabled ? (b.status ?? '') : 'disabled';
+      return sa.localeCompare(sb);
+    }
+    case 'lastRun':
+      return compareNullableDate(a.lastRun, b.lastRun);
+    default:
+      return 0;
+  }
+}
+
+function compareNullableDate(a: string | null, b: string | null): number {
+  if (!a && !b) return 0;
+  if (!a) return -1; // nulls last
+  if (!b) return 1;
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
+/** Cycle sort: click same column toggles asc↔desc; click different column starts desc. */
+export function nextSort(current: SortState, column: SortColumn): SortState {
+  if (current.column === column) {
+    // Same column: asc → desc → clear
+    if (current.direction === 'desc') return { column, direction: 'asc' };
+    return { column: null, direction: 'desc' }; // clear
+  }
+  // New column: start desc
+  return { column, direction: 'desc' };
 }
