@@ -91,6 +91,11 @@ body {
   position: relative;
 }
 
+/* Frontmatter block */
+.prose .frontmatter-block {
+  margin-bottom: 2em;
+}
+
 /* Code blocks */
 .prose pre {
   background-color: var(--color-muted);
