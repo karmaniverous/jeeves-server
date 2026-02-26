@@ -71,13 +71,28 @@ function linkifyFilesystemPaths(markdown: string): string {
 }
 
 /**
+ * Extract YAML frontmatter from markdown if present.
+ * Returns the frontmatter content (without delimiters) and the remaining markdown.
+ */
+function extractFrontmatter(markdown: string): {
+  frontmatter: string | null;
+  body: string;
+} {
+  const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
+  if (!match) return { frontmatter: null, body: markdown };
+  return { frontmatter: match[1], body: markdown.slice(match[0].length) };
+}
+
+/**
  * Parse markdown to HTML with heading extraction
  */
 export function parseMarkdown(
   markdown: string,
   options: { linkWindowsPaths?: boolean; basePath?: string } = {},
 ): { html: string; headings: Heading[] } {
-  let processedMarkdown = markdown;
+  // Extract frontmatter before processing
+  const { frontmatter, body } = extractFrontmatter(markdown);
+  let processedMarkdown = body;
 
   // Optionally linkify Windows paths
   if (options.linkWindowsPaths) {
@@ -159,7 +174,16 @@ export function parseMarkdown(
   };
 
   marked.setOptions({ renderer });
-  const html = marked(processedMarkdown) as string;
+  let html = marked(processedMarkdown) as string;
+
+  // Prepend frontmatter as a rendered YAML code block
+  if (frontmatter) {
+    const escaped = frontmatter
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    html = `<div class="frontmatter-block"><pre><code class="language-yaml">${escaped}</code></pre></div>\n${html}`;
+  }
 
   return { html, headings };
 }
