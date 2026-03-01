@@ -71,7 +71,7 @@ export const keyEntrySchema = z.union([
 /** Top-level Jeeves Server configuration */
 export const jeevesConfigSchema = z
   .object({
-    port: z.number().int().positive(),
+    port: z.number().int().positive().default(1934),
     chromePath: z.string().min(1),
     auth: authSchema,
     insiders: z.record(z.email(), insiderEntrySchema).default({}),
