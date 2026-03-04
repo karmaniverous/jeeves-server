@@ -58,6 +58,7 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
     const refreshed = await getFileRaw(reqPath);
     setFileRaw(refreshed);
     try { const r = await getFile(reqPath); setFileRendered(r); } catch { /* ignore */ }
+    setEditing(false);
   };
 
   return {
