@@ -77,9 +77,9 @@ function ResultRow({ result, onNavigate }: { result: SearchResult; onNavigate: (
             >
               {result.fileName}
             </button>
-            {result.domain && (
+            {result.domains && result.domains.length > 0 && (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
-                {result.domain}
+                {result.domains.join(', ')}
               </span>
             )}
             <span className="text-[10px] text-muted-foreground shrink-0">
@@ -224,7 +224,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
 
   // Apply client-side filters
   const filtered = results.filter((r) => {
-    if (domainFilter.size > 0 && (!r.domain || !domainFilter.has(r.domain))) return false;
+    if (domainFilter.size > 0 && (!r.domains || !r.domains.some(d => domainFilter.has(d)))) return false;
     if (authorFilter.size > 0 && (!r.author || !authorFilter.has(r.author))) return false;
     if (extFilter.size > 0) {
       const dot = r.fileName.lastIndexOf('.');
@@ -363,3 +363,4 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     </div>
   );
 }
+

@@ -185,7 +185,7 @@ export interface SearchResult {
   fileName: string;
   bestScore: number;
   mtime?: string;
-  domain?: string;
+  domains?: string[];
   title?: string;
   author?: string;
   participants?: string;
@@ -221,3 +221,4 @@ export async function clearCache(path: string): Promise<{ cleared: { exports: nu
     { method: 'DELETE' },
   );
 }
+

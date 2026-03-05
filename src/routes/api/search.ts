@@ -42,7 +42,7 @@ interface WatcherResult {
     chunk_text?: string;
     chunk_index?: number;
     total_chunks?: number;
-    domain?: string;
+    domains?: string[];
     title?: string;
     author?: string;
     participants?: string;
@@ -57,7 +57,7 @@ interface GroupedResult {
   fileName: string;
   bestScore: number;
   mtime?: string;
-  domain?: string;
+  domains?: string[];
   title?: string;
   author?: string;
   participants?: string;
@@ -198,7 +198,7 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
             browsePath: key,
             fileName: parts[parts.length - 1],
             bestScore: r.score,
-            domain: r.payload.domain,
+            domains: Array.isArray(r.payload.domains) ? (r.payload.domains as string[]) : (r.payload.domain ? [r.payload.domain as string] : []),
             title: r.payload.title,
             author: r.payload.author,
             participants: r.payload.participants,
@@ -206,8 +206,8 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
           };
           fileMap.set(key, group);
         }
-        if (r.score > group.bestScore) group.bestScore = r.score;
-        group.chunks.push({
+        if (r.score > group!.bestScore) group!.bestScore = r.score;
+        group!.chunks.push({
           text: r.payload.chunk_text ?? '',
           index: r.payload.chunk_index ?? 0,
           score: r.score,
@@ -237,7 +237,7 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
 
       // Extract distinct metadata values for filter chips
       const metadata = {
-        domains: [...new Set(grouped.map((g) => g.domain).filter(Boolean))],
+        domains: [...new Set(grouped.flatMap((g) => g.domains || []).filter(Boolean))],
         authors: [...new Set(grouped.map((g) => g.author).filter(Boolean))],
         participants: [
           ...new Set(
@@ -261,3 +261,6 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 };
+
+
+
