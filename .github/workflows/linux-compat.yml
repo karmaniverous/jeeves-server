@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20, 22]
+        node-version: [20, 22, 24]
 
     steps:
       - uses: actions/checkout@v4
@@ -25,17 +25,17 @@ jobs:
         run: npm ci
 
       - name: Install client dependencies
-        run: cd client && npm ci
+        run: cd packages/service/client && npm ci
 
       - name: TypeScript compile
-        run: npx tsc
+        run: npm run build
 
       - name: Build client
-        run: cd client && npx vite build --outDir ../dist/client
+        run: cd packages/service/client && npx vite build --outDir ../dist/client
 
       - name: Write test config
         run: |
-          cat > jeeves.config.ts << 'EOF'
+          cat > packages/service/jeeves.config.ts << 'EOF'
           import type { JeevesConfig } from './src/config/schema.js';
 
           export default {
@@ -57,7 +57,7 @@ jobs:
 
       - name: Start server
         run: |
-          node dist/server.js &
+          node packages/service/dist/src/server.js &
           SERVER_PID=$!
           echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
 

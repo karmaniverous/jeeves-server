@@ -1,17 +1,6 @@
 {
-  "project": ["src/**/*.ts"],
-  "ignore": ["server.js"],
-  "ignoreDependencies": [
-    "@panzoom/panzoom",
-    "tslib"
-  ],
-  "ignoreBinaries": ["vite"],
-  "rules": {
-    "exports": "off",
-    "types": "off",
-    "unlisted": "off"
-  },
-  "vitest": {
-    "entry": ["src/**/*.test.ts"]
+  "workspaces": {
+    "packages/service": {},
+    "packages/openclaw": {}
   }
 }

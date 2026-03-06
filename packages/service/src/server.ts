@@ -51,7 +51,7 @@ async function start() {
     await fastify.register(pathRoute);
 
     // Serve React SPA (if built)
-    const clientDir = path.join(__dirname, 'client');
+    const clientDir = path.join(__dirname, '..', 'client');
     if (fs.existsSync(clientDir)) {
       await fastify.register(fastifyStatic, {
         root: clientDir,

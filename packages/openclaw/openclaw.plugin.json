@@ -1,0 +1,8 @@
+{
+  "id": "jeeves-server-openclaw",
+  "name": "Jeeves Server",
+  "version": "0.1.0",
+  "skills": [
+    "dist/skills/jeeves-server"
+  ]
+}
