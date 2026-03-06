@@ -21,7 +21,7 @@ import { jeevesConfigSchema } from './schema.js';
 import type { RuntimeConfig } from './types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.resolve(__dirname, '../..');
+const rootDir = path.resolve(__dirname, '../../..');
 const CONFIG_FILENAME = 'jeeves.config';
 
 export function loadConfig(): RuntimeConfig {
