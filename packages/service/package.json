@@ -21,7 +21,7 @@
   ],
   "type": "module",
   "scripts": {
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "dev": "tsx watch src/server.ts",
     "prebuild": "node -e \"const fs=require('fs');['dist','.tsbuildinfo'].forEach(p=>{try{fs.rmSync(p,{recursive:true,force:true})}catch{}})\"",
     "build": "tsc",

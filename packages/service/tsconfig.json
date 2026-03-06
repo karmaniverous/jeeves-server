@@ -19,7 +19,8 @@
     "types": [
       "node",
       "vitest/globals"
-    ]
+    ],
+    "rootDir": "."
   },
   "exclude": [
     "coverage",
