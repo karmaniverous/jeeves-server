@@ -37,16 +37,14 @@ const vitestRecommendedRules: Linter.RulesRecord =
 export default [
   {
     ignores: [
-      '.stan/**/*',
-      'coverage/**/*',
-      'dist/**/*',
-      'logs/**/*',
+      '**/.stan/**/*',
+      '**/coverage/**/*',
+      '**/dist/**',
+      '**/docs/**/*',
       'node_modules/**/*',
-      'client/**/*',
-      'test-docs/**/*',
-      'server.js',
-      '*.pdf',
-      '*.docx',
+      '**/client/**/*',
+      '**/test-docs/**/*',
+      '**/jeeves.config.template.ts',
     ],
   },
   eslint.configs.recommended,
@@ -55,7 +53,7 @@ export default [
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: './tsconfig.eslint.json',
+        project: true,
         tsconfigRootDir,
       },
     },
@@ -83,7 +81,7 @@ export default [
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: './tsconfig.eslint.json',
+        project: true,
         tsconfigRootDir,
       },
     },
