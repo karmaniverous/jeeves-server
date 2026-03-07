@@ -10,6 +10,7 @@ import { directoryRoutes } from './directory.js';
 import { drivesRoutes } from './drives.js';
 import { exportRoutes } from './export.js';
 import { fileContentRoutes } from './fileContent.js';
+import { linkInfoRoutes } from './linkInfo.js';
 import { addAuthMiddleware } from './middleware.js';
 import { rawRoutes } from './raw.js';
 import { runnerRoutes } from './runner.js';
@@ -24,6 +25,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
   await fastify.register(drivesRoutes);
   await fastify.register(directoryRoutes);
   await fastify.register(fileContentRoutes);
+  await fastify.register(linkInfoRoutes);
   await fastify.register(rawRoutes);
   await fastify.register(exportRoutes);
   await fastify.register(diagramsRoutes);
