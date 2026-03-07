@@ -145,6 +145,36 @@ export const fileContentRoutes: FastifyPluginAsync = async (fastify) => {
       // Text files
       const buffer = fs.readFileSync(resolved);
       if (looksLikeText(buffer)) {
+        // Try watcher render for non-natively-renderable text files
+        if (!rawOnly) {
+          const renderResult = await tryWatcherRender(resolved);
+          if (renderResult && renderResult.renderAs === 'md') {
+            // Pipe watcher-rendered markdown through the markdown pipeline
+            const urlDir = reqPath.includes('/')
+              ? reqPath.substring(0, reqPath.lastIndexOf('/'))
+              : '';
+            const fsDir = path.dirname(resolved);
+            setDiagramContext(fsDir);
+            const { headings, html: parsedHtml } = parseMarkdown(
+              renderResult.content,
+              { linkWindowsPaths: true, basePath: urlDir },
+            );
+            const html = await renderEmbeddedDiagrams(parsedHtml, fsDir);
+
+            return await reply.send({
+              type: 'markdown',
+              content: buffer.toString('utf8'),
+              html,
+              headings,
+              fileName,
+              breadcrumbs,
+              isInsider,
+              renderAs: renderResult.renderAs,
+              matchedRules: renderResult.rules,
+            });
+          }
+        }
+
         return handleText(
           reply,
           buffer,
@@ -217,6 +247,43 @@ export const fileContentRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 };
+
+/** Watcher render response shape. */
+interface WatcherRenderResponse {
+  renderAs: string;
+  content: string;
+  rules: string[];
+  metadata: Record<string, unknown>;
+}
+
+/**
+ * Try to render a file via the watcher's render endpoint.
+ * Returns null if watcher is not configured, unreachable, or no rules match.
+ */
+async function tryWatcherRender(
+  fsPath: string,
+): Promise<WatcherRenderResponse | null> {
+  const config = getConfig();
+  if (!config.watcherUrl) return null;
+
+  try {
+    const res = await fetch(`${config.watcherUrl}/render`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: fsPath }),
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!res.ok) return null;
+
+    const data = (await res.json()) as WatcherRenderResponse;
+    if (data.rules.length === 0) return null;
+
+    return data;
+  } catch {
+    return null;
+  }
+}
 
 /** Handle markdown file content. */
 async function handleMarkdown(
