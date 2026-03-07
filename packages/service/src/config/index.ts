@@ -11,13 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 import { cosmiconfig } from 'cosmiconfig';
 
-import {
-  deriveInternalKey,
-  normalizeScopes,
-  resolveInsiders,
-  resolveKeys,
-  resolvePlantuml,
-} from './resolve.js';
+import { buildRuntimeConfig } from './resolve.js';
 import { jeevesConfigSchema } from './schema.js';
 import { substituteEnvVars } from './substituteEnvVars.js';
 import type { RuntimeConfig } from './types.js';
@@ -77,44 +71,7 @@ export async function loadConfig(configPath?: string): Promise<RuntimeConfig> {
     throw new Error(`Invalid configuration in ${result.filepath}:\n${issues}`);
   }
 
-  const config = parseResult.data;
-  const stateFile = path.join(rootDir, 'state.json');
-
-  const resolvedKeys = resolveKeys(
-    config.keys as Record<string, string | { key: string; scopes?: unknown }>,
-  );
-  const resolvedInsiders = resolveInsiders(
-    config.insiders as Record<string, { scopes?: unknown }>,
-    stateFile,
-  );
-
-  return {
-    port: config.port,
-    eventTimeoutMs: config.eventTimeoutMs,
-    eventLogPurgeMs: config.eventLogPurgeMs,
-    maxZipSizeMb: config.maxZipSizeMb,
-    chromePath: config.chromePath,
-    roots: config.roots,
-    mermaidCliPath: config.mermaidCliPath,
-    plantuml: resolvePlantuml(config.plantuml),
-    outsiderPolicy: normalizeScopes(config.outsiderPolicy) ?? null,
-    events: config.events,
-    authModes: config.auth.modes,
-    resolvedKeys,
-    resolvedInsiders,
-    googleAuth: config.auth.google ?? null,
-    sessionSecret: config.auth.sessionSecret ?? null,
-    internalInsiderKey: deriveInternalKey(resolvedKeys),
-    runnerUrl: config.runnerUrl,
-    watcherUrl: config.watcherUrl,
-    diagramCachePath: config.diagramCachePath,
-    configPath: result.filepath,
-    eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),
-    stateFile,
-    eventQueuePath: path.join(rootDir, 'logs', 'event-queue.jsonl'),
-    eventQueueCursorPath: path.join(rootDir, 'logs', 'event-queue.cursor'),
-    eventLogPath: path.join(rootDir, 'logs', 'event-log.jsonl'),
-  };
+  return buildRuntimeConfig(parseResult.data, rootDir, result.filepath);
 }
 
 let configInstance: RuntimeConfig | null = null;

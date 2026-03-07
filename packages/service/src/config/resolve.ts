@@ -6,12 +6,15 @@
  */
 
 import fs from 'node:fs';
+import path from 'node:path';
 
 import { computeInsiderKey } from '../util/crypto.js';
+import type { JeevesConfig } from './schema.js';
 import type {
   NormalizedScopes,
   ResolvedInsider,
   ResolvedKey,
+  RuntimeConfig,
   ServerState,
 } from './types.js';
 
@@ -101,4 +104,54 @@ export function resolvePlantuml(config?: {
 export function deriveInternalKey(resolvedKeys: ResolvedKey[]): string | null {
   const internalKey = resolvedKeys.find((k) => k.name === '_internal');
   return internalKey ? computeInsiderKey(internalKey.seed) : null;
+}
+
+/**
+ * Build the full RuntimeConfig from validated config, resolved runtime values, and paths.
+ *
+ * Centralizes the mapping from parsed config + resolved values → RuntimeConfig,
+ * keeping loadConfig focused on loading/validation and this module focused on resolution.
+ */
+export function buildRuntimeConfig(
+  config: JeevesConfig,
+  rootDir: string,
+  configPath: string,
+): RuntimeConfig {
+  const stateFile = path.join(rootDir, 'state.json');
+
+  const resolvedKeys = resolveKeys(
+    config.keys as Record<string, string | { key: string; scopes?: unknown }>,
+  );
+  const resolvedInsiders = resolveInsiders(
+    config.insiders as Record<string, { scopes?: unknown }>,
+    stateFile,
+  );
+
+  return {
+    port: config.port,
+    eventTimeoutMs: config.eventTimeoutMs,
+    eventLogPurgeMs: config.eventLogPurgeMs,
+    maxZipSizeMb: config.maxZipSizeMb,
+    chromePath: config.chromePath,
+    roots: config.roots,
+    mermaidCliPath: config.mermaidCliPath,
+    plantuml: resolvePlantuml(config.plantuml),
+    outsiderPolicy: normalizeScopes(config.outsiderPolicy) ?? null,
+    events: config.events,
+    authModes: config.auth.modes,
+    resolvedKeys,
+    resolvedInsiders,
+    googleAuth: config.auth.google ?? null,
+    sessionSecret: config.auth.sessionSecret ?? null,
+    internalInsiderKey: deriveInternalKey(resolvedKeys),
+    runnerUrl: config.runnerUrl,
+    watcherUrl: config.watcherUrl,
+    diagramCachePath: config.diagramCachePath,
+    configPath,
+    eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),
+    stateFile,
+    eventQueuePath: path.join(rootDir, 'logs', 'event-queue.jsonl'),
+    eventQueueCursorPath: path.join(rootDir, 'logs', 'event-queue.cursor'),
+    eventLogPath: path.join(rootDir, 'logs', 'event-log.jsonl'),
+  };
 }
