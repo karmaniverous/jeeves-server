@@ -57,7 +57,7 @@ describe('GET /api/link-info', () => {
 
     let result: unknown;
     const fakeReply = {
-      code: (_c: number) => ({
+      code: () => ({
         send: (d: unknown) => {
           result = d;
           return d;
