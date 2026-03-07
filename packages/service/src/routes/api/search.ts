@@ -266,4 +266,48 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
         .send({ error: `Watcher unreachable: ${String(err)}` });
     }
   });
+
+  // Cached facets manifest
+  let facetsCache: { data: unknown; fetchedAt: number } | null = null;
+  const FACETS_CACHE_TTL_MS = 60_000; // 1 minute
+
+  fastify.get('/api/search/facets', async (request, reply) => {
+    if (request.accessMode !== 'insider') {
+      return reply.code(403).send({ error: 'Insider access required' });
+    }
+
+    const config = getConfig();
+    if (!config.watcherUrl) {
+      return reply.code(501).send({ error: 'Search not configured' });
+    }
+
+    // Return cached if fresh
+    if (
+      facetsCache &&
+      Date.now() - facetsCache.fetchedAt < FACETS_CACHE_TTL_MS
+    ) {
+      return reply.send(facetsCache.data);
+    }
+
+    try {
+      const watcherRes = await fetch(`${config.watcherUrl}/search/facets`, {
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (!watcherRes.ok) {
+        return reply
+          .code(watcherRes.status)
+          .send({ error: 'Watcher facets request failed' });
+      }
+
+      const data: unknown = await watcherRes.json();
+      facetsCache = { data, fetchedAt: Date.now() };
+      return await reply.send(data);
+    } catch (err) {
+      return await reply.code(502).send({
+        error: 'Failed to reach watcher',
+        detail: err instanceof Error ? err.message : String(err),
+      });
+    }
+  });
 };
