@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronRight, FileText, RotateCcw, Search, X } from 'lucide-react';
 
-import { searchDocuments, type SearchResult, type SearchMetadata } from '@/lib/api';
+import { fetchFacets, searchDocuments, type SearchFacet, type SearchResult, type SearchMetadata } from '@/lib/api';
 
 type DatePreset = '24h' | '7d' | '30d' | 'custom' | null;
 
@@ -139,6 +139,8 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   const [datePreset, setDatePreset] = useState<DatePreset>(null);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [facets, setFacets] = useState<SearchFacet[]>([]);
+  const [facetSelections, setFacetSelections] = useState<Record<string, Set<string>>>({});
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -146,6 +148,10 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 50);
+      // Fetch facets on modal open
+      void fetchFacets()
+        .then((res) => setFacets(res.facets))
+        .catch(() => setFacets([]));
     }
   }, [open]);
 
@@ -160,6 +166,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     setDatePreset(null);
     setDateFrom('');
     setDateTo('');
+    setFacetSelections({});
     inputRef.current?.focus();
   }, []);
 
@@ -172,7 +179,20 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     setLoading(true);
     setError(null);
     try {
-      const res = await searchDocuments(q, 30);
+      // Build Qdrant filter from facet selections
+      const mustClauses: Record<string, unknown>[] = [];
+      for (const [field, selected] of Object.entries(facetSelections)) {
+        if (selected.size > 0) {
+          mustClauses.push({
+            key: field,
+            match: { any: [...selected] },
+          });
+        }
+      }
+      const filter = mustClauses.length > 0
+        ? { must: mustClauses }
+        : undefined;
+      const res = await searchDocuments(q, 30, filter);
       setResults(res.results);
       setMetadata(res.metadata);
     } catch (err) {
@@ -208,6 +228,27 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     },
     [],
   );
+
+  const toggleFacet = useCallback(
+    (field: string, value: string) => {
+      setFacetSelections((prev) => {
+        const current = prev[field] ?? new Set<string>();
+        const next = new Set(current);
+        if (next.has(value)) next.delete(value);
+        else next.add(value);
+        return { ...prev, [field]: next };
+      });
+    },
+    [],
+  );
+
+  // Re-search when facet selections change
+  useEffect(() => {
+    if (query.trim()) {
+      void doSearch(query);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [facetSelections]);
 
   // Extract extensions from results
   const extensions = [...new Set(results.map((r) => {
@@ -272,7 +313,24 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
           </button>
         </div>
 
-        {/* Filter chips — Type always shown when results exist */}
+        {/* Schema-driven facet filters */}
+        {facets.length > 0 && (
+          <div className="px-4 py-2 border-b border-border flex flex-col gap-1.5">
+            {facets
+              .filter((f) => f.values.length > 0 && f.uiHint !== 'hidden')
+              .map((f) => (
+                <FilterChips
+                  key={f.field}
+                  label={f.field.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                  values={f.values}
+                  selected={facetSelections[f.field] ?? new Set()}
+                  onToggle={(v) => toggleFacet(f.field, v)}
+                />
+              ))}
+          </div>
+        )}
+
+        {/* Post-hoc filter chips — Type always shown when results exist */}
         {results.length > 0 && (
           <div className="px-4 py-2 border-b border-border flex flex-col gap-1.5">
             <FilterChips

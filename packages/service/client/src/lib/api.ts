@@ -215,6 +215,23 @@ export async function searchDocuments(
   });
 }
 
+
+export interface SearchFacet {
+  field: string;
+  type: string;
+  uiHint: string;
+  values: string[];
+  rules: string[];
+}
+
+export interface FacetsResponse {
+  facets: SearchFacet[];
+}
+
+export async function fetchFacets(): Promise<FacetsResponse> {
+  return fetchJson<FacetsResponse>(`${API_BASE}/search/facets`);
+}
+
 export async function clearCache(path: string): Promise<{ cleared: { exports: number; diagrams: number } }> {
   return fetchJson<{ cleared: { exports: number; diagrams: number } }>(
     `${API_BASE}/export-cache/${path}`,
