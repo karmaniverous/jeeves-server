@@ -35,25 +35,23 @@ jobs:
 
       - name: Write test config
         run: |
-          cat > packages/service/jeeves.config.ts << 'EOF'
-          import type { JeevesConfig } from './src/config/schema.js';
-
-          export default {
-            port: 3456,
-            chromePath: '/usr/bin/chromium-browser',
-            auth: {
-              modes: ['keys'],
+          cat > packages/service/jeeves-server.config.json << 'JSONEOF'
+          {
+            "port": 3456,
+            "chromePath": "/usr/bin/chromium-browser",
+            "auth": {
+              "modes": ["keys"]
             },
-            keys: {
-              primary: 'ci-test-seed-not-a-real-secret-0000000000000000000000000000000000',
-              _internal: 'ci-internal-seed-not-a-real-secret-00000000000000000000000000000000',
+            "keys": {
+              "primary": "ci-test-seed-not-a-real-secret-0000000000000000000000000000000000",
+              "_internal": "ci-internal-seed-not-a-real-secret-00000000000000000000000000000000"
             },
-            roots: {
-              workspace: process.cwd(),
+            "roots": {
+              "workspace": "${GITHUB_WORKSPACE}"
             },
-            events: {},
-          } satisfies JeevesConfig;
-          EOF
+            "events": {}
+          }
+          JSONEOF
 
       - name: Start server
         run: |

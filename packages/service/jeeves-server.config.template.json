@@ -1,0 +1,25 @@
+{
+  "$schema": "./jeeves-server.schema.json",
+  "port": 1934,
+  "chromePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "auth": {
+    "modes": ["google", "keys"],
+    "google": {
+      "clientId": "your-google-client-id.apps.googleusercontent.com",
+      "clientSecret": "${GOOGLE_CLIENT_SECRET}"
+    },
+    "sessionSecret": "${SESSION_SECRET}"
+  },
+  "insiders": {
+    "user@example.com": {
+      "scopes": ["/**"]
+    }
+  },
+  "keys": {
+    "primary": "${KEY_PRIMARY}",
+    "_internal": "${KEY_INTERNAL}"
+  },
+  "events": {},
+  "eventTimeoutMs": 30000,
+  "eventLogPurgeMs": 2592000000
+}

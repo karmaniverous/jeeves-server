@@ -4,7 +4,9 @@ node_modules/
 # Local environment (contains secrets)
 *.local
 .env.local
-jeeves.config.ts
+jeeves-server.config.json
+jeeves-server.config.yaml
+jeeves-server.config.toml
 
 # Runtime state
 state.json

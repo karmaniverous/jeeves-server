@@ -1,14 +1,15 @@
 /**
- * Config loading and singleton management.
+ * @packageDocumentation
  *
- * Loads jeeves.config.ts via jiti, validates with Zod, resolves runtime types
- * via resolve.ts, and exposes getConfig()/resetConfig().
+ * Config loading and singleton management.
+ * Loads config via cosmiconfig, validates with Zod, applies env var substitution,
+ * resolves runtime types via resolve.ts, and exposes getConfig()/resetConfig().
  */
 
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createJiti } from 'jiti';
+import { cosmiconfig } from 'cosmiconfig';
 
 import {
   deriveInternalKey,
@@ -18,35 +19,47 @@ import {
   resolvePlantuml,
 } from './resolve.js';
 import { jeevesConfigSchema } from './schema.js';
+import { substituteEnvVars } from './substituteEnvVars.js';
 import type { RuntimeConfig } from './types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '../../..');
-const CONFIG_FILENAME = 'jeeves.config';
 
-export function loadConfig(): RuntimeConfig {
-  const jiti = createJiti(import.meta.url);
-  const configPath = path.join(rootDir, CONFIG_FILENAME);
+const MODULE_NAME = 'jeeves-server';
 
-  let rawConfig: unknown;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
-    const mod = jiti(configPath) as { default?: unknown };
-    rawConfig = mod.default ?? mod;
-  } catch (err) {
+/**
+ * Load and validate jeeves-server configuration via cosmiconfig.
+ *
+ * Searches for `jeeves-server.config.{json,yaml,yml,js,ts,cjs,mjs}`
+ * or `.jeeves-serverrc` in the package root and parent directories.
+ *
+ * @param configPath - Optional explicit path to a config file.
+ * @returns Resolved runtime configuration.
+ */
+export async function loadConfig(configPath?: string): Promise<RuntimeConfig> {
+  const explorer = cosmiconfig(MODULE_NAME);
+
+  const result = configPath
+    ? await explorer.load(configPath)
+    : await explorer.search(rootDir);
+
+  if (!result || result.isEmpty) {
     throw new Error(
-      `Failed to load ${CONFIG_FILENAME}.ts. Copy ${CONFIG_FILENAME}.template.ts and configure.\n${String(err)}`,
+      `No jeeves-server configuration found. Create a jeeves-server.config.json (or .yaml/.toml) file.\n` +
+        `Searched from: ${rootDir}`,
     );
   }
 
-  const parseResult = jeevesConfigSchema.safeParse(rawConfig);
+  const substituted = substituteEnvVars(
+    result.config as Record<string, unknown>,
+  );
+
+  const parseResult = jeevesConfigSchema.safeParse(substituted);
   if (!parseResult.success) {
     const issues = parseResult.error.issues
       .map((i) => `  - ${i.path.join('.')}: ${i.message}`)
       .join('\n');
-    throw new Error(
-      `Invalid configuration in ${CONFIG_FILENAME}.ts:\n${issues}`,
-    );
+    throw new Error(`Invalid configuration in ${result.filepath}:\n${issues}`);
   }
 
   const config = parseResult.data;
@@ -80,7 +93,7 @@ export function loadConfig(): RuntimeConfig {
     runnerUrl: config.runnerUrl,
     watcherUrl: config.watcherUrl,
     diagramCachePath: config.diagramCachePath,
-    configPath: path.join(rootDir, `${CONFIG_FILENAME}.ts`),
+    configPath: result.filepath,
     eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),
     stateFile,
     eventQueuePath: path.join(rootDir, 'logs', 'event-queue.jsonl'),
@@ -91,13 +104,31 @@ export function loadConfig(): RuntimeConfig {
 
 let configInstance: RuntimeConfig | null = null;
 
+/**
+ * Get the singleton config instance. Initializes on first call.
+ * @throws If config has not been initialized — call initConfig() first.
+ */
 export function getConfig(): RuntimeConfig {
   if (!configInstance) {
-    configInstance = loadConfig();
+    throw new Error(
+      'Config not initialized. Call initConfig() before getConfig().',
+    );
   }
   return configInstance;
 }
 
+/**
+ * Initialize the config singleton. Must be called once at startup.
+ * @param configPath - Optional explicit path to a config file.
+ */
+export async function initConfig(configPath?: string): Promise<RuntimeConfig> {
+  configInstance = await loadConfig(configPath);
+  return configInstance;
+}
+
+/**
+ * Reset the config singleton (for testing).
+ */
 export function resetConfig(): void {
   configInstance = null;
 }
