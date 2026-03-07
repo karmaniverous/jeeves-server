@@ -32,7 +32,7 @@ Edit `jeeves.config.ts` with your values. This file is **gitignored** — it con
 import type { JeevesConfig } from './src/config/schema.js';
 
 export default {
-  port: 3456,
+  port: 1934,
   chromePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
   auth: { ... },
   insiders: { ... },

@@ -25,7 +25,7 @@ How to run Jeeves Server in production.
 node dist/server.js
 ```
 
-The server listens on the port configured in `jeeves.config.ts` (default: 3456) on all interfaces (`0.0.0.0`).
+The server listens on the port configured in `jeeves.config.ts` (default: 1934) on all interfaces (`0.0.0.0`).
 
 ### As a Windows Service (NSSM)
 
@@ -147,7 +147,7 @@ Running behind a reverse proxy is recommended for:
 
 ```
 jeeves.example.com {
-    reverse_proxy localhost:3456
+    reverse_proxy localhost:1934
 }
 ```
 
@@ -164,7 +164,7 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/jeeves.example.com/privkey.pem;
 
     location / {
-        proxy_pass http://localhost:3456;
+        proxy_pass http://localhost:1934;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -225,8 +225,8 @@ auth: {
   },
 },
 
-// Prod: jeeves.config.ts (port 3456)
-port: 3456,
+// Prod: jeeves.config.ts (port 1934)
+port: 1934,
 auth: {
   google: {
     clientId: 'prod-client-id.apps.googleusercontent.com',
@@ -242,7 +242,7 @@ Each needs its own Google OAuth redirect URI registered.
 The `/health` endpoint requires no authentication:
 
 ```bash
-curl http://localhost:3456/health
+curl http://localhost:1934/health
 # Returns 200 OK
 ```
 
