@@ -77,6 +77,13 @@ export async function loadConfig(configPath?: string): Promise<RuntimeConfig> {
 let configInstance: RuntimeConfig | null = null;
 
 /**
+ * Check if the config singleton has been initialized.
+ */
+export function isConfigInitialized(): boolean {
+  return configInstance !== null;
+}
+
+/**
  * Get the singleton config instance. Initializes on first call.
  * @throws If config has not been initialized — call initConfig() first.
  */
