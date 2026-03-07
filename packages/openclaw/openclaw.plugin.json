@@ -1,8 +1,34 @@
 {
   "id": "jeeves-server-openclaw",
   "name": "Jeeves Server",
+  "description": "File browsing, document sharing, export, and event gateway tools for jeeves-server.",
   "version": "0.1.0",
   "skills": [
     "dist/skills/jeeves-server"
-  ]
+  ],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "apiUrl": {
+        "type": "string",
+        "description": "jeeves-server API base URL",
+        "default": "http://127.0.0.1:1934"
+      },
+      "pluginKey": {
+        "type": "string",
+        "description": "Server _plugin key seed (for authenticated API calls)"
+      }
+    }
+  },
+  "uiHints": {
+    "apiUrl": {
+      "label": "Server API URL",
+      "placeholder": "http://127.0.0.1:1934"
+    },
+    "pluginKey": {
+      "label": "Plugin Key Seed",
+      "placeholder": "hex string from server config keys._plugin"
+    }
+  }
 }
