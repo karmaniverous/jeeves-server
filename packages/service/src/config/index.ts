@@ -37,7 +37,22 @@ const MODULE_NAME = 'jeeves-server';
  * @returns Resolved runtime configuration.
  */
 export async function loadConfig(configPath?: string): Promise<RuntimeConfig> {
-  const explorer = cosmiconfig(MODULE_NAME);
+  const explorer = cosmiconfig(MODULE_NAME, {
+    searchPlaces: [
+      'package.json',
+      `.${MODULE_NAME}rc`,
+      `.${MODULE_NAME}rc.json`,
+      `.${MODULE_NAME}rc.yaml`,
+      `.${MODULE_NAME}rc.yml`,
+      `${MODULE_NAME}.config.json`,
+      `${MODULE_NAME}.config.yaml`,
+      `${MODULE_NAME}.config.yml`,
+      `${MODULE_NAME}.config.js`,
+      `${MODULE_NAME}.config.ts`,
+      `${MODULE_NAME}.config.mjs`,
+      `${MODULE_NAME}.config.cjs`,
+    ],
+  });
 
   const result = configPath
     ? await explorer.load(configPath)
@@ -45,7 +60,7 @@ export async function loadConfig(configPath?: string): Promise<RuntimeConfig> {
 
   if (!result || result.isEmpty) {
     throw new Error(
-      `No jeeves-server configuration found. Create a jeeves-server.config.json (or .yaml/.toml) file.\n` +
+      `No jeeves-server configuration found. Create a jeeves-server.config.json (or .yaml) file.\n` +
         `Searched from: ${rootDir}`,
     );
   }
