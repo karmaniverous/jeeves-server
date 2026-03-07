@@ -7,6 +7,13 @@
 import type { Command } from '@commander-js/extra-typings';
 
 import { loadConfig } from '../../config/index.js';
+import type { NormalizedScopes } from '../../config/types.js';
+
+function formatScopes(scopes: NormalizedScopes | null): string {
+  return scopes
+    ? `scoped (allow: ${String(scopes.allow.length)}, deny: ${String(scopes.deny.length)})`
+    : 'unscoped';
+}
 
 export function registerConfigCommand(cli: Command): void {
   const config = cli.command('config').description('Configuration management');
@@ -58,18 +65,14 @@ export function registerConfigCommand(cli: Command): void {
         console.log('');
         console.log('Keys:');
         for (const key of cfg.resolvedKeys) {
-          const scopes = key.scopes
-            ? `scoped (allow: ${String(key.scopes.allow.length)}, deny: ${String(key.scopes.deny.length)})`
-            : 'unscoped';
-          console.log(`  ${key.name}: ${key.seed.slice(0, 8)}... (${scopes})`);
+          console.log(
+            `  ${key.name}: ${key.seed.slice(0, 8)}... (${formatScopes(key.scopes)})`,
+          );
         }
         console.log('');
         console.log('Insiders:');
         for (const insider of cfg.resolvedInsiders) {
-          const scopes = insider.scopes
-            ? `scoped (allow: ${String(insider.scopes.allow.length)}, deny: ${String(insider.scopes.deny.length)})`
-            : 'unscoped';
-          console.log(`  ${insider.email}: ${scopes}`);
+          console.log(`  ${insider.email}: ${formatScopes(insider.scopes)}`);
         }
         console.log('');
         console.log('Integrations:');
