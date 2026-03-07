@@ -234,7 +234,7 @@ export const exportRoutes: FastifyPluginAsync = async (fastify) => {
           .send(cachedBuffer);
       }
 
-      const outFile = renderMermaidToFile(resolved, format);
+      const outFile = await renderMermaidToFile(resolved, format);
       if (!outFile)
         return reply.code(500).send({ error: 'Mermaid render failed' });
 
