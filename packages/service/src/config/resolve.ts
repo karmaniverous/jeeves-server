@@ -85,17 +85,32 @@ export function resolveInsiders(
 }
 
 /**
- * Resolve PlantUML config with community server fallback.
+ * Resolve PlantUML config with auto-discovery and community server fallback.
+ *
+ * If no jarPath is configured, checks for a bundled jar at vendor/plantuml.jar
+ * (downloaded by the postinstall script).
  */
-export function resolvePlantuml(config?: {
-  jarPath?: string;
-  javaPath?: string;
-  servers?: string[];
-}): { jarPath?: string; javaPath?: string; servers: string[] } {
+export function resolvePlantuml(
+  config?: {
+    jarPath?: string;
+    javaPath?: string;
+    servers?: string[];
+  },
+  rootDir?: string,
+): { jarPath?: string; javaPath?: string; servers: string[] } {
   const COMMUNITY = 'https://www.plantuml.com/plantuml';
   const servers = config?.servers ? [...config.servers] : [];
   if (!servers.includes(COMMUNITY)) servers.push(COMMUNITY);
-  return { jarPath: config?.jarPath, javaPath: config?.javaPath, servers };
+
+  let jarPath = config?.jarPath;
+  if (!jarPath && rootDir) {
+    const vendorJar = path.join(rootDir, 'vendor', 'plantuml.jar');
+    if (fs.existsSync(vendorJar)) {
+      jarPath = vendorJar;
+    }
+  }
+
+  return { jarPath, javaPath: config?.javaPath, servers };
 }
 
 /**
@@ -134,8 +149,9 @@ export function buildRuntimeConfig(
     maxZipSizeMb: config.maxZipSizeMb,
     chromePath: config.chromePath,
     roots: config.roots,
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     mermaidCliPath: config.mermaidCliPath,
-    plantuml: resolvePlantuml(config.plantuml),
+    plantuml: resolvePlantuml(config.plantuml, rootDir),
     outsiderPolicy: normalizeScopes(config.outsiderPolicy) ?? null,
     events: config.events,
     authModes: config.auth.modes,

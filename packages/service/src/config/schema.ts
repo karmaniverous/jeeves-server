@@ -93,7 +93,7 @@ export const jeevesConfigSchema = z
      * Default: 'http://127.0.0.1:3100'
      */
     runnerUrl: z.url().optional(),
-    /** Path to mermaid-cli (npx prefix directory). If not set, mermaid rendering is disabled. */
+    /** @deprecated Mermaid is now bundled. This field is ignored but kept for backward compatibility. */
     mermaidCliPath: z.string().optional(),
     /**
      * PlantUML rendering configuration.

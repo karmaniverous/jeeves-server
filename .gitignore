@@ -50,3 +50,6 @@ cloud-init-linux-test.yaml
 .stan/context/
 .stan/system/.docs.meta.json
 _do.cjs 
+
+# PlantUML jar (downloaded at postinstall)
+packages/service/vendor/

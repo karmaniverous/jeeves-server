@@ -67,7 +67,7 @@ export const statusRoutes: FastifyPluginAsync = async (fastify) => {
       })),
       exportFormats: ['pdf', 'docx', 'zip'],
       diagrams: {
-        mermaid: Boolean(config.mermaidCliPath),
+        mermaid: true, // bundled via @mermaid-js/mermaid-cli
         plantuml: {
           localJar: Boolean(config.plantuml.jarPath),
           servers: config.plantuml.servers,

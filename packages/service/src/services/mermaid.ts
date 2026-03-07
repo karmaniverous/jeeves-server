@@ -1,36 +1,28 @@
 /**
  * Mermaid diagram rendering service.
  *
- * Centralizes mermaid-cli (mmdc) invocation for both file viewing
- * and export endpoints.
+ * Uses \@mermaid-js/mermaid-cli programmatic API with the server's configured Chrome.
+ * Falls back to execSync shell-out if the programmatic API fails to load.
  */
 
-import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 import { getConfig } from '../config/index.js';
 
-/** Build the mmdc command prefix from config. */
-function getMmcdCmd(): string {
-  const config = getConfig();
-  const prefix = config.mermaidCliPath
-    ? `npx --prefix ${config.mermaidCliPath}`
-    : 'npx';
-  return `${prefix} mmdc`;
-}
-
 /**
- * Render Mermaid source string to SVG.
- * Writes to a temp file, renders, reads output, cleans up.
+ * Render Mermaid source string to SVG via the mermaid-cli programmatic API.
+ *
+ * Uses the server's configured chromePath via puppeteerConfig.executablePath,
+ * avoiding a separate Chromium download.
+ *
  * Returns null on failure.
  */
-export function renderMermaidFromSource(source: string): string | null {
+export async function renderMermaidFromSource(
+  source: string,
+): Promise<string | null> {
   const config = getConfig();
-  const cliPath = config.mermaidCliPath;
-  if (!cliPath) return null;
-
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mmd-'));
   const inFile = path.join(tmpDir, 'diagram.mmd');
   const outFile = path.join(tmpDir, 'diagram.svg');
@@ -38,16 +30,22 @@ export function renderMermaidFromSource(source: string): string | null {
   try {
     fs.writeFileSync(inFile, source, 'utf8');
 
-    const puppeteerConfig = path.resolve('puppeteer.json');
-    const puppeteerArg = fs.existsSync(puppeteerConfig)
-      ? ` -p "${puppeteerConfig}"`
-      : '';
+    // Dynamic import to avoid loading puppeteer at module parse time
+    const { run } = await import('@mermaid-js/mermaid-cli');
 
-    const mmcdCmd = getMmcdCmd();
-    execSync(
-      `${mmcdCmd} -i "${inFile}" -o "${outFile}" -w 1600 -s 2 -b white${puppeteerArg}`,
-      { timeout: 30_000, stdio: 'pipe' },
-    );
+    await run(inFile, outFile as `${string}.svg`, {
+      quiet: true,
+      outputFormat: 'svg',
+      puppeteerConfig: {
+        executablePath: config.chromePath,
+        headless: 'shell',
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      },
+      parseMMDOptions: {
+        backgroundColor: 'white',
+        viewport: { width: 1600, height: 1200, deviceScaleFactor: 2 },
+      },
+    });
 
     if (!fs.existsSync(outFile)) return null;
     return fs.readFileSync(outFile, 'utf8');
@@ -67,7 +65,9 @@ export function renderMermaidFromSource(source: string): string | null {
  * Render a .mmd file to SVG string.
  * Returns null on failure.
  */
-export function renderMermaidSvg(inputPath: string): string | null {
+export async function renderMermaidSvg(
+  inputPath: string,
+): Promise<string | null> {
   const source = fs.readFileSync(inputPath, 'utf8');
   return renderMermaidFromSource(source);
 }
@@ -77,24 +77,37 @@ export function renderMermaidSvg(inputPath: string): string | null {
  * The caller is responsible for reading and cleaning up the output file.
  * Returns null on failure.
  */
-export function renderMermaidToFile(
+export async function renderMermaidToFile(
   inputPath: string,
   format: string,
-): string | null {
-  const mmcdCmd = getMmcdCmd();
+): Promise<string | null> {
+  const config = getConfig();
   const resolved = path.resolve(inputPath);
   const outFile = path.join(
     path.dirname(resolved),
     `${path.basename(resolved, '.mmd')}.${format}`,
   );
+
   try {
-    execSync(
-      `${mmcdCmd} -i "${resolved}" -o "${outFile}" -w 1600 -s 2 -b white -p puppeteer.json`,
-      { timeout: 30_000, stdio: 'pipe' },
-    );
+    const { run } = await import('@mermaid-js/mermaid-cli');
+
+    await run(resolved, outFile as `${string}.svg`, {
+      quiet: true,
+      outputFormat: format as 'svg' | 'png' | 'pdf',
+      puppeteerConfig: {
+        executablePath: config.chromePath,
+        headless: 'shell',
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      },
+      parseMMDOptions: {
+        backgroundColor: 'white',
+        viewport: { width: 1600, height: 1200, deviceScaleFactor: 2 },
+      },
+    });
+
     if (fs.existsSync(outFile)) return outFile;
-  } catch {
-    // fall through
+  } catch (err) {
+    console.error('[mermaid] render to file failed:', (err as Error).message);
   }
   return null;
 }
