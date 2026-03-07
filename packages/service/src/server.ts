@@ -11,7 +11,7 @@ import cookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';
 import Fastify from 'fastify';
 
-import { initConfig } from './config/index.js';
+import { getConfig, initConfig } from './config/index.js';
 import { apiRoute } from './routes/api/index.js';
 import { authRoute } from './routes/auth.js';
 import { eventRoute } from './routes/event.js';
@@ -27,7 +27,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function start() {
   try {
-    const config = await initConfig();
+    // If config is already initialized (e.g. by CLI), use it; otherwise init from default search
+    let config;
+    try {
+      config = getConfig();
+    } catch {
+      config = await initConfig();
+    }
 
     const fastify = Fastify({
       logger: true,

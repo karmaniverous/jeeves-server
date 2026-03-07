@@ -55,7 +55,7 @@ jobs:
 
       - name: Start server
         run: |
-          node packages/service/dist/src/server.js &
+          node packages/service/dist/src/cli/index.js start --config packages/service/jeeves-server.config.json &
           SERVER_PID=$!
           echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
 
