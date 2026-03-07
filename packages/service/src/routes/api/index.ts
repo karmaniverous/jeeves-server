@@ -15,6 +15,7 @@ import { rawRoutes } from './raw.js';
 import { runnerRoutes } from './runner.js';
 import { searchRoutes } from './search.js';
 import { sharingRoutes } from './sharing.js';
+import { statusRoutes } from './status.js';
 
 export const apiRoute: FastifyPluginAsync = async (fastify) => {
   // Add auth hook directly to this context (not as a child plugin)
@@ -30,4 +31,5 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
   await fastify.register(searchRoutes);
   await fastify.register(sharingRoutes);
   await fastify.register(authStatusRoutes);
+  await fastify.register(statusRoutes);
 };
