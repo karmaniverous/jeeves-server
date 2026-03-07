@@ -5,14 +5,10 @@
  * event schemas, insider count (no PII), and export capabilities.
  */
 
-import { createRequire } from 'node:module';
-
 import type { FastifyPluginAsync } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
-
-const require = createRequire(import.meta.url);
-const { version } = require('../../../package.json') as { version: string };
+import { packageVersion } from '../../util/packageVersion.js';
 
 const startTime = Date.now();
 
@@ -53,7 +49,7 @@ export const statusRoutes: FastifyPluginAsync = async (fastify) => {
     ]);
 
     return {
-      version,
+      version: packageVersion,
       uptime: Math.floor((Date.now() - startTime) / 1000),
       port: config.port,
       chrome: {
