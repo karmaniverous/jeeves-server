@@ -172,6 +172,25 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
         return ['/export/' + p + '.' + fmt];
       },
     },
+    {
+      name: 'server_event_status',
+      description:
+        'Query event gateway status: active schemas, recent event log entries, and event counts.',
+      parameters: {
+        type: 'object',
+        properties: {
+          limit: {
+            type: 'number',
+            description:
+              'Maximum number of recent events to return (default: 20)',
+          },
+        },
+      },
+      buildRequest: (params) => {
+        const limit = params.limit ? String(params.limit as number) : '20';
+        return ['/api/status?events=' + limit];
+      },
+    },
   ];
 
   for (const tool of tools) {

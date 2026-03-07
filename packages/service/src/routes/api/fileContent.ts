@@ -159,7 +159,14 @@ export const fileContentRoutes: FastifyPluginAsync = async (fastify) => {
               renderResult.content,
               { linkWindowsPaths: true, basePath: urlDir },
             );
-            const html = await renderEmbeddedDiagrams(parsedHtml, fsDir);
+            let html = parsedHtml;
+
+            if (
+              (request.query as { render_diagrams?: string })
+                .render_diagrams === '1'
+            ) {
+              html = await renderEmbeddedDiagrams(html, fsDir);
+            }
 
             return await reply.send({
               type: 'markdown',

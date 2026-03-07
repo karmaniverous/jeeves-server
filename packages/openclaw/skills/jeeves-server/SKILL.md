@@ -1,6 +1,6 @@
 # Jeeves Server Skill
 
-Operate and interact with a jeeves-server deployment. Use for file browsing, document sharing, export, link generation, and server diagnostics.
+Operate and interact with a jeeves-server deployment. Use for file browsing, document sharing, export, link generation, event gateway queries, and server diagnostics.
 
 ## Tools
 
@@ -11,6 +11,7 @@ Operate and interact with a jeeves-server deployment. Use for file browsing, doc
 | `server_link_info` | Query available link types for a path (page URL, raw URL, export links) |
 | `server_share` | Generate share links with optional expiry and directory depth |
 | `server_export` | Trigger export (PDF, DOCX, SVG, PNG, ZIP) and get download URL |
+| `server_event_status` | Query event gateway status, active schemas, and recent event log |
 
 ## Browse Paths
 
@@ -45,17 +46,94 @@ Run `server_status` to check:
 - Connected services (watcher, runner) and their reachability
 - Available export formats and diagram languages
 
-## Bootstrap
+## Bootstrap: Full Stack Setup
 
-If the server is unreachable, check:
-1. Is the JeevesServer service running? → `jeeves-server service start`
-2. Is the apiUrl correct in OpenClaw plugin config? → Default: `http://127.0.0.1:1934`
-3. Is the `_plugin` key configured in both server config and plugin config?
+### Prerequisites
 
-## Installation
+- **Node.js 20+** and npm
+- **Java 8+** (optional, for local PlantUML rendering)
+- **Chrome/Chromium** (optional, for PDF export)
+- **NSSM** (Windows) or **systemd** (Linux) for service management
+- **Caddy** (recommended) or nginx for reverse proxy with automatic TLS
+
+### 1. Install jeeves-server
+
+```bash
+npm install -g @karmaniverous/jeeves-server
+```
+
+### 2. Create config
+
+Create `jeeves-server.config.json` in the server's working directory:
+
+```json
+{
+  "port": 1934,
+  "roots": {
+    "data": "/path/to/data"
+  },
+  "keys": {
+    "_internal": "random-hex-seed-for-puppeteer",
+    "_plugin": "random-hex-seed-for-openclaw-plugin"
+  },
+  "insiders": [
+    { "email": "you@example.com" }
+  ],
+  "google": {
+    "clientId": "${GOOGLE_CLIENT_ID}",
+    "clientSecret": "${GOOGLE_CLIENT_SECRET}"
+  },
+  "sessionSecret": "${SESSION_SECRET}",
+  "watcherUrl": "http://127.0.0.1:1936"
+}
+```
+
+### 3. Validate config
+
+```bash
+jeeves-server config validate
+jeeves-server config show
+```
+
+### 4. Register as system service
+
+**Windows (NSSM):**
+```bash
+jeeves-server service install
+jeeves-server service start
+```
+
+**Linux (systemd):**
+```bash
+sudo jeeves-server service install
+sudo jeeves-server service start
+```
+
+### 5. Configure Caddy reverse proxy
+
+Add to your Caddyfile:
+
+```
+your-domain.com {
+    reverse_proxy localhost:1934
+}
+```
+
+Caddy handles TLS certificate provisioning automatically. Ensure DNS A/AAAA records point to your server.
+
+### 6. Install OpenClaw plugin
 
 ```bash
 npx @karmaniverous/jeeves-server-openclaw install
 ```
 
-This copies the plugin to `~/.openclaw/extensions/` and patches `openclaw.json`. Restart the gateway after installing.
+Configure the plugin in `openclaw.json` with `apiUrl` and `pluginKey` (matching the `_plugin` key seed from server config). Restart the OpenClaw gateway.
+
+## Troubleshooting
+
+If the server is unreachable:
+1. Is the service running? → `jeeves-server service start`
+2. Is the apiUrl correct? → Default: `http://127.0.0.1:1934`
+3. Is the `_plugin` key configured in both server config and plugin config?
+4. Is Caddy proxying to the correct port? → Check `Caddyfile`
+5. Is the firewall allowing traffic on port 1934? → Only needed for local access; Caddy handles external traffic

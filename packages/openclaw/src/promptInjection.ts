@@ -71,6 +71,28 @@ export async function generateServerMenu(apiUrl: string): Promise<string> {
     lines.push('');
   }
 
+  // Event gateway
+  if (status.events && status.events.length > 0) {
+    lines.push('### Event Gateway');
+    lines.push('Active schemas:');
+    for (const evt of status.events) {
+      lines.push(
+        '* **' +
+          evt.name +
+          '**' +
+          (evt.pattern ? ' — pattern: `' + evt.pattern + '`' : ''),
+      );
+    }
+    lines.push('');
+  }
+
+  // Insider count
+  if (status.insiderCount !== undefined) {
+    lines.push('### Access');
+    lines.push(String(status.insiderCount) + ' insider(s) configured.');
+    lines.push('');
+  }
+
   // Sharing guidance
   lines.push('### Sharing');
   lines.push(

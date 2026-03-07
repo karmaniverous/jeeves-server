@@ -1,9 +1,7 @@
 /**
  * Markdown rendered view with TOC sidebar.
  */
-import { useRef } from 'react';
 import type { FileContent } from '@/lib/api';
-import { useScrollAnchor } from '@/hooks/useScrollAnchor';
 import { initEmbeddedDiagramPanzoom } from '@/components/EmbeddedDiagramPanzoom';
 import { initLazyDiagrams } from '@/components/LazyDiagram';
 import { initInlineSvgPanzoom } from '@/components/InlineSvgPanzoom';
@@ -62,8 +60,6 @@ export function MarkdownView({
   mobileTocOpen, setMobileTocOpen,
 }: MarkdownViewProps) {
   const [theme] = useTheme();
-  const articleRef = useRef<HTMLElement>(null);
-  useScrollAnchor(mainRef, articleRef);
   const plainCode = new URLSearchParams(window.location.search).has('plain_code');
   const hasHeadings = fileRendered.headings && fileRendered.headings.length > 2;
 
@@ -120,7 +116,7 @@ export function MarkdownView({
 
         {/* Markdown article */}
         <article
-          ref={(el) => { (articleRef as React.MutableRefObject<HTMLElement | null>).current = el; if (el) { if (!plainCode) initCodeBlockCm6(el, theme); injectCopyButtons(el); initInlineSvgPanzoom(el); initEmbeddedDiagramPanzoom(el); initLazyDiagrams(el); } }}
+          ref={(el) => { if (el) { if (!plainCode) initCodeBlockCm6(el, theme); injectCopyButtons(el); initInlineSvgPanzoom(el); initEmbeddedDiagramPanzoom(el); initLazyDiagrams(el); } }}
           className={`prose bg-background p-6 rounded-lg border border-border min-w-0 flex-1 ${
             proseWidth === 'narrow' ? 'max-w-prose' : proseWidth === 'medium' ? 'max-w-5xl' : 'max-w-none'
           }`}
