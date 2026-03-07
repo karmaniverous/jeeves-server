@@ -44,6 +44,8 @@ export interface DirectoryListing {
   entries: DirectoryEntry[];
   breadcrumbs: BreadcrumbItem[];
   isInsider: boolean;
+  renderAs?: string;
+  matchedRules?: string[];
 }
 
 export interface BreadcrumbItem {
