@@ -1,5 +1,4 @@
 /**
- * @module plugin/toolsWriter
  * Writes the Server menu section directly to TOOLS.md on disk.
  */
 

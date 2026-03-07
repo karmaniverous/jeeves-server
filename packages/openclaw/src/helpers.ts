@@ -1,5 +1,4 @@
 /**
- * @module plugin/helpers
  * Shared types and utility functions for the OpenClaw plugin tool registrations.
  */
 

@@ -1,5 +1,4 @@
 /**
- * @module plugin/serverTools
  * Server tool registrations (server_* tools) for the OpenClaw plugin.
  */
 

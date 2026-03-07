@@ -1,5 +1,4 @@
 /**
- * @module plugin
  * OpenClaw plugin entry point. Registers all jeeves-server tools.
  */
 

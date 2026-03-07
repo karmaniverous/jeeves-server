@@ -1,5 +1,4 @@
 /**
- * @module plugin/promptInjection
  * Generates the Server menu string for TOOLS.md injection.
  */
 
