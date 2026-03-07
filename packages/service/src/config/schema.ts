@@ -159,19 +159,16 @@ export const jeevesConfigSchema = z
       });
     }
 
-    // _internal key must not have scopes
-    const internal = config.keys['_internal'];
-    if (
-      internal &&
-      typeof internal === 'object' &&
-      'scopes' in internal &&
-      internal.scopes
-    ) {
-      ctx.addIssue({
-        code: 'custom',
-        message: '_internal key must not have scopes (it is always unscoped)',
-        path: ['keys', '_internal'],
-      });
+    // _internal and _plugin keys must not have scopes
+    for (const reserved of ['_internal', '_plugin'] as const) {
+      const key = config.keys[reserved];
+      if (key && typeof key === 'object' && 'scopes' in key && key.scopes) {
+        ctx.addIssue({
+          code: 'custom',
+          message: `${reserved} key must not have scopes (it is always unscoped)`,
+          path: ['keys', reserved],
+        });
+      }
     }
   });
 
