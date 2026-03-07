@@ -21,7 +21,7 @@ The config contains **seeds**. The actual URL key is derived via HMAC:
 
 ```bash
 # Get the insider key from a seed
-curl -s "http://localhost:3456/insider-key" -H "X-API-Key: <seed>"
+curl -s "http://localhost:1934/insider-key" -H "X-API-Key: <seed>"
 # Returns: { "key": "a1b2c3d4..." }
 ```
 
@@ -220,7 +220,7 @@ Write Markdown files to the server's filesystem. Jeeves Server will render them 
 ### Checking server status
 
 ```bash
-curl -s http://localhost:3456/health
+curl -s http://localhost:1934/health
 ```
 
 ### Triggering webhooks
@@ -228,7 +228,7 @@ curl -s http://localhost:3456/health
 If you need to trigger an action via the event gateway:
 
 ```bash
-curl -X POST "http://localhost:3456/event?key=<webhook-key>" \
+curl -X POST "http://localhost:1934/event?key=<webhook-key>" \
   -H "Content-Type: application/json" \
   -d '{"action": "rebuild", "target": "docs"}'
 ```
