@@ -295,7 +295,7 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
       });
 
       if (!watcherRes.ok) {
-        return reply
+        return await reply
           .code(watcherRes.status)
           .send({ error: 'Watcher facets request failed' });
       }
