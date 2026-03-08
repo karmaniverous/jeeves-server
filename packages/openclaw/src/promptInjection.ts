@@ -17,7 +17,7 @@ interface StatusResponse {
   };
   services?: Record<string, { url: string; reachable: boolean }>;
   auth?: { insiderCount?: number; keyCount?: number };
-  events?: Array<{ name: string; cmd?: string }>;
+  events?: Array<{ name: string; cmd?: string; pattern?: string }>;
   diagrams?: {
     mermaid?: boolean;
     plantuml?: { localJar?: boolean; servers?: string[] };
