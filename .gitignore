@@ -53,3 +53,6 @@ _do.cjs
 
 # PlantUML jar (downloaded at postinstall)
 packages/service/vendor/
+
+# TypeDoc output
+/docs/
