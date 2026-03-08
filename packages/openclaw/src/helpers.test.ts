@@ -31,7 +31,10 @@ describe('deriveKey', () => {
     const seed = 'test-seed-12345';
     // Manually compute what computeInsiderKey produces
     const { createHmac } = await import('node:crypto');
-    const expected = createHmac('sha256', seed).update('insider').digest('hex').substring(0, 32);
+    const expected = createHmac('sha256', seed)
+      .update('insider')
+      .digest('hex')
+      .substring(0, 32);
     expect(deriveKey(seed)).toBe(expected);
   });
 });

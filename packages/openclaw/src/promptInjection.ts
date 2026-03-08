@@ -18,13 +18,19 @@ interface StatusResponse {
   services?: Record<string, { url: string; reachable: boolean }>;
   auth?: { insiderCount?: number; keyCount?: number };
   events?: Array<{ name: string; cmd?: string }>;
-  diagrams?: { mermaid?: boolean; plantuml?: { localJar?: boolean; servers?: string[] } };
+  diagrams?: {
+    mermaid?: boolean;
+    plantuml?: { localJar?: boolean; servers?: string[] };
+  };
 }
 
 /**
  * Fetch server status and generate a Markdown menu string.
  */
-export async function generateServerMenu(apiUrl: string, keySeed?: string): Promise<string> {
+export async function generateServerMenu(
+  apiUrl: string,
+  keySeed?: string,
+): Promise<string> {
   let status: StatusResponse;
 
   try {
@@ -50,7 +56,10 @@ export async function generateServerMenu(apiUrl: string, keySeed?: string): Prom
   if (status.exports) {
     lines.push('### Export');
     if (status.exports.documents) {
-      lines.push('* **Documents** (Markdown/HTML): ' + status.exports.documents.join(', '));
+      lines.push(
+        '* **Documents** (Markdown/HTML): ' +
+          status.exports.documents.join(', '),
+      );
       if (!status.exports.chromeAvailable) {
         lines.push('  > Chrome not detected \u2014 PDF export unavailable.');
       }
@@ -62,7 +71,9 @@ export async function generateServerMenu(apiUrl: string, keySeed?: string): Prom
       lines.push('* **Diagrams**: ' + status.exports.diagrams.join(', '));
     }
     lines.push('* **All files**: raw download');
-    lines.push('Use `server_link_info` to check available formats for a specific path.');
+    lines.push(
+      'Use `server_link_info` to check available formats for a specific path.',
+    );
     lines.push('');
   }
 
@@ -72,7 +83,9 @@ export async function generateServerMenu(apiUrl: string, keySeed?: string): Prom
     if (status.diagrams.mermaid) langs.push('Mermaid');
     if (status.diagrams.plantuml) {
       const pl = status.diagrams.plantuml;
-      langs.push('PlantUML' + (pl.localJar ? ' (local jar)' : ' (server-only)'));
+      langs.push(
+        'PlantUML' + (pl.localJar ? ' (local jar)' : ' (server-only)'),
+      );
     }
     if (langs.length > 0) {
       lines.push('### Diagrams');
