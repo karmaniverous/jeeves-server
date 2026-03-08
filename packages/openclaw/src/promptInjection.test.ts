@@ -18,7 +18,7 @@ describe('generateServerMenu', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: () => ({ version: '3.0.0', port: 1934 }),
-    } as Response);
+    } as unknown as Response);
     const menu = await generateServerMenu('http://localhost:1934');
     expect(menu).toContain('v3.0.0');
     expect(menu).toContain('1934');
@@ -33,7 +33,7 @@ describe('generateServerMenu', () => {
         exportFormats: ['pdf', 'docx'],
         chrome: true,
       }),
-    } as Response);
+    } as unknown as Response);
     const menu = await generateServerMenu('http://localhost:1934');
     expect(menu).toContain('pdf, docx');
     expect(menu).not.toContain('Chrome not detected');
@@ -48,7 +48,7 @@ describe('generateServerMenu', () => {
         exportFormats: ['docx'],
         chrome: false,
       }),
-    } as Response);
+    } as unknown as Response);
     const menu = await generateServerMenu('http://localhost:1934');
     expect(menu).toContain('Chrome not detected');
   });
@@ -62,7 +62,7 @@ describe('generateServerMenu', () => {
         events: [{ name: 'webhook', pattern: '/event/*' }],
         insiderCount: 3,
       }),
-    } as Response);
+    } as unknown as Response);
     const menu = await generateServerMenu('http://localhost:1934');
     expect(menu).toContain('webhook');
     expect(menu).toContain('/event/*');
@@ -80,7 +80,7 @@ describe('generateServerMenu', () => {
           runner: { url: 'http://localhost:1937', reachable: false },
         },
       }),
-    } as Response);
+    } as unknown as Response);
     const menu = await generateServerMenu('http://localhost:1934');
     expect(menu).toContain('\u2705');
     expect(menu).toContain('\u274c');

@@ -9,7 +9,7 @@ import { createElement, Maximize, Minimize } from 'lucide';
 // ── CSS class constants ──────────────────────────────────────────────
 
 const WRAPPER_CLASS = 'relative bg-white rounded-lg border border-border overflow-hidden my-4';
-const WRAPPER_FULLSCREEN_CLASS = 'fixed inset-0 z-[100] bg-white dark:bg-zinc-900 flex flex-col';
+const WRAPPER_FULLSCREEN_CLASS = 'fixed inset-0 z-[100] bg-white flex flex-col';
 const VIEWPORT_CLASS = 'overflow-hidden w-full';
 const VIEWPORT_FULLSCREEN_CLASS = 'overflow-hidden w-full h-full flex-1';
 const INNER_CLASS = 'flex items-center justify-center p-4 [&>svg]:max-w-full [&>svg]:h-auto';
