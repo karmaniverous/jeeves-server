@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [v3.0.0-1](https://github.com/karmaniverous/jeeves-server/compare/v2.9.3...v3.0.0-1)
+#### [v3.0.0](https://github.com/karmaniverous/jeeves-server/compare/v2.9.3...v3.0.0)
 
 - feat: named access scopes [`#84`](https://github.com/karmaniverous/jeeves-server/pull/84)
 - fix: plugin auth chain, status endpoint improvements [`#83`](https://github.com/karmaniverous/jeeves-server/pull/83)
@@ -63,14 +63,17 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore: migrate default port to 1934 [`4614a5f`](https://github.com/karmaniverous/jeeves-server/commit/4614a5f4a5a1fd1d75eb730adbb8caa4a7dab7ff)
 - chore: add tsdoc.json to both package roots [`9ccf217`](https://github.com/karmaniverous/jeeves-server/commit/9ccf2171347ed4deabe617b16b236edba5b5bc75)
 - chore: add tsdoc.json to both package roots [`173cf94`](https://github.com/karmaniverous/jeeves-server/commit/173cf94061cfabd3c21796cb10ad0300c1e14e2b)
+- chore: release @karmaniverous/jeeves-server v3.0.0-1 [`db96bc1`](https://github.com/karmaniverous/jeeves-server/commit/db96bc140b9cbca7ad52ddd562a805ac74ca67aa)
 - fix: set rootDir and update start script path for monorepo layout [`a2fd77c`](https://github.com/karmaniverous/jeeves-server/commit/a2fd77cb067fbae733a64e9bc04c0d9159910f90)
 - fix: resolve TS2352 warnings in openclaw test mocks [`88950e2`](https://github.com/karmaniverous/jeeves-server/commit/88950e23bbd206e40a7bc25ea35c64d7609af281)
 - fix: CI failures and SvgViewer panzoom re-init bug [`7392712`](https://github.com/karmaniverous/jeeves-server/commit/73927128276341a37c362c3143334bd8bb416d09)
 - fix: resolve remaining lint errors (type annotations, unused params, unnecessary conditionals) [`e7714ae`](https://github.com/karmaniverous/jeeves-server/commit/e7714ae451a72a1dd9881d85c964d6d8aec17574)
 - fix: remove unnecessary auth from /api/status calls (endpoint is public) [`f651fe7`](https://github.com/karmaniverous/jeeves-server/commit/f651fe7bff4320eb28b5039278bcdcd032cac6d5)
 - fix: update linux-compat CI for monorepo paths [`22dd30f`](https://github.com/karmaniverous/jeeves-server/commit/22dd30ffe5543042287a299523e5b1125c86381e)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.1.0-1 [`d08e571`](https://github.com/karmaniverous/jeeves-server/commit/d08e571d58bb6387e69441dc06511d92fb743c15)
 - chore: eliminate all lint warnings [`ed12c86`](https://github.com/karmaniverous/jeeves-server/commit/ed12c868546a3f14f7d809d7378235ac91415be7)
 - fix: CI rimraf resolution and remove redundant client steps [`757c45c`](https://github.com/karmaniverous/jeeves-server/commit/757c45cf429e7c70358442e353922f7999d74640)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.1.0 [`bbeac17`](https://github.com/karmaniverous/jeeves-server/commit/bbeac17333ebad423b0fd8c2bcd310bbb0b63b27)
 - publishconfig public access [`8e4358c`](https://github.com/karmaniverous/jeeves-server/commit/8e4358cc43dc2f131840047d34f2644eb6293fe2)
 - fix: add pattern to StatusResponse events type [`f64e6af`](https://github.com/karmaniverous/jeeves-server/commit/f64e6af06ce51a54dee4bf69dd0e6fbae79dc683)
 - fix: normalize path for watcher render (Windows backslash + uppercase drive) [`f6c229d`](https://github.com/karmaniverous/jeeves-server/commit/f6c229d7f4ac7ec11099c884b75e6a90cc0cdf59)
