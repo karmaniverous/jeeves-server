@@ -4,3 +4,5 @@ children:
   - ./openclaw-integration.md
   - ../CHANGELOG.md
 ---
+
+Foo

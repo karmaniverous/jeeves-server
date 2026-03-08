@@ -9,3 +9,5 @@ children:
   - ./api-integration.md
   - ../CHANGELOG.md
 ---
+
+Foo

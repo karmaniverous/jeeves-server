@@ -32,9 +32,7 @@
   ],
   "projectDocuments": [
     "./packages/service/guides/index.md",
-    "./packages/service/CHANGELOG.md",
     "./packages/openclaw/guides/index.md",
-    "./packages/openclaw/CHANGELOG.md"
   ],
   "replaceText": {
     "replacements": [

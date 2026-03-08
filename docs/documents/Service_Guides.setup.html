@@ -1,0 +1,303 @@
+<!DOCTYPE html><html class="default" lang="en" data-base="../"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>setup | @karmaniverous/jeeves-server</title><meta name="description" content="Documentation for @karmaniverous/jeeves-server"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/icons.js" id="tsd-icons-script"></script><script async src="../assets/search.js" id="tsd-search-script"></script><script async src="../assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="../index.html" class="title">@karmaniverous/jeeves-server</a><div id="tsd-toolbar-links"><a href="https://github.com/karmaniverous/jeeves-server">GitHub</a></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><ul class="tsd-breadcrumb" aria-label="Breadcrumb"><li><a href="Service_Guides.html">Service Guides</a></li><li><a href="" aria-current="page">setup</a></li></ul></div><div class="tsd-panel tsd-typography"><h1 id="setup-configuration" class="tsd-anchor-link">Setup &amp; Configuration<a href="#setup-configuration" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h1>
+<h2 id="prerequisites" class="tsd-anchor-link">Prerequisites<a href="#prerequisites" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<ul>
+<li><strong>Node.js</strong> ≥ 20</li>
+<li><strong>Chrome or Chromium</strong> — required for PDF export (Puppeteer uses it headlessly)</li>
+</ul>
+<h2 id="installation" class="tsd-anchor-link">Installation<a href="#installation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<pre><code class="bash"><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">install</span><span class="hl-1"> </span><span class="hl-3">-g</span><span class="hl-1"> </span><span class="hl-2">@karmaniverous/jeeves-server</span>
+</code><button type="button">Copy</button></pre>
+
+<p>The <code>postinstall</code> script automatically downloads the PlantUML jar for local diagram rendering.</p>
+<h2 id="configuration" class="tsd-anchor-link">Configuration<a href="#configuration" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Jeeves Server uses <a href="https://github.com/cosmiconfig/cosmiconfig" target="_blank" class="external">cosmiconfig</a> for configuration. Create a config file in any supported format:</p>
+<pre><code class="bash"><span class="hl-4"># JSON (recommended for simplicity)</span><br/><span class="hl-0">jeeves-server.config.json</span><br/><br/><span class="hl-4"># YAML</span><br/><span class="hl-0">jeeves-server.config.yaml</span><br/><br/><span class="hl-4"># TypeScript (for type checking during authoring)</span><br/><span class="hl-0">jeeves-server.config.ts</span><br/><br/><span class="hl-4"># Or any cosmiconfig-supported format</span>
+</code><button type="button">Copy</button></pre>
+
+<p>The server searches for config files starting from its working directory and walking up. You can also specify an explicit path:</p>
+<pre><code class="bash"><span class="hl-0">jeeves-server</span><span class="hl-1"> </span><span class="hl-2">start</span><span class="hl-1"> </span><span class="hl-3">--config</span><span class="hl-1"> </span><span class="hl-2">/path/to/jeeves-server.config.json</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="config-structure-json" class="tsd-anchor-link">Config structure (JSON)<a href="#config-structure-json" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;port&quot;</span><span class="hl-1">: </span><span class="hl-6">1934</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;chromePath&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;C:</span><span class="hl-7">\\</span><span class="hl-2">Program Files</span><span class="hl-7">\\</span><span class="hl-2">Google</span><span class="hl-7">\\</span><span class="hl-2">Chrome</span><span class="hl-7">\\</span><span class="hl-2">Application</span><span class="hl-7">\\</span><span class="hl-2">chrome.exe&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;auth&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;modes&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;keys&quot;</span><span class="hl-1">, </span><span class="hl-2">&quot;google&quot;</span><span class="hl-1">],</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;google&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;clientId&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;your-google-client-id&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;clientSecret&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;your-google-client-secret&quot;</span><br/><span class="hl-1">    },</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;sessionSecret&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;random-session-signing-secret&quot;</span><br/><span class="hl-1">  },</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;scopes&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;restricted&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;allow&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;/d/projects/*&quot;</span><span class="hl-1">],</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;deny&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;/d/projects/secret/*&quot;</span><span class="hl-1">]</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">  },</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;insiders&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;alice@example.com&quot;</span><span class="hl-1">: {},</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;contractor@example.com&quot;</span><span class="hl-1">: { </span><span class="hl-5">&quot;scopes&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;restricted&quot;</span><span class="hl-1"> }</span><br/><span class="hl-1">  },</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;keys&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;_internal&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;random-hex-seed-for-pdf-export&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;_plugin&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;random-hex-seed-for-openclaw-plugin&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;primary&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;random-hex-seed-for-api-access&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;webhook-notion&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;key&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;random-hex-seed&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;scopes&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;/event&quot;</span><span class="hl-1">]</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">  },</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;events&quot;</span><span class="hl-1">: {},</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;watcherUrl&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;http://localhost:1936&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;runnerUrl&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;http://127.0.0.1:1937&quot;</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="environment-variable-substitution" class="tsd-anchor-link">Environment variable substitution<a href="#environment-variable-substitution" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>String values in the config support <code>${VAR_NAME}</code> substitution from <code>process.env</code>:</p>
+<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;auth&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;google&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;clientId&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;${GOOGLE_CLIENT_ID}&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;clientSecret&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;${GOOGLE_CLIENT_SECRET}&quot;</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="validating-your-config" class="tsd-anchor-link">Validating your config<a href="#validating-your-config" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="bash"><span class="hl-0">jeeves-server</span><span class="hl-1"> </span><span class="hl-2">config</span><span class="hl-1"> </span><span class="hl-2">validate</span><span class="hl-1"> [--config &lt;</span><span class="hl-2">pat</span><span class="hl-1">h&gt;</span><span class="hl-2">]</span>
+</code><button type="button">Copy</button></pre>
+
+<p>This loads and validates the config against the Zod schema, reporting any errors. Use <code>config show</code> to see the fully resolved configuration with all derived keys and scope assignments.</p>
+<h3 id="platform-specific-settings" class="tsd-anchor-link">Platform-specific settings<a href="#platform-specific-settings" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p><strong>Windows</strong> — drives are auto-discovered; no <code>roots</code> config needed:</p>
+<pre><code class="json"><span class="hl-1">{ </span><span class="hl-5">&quot;chromePath&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;C:</span><span class="hl-7">\\</span><span class="hl-2">Program Files</span><span class="hl-7">\\</span><span class="hl-2">Google</span><span class="hl-7">\\</span><span class="hl-2">Chrome</span><span class="hl-7">\\</span><span class="hl-2">Application</span><span class="hl-7">\\</span><span class="hl-2">chrome.exe&quot;</span><span class="hl-1"> }</span>
+</code><button type="button">Copy</button></pre>
+
+<p><strong>Linux</strong> — configure filesystem roots for the file browser:</p>
+<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;chromePath&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;/usr/bin/chromium-browser&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;roots&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;home&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;/home&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;projects&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;/opt/projects&quot;</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
+
+<p>On Windows, <code>roots</code> is ignored. On Linux, if omitted, it defaults to <code>{ &quot;root&quot;: &quot;/&quot; }</code>.</p>
+<h3 id="config-is-immutable-at-runtime" class="tsd-anchor-link">Config is immutable at runtime<a href="#config-is-immutable-at-runtime" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Once the server starts, the config is loaded once and never written to. Mutable state (like auto-generated insider keys) lives in a separate <code>state.json</code> file that the server manages itself.</p>
+<hr>
+<h2 id="authentication-modes" class="tsd-anchor-link">Authentication Modes<a href="#authentication-modes" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Jeeves Server supports two authentication methods, configured via <code>auth.modes</code>:</p>
+<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;auth&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;modes&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;google&quot;</span><span class="hl-1">, </span><span class="hl-2">&quot;keys&quot;</span><span class="hl-1">]</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
+
+<p>You can enable one or both. The order matters — modes are checked in the order listed.</p>
+<h3 id="google-oauth-" class="tsd-anchor-link">Google OAuth (<code>&quot;google&quot;</code>)<a href="#google-oauth-" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p><strong>Best for:</strong> Teams where insiders log in via browser.</p>
+<p>Users authenticate with their Google account. The server checks their email against the <code>insiders</code> map to determine access.</p>
+<p><strong>Requirements when enabled:</strong></p>
+<ul>
+<li><code>auth.google.clientId</code> and <code>auth.google.clientSecret</code> — from <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="external">Google Cloud Console</a></li>
+<li><code>auth.sessionSecret</code> — a random string for signing session cookies</li>
+<li>At least one entry in <code>insiders</code></li>
+</ul>
+<p><strong>Google Cloud setup:</strong></p>
+<ol>
+<li>Create a project (or use an existing one)</li>
+<li>Go to <strong>APIs &amp; Services → Credentials → Create Credentials → OAuth client ID</strong></li>
+<li>Application type: <strong>Web application</strong></li>
+<li>Authorized redirect URI: <code>https://your-domain.com/auth/google/callback</code></li>
+<li>Copy the client ID and client secret into your config</li>
+</ol>
+<h3 id="key-based-auth-" class="tsd-anchor-link">Key-Based Auth (<code>&quot;keys&quot;</code>)<a href="#key-based-auth-" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p><strong>Best for:</strong> Headless access, bot integrations, simple setups without Google.</p>
+<p>Users authenticate by appending <code>?key=&lt;value&gt;</code> to any URL. The server derives keys from configured seeds using HMAC-SHA256.</p>
+<p><strong>Requirements when enabled:</strong></p>
+<ul>
+<li>At least one entry in <code>keys</code></li>
+</ul>
+<p><strong>How keys work:</strong> You configure a <strong>seed</strong> (a random secret string). The server derives the actual key from it via HMAC. You never put the derived key in the config — only the seed. To get the derived key:</p>
+<pre><code class="bash"><span class="hl-0">curl</span><span class="hl-1"> </span><span class="hl-3">-H</span><span class="hl-1"> </span><span class="hl-2">&quot;X-API-Key: &lt;seed&gt;&quot;</span><span class="hl-1"> </span><span class="hl-2">https://your-domain.com/insider-key</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="both-modes-together" class="tsd-anchor-link">Both Modes Together<a href="#both-modes-together" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>When both are active, browser users log in with Google, and bots/scripts use <code>?key=</code> for stateless access. Both methods work on every endpoint.</p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Recommended</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Team of humans accessing via browser</td>
+<td><code>[&quot;google&quot;]</code></td>
+</tr>
+<tr>
+<td>Bot/script access only</td>
+<td><code>[&quot;keys&quot;]</code></td>
+</tr>
+<tr>
+<td>Humans + bots on the same server</td>
+<td><code>[&quot;google&quot;, &quot;keys&quot;]</code></td>
+</tr>
+<tr>
+<td>Quick local setup, no Google credentials</td>
+<td><code>[&quot;keys&quot;]</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="named-access-scopes" class="tsd-anchor-link">Named Access Scopes<a href="#named-access-scopes" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Define reusable scope policies at the top level, then reference them by name from insiders, keys, or the outsider policy:</p>
+<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;scopes&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;engineering&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;allow&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;/d/repos/*&quot;</span><span class="hl-1">, </span><span class="hl-2">&quot;/d/docs/*&quot;</span><span class="hl-1">],</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;deny&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;/d/docs/hr/*&quot;</span><span class="hl-1">]</span><br/><span class="hl-1">    },</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;readonly-projects&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;allow&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;/d/projects/*&quot;</span><span class="hl-1">]</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">  },</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;insiders&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;dev@example.com&quot;</span><span class="hl-1">: { </span><span class="hl-5">&quot;scopes&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;engineering&quot;</span><span class="hl-1"> },</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;contractor@example.com&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;scopes&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;readonly-projects&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;deny&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;/d/projects/secret/*&quot;</span><span class="hl-1">]</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
+
+<p>Named scopes are <strong>atomic</strong> — composition happens at the point of use. An insider or key referencing a named scope can add extra <code>allow</code> and <code>deny</code> patterns that merge on top of the named scope's rules.</p>
+<p>Scopes can also be specified inline (without named references) using the same formats as before:</p>
+<pre><code class="json"><span class="hl-1">{ </span><span class="hl-5">&quot;scopes&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;/d/projects/*&quot;</span><span class="hl-1">] }</span><br/><span class="hl-1">{ </span><span class="hl-5">&quot;scopes&quot;</span><span class="hl-1">: { </span><span class="hl-5">&quot;allow&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;/d/*&quot;</span><span class="hl-1">], </span><span class="hl-5">&quot;deny&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;/d/secrets/*&quot;</span><span class="hl-1">] } }</span>
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h2 id="insiders" class="tsd-anchor-link">Insiders<a href="#insiders" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>The <code>insiders</code> map defines <strong>who</strong> has full browsing access:</p>
+<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;insiders&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;alice@example.com&quot;</span><span class="hl-1">: {},</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;contractor@example.com&quot;</span><span class="hl-1">: { </span><span class="hl-5">&quot;scopes&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;restricted&quot;</span><span class="hl-1"> },</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;team@example.com&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;scopes&quot;</span><span class="hl-1">: { </span><span class="hl-5">&quot;allow&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;/d/*&quot;</span><span class="hl-1">], </span><span class="hl-5">&quot;deny&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;/d/secrets/*&quot;</span><span class="hl-1">] }</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
+
+<p>See the <a href="Service_Guides.sharing.html">Insiders, Outsiders &amp; Sharing</a> guide for the full access model.</p>
+<hr>
+<h2 id="keys" class="tsd-anchor-link">Keys<a href="#keys" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>The <code>keys</code> map defines <strong>named API keys</strong> for machine and human access:</p>
+<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;keys&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;primary&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;a-random-64-char-hex-string&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;webhook-notion&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;key&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;another-random-hex-string&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;scopes&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;/event&quot;</span><span class="hl-1">]</span><br/><span class="hl-1">    },</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;_internal&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;seed-for-pdf-export&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;_plugin&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;seed-for-openclaw-plugin&quot;</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
+
+<p><strong>Generate seeds with:</strong></p>
+<pre><code class="bash"><span class="hl-0">node</span><span class="hl-1"> </span><span class="hl-3">-e</span><span class="hl-1"> </span><span class="hl-2">&quot;console.log(require(&#39;crypto&#39;).randomBytes(32).toString(&#39;hex&#39;))&quot;</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="reserved-keys" class="tsd-anchor-link">Reserved keys<a href="#reserved-keys" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Purpose</th>
+<th>Scopes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_internal</code></td>
+<td>Puppeteer uses this to authenticate when rendering PDFs/DOCX. <strong>Required for export.</strong></td>
+<td>Must be unscoped</td>
+</tr>
+<tr>
+<td><code>_plugin</code></td>
+<td>OpenClaw plugin authentication. See <a href="OpenClaw_Plugin_Guides.openclaw-integration.html">OpenClaw Integration</a>.</td>
+<td>Must be unscoped</td>
+</tr>
+</tbody>
+</table>
+<p>Both reserved keys are enforced unscoped by the Zod schema.</p>
+<hr>
+<h2 id="event-gateway" class="tsd-anchor-link">Event Gateway<a href="#event-gateway" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>See the <a href="Service_Guides.event-gateway.html">Event Gateway</a> guide for full configuration and usage.</p>
+<hr>
+<h2 id="optional-integrations" class="tsd-anchor-link">Optional Integrations<a href="#optional-integrations" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="jeeves-watcher-semantic-search" class="tsd-anchor-link">jeeves-watcher (Semantic Search)<a href="#jeeves-watcher-semantic-search" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>When <code>watcherUrl</code> is configured, the server proxies semantic search queries to <a href="https://github.com/karmaniverous/jeeves-watcher" target="_blank" class="external">jeeves-watcher</a> and provides a search UI in the header, with filter facets and scope-aware result filtering.</p>
+<pre><code class="json"><span class="hl-1">{ </span><span class="hl-5">&quot;watcherUrl&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;http://localhost:1936&quot;</span><span class="hl-1"> }</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="jeeves-runner-process-dashboard" class="tsd-anchor-link">jeeves-runner (Process Dashboard)<a href="#jeeves-runner-process-dashboard" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>When <code>runnerUrl</code> is configured, the server proxies runner API calls for the process dashboard UI.</p>
+<pre><code class="json"><span class="hl-1">{ </span><span class="hl-5">&quot;runnerUrl&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;http://127.0.0.1:1937&quot;</span><span class="hl-1"> }</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="plantuml" class="tsd-anchor-link">PlantUML<a href="#plantuml" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Mermaid is bundled as a direct dependency — no configuration needed. PlantUML uses a fallback pipeline:</p>
+<ol>
+<li><strong>Local Java jar</strong> (downloaded automatically via <code>postinstall</code>) — fastest, supports <code>!include</code></li>
+<li><strong>Configured PlantUML servers</strong> — private instances, tried in order</li>
+<li><strong>Public community server</strong> (<code>plantuml.com</code>) — always appended as last resort</li>
+</ol>
+<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;plantuml&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;jarPath&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;/opt/plantuml/plantuml.jar&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;javaPath&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;/usr/bin/java&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;servers&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;https://internal.plantuml.example.com/plantuml&quot;</span><span class="hl-1">]</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
+
+<p>If <code>plantuml</code> is omitted entirely, only the community server is used.</p>
+<hr>
+<h2 id="config-reference" class="tsd-anchor-link">Config Reference<a href="#config-reference" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>port</code></td>
+<td>number</td>
+<td><code>1934</code></td>
+<td>Server port</td>
+</tr>
+<tr>
+<td><code>chromePath</code></td>
+<td>string</td>
+<td><em>required</em></td>
+<td>Path to Chrome/Chromium executable</td>
+</tr>
+<tr>
+<td><code>auth</code></td>
+<td>object</td>
+<td><em>required</em></td>
+<td>Authentication configuration</td>
+</tr>
+<tr>
+<td><code>scopes</code></td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Named scope definitions</td>
+</tr>
+<tr>
+<td><code>insiders</code></td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Email → insider entry map</td>
+</tr>
+<tr>
+<td><code>keys</code></td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Named key entries</td>
+</tr>
+<tr>
+<td><code>events</code></td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Event gateway schemas</td>
+</tr>
+<tr>
+<td><code>eventTimeoutMs</code></td>
+<td>number</td>
+<td><code>30000</code></td>
+<td>Default event command timeout</td>
+</tr>
+<tr>
+<td><code>eventLogPurgeMs</code></td>
+<td>number</td>
+<td><code>2592000000</code></td>
+<td>Event log retention (default: 30 days)</td>
+</tr>
+<tr>
+<td><code>maxZipSizeMb</code></td>
+<td>number</td>
+<td><code>100</code></td>
+<td>Max directory size for ZIP export</td>
+</tr>
+<tr>
+<td><code>roots</code></td>
+<td>object</td>
+<td>—</td>
+<td>Linux filesystem roots (ignored on Windows)</td>
+</tr>
+<tr>
+<td><code>watcherUrl</code></td>
+<td>string</td>
+<td>—</td>
+<td>jeeves-watcher API URL for semantic search</td>
+</tr>
+<tr>
+<td><code>runnerUrl</code></td>
+<td>string</td>
+<td>—</td>
+<td>jeeves-runner API URL for process dashboard</td>
+</tr>
+<tr>
+<td><code>plantuml</code></td>
+<td>object</td>
+<td>—</td>
+<td>PlantUML rendering config</td>
+</tr>
+<tr>
+<td><code>diagramCachePath</code></td>
+<td>string</td>
+<td><code>.diagram-cache</code></td>
+<td>Cached rendered diagram directory</td>
+</tr>
+<tr>
+<td><code>outsiderPolicy</code></td>
+<td>scopes</td>
+<td>—</td>
+<td>Global outsider sharing constraints</td>
+</tr>
+<tr>
+<td><code>mermaidCliPath</code></td>
+<td>string</td>
+<td>—</td>
+<td><strong>Deprecated.</strong> Mermaid is now bundled.</td>
+</tr>
+</tbody>
+</table>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#setup-configuration"><span>Setup &amp; <wbr/>Configuration</span></a><ul><li><a href="#prerequisites"><span>Prerequisites</span></a></li><li><a href="#installation"><span>Installation</span></a></li><li><a href="#configuration"><span>Configuration</span></a></li><li><ul><li><a href="#config-structure-json"><span>Config structure (<wbr/>JSON)</span></a></li><li><a href="#environment-variable-substitution"><span>Environment variable substitution</span></a></li><li><a href="#validating-your-config"><span>Validating your config</span></a></li><li><a href="#platform-specific-settings"><span>Platform-<wbr/>specific settings</span></a></li><li><a href="#config-is-immutable-at-runtime"><span>Config is immutable at runtime</span></a></li></ul></li><li><a href="#authentication-modes"><span>Authentication <wbr/>Modes</span></a></li><li><ul><li><a href="#google-oauth-"><span>Google <wbr/>O<wbr/>Auth ()</span></a></li><li><a href="#key-based-auth-"><span>Key-<wbr/>Based <wbr/>Auth ()</span></a></li><li><a href="#both-modes-together"><span>Both <wbr/>Modes <wbr/>Together</span></a></li></ul></li><li><a href="#named-access-scopes"><span>Named <wbr/>Access <wbr/>Scopes</span></a></li><li><a href="#insiders"><span>Insiders</span></a></li><li><a href="#keys"><span>Keys</span></a></li><li><ul><li><a href="#reserved-keys"><span>Reserved keys</span></a></li></ul></li><li><a href="#event-gateway"><span>Event <wbr/>Gateway</span></a></li><li><a href="#optional-integrations"><span>Optional <wbr/>Integrations</span></a></li><li><ul><li><a href="#jeeves-watcher-semantic-search"><span>jeeves-<wbr/>watcher (<wbr/>Semantic <wbr/>Search)</span></a></li><li><a href="#jeeves-runner-process-dashboard"><span>jeeves-<wbr/>runner (<wbr/>Process <wbr/>Dashboard)</span></a></li><li><a href="#plantuml"><span>Plant<wbr/>UML</span></a></li></ul></li><li><a href="#config-reference"><span>Config <wbr/>Reference</span></a></li></ul></div></details></div><div class="site-menu"><nav id="tsd-sidebar-links" class="tsd-navigation"><a href="https://github.com/karmaniverous/jeeves-server" class="tsd-nav-link">GitHub</a></nav><nav class="tsd-navigation"><a href="../modules.html">@karmaniverous/jeeves-server</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>

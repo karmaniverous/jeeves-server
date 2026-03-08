@@ -1,0 +1,211 @@
+<!DOCTYPE html><html class="default" lang="en" data-base="../"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>exports | @karmaniverous/jeeves-server</title><meta name="description" content="Documentation for @karmaniverous/jeeves-server"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/icons.js" id="tsd-icons-script"></script><script async src="../assets/search.js" id="tsd-search-script"></script><script async src="../assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="../index.html" class="title">@karmaniverous/jeeves-server</a><div id="tsd-toolbar-links"><a href="https://github.com/karmaniverous/jeeves-server">GitHub</a></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><ul class="tsd-breadcrumb" aria-label="Breadcrumb"><li><a href="Service_Guides.html">Service Guides</a></li><li><a href="" aria-current="page">exports</a></li></ul></div><div class="tsd-panel tsd-typography"><h1 id="exporting-downloads" class="tsd-anchor-link">Exporting &amp; Downloads<a href="#exporting-downloads" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h1>
+<p>Jeeves Server can export files as PDF, DOCX, or ZIP — turning Markdown into business-ready documents with one click.</p>
+<h2 id="export-types" class="tsd-anchor-link">Export Types<a href="#export-types" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Available For</th>
+<th>How It Works</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PDF</strong></td>
+<td>Markdown, Mermaid, PlantUML</td>
+<td>Puppeteer (Markdown) or diagram renderer (Mermaid/PlantUML)</td>
+</tr>
+<tr>
+<td><strong>DOCX</strong></td>
+<td>Markdown files</td>
+<td>HTML converted via <code>@turbodocx/html-to-docx</code></td>
+</tr>
+<tr>
+<td><strong>SVG</strong></td>
+<td>Mermaid (<code>.mmd</code>), PlantUML (<code>.puml</code>, <code>.pu</code>, <code>.plantuml</code>)</td>
+<td>Rendered via Mermaid CLI or PlantUML jar/server</td>
+</tr>
+<tr>
+<td><strong>PNG</strong></td>
+<td>Mermaid, PlantUML</td>
+<td>Rendered via Mermaid CLI or PlantUML jar/server</td>
+</tr>
+<tr>
+<td><strong>EPS</strong></td>
+<td>PlantUML (jar only)</td>
+<td>Vector export via PlantUML jar</td>
+</tr>
+<tr>
+<td><strong>ZIP</strong></td>
+<td>Directories</td>
+<td>Entire directory tree compressed via <a href="https://github.com/archiverjs/node-archiver" target="_blank" class="external"><code>archiver</code></a></td>
+</tr>
+<tr>
+<td><strong>Raw</strong></td>
+<td>Any file</td>
+<td>Direct file download</td>
+</tr>
+</tbody>
+</table>
+<h2 id="using-exports" class="tsd-anchor-link">Using Exports<a href="#using-exports" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="from-the-ui" class="tsd-anchor-link">From the UI<a href="#from-the-ui" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>The <strong>Download dropdown</strong> (⬇️ icon) in the header shows available export options based on the current file type. Click an option and the file downloads directly — a spinner shows during generation, replaced by a checkmark on completion.</p>
+<h3 id="via-url-parameters" class="tsd-anchor-link">Via URL Parameters<a href="#via-url-parameters" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Append to any file URL:</p>
+<pre><code><span class="hl-1"># </span><span class="hl-11">PDF</span><span class="hl-1"> </span><span class="hl-3">export</span><br/><span class="hl-12">/browse/</span><span class="hl-3">d</span><span class="hl-1">/</span><span class="hl-8">docs</span><span class="hl-1">/</span><span class="hl-8">design</span><span class="hl-1">.</span><span class="hl-8">md</span><span class="hl-1">?</span><span class="hl-8">export</span><span class="hl-1">=</span><span class="hl-8">pdf</span><br/><br/><span class="hl-1"># </span><span class="hl-11">DOCX</span><span class="hl-1"> </span><span class="hl-8">export</span><br/><span class="hl-12">/browse/</span><span class="hl-3">d</span><span class="hl-1">/</span><span class="hl-8">docs</span><span class="hl-1">/</span><span class="hl-8">design</span><span class="hl-1">.</span><span class="hl-8">md</span><span class="hl-1">?</span><span class="hl-8">export</span><span class="hl-1">=</span><span class="hl-8">docx</span><br/><br/><span class="hl-1"># </span><span class="hl-8">Raw</span><span class="hl-1"> </span><span class="hl-8">file</span><span class="hl-1"> </span><span class="hl-8">download</span><br/><span class="hl-12">/browse/</span><span class="hl-3">d</span><span class="hl-1">/</span><span class="hl-8">docs</span><span class="hl-1">/</span><span class="hl-8">design</span><span class="hl-1">.</span><span class="hl-8">md</span><span class="hl-1">?</span><span class="hl-8">raw</span><span class="hl-1">=</span><span class="hl-6">1</span>
+</code><button>Copy</button></pre>
+
+<p>These work with both insider keys (<code>?key=&lt;insider-key&gt;&amp;export=pdf</code>) and outsider share links.</p>
+<h3 id="programmatic-access" class="tsd-anchor-link">Programmatic Access<a href="#programmatic-access" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="bash"><span class="hl-4"># Download PDF via curl</span><br/><span class="hl-0">curl</span><span class="hl-1"> </span><span class="hl-3">-o</span><span class="hl-1"> </span><span class="hl-2">design.pdf</span><span class="hl-1"> </span><span class="hl-2">&quot;https://jeeves.example.com/path/d/docs/design.md?key=&lt;key&gt;&amp;export=pdf&quot;</span><br/><br/><span class="hl-4"># Download DOCX</span><br/><span class="hl-0">curl</span><span class="hl-1"> </span><span class="hl-3">-o</span><span class="hl-1"> </span><span class="hl-2">design.docx</span><span class="hl-1"> </span><span class="hl-2">&quot;https://jeeves.example.com/path/d/docs/design.md?key=&lt;key&gt;&amp;export=docx&quot;</span><br/><br/><span class="hl-4"># Download raw file</span><br/><span class="hl-0">curl</span><span class="hl-1"> </span><span class="hl-3">-o</span><span class="hl-1"> </span><span class="hl-2">design.md</span><span class="hl-1"> </span><span class="hl-2">&quot;https://jeeves.example.com/path/d/docs/design.md?key=&lt;key&gt;&amp;raw=1&quot;</span>
+</code><button type="button">Copy</button></pre>
+
+<h2 id="pdf-export" class="tsd-anchor-link">PDF Export<a href="#pdf-export" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>PDF generation uses <a href="https://github.com/puppeteer/puppeteer" target="_blank" class="external"><strong>Puppeteer</strong></a> with your installed Chrome/Chromium. The server:</p>
+<ol>
+<li>Launches headless Chrome</li>
+<li>Loads the rendered markdown page (authenticating with the <code>_internal</code> key)</li>
+<li>Prints to PDF with print-quality settings</li>
+<li>Returns the PDF as a download</li>
+</ol>
+<h3 id="requirements" class="tsd-anchor-link">Requirements<a href="#requirements" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul>
+<li><strong>Chrome/Chromium</strong> must be installed on the server</li>
+<li><strong><code>chromePath</code></strong> must point to the executable in <code>your config file</code></li>
+<li><strong><code>_internal</code> key</strong> must be configured (Puppeteer uses it to authenticate)</li>
+</ul>
+<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;chromePath&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;C:</span><span class="hl-7">\\</span><span class="hl-2">Program Files</span><span class="hl-7">\\</span><span class="hl-2">Google</span><span class="hl-7">\\</span><span class="hl-2">Chrome</span><span class="hl-7">\\</span><span class="hl-2">Application</span><span class="hl-7">\\</span><span class="hl-2">chrome.exe&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;keys&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;_internal&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;random-seed-string&quot;</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="what-you-see-is-what-you-get" class="tsd-anchor-link">What you see is what you get<a href="#what-you-see-is-what-you-get" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>PDFs render from the same HTML as the browser view, but:</p>
+<ul>
+<li><strong>Prose width setting is ignored</strong> — exports always use full width</li>
+<li><strong>Dark mode is ignored</strong> — exports always render in light mode</li>
+<li><strong>TOC sidebar is excluded</strong> — the document stands alone</li>
+<li><strong>Code blocks retain syntax highlighting</strong> — colors print correctly</li>
+</ul>
+<h3 id="troubleshooting" class="tsd-anchor-link">Troubleshooting<a href="#troubleshooting" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p><strong>&quot;Export failed&quot; error:</strong></p>
+<ul>
+<li>Verify <code>chromePath</code> points to a valid Chrome/Chromium executable</li>
+<li>Ensure the <code>_internal</code> key is configured in <code>keys</code></li>
+<li>Check server logs for Puppeteer errors</li>
+</ul>
+<p><strong>Blank or login page in PDF:</strong></p>
+<ul>
+<li>The <code>_internal</code> key's derived insider key must be valid</li>
+<li>Verify with: <code>curl -s &quot;http://localhost:&lt;port&gt;/insider-key&quot; -H &quot;X-API-Key: &lt;_internal-seed&gt;&quot;</code></li>
+</ul>
+<p><strong>Timeout on large documents:</strong></p>
+<ul>
+<li>Large markdown files with many code blocks or diagrams take longer to render</li>
+<li>The server has a default timeout; very large documents may need optimization</li>
+</ul>
+<h2 id="docx-export" class="tsd-anchor-link">DOCX Export<a href="#docx-export" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>DOCX generation converts the rendered HTML to a Word document using <a href="https://github.com/nickmessing/turbodocx" target="_blank" class="external"><code>@turbodocx/html-to-docx</code></a>. This happens server-side without Chrome.</p>
+<p>DOCX exports:</p>
+<ul>
+<li>Preserve headings, tables, lists, and basic formatting</li>
+<li>Include code blocks (without syntax highlighting colors)</li>
+<li>Embed images as inline content</li>
+<li>Work independently of the <code>_internal</code> key (no Puppeteer needed)</li>
+</ul>
+<h2 id="mermaid-export" class="tsd-anchor-link">Mermaid Export<a href="#mermaid-export" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Mermaid diagrams (<code>.mmd</code> files) can be exported as SVG, PNG, or PDF via the <a href="https://github.com/mermaid-js/mermaid-cli" target="_blank" class="external">Mermaid CLI</a> (<code>mmdc</code>).</p>
+<h3 id="requirements-1" class="tsd-anchor-link">Requirements<a href="#requirements-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Mermaid CLI is bundled as a direct dependency (<code>@mermaid-js/mermaid-cli</code>) — no separate installation or configuration needed. Chrome/Chromium is required for rendering.</p>
+<h3 id="export-endpoint" class="tsd-anchor-link">Export endpoint<a href="#export-endpoint" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code><span class="hl-11">GET</span><span class="hl-1"> /</span><span class="hl-8">api</span><span class="hl-1">/</span><span class="hl-8">mermaid</span><span class="hl-1">-</span><span class="hl-3">export</span><span class="hl-1">/&lt;</span><span class="hl-8">path</span><span class="hl-1">&gt;?</span><span class="hl-8">format</span><span class="hl-1">=</span><span class="hl-8">svg</span><span class="hl-1">|</span><span class="hl-8">png</span><span class="hl-1">|</span><span class="hl-8">pdf</span>
+</code><button>Copy</button></pre>
+
+<h2 id="plantuml-export" class="tsd-anchor-link">PlantUML Export<a href="#plantuml-export" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>PlantUML files (<code>.puml</code>, <code>.pu</code>, <code>.plantuml</code>) can be exported as SVG, PNG, PDF, or EPS.</p>
+<h3 id="rendering-pipeline" class="tsd-anchor-link">Rendering pipeline<a href="#rendering-pipeline" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>PlantUML uses a <strong>fallback rendering pipeline</strong> — each method is tried in order until one succeeds:</p>
+<ol>
+<li><strong>Local Java jar</strong> — fastest, supports <code>!include</code> directives for complex diagrams with shared libraries. Requires Java and the PlantUML jar.</li>
+<li><strong>Configured PlantUML servers</strong> — self-hosted or private PlantUML server instances, tried in order.</li>
+<li><strong>Public community server</strong> (<code>plantuml.com</code>) — always appended as the last resort. Cannot resolve <code>!include</code> directives.</li>
+</ol>
+<h3 id="configuration" class="tsd-anchor-link">Configuration<a href="#configuration" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;plantuml&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;jarPath&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;/opt/plantuml/plantuml.jar&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;javaPath&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;/usr/bin/java&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;servers&quot;</span><span class="hl-1">: [</span><span class="hl-2">&quot;https://internal.plantuml.example.com/plantuml&quot;</span><span class="hl-1">]</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
+
+<p>If <code>plantuml</code> is omitted entirely, only the public community server is used.</p>
+<h3 id="export-formats" class="tsd-anchor-link">Export formats<a href="#export-formats" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Jar</th>
+<th>Server</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SVG</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>PNG</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>PDF</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>EPS</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+</tbody>
+</table>
+<h3 id="export-endpoint-1" class="tsd-anchor-link">Export endpoint<a href="#export-endpoint-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code><span class="hl-11">GET</span><span class="hl-1"> /</span><span class="hl-8">api</span><span class="hl-1">/</span><span class="hl-8">plantuml</span><span class="hl-1">-</span><span class="hl-3">export</span><span class="hl-1">/&lt;</span><span class="hl-8">path</span><span class="hl-1">&gt;?</span><span class="hl-8">format</span><span class="hl-1">=</span><span class="hl-8">svg</span><span class="hl-1">|</span><span class="hl-8">png</span><span class="hl-1">|</span><span class="hl-8">pdf</span><span class="hl-1">|</span><span class="hl-8">eps</span>
+</code><button>Copy</button></pre>
+
+<h3 id="support" class="tsd-anchor-link"><code>!include</code> support<a href="#support" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Only the <strong>local jar</strong> method resolves <code>!include</code> directives. If your diagrams reference shared PlantUML libraries (e.g., AWS icons, company style files), you must configure <code>jarPath</code>. The jar runs with <code>cwd</code> set to the diagram's parent directory, so relative includes resolve naturally.</p>
+<h2 id="embedded-diagrams-in-markdown" class="tsd-anchor-link">Embedded Diagrams in Markdown<a href="#embedded-diagrams-in-markdown" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Markdown files can contain <strong>inline diagram source</strong> in fenced code blocks. Following the <a href="https://github.blog/2022-02-14-include-diagrams-markdown-files-mermaid/" target="_blank" class="external">GitHub convention</a>, code blocks tagged <code>mermaid</code> or <code>plantuml</code> (also <code>puml</code>) are rendered as inline SVG diagrams when the page is displayed.</p>
+<pre><code class="markdown"><span class="hl-1">```mermaid</span><br/><span class="hl-1">graph TD</span><br/><span class="hl-1">    A[Start] --&gt; B{Decision}</span><br/><span class="hl-1">    B --&gt;|Yes| C[Do it]</span><br/><span class="hl-1">    B --&gt;|No| D[Skip]</span><br/><span class="hl-1">```</span><br/><br/><span class="hl-1">```plantuml</span><br/><span class="hl-1">@startuml</span><br/><span class="hl-1">Alice -&gt; Bob: Hello</span><br/><span class="hl-1">Bob --&gt; Alice: Hi!</span><br/><span class="hl-1">@enduml</span><br/><span class="hl-1">```</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="how-it-works" class="tsd-anchor-link">How it works<a href="#how-it-works" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Diagram blocks are detected during markdown parsing, replaced with placeholders, and rendered server-side after HTML generation:</p>
+<ul>
+<li><strong>Mermaid</strong> — rendered via Mermaid CLI (<code>mmdc</code>) to SVG</li>
+<li><strong>PlantUML</strong> — rendered via the same fallback pipeline as <code>.puml</code> files (jar → servers → community)</li>
+</ul>
+<p>If rendering fails, the source code is displayed with a small error label.</p>
+<h3 id="showing-source-instead-of-rendering" class="tsd-anchor-link">Showing source instead of rendering<a href="#showing-source-instead-of-rendering" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>To display diagram source as a code block (without rendering), use a different language hint:</p>
+<pre><code class="markdown"><span class="hl-1">```text</span><br/><span class="hl-1">graph TD</span><br/><span class="hl-1">    A --&gt; B</span><br/><span class="hl-1">```</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="pdfdocx-export" class="tsd-anchor-link">PDF/DOCX export<a href="#pdfdocx-export" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Embedded diagrams appear in PDF and DOCX exports as rendered SVGs — what you see in the browser is what you get in the export.</p>
+<h2 id="zip-export" class="tsd-anchor-link">ZIP Export<a href="#zip-export" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Directories can be downloaded as ZIP archives. The header shows a ZIP download option when viewing a directory.</p>
+<h3 id="size-limit" class="tsd-anchor-link">Size limit<a href="#size-limit" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>The <code>maxZipSizeMb</code> config setting (default: 100 MB) prevents accidentally zipping enormous directories:</p>
+<pre><code><span class="hl-9">maxZipSizeMb</span><span class="hl-1">: </span><span class="hl-6">100</span><span class="hl-1">,  </span><span class="hl-4">// Refuse ZIP for directories larger than this</span>
+</code><button>Copy</button></pre>
+
+<p>When the total directory size exceeds this limit, the ZIP option is disabled with a message explaining why.</p>
+<h3 id="whats-included" class="tsd-anchor-link">What's included<a href="#whats-included" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>The ZIP contains the entire directory tree — all files and subdirectories. No files are excluded.</p>
+<h2 id="export-for-outsiders" class="tsd-anchor-link">Export for Outsiders<a href="#export-for-outsiders" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Outsiders (people using share links) can also export files:</p>
+<ul>
+<li><strong>PDF and DOCX</strong> exports work on shared markdown files</li>
+<li><strong>Raw download</strong> works on any shared file</li>
+<li><strong>ZIP</strong> works on shared directories (within the size limit)</li>
+</ul>
+<p>The share link's authentication covers the export — no additional credentials needed.</p>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#exporting-downloads"><span>Exporting &amp; <wbr/>Downloads</span></a><ul><li><a href="#export-types"><span>Export <wbr/>Types</span></a></li><li><a href="#using-exports"><span>Using <wbr/>Exports</span></a></li><li><ul><li><a href="#from-the-ui"><span>From the <wbr/>UI</span></a></li><li><a href="#via-url-parameters"><span>Via <wbr/>URL <wbr/>Parameters</span></a></li><li><a href="#programmatic-access"><span>Programmatic <wbr/>Access</span></a></li></ul></li><li><a href="#pdf-export"><span>PDF <wbr/>Export</span></a></li><li><ul><li><a href="#requirements"><span>Requirements</span></a></li><li><a href="#what-you-see-is-what-you-get"><span>What you see is what you get</span></a></li><li><a href="#troubleshooting"><span>Troubleshooting</span></a></li></ul></li><li><a href="#docx-export"><span>DOCX <wbr/>Export</span></a></li><li><a href="#mermaid-export"><span>Mermaid <wbr/>Export</span></a></li><li><ul><li><a href="#requirements-1"><span>Requirements</span></a></li><li><a href="#export-endpoint"><span>Export endpoint</span></a></li></ul></li><li><a href="#plantuml-export"><span>Plant<wbr/>UML <wbr/>Export</span></a></li><li><ul><li><a href="#rendering-pipeline"><span>Rendering pipeline</span></a></li><li><a href="#configuration"><span>Configuration</span></a></li><li><a href="#export-formats"><span>Export formats</span></a></li><li><a href="#export-endpoint-1"><span>Export endpoint</span></a></li><li><a href="#support"><span> support</span></a></li></ul></li><li><a href="#embedded-diagrams-in-markdown"><span>Embedded <wbr/>Diagrams in <wbr/>Markdown</span></a></li><li><ul><li><a href="#how-it-works"><span>How it works</span></a></li><li><a href="#showing-source-instead-of-rendering"><span>Showing source instead of rendering</span></a></li><li><a href="#pdfdocx-export"><span>PDF/<wbr/>DOCX export</span></a></li></ul></li><li><a href="#zip-export"><span>ZIP <wbr/>Export</span></a></li><li><ul><li><a href="#size-limit"><span>Size limit</span></a></li><li><a href="#whats-included"><span>What&#39;s included</span></a></li></ul></li><li><a href="#export-for-outsiders"><span>Export for <wbr/>Outsiders</span></a></li></ul></div></details></div><div class="site-menu"><nav id="tsd-sidebar-links" class="tsd-navigation"><a href="https://github.com/karmaniverous/jeeves-server" class="tsd-nav-link">GitHub</a></nav><nav class="tsd-navigation"><a href="../modules.html">@karmaniverous/jeeves-server</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>
