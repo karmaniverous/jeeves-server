@@ -2,6 +2,8 @@
  * Generates the Server menu string for TOOLS.md injection.
  */
 
+import { fetchJson } from './helpers.js';
+
 interface StatusResponse {
   version?: string;
   uptime?: number;
@@ -14,12 +16,6 @@ interface StatusResponse {
   diagrams?: string[];
 }
 
-async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-  if (!res.ok) throw new Error('HTTP ' + String(res.status));
-  return res.json() as Promise<T>;
-}
-
 /**
  * Fetch server status and generate a Markdown menu string.
  */
@@ -27,7 +23,9 @@ export async function generateServerMenu(apiUrl: string): Promise<string> {
   let status: StatusResponse;
 
   try {
-    status = await fetchJson<StatusResponse>(apiUrl + '/api/status');
+    status = (await fetchJson(apiUrl + '/api/status', {
+      signal: AbortSignal.timeout(5000),
+    })) as StatusResponse;
   } catch {
     return `> **ACTION REQUIRED: jeeves-server is unreachable.**
 > The server API at ${apiUrl} is down or not configured.
@@ -67,6 +65,28 @@ export async function generateServerMenu(apiUrl: string): Promise<string> {
       const icon = svc.reachable ? '\u2705' : '\u274c';
       lines.push(`* ${icon} **${name}**: ${svc.url}`);
     }
+    lines.push('');
+  }
+
+  // Event gateway
+  if (status.events && status.events.length > 0) {
+    lines.push('### Event Gateway');
+    lines.push('Active schemas:');
+    for (const evt of status.events) {
+      lines.push(
+        '* **' +
+          evt.name +
+          '**' +
+          (evt.pattern ? ' — pattern: `' + evt.pattern + '`' : ''),
+      );
+    }
+    lines.push('');
+  }
+
+  // Insider count
+  if (status.insiderCount !== undefined) {
+    lines.push('### Access');
+    lines.push(String(status.insiderCount) + ' insider(s) configured.');
     lines.push('');
   }
 

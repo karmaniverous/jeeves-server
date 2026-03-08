@@ -12,6 +12,11 @@ import {
   withAuth,
 } from './helpers.js';
 
+/** Normalize a browse path param: strip leading slash. */
+function normalizePath(params: Record<string, unknown>): string {
+  return String(params.path).replace(/^\//, '');
+}
+
 /** Config for a server API tool. */
 interface ApiToolConfig {
   name: string;
@@ -90,7 +95,7 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
         required: ['path'],
       },
       buildRequest: (params) => {
-        const p = String(params.path).replace(/^\//, '');
+        const p = normalizePath(params);
         return ['/api/link-info/' + p];
       },
     },
@@ -109,7 +114,7 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
         required: ['path'],
       },
       buildRequest: (params) => {
-        const p = String(params.path).replace(/^\//, '');
+        const p = normalizePath(params);
         return ['/api/directory/' + p];
       },
     },
@@ -136,7 +141,7 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
         required: ['path'],
       },
       buildRequest: (params) => {
-        const p = String(params.path).replace(/^\//, '');
+        const p = normalizePath(params);
         const qs: string[] = [];
         if (params.expiryDays !== undefined)
           qs.push('exp=' + String(params.expiryDays as number));
@@ -166,9 +171,28 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
         required: ['path', 'format'],
       },
       buildRequest: (params) => {
-        const p = String(params.path).replace(/^\//, '');
+        const p = normalizePath(params);
         const fmt = String(params.format);
         return ['/export/' + p + '.' + fmt];
+      },
+    },
+    {
+      name: 'server_event_status',
+      description:
+        'Query event gateway status: active schemas, recent event log entries, and event counts.',
+      parameters: {
+        type: 'object',
+        properties: {
+          limit: {
+            type: 'number',
+            description:
+              'Maximum number of recent events to return (default: 20)',
+          },
+        },
+      },
+      buildRequest: (params) => {
+        const limit = params.limit ? String(params.limit as number) : '20';
+        return ['/api/status?events=' + limit];
       },
     },
   ];
