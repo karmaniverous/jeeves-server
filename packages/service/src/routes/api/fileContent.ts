@@ -266,7 +266,11 @@ async function tryWatcherRender(
     const res = await fetch(`${config.watcherUrl}/render`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: fsPath.replace(/\\/g, '/').replace(/^([A-Z]):/, (_, d) => d.toLowerCase() + ':') }),
+      body: JSON.stringify({
+        path: fsPath
+          .replace(/\\/g, '/')
+          .replace(/^([A-Z]):/, (_, d) => d.toLowerCase() + ':'),
+      }),
       signal: AbortSignal.timeout(5000),
     });
 

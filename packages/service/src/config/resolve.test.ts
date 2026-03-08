@@ -57,19 +57,25 @@ describe('resolveKeys', () => {
   });
 
   it('handles object key entries with scopes', () => {
-    const result = resolveKeys({
-      scoped: { key: 'seed456', scopes: ['/docs'] },
-    }, {});
+    const result = resolveKeys(
+      {
+        scoped: { key: 'seed456', scopes: ['/docs'] },
+      },
+      {},
+    );
     expect(result[0].name).toBe('scoped');
     expect(result[0].seed).toBe('seed456');
     expect(result[0].scopes).toEqual({ allow: ['/docs'], deny: [] });
   });
 
   it('handles mixed entries', () => {
-    const result = resolveKeys({
-      plain: 'abc',
-      complex: { key: 'def', scopes: { allow: ['/x'], deny: ['/y'] } },
-    }, {});
+    const result = resolveKeys(
+      {
+        plain: 'abc',
+        complex: { key: 'def', scopes: { allow: ['/x'], deny: ['/y'] } },
+      },
+      {},
+    );
     expect(result).toHaveLength(2);
     expect(result[0].scopes).toBe(null);
     expect(result[1].scopes).toEqual({ allow: ['/x'], deny: ['/y'] });

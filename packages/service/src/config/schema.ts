@@ -90,7 +90,7 @@ function getScopeRefs(scopes: unknown): string[] {
   if (Array.isArray(scopes) && scopes.length > 0) {
     const strs = scopes.filter((v) => typeof v === 'string');
     if (strs.length !== scopes.length) return [];
-    return (strs as string[]).filter((v) => isName(v));
+    return strs.filter((v) => isName(v));
   }
 
   return [];
@@ -220,21 +220,18 @@ export const jeevesConfigSchema = z
 
     for (const [email, entry] of Object.entries(config.insiders)) {
       const refs = getScopeRefs(entry.scopes);
-      if (refs.length > 0)
-        validateRefs(refs, ['insiders', email, 'scopes']);
+      if (refs.length > 0) validateRefs(refs, ['insiders', email, 'scopes']);
     }
 
     for (const [name, entry] of Object.entries(config.keys)) {
       if (typeof entry === 'object' && entry !== null) {
         const refs = getScopeRefs(entry.scopes);
-        if (refs.length > 0)
-          validateRefs(refs, ['keys', name, 'scopes']);
+        if (refs.length > 0) validateRefs(refs, ['keys', name, 'scopes']);
       }
     }
 
     const outsiderRefs = getScopeRefs(config.outsiderPolicy);
-    if (outsiderRefs.length > 0)
-      validateRefs(outsiderRefs, ['outsiderPolicy']);
+    if (outsiderRefs.length > 0) validateRefs(outsiderRefs, ['outsiderPolicy']);
   });
 
 /** Inferred config type */

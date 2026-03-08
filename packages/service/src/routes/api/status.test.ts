@@ -53,7 +53,12 @@ describe('GET /api/status', () => {
     expect((status.auth as { insiderCount: number }).insiderCount).toBe(2);
     expect((status.auth as { keyCount: number }).keyCount).toBe(1);
     expect(status.events).toHaveLength(2);
-    const exports = status.exports as { documents: string[]; directories: string[]; diagrams: string[]; chromeAvailable: boolean };
+    const exports = status.exports as {
+      documents: string[];
+      directories: string[];
+      diagrams: string[];
+      chromeAvailable: boolean;
+    };
     expect(exports.documents).toEqual(['pdf', 'docx']);
     expect(exports.directories).toEqual(['zip']);
     expect(exports.diagrams).toEqual(['svg', 'png']);

@@ -121,7 +121,6 @@ describe('loadConfig', () => {
     );
   });
 
-
   it('rejects undefined named scope references', async () => {
     const configPath = writeConfig(tmpDir, {
       ...VALID_CONFIG,

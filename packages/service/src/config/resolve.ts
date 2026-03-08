@@ -69,8 +69,9 @@ export function resolveNamedScopes(
       ? isName(rawScopes)
         ? [rawScopes]
         : null
-      : Array.isArray(rawScopes) && rawScopes.every((v) => typeof v === 'string')
-        ? (rawScopes.filter((v) => isName(String(v))) as string[])
+      : Array.isArray(rawScopes) &&
+          rawScopes.every((v) => typeof v === 'string')
+        ? rawScopes.filter((v) => isName(String(v)))
         : null;
 
   if (refs && refs.length > 0) {
@@ -248,7 +249,8 @@ export function buildRuntimeConfig(
         (config.outsiderPolicy as unknown) &&
           typeof config.outsiderPolicy === 'object' &&
           !Array.isArray(config.outsiderPolicy)
-          ? (config.outsiderPolicy as { scopes?: unknown }).scopes ?? config.outsiderPolicy
+          ? ((config.outsiderPolicy as { scopes?: unknown }).scopes ??
+              config.outsiderPolicy)
           : config.outsiderPolicy,
         (config.outsiderPolicy as unknown) &&
           typeof config.outsiderPolicy === 'object' &&
