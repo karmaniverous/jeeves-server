@@ -8,7 +8,7 @@ import { marked } from 'marked';
 
 import { registerDiagram } from './embeddedDiagrams.js';
 
-export interface Heading {
+interface Heading {
   level: number;
   text: string;
   slug: string;
@@ -186,20 +186,4 @@ export function parseMarkdown(
   }
 
   return { html, headings };
-}
-
-/**
- * Generate table of contents HTML
- */
-export function generateTOC(headings: Heading[]): string {
-  if (headings.length === 0) return '';
-
-  let tocHtml = '<nav class="toc"><div class="toc-title">Contents</div><ul>';
-  for (const h of headings) {
-    const indent = (h.level - 1) * 0.8;
-    tocHtml += `<li style="margin-left:${String(indent)}em"><a href="#${h.slug}">${h.text}</a></li>`;
-  }
-  tocHtml += '</ul></nav>';
-
-  return tocHtml;
 }

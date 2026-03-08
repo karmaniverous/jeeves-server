@@ -163,10 +163,6 @@ export async function getShareLink(
   });
 }
 
-export function getRawFileUrl(path: string): string {
-  return `/api/raw/${path}`;
-}
-
 export async function saveFile(path: string, content: string): Promise<{ ok: boolean; size: number }> {
   return fetchJson<{ ok: boolean; size: number }>(`${API_BASE}/file/${path}`, {
     method: 'PUT',

@@ -94,12 +94,6 @@ export interface RunEntry {
   stderrTail: string;
 }
 
-export interface RunnerHealth {
-  status: string;
-  uptime: number;
-  version: string;
-}
-
 function mapJob(raw: RawJob): RunnerJob {
   return {
     id: raw.id,
@@ -127,10 +121,6 @@ function mapRun(raw: RawRun): RunEntry {
     stdoutTail: raw.stdout_tail,
     stderrTail: raw.stderr_tail,
   };
-}
-
-export async function getRunnerHealth(): Promise<RunnerHealth> {
-  return runnerFetch<RunnerHealth>('/health');
 }
 
 export async function getRunnerStats(): Promise<RunnerStats> {

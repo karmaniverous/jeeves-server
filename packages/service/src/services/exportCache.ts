@@ -27,10 +27,6 @@ export function initExportCache(dir?: string): void {
   fs.mkdirSync(cacheDir, { recursive: true });
 }
 
-export function getExportCacheDir(): string | null {
-  return cacheDir;
-}
-
 function cacheKey(fsPath: string, format: string): string {
   const normalized = fsPath.replace(/\\/g, '/').toLowerCase();
   return crypto
