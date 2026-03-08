@@ -23,7 +23,7 @@
   "scripts": {
     "start": "node dist/src/server.js",
     "dev": "tsx watch src/server.ts",
-    "prebuild": "rimraf dist .tsbuildinfo",
+    "prebuild": "npx rimraf dist .tsbuildinfo",
     "build": "tsc",
     "postbuild": "cd client && npm run build",
     "typecheck": "cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc --noEmit",
