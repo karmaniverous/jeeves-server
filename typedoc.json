@@ -7,19 +7,20 @@
     "console",
     "css",
     "html",
+    "ini",
     "javascript",
     "json",
-    "jsonc",
     "json5",
+    "jsonc",
+    "jsonl",
     "md",
+    "mermaid",
+    "nginx",
+    "powershell",
     "tsx",
     "typescript",
     "yaml",
-    "yml",
-    "mermaid",
-    "powershell",
-    "ini",
-    "nginx"
+    "yml"
   ],
   "hostedBaseUrl": "https://docs.karmanivero.us/jeeves-server",
   "navigationLinks": {
@@ -32,7 +33,7 @@
   ],
   "projectDocuments": [
     "./packages/service/guides/index.md",
-    "./packages/openclaw/guides/index.md",
+    "./packages/openclaw/guides/index.md"
   ],
   "replaceText": {
     "replacements": [
