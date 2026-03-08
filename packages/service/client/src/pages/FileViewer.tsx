@@ -21,14 +21,22 @@ export function FileViewer() {
   }, []);
   useEffect(() => { measure(); window.addEventListener('resize', measure); return () => window.removeEventListener('resize', measure); }, [measure]);
 
-  useEffect(() => {
+  const loadFile = useCallback(async (path: string) => {
     setLoading(true);
     setError(null);
-    getFile(reqPath)
-      .then(setFile)
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [reqPath]);
+    try {
+      const data = await getFile(path);
+      setFile(data);
+    } catch (e: unknown) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadFile(reqPath);
+  }, [loadFile, reqPath]);
 
   const breadcrumbs: BreadcrumbItem[] = file?.breadcrumbs ?? [];
 

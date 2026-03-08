@@ -72,7 +72,7 @@ export function SvgViewer({ content }: SvgViewerProps) {
     wheelCleanupRef.current = () => container.removeEventListener('wheel', wheelHandler);
 
     setReady(true);
-  }, [html]);
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;

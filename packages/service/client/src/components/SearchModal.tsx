@@ -200,7 +200,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [facetSelections]);
 
   const handleInputChange = useCallback(
     (value: string) => {
