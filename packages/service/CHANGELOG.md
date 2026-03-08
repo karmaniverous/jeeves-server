@@ -1,0 +1,450 @@
+### Changelog
+
+All notable changes to this project will be documented in this file. Dates are displayed in UTC.
+
+#### [v3.0.0-0](https://github.com/karmaniverous/jeeves-server/compare/v2.9.3...v3.0.0-0)
+
+- chore: integrate client as npm workspace member [`#81`](https://github.com/karmaniverous/jeeves-server/pull/81)
+- fix: force white background in panzoom fullscreen (dark mode) [`#80`](https://github.com/karmaniverous/jeeves-server/pull/80)
+- chore: make both packages releasable [`#79`](https://github.com/karmaniverous/jeeves-server/pull/79)
+- fix: address Gemini code review feedback (PRs #65-#76) [`#78`](https://github.com/karmaniverous/jeeves-server/pull/78)
+- chore: fix all gap analysis findings (10 items) [`#77`](https://github.com/karmaniverous/jeeves-server/pull/77)
+- Phase 4, Steps 16-18: Document rendering pipeline [`#76`](https://github.com/karmaniverous/jeeves-server/pull/76)
+- Phase 3, Steps 11-15: OpenClaw plugin [`#75`](https://github.com/karmaniverous/jeeves-server/pull/75)
+- Phase 2, Steps 9-10: Search facets proxy + filter UI [`#74`](https://github.com/karmaniverous/jeeves-server/pull/74)
+- Phase 2, Step 8: Scroll anchoring [`#73`](https://github.com/karmaniverous/jeeves-server/pull/73)
+- chore: SOLID/DRY/coverage audit pass 2 [`#72`](https://github.com/karmaniverous/jeeves-server/pull/72)
+- Phase 2, Step 7: Link availability endpoint [`#71`](https://github.com/karmaniverous/jeeves-server/pull/71)
+- Phase 1, Step 6: Port migration [`#70`](https://github.com/karmaniverous/jeeves-server/pull/70)
+- Phase 1, Step 5: Diagram dependency internalization [`#69`](https://github.com/karmaniverous/jeeves-server/pull/69)
+- Phase 1, Step 4: Server Status API [`#68`](https://github.com/karmaniverous/jeeves-server/pull/68)
+- Phase 1, Step 3: CLI commands [`#67`](https://github.com/karmaniverous/jeeves-server/pull/67)
+- Phase 1, Step 2: Config migration (jiti → cosmiconfig) [`#66`](https://github.com/karmaniverous/jeeves-server/pull/66)
+- Phase 1: Monorepo & Config (v3.0.0) [`#65`](https://github.com/karmaniverous/jeeves-server/pull/65)
+- feat: align search browse filter with watcher domains convention [`#64`](https://github.com/karmaniverous/jeeves-server/pull/64)
+- fix: exit edit mode after save [`#63`](https://github.com/karmaniverous/jeeves-server/pull/63)
+- chore: add default port 1934 [`#62`](https://github.com/karmaniverous/jeeves-server/pull/62)
+- chore: add default port 1934 [`#61`](https://github.com/karmaniverous/jeeves-server/pull/61)
+- chore: add client as workspace member, align puppeteer versions [`6e3a40d`](https://github.com/karmaniverous/jeeves-server/commit/6e3a40dfdb91ffe2e39877d1b69b36db3e01f863)
+- feat: internalize diagram dependencies (mermaid/plantuml) [`9c7f8a7`](https://github.com/karmaniverous/jeeves-server/commit/9c7f8a7d331a4e4f6013f1c7c2fff373769c6fbb)
+- feat: implement OpenClaw plugin (Phase 3, Steps 11-15) [`72a04e0`](https://github.com/karmaniverous/jeeves-server/commit/72a04e030352ca105c160b331328863c9ce41058)
+- refactor: monorepo scaffolding (Phase 1, Step 1) [`15cf2ba`](https://github.com/karmaniverous/jeeves-server/commit/15cf2baa7079057f095c973932d233dda2013659)
+- feat: migrate config from jiti/TS to cosmiconfig/JSON [`adfba33`](https://github.com/karmaniverous/jeeves-server/commit/adfba3387219d49f4675a6c6579253d563788394)
+- fix: resolve all client ESLint errors and warnings [`768541a`](https://github.com/karmaniverous/jeeves-server/commit/768541a71644c3ddcbc4a50bc6ed7a42a1c6d9a5)
+- chore: SOLID/DRY pass #3 + plugin test coverage [`7dcc4c3`](https://github.com/karmaniverous/jeeves-server/commit/7dcc4c3ad36a45a46dc99c8a1e749dfd2ec01e47)
+- feat: add CLI commands (start, config validate/show, service) [`0437984`](https://github.com/karmaniverous/jeeves-server/commit/0437984e7f783604f9cbdd333db61f8d1af42961)
+- fix: resolve knip unused files, dependencies, and exports [`964beba`](https://github.com/karmaniverous/jeeves-server/commit/964beba273f99be8d3302648c2dd442a3e3dcc07)
+- fix: address all gap analysis findings [`1eb02ab`](https://github.com/karmaniverous/jeeves-server/commit/1eb02abf0634be38c687d4927a2360cd27c3aad8)
+- npm audit fix [`3a144b4`](https://github.com/karmaniverous/jeeves-server/commit/3a144b4b07e1387cf40733486e60aeaf7a34d0a6)
+- feat: add GET /api/link-info endpoint [`02ece39`](https://github.com/karmaniverous/jeeves-server/commit/02ece3960aa91861455034aa4bfe8850c0b0f363)
+- test: add resolve.ts unit tests (21 tests) [`7c988ef`](https://github.com/karmaniverous/jeeves-server/commit/7c988ef08a45e5d6f3d04165f01b718a8bb539a6)
+- fix: cosmiconfig searchPlaces, SOLID/DRY pass, test coverage [`08de751`](https://github.com/karmaniverous/jeeves-server/commit/08de751a26fe595f13d43970bb39bb8b4d609199)
+- feat: add GET /api/status endpoint [`764c3a7`](https://github.com/karmaniverous/jeeves-server/commit/764c3a7313bd895032cc17bdc811808cdc8eb80e)
+- chore: SOLID/DRY/test coverage pass [`e491bfb`](https://github.com/karmaniverous/jeeves-server/commit/e491bfbbce7fef13252c2488378b85e983a2207a)
+- refactor: extract buildRuntimeConfig to resolve.ts (DRY) [`87bd749`](https://github.com/karmaniverous/jeeves-server/commit/87bd749c6827e3c95e2ff9996ab1b781cb316932)
+- fix: address Gemini code review feedback across PRs #65-#76 [`2fef919`](https://github.com/karmaniverous/jeeves-server/commit/2fef9192b00c80605c9cca348ea7feff5af2602a)
+- refactor: extract shared renderMarkdownContent pipeline [`244dddf`](https://github.com/karmaniverous/jeeves-server/commit/244dddf83da846d2863e776ae78a029610532d2d)
+- feat: schema-driven search facet filters (Step 10) [`c305c2a`](https://github.com/karmaniverous/jeeves-server/commit/c305c2ae261514411b6329bdc84052ee5c189759)
+- feat: add scroll anchoring for async diagram renders [`e4bd972`](https://github.com/karmaniverous/jeeves-server/commit/e4bd97293dbb8a9a63d5cf3bceb6e0cbb7a26916)
+- feat: document rendering pipeline (Phase 4, Steps 16-18) [`56095ee`](https://github.com/karmaniverous/jeeves-server/commit/56095ee8f7153509048f0b8af1ed73bb95aa5ae0)
+- npm audit fix [`3810c0f`](https://github.com/karmaniverous/jeeves-server/commit/3810c0fad8067752c4513bcccdd721698c8b3c3b)
+- fix: resolve package.json path portably for version [`29d775c`](https://github.com/karmaniverous/jeeves-server/commit/29d775c318ee85003fd6be7f67303633e092a110)
+- feat: add GET /api/search/facets proxy endpoint [`28fc200`](https://github.com/karmaniverous/jeeves-server/commit/28fc20084453b7bee28b4b9b23932a85a88567d0)
+- ni [`e40deac`](https://github.com/karmaniverous/jeeves-server/commit/e40deacf8659a59328ceec50abb6f1f27041b5d8)
+- chore: migrate default port to 1934 [`4614a5f`](https://github.com/karmaniverous/jeeves-server/commit/4614a5f4a5a1fd1d75eb730adbb8caa4a7dab7ff)
+- chore: add tsdoc.json to both package roots [`9ccf217`](https://github.com/karmaniverous/jeeves-server/commit/9ccf2171347ed4deabe617b16b236edba5b5bc75)
+- chore: add tsdoc.json to both package roots [`173cf94`](https://github.com/karmaniverous/jeeves-server/commit/173cf94061cfabd3c21796cb10ad0300c1e14e2b)
+- fix: set rootDir and update start script path for monorepo layout [`a2fd77c`](https://github.com/karmaniverous/jeeves-server/commit/a2fd77cb067fbae733a64e9bc04c0d9159910f90)
+- fix: resolve TS2352 warnings in openclaw test mocks [`88950e2`](https://github.com/karmaniverous/jeeves-server/commit/88950e23bbd206e40a7bc25ea35c64d7609af281)
+- fix: CI failures and SvgViewer panzoom re-init bug [`7392712`](https://github.com/karmaniverous/jeeves-server/commit/73927128276341a37c362c3143334bd8bb416d09)
+- fix: update linux-compat CI for monorepo paths [`22dd30f`](https://github.com/karmaniverous/jeeves-server/commit/22dd30ffe5543042287a299523e5b1125c86381e)
+- chore: eliminate all lint warnings [`ed12c86`](https://github.com/karmaniverous/jeeves-server/commit/ed12c868546a3f14f7d809d7378235ac91415be7)
+- fix: CI rimraf resolution and remove redundant client steps [`757c45c`](https://github.com/karmaniverous/jeeves-server/commit/757c45cf429e7c70358442e353922f7999d74640)
+- publishconfig public access [`8e4358c`](https://github.com/karmaniverous/jeeves-server/commit/8e4358cc43dc2f131840047d34f2644eb6293fe2)
+- merge: incorporate main (PR #77 gap-analysis) [`845268d`](https://github.com/karmaniverous/jeeves-server/commit/845268de8d3b990187f078f0135053d52c311009)
+- fix: add missing return-await in facets handler [`b08d4a3`](https://github.com/karmaniverous/jeeves-server/commit/b08d4a34b1bc2a648edf4e9aeb23d4db0be45afc)
+- fix: remove unused parameter in linkInfo test [`36fca9a`](https://github.com/karmaniverous/jeeves-server/commit/36fca9ad8e051a47902ce75dab360ac98c169321)
+- ci: add Node 24 to linux-compat matrix [`66f1008`](https://github.com/karmaniverous/jeeves-server/commit/66f1008c133f2543181636200f49979878925a05)
+- fix: adjust relative paths for monorepo dist/src/ layout [`dcaf9dc`](https://github.com/karmaniverous/jeeves-server/commit/dcaf9dc436203d3686e4350cf45302ac51e10372)
+- fix: adjust rootDir depth for monorepo dist/src/config path [`5427014`](https://github.com/karmaniverous/jeeves-server/commit/542701458f9d95f85f0547ca7a2e4a85218710ff)
+
+#### [v2.9.3](https://github.com/karmaniverous/jeeves-server/compare/v2.9.2...v2.9.3)
+
+> 26 February 2026
+
+- feat: render YAML frontmatter as code block [`#60`](https://github.com/karmaniverous/jeeves-server/pull/60)
+- feat: render YAML frontmatter as code block in markdown view [`3045a94`](https://github.com/karmaniverous/jeeves-server/commit/3045a94a2364455cdeac6f36f3446fc561d37737)
+- chore: release v2.9.3 [`1475596`](https://github.com/karmaniverous/jeeves-server/commit/1475596bcb2dd22f2c5f1621b670fc50898a11d7)
+
+#### [v2.9.2](https://github.com/karmaniverous/jeeves-server/compare/v2.9.1...v2.9.2)
+
+> 24 February 2026
+
+- feat: sortable columns on runner dashboard [`023a473`](https://github.com/karmaniverous/jeeves-server/commit/023a473b53b1469b52eccda5dff76f4da2d8989f)
+- chore: release v2.9.2 [`d3db011`](https://github.com/karmaniverous/jeeves-server/commit/d3db011a3d395de57537b7054e7ad06be160d698)
+
+#### [v2.9.1](https://github.com/karmaniverous/jeeves-server/compare/v2.9.0...v2.9.1)
+
+> 24 February 2026
+
+- fix: dark mode status pills via custom-variant [`30454de`](https://github.com/karmaniverous/jeeves-server/commit/30454dec84984573214abdff5d9fcbe12d3b4e9a)
+- chore: release v2.9.1 [`d34fd62`](https://github.com/karmaniverous/jeeves-server/commit/d34fd6205e87bd9ec7f5941ba498d3493a87f6ea)
+- chore: release v2.9.0 [`7cdc030`](https://github.com/karmaniverous/jeeves-server/commit/7cdc03037b0bc4c25b69e849bed7f7be0f47be93)
+
+#### [v2.9.0](https://github.com/karmaniverous/jeeves-server/compare/v2.8.0...v2.9.0)
+
+> 24 February 2026
+
+-  feat: add runner dashboard [`#59`](https://github.com/karmaniverous/jeeves-server/pull/59)
+- fix: event queue byte/char cursor mismatch + postbuild client [`#52`](https://github.com/karmaniverous/jeeves-server/pull/52)
+- fix: client TS errors + picomatch dot matching [`#51`](https://github.com/karmaniverous/jeeves-server/pull/51)
+- gitignores [`601737f`](https://github.com/karmaniverous/jeeves-server/commit/601737f2218dcd87c6979176541df4795279aa39)
+- chore: release v2.9.0 [`7813907`](https://github.com/karmaniverous/jeeves-server/commit/78139078c7c5339e963db21940a7e70b1d4a78c1)
+
+#### [v2.8.0](https://github.com/karmaniverous/jeeves-server/compare/v2.7.5...v2.8.0)
+
+> 23 February 2026
+
+- [GH-46] Semantic search UI [`#47`](https://github.com/karmaniverous/jeeves-server/pull/47)
+- [GH-46] GH-46: Semantic search — backend proxy + frontend modal [`80383d1`](https://github.com/karmaniverous/jeeves-server/commit/80383d1ac18b3e7ad3278f384d6d7a533fac10dd)
+- [GH-46] GH-46: Date range filtering (relative + absolute) [`e775502`](https://github.com/karmaniverous/jeeves-server/commit/e775502c4c26576bc7d38f2cd2c9dd1b1cf639c0)
+- [GH-46] GH-46: Accordion chunks with scrollable container [`d9462e0`](https://github.com/karmaniverous/jeeves-server/commit/d9462e05b6958484f3ded9baf12d48b435818bc2)
+- [GH-46] GH-46: Persistent search state + reset control [`8fba6ea`](https://github.com/karmaniverous/jeeves-server/commit/8fba6eabb038a394136dc0611301826de627fbdc)
+- [GH-46] GH-46: File type (extension) filter chips [`fcab7b2`](https://github.com/karmaniverous/jeeves-server/commit/fcab7b235c4bc9965cc3a360f1ed425542a92bed)
+- [GH-46] GH-46: Enlarge search modal (max-w-4xl, 85vh, less top offset) [`83d8ad2`](https://github.com/karmaniverous/jeeves-server/commit/83d8ad2473c80465a5d5a776c581c7c164be41a7)
+
+#### [v2.7.5](https://github.com/karmaniverous/jeeves-server/compare/v2.7.4...v2.7.5)
+
+> 22 February 2026
+
+- [GH-44] Cache exports + Clear Cache control [`#45`](https://github.com/karmaniverous/jeeves-server/pull/45)
+- [GH-44] GH-44: Add export cache + Clear Cache endpoint and UI [`bf41cd0`](https://github.com/karmaniverous/jeeves-server/commit/bf41cd00ac2d56c6f42d763115feb9ae88e1f5aa)
+- [GH-44] Clear cache covers standalone diagram files (mmd/puml) [`63ba5c8`](https://github.com/karmaniverous/jeeves-server/commit/63ba5c823ca0be448bebe5c691819d8dd039c79d)
+- [GH-44] Add .export-cache/ to gitignore [`80ade63`](https://github.com/karmaniverous/jeeves-server/commit/80ade63660b02ebecede3f08f73cd281bf1fc69e)
+
+#### [v2.7.4](https://github.com/karmaniverous/jeeves-server/compare/v2.7.3...v2.7.4)
+
+> 22 February 2026
+
+- GH-42: Unify raw view on CodeMirror 6 with code folding [`#43`](https://github.com/karmaniverous/jeeves-server/pull/43)
+- [GH-42] Replace highlight.js raw view with CodeMirror 6 read-only viewer [`547315c`](https://github.com/karmaniverous/jeeves-server/commit/547315ca640b352d54c6ab58f4dad0c83383a6e8)
+- [GH-42] Remove highlight.js — CM6 handles all syntax highlighting [`52415ae`](https://github.com/karmaniverous/jeeves-server/commit/52415aed229b25ad2bb75473b7e1eb0cb28cd769)
+- [GH-42] Fix DOCX code block rendering — per-line paragraphs with NBSP indent [`61db677`](https://github.com/karmaniverous/jeeves-server/commit/61db677ca130fa04e3ffba475ed1c11a2676cd2c)
+- [GH-42] Fix lint: unnecessary conditional in export.ts [`528c740`](https://github.com/karmaniverous/jeeves-server/commit/528c74013522c68c2540fd2f8758cee72cf3155c)
+- [GH-42] Revert custom fold markers to basicSetup defaults [`37fc320`](https://github.com/karmaniverous/jeeves-server/commit/37fc32011edb77e69684a114f66884ee4a75d9f1)
+- [GH-42] Skip CM6 for PDF/DOCX export — use plain pre/code blocks [`6706f68`](https://github.com/karmaniverous/jeeves-server/commit/6706f688cc195316c2c0dae34e99cefa91c3d6cf)
+
+#### [v2.7.3](https://github.com/karmaniverous/jeeves-server/compare/v2.7.2...v2.7.3)
+
+> 22 February 2026
+
+- GH-40: Retry button for failed inline diagram renders [`#41`](https://github.com/karmaniverous/jeeves-server/pull/41)
+- [GH-40] Add retry button to failed inline diagram renders [`1fe10bd`](https://github.com/karmaniverous/jeeves-server/commit/1fe10bd731f9429c1cf691317a283d71b6a9592b)
+- [GH-40] Improve error message and add reload hint on retry failure [`b0c02c8`](https://github.com/karmaniverous/jeeves-server/commit/b0c02c88cfa5b67f73de5f64dff47d87779e0999)
+
+#### [v2.7.2](https://github.com/karmaniverous/jeeves-server/compare/v2.7.1...v2.7.2)
+
+> 22 February 2026
+
+- GH-38: Terms of Service, Privacy Policy & search engine blocking [`#39`](https://github.com/karmaniverous/jeeves-server/pull/39)
+
+#### [v2.7.1](https://github.com/karmaniverous/jeeves-server/compare/v2.7.0...v2.7.1)
+
+> 21 February 2026
+
+- SOLID/DRY codebase audit — comprehensive refactor [`#37`](https://github.com/karmaniverous/jeeves-server/pull/37)
+
+#### [v2.7.0](https://github.com/karmaniverous/jeeves-server/compare/v2.6.0...v2.7.0)
+
+> 21 February 2026
+
+- GH-32 + GH-33: Diagram cache + lazy-load embedded diagrams [`74b68be`](https://github.com/karmaniverous/jeeves-server/commit/74b68be594735260dbd9645e565f04a73ba76d5e)
+
+#### [v2.6.0](https://github.com/karmaniverous/jeeves-server/compare/v2.5.0...v2.6.0)
+
+> 20 February 2026
+
+- feat: in-browser text editing (GH-30) [`#31`](https://github.com/karmaniverous/jeeves-server/pull/31)
+- chore: bump version to 2.6.0 [`7d54aa3`](https://github.com/karmaniverous/jeeves-server/commit/7d54aa3be4c4ae0093ed86bd16d98e57ed3bdf77)
+
+#### [v2.5.0](https://github.com/karmaniverous/jeeves-server/compare/v2.4.0...v2.5.0)
+
+> 20 February 2026
+
+- feat: Render embedded Mermaid/PlantUML code blocks (GH-23) [`#27`](https://github.com/karmaniverous/jeeves-server/pull/27)
+- chore: bump version to 2.5.0 [`2c42e14`](https://github.com/karmaniverous/jeeves-server/commit/2c42e14aa5e6324b67c5ef0dc615cece50cf1992)
+
+#### [v2.4.0](https://github.com/karmaniverous/jeeves-server/compare/v2.3.5...v2.4.0)
+
+> 20 February 2026
+
+- feat: Native PlantUML support (GH-22) [`#25`](https://github.com/karmaniverous/jeeves-server/pull/25)
+- chore: bump version to 2.4.0 [`ddf9d87`](https://github.com/karmaniverous/jeeves-server/commit/ddf9d87cf8b42420d0bc3e24b46489bbec04aff8)
+
+#### [v2.3.5](https://github.com/karmaniverous/jeeves-server/compare/v2.3.4...v2.3.5)
+
+> 20 February 2026
+
+- fix: case-insensitive email comparison for insider matching [`#24`](https://github.com/karmaniverous/jeeves-server/pull/24)
+
+#### [v2.3.4](https://github.com/karmaniverous/jeeves-server/compare/v2.3.3...v2.3.4)
+
+> 19 February 2026
+
+- refactor: Copy Raw Link builds /api/raw/ URL directly, remove raw=1 redirect [`#21`](https://github.com/karmaniverous/jeeves-server/pull/21)
+
+#### [v2.3.3](https://github.com/karmaniverous/jeeves-server/compare/v2.3.2...v2.3.3)
+
+> 19 February 2026
+
+- feat: raw=1 on /browse/* redirects to /api/raw/* for raw file delivery [`#20`](https://github.com/karmaniverous/jeeves-server/pull/20)
+
+#### [v2.3.2](https://github.com/karmaniverous/jeeves-server/compare/v2.3.1...v2.3.2)
+
+> 19 February 2026
+
+- fix: forward auth params on downloads, show error popup on failure [`#19`](https://github.com/karmaniverous/jeeves-server/pull/19)
+
+#### [v2.3.1](https://github.com/karmaniverous/jeeves-server/compare/v2.3.0...v2.3.1)
+
+> 18 February 2026
+
+- refactor: replace hand-rolled glob matching with picomatch [`#18`](https://github.com/karmaniverous/jeeves-server/pull/18)
+
+#### [v2.3.0](https://github.com/karmaniverous/jeeves-server/compare/v2.2.1...v2.3.0)
+
+> 18 February 2026
+
+- [GH-16] feat(GH-16): utility share-for endpoint + outsider policy [`#17`](https://github.com/karmaniverous/jeeves-server/pull/17)
+
+#### [v2.2.1](https://github.com/karmaniverous/jeeves-server/compare/v2.2.0...v2.2.1)
+
+> 18 February 2026
+
+- Allow/deny scopes for insiders and keys [`#15`](https://github.com/karmaniverous/jeeves-server/pull/15)
+- chore: update repo description and add keywords to package.json [`5130698`](https://github.com/karmaniverous/jeeves-server/commit/51306983c3bcf6e8f8af8d49316512437c1cc1ff)
+
+#### [v2.2.0](https://github.com/karmaniverous/jeeves-server/compare/v2.1.0...v2.2.0)
+
+> 17 February 2026
+
+- GH-13: Linux compatibility [`#14`](https://github.com/karmaniverous/jeeves-server/pull/14)
+
+#### [v2.1.0](https://github.com/karmaniverous/jeeves-server/compare/v2.0.1...v2.1.0)
+
+> 17 February 2026
+
+- [GH-11] Deep share links with depth and directory controls [`#12`](https://github.com/karmaniverous/jeeves-server/pull/12)
+- docs: add platform support section, sync requirements with GH-11 implementation, call out Linux as next-up [`261ff4d`](https://github.com/karmaniverous/jeeves-server/commit/261ff4d69de26ef7fdc83295c7ea9e255ce9214e)
+- fix: header button hover in light mode - use white/10 overlay instead of accent bg [`eeb370c`](https://github.com/karmaniverous/jeeves-server/commit/eeb370c1dfaa79ba03f4685fddd664874f2b3e7a)
+
+#### [v2.0.1](https://github.com/karmaniverous/jeeves-server/compare/v2.0.0...v2.0.1)
+
+> 17 February 2026
+
+- Fix PDF/DOCX export rendering [`#10`](https://github.com/karmaniverous/jeeves-server/pull/10)
+- Decommission path routes [`#8`](https://github.com/karmaniverous/jeeves-server/pull/8)
+- [GH-9] fix DOCX SVG export — render SVGs in clean isolated pages [`#9`](https://github.com/karmaniverous/jeeves-server/issues/9)
+- [GH-9] fix DOCX SVG screenshot offset — use element.screenshot() instead of clip [`#9`](https://github.com/karmaniverous/jeeves-server/issues/9)
+- [GH-9] fix SVG rendering in SPA and PDF/DOCX export issues [`#9`](https://github.com/karmaniverous/jeeves-server/issues/9)
+- [GH-9] fix PDF/DOCX exports rendering panzoom container chrome [`#9`](https://github.com/karmaniverous/jeeves-server/issues/9)
+- [GH-7] decommission /path routes — migrate to /api/raw, /api/export, /browse redirect [`#7`](https://github.com/karmaniverous/jeeves-server/issues/7)
+- [GH-7] remove legacy server.js — replaced by src/server.ts [`6a701e6`](https://github.com/karmaniverous/jeeves-server/commit/6a701e6eb9325c39b20799673f5aee58877538ee)
+- [GH-7] remove server-rendered about page, templates, and test PDFs [`bad31ca`](https://github.com/karmaniverous/jeeves-server/commit/bad31ca3c4da5eb00ea9183c0b5a1dbb9442a0cf)
+- [GH-9] render DOCX SVGs at full page width (1152px) [`dbb5bae`](https://github.com/karmaniverous/jeeves-server/commit/dbb5bae948f762b65da047980fdcdf44c1999727)
+- fix: increase mobile bottom padding to pb-32 (8rem) [`e19b653`](https://github.com/karmaniverous/jeeves-server/commit/e19b6532d3851b5e7353c3ecb1d54bf7f7fa9c79)
+- fix: use md:px-6 md:pt-6 instead of md:p-6 so pb-16 isn't overridden at md breakpoint [`6b1c19f`](https://github.com/karmaniverous/jeeves-server/commit/6b1c19f154197816ce8769c7a395f228eaf9a3f1)
+- fix: add pb-16 bottom padding to scroll containers for mobile browser chrome clearance [`7319d00`](https://github.com/karmaniverous/jeeves-server/commit/7319d004954a7e8e6ca953e12ed25d16eb0b106d)
+- fix: pass puppeteer.json config to mmdc for NSSM service compatibility [`769610f`](https://github.com/karmaniverous/jeeves-server/commit/769610f655e6ea1553b70d9e79064cb27435563f)
+- [GH-9] render DOCX SVG screenshots at 2x device scale for crisp output [`68c04f4`](https://github.com/karmaniverous/jeeves-server/commit/68c04f435604416ee0cd193dc9d3fa644f488213)
+
+### [v2.0.0](https://github.com/karmaniverous/jeeves-server/compare/v1.2.1...v2.0.0)
+
+> 16 February 2026
+
+- v2.0.0: React SPA migration [`#6`](https://github.com/karmaniverous/jeeves-server/pull/6)
+- [GH-5] merge: resolve conflicts with main (keep feature branch for frozen server pages) [`2c57b6f`](https://github.com/karmaniverous/jeeves-server/commit/2c57b6f11a0293c22da9c74c1b80b229b01f0fe0)
+- [GH-5] feat: React + Vite scaffold with file browser, API endpoints, and SPA serving (GH-5) [`6a8ffb5`](https://github.com/karmaniverous/jeeves-server/commit/6a8ffb5e932e648a44311ac9a686e5cb1b31c104)
+- [GH-5] Dropdown menus, TS config, state separation, local static assets [`16f40b4`](https://github.com/karmaniverous/jeeves-server/commit/16f40b4607037c8b5992a7a3bbf1d586d697cce8)
+- [GH-5] docs: add all guides - event gateway, exports, deployment, API integration [`45e026a`](https://github.com/karmaniverous/jeeves-server/commit/45e026aae634d6f3cbfcf8324b64263add21b392)
+- [GH-5] docs: move requirements to .stan/system/stan.requirements.md, slim README [`43214d0`](https://github.com/karmaniverous/jeeves-server/commit/43214d00171f305916516c6738383d19b2f55dc1)
+- [GH-5] docs: add setup and sharing guides, link from README [`ac32dc9`](https://github.com/karmaniverous/jeeves-server/commit/ac32dc945d45f5d3566e27116f1ec5b2044fa7e3)
+- [GH-5] docs: update README to reflect current architecture - Fastify, Zod 4 config, React SPA, dual auth, prose width toggle [`e0da626`](https://github.com/karmaniverous/jeeves-server/commit/e0da62659996d88a79651e49c66f0565b40cc1fd)
+- [GH-5] feat: per-row share icons on drives listing page (GH-5) [`35a04a6`](https://github.com/karmaniverous/jeeves-server/commit/35a04a679b96d3d2f5e4dfa18ffa2a28246df809)
+- [GH-5] Fix header wrapping + unified fixed top bar [`26baa15`](https://github.com/karmaniverous/jeeves-server/commit/26baa1505ad726e66e79ff89bb4bb275d919bd5e)
+- [GH-5] feat: responsive header - single row wide, progressive collapse - Action bar wraps to row 2 below lg breakpoint - Info/theme fold into account menu below lg - Breadcrumbs scroll horizontally (hat pinned) - Thin scrollbar styling for breadcrumb overflow [`c20ea7a`](https://github.com/karmaniverous/jeeves-server/commit/c20ea7aa83ef525be24401902e632c1031055134)
+- [GH-5] Fixed header/tabs, key auth for SPA, dropdown hover variants [`808c024`](https://github.com/karmaniverous/jeeves-server/commit/808c024619150772aac528e645b31fd22ecb8a9e)
+- [GH-5] feat: replace expiry text input with dropdown (never/1h/1d/1w/1m/1y) (GH-5) [`7691a69`](https://github.com/karmaniverous/jeeves-server/commit/7691a69884c595f06f2f02ad2701541f6a91c31c)
+- [GH-5] Responsive header layout - two-row design [`1c7fbda`](https://github.com/karmaniverous/jeeves-server/commit/1c7fbda388b4694777c680dc9ecde6a585dc3748)
+- [GH-5] feat: Panzoom for SVG images embedded in rendered markdown - Finds img tags with .svg sources in rendered articles - Fetches SVG content and replaces img with interactive Panzoom container - Scroll to zoom, drag to pan - Graceful fallback to original img on fetch failure [`1cd0dd4`](https://github.com/karmaniverous/jeeves-server/commit/1cd0dd425080e2e4ead053a1dba9023c21f9ef36)
+- feat: replace expiry text input with dropdown (never/1h/1d/1w/1m/1y) [`4a0f8ae`](https://github.com/karmaniverous/jeeves-server/commit/4a0f8ae5b542a43a962f60b0de8ce8560f2a6ff4)
+- [GH-5] refactor: replace lodash with radash in event gateway JsonMap lib [`5c2f322`](https://github.com/karmaniverous/jeeves-server/commit/5c2f322d82a4d97c00da6775ad830bdb8a8cd0aa)
+- feat: per-row share icons on drives listing page [`dcc2fbc`](https://github.com/karmaniverous/jeeves-server/commit/dcc2fbcf420b63e6f729c840836037573e7f9871)
+- [GH-5] feat: fullscreen toggle for inline SVG Panzoom viewers [`2806878`](https://github.com/karmaniverous/jeeves-server/commit/280687870da15e806a8254e48b4e400b7e96aed6)
+- [GH-5] Scrollbar under tabs, main as scroll container [`65b4dcc`](https://github.com/karmaniverous/jeeves-server/commit/65b4dcc7ebd63a467a81c17de80a64ae685e1e80)
+- [GH-5] fix: pre-process SVG to 100% width/height before render — prevents overflow on tab switch [`3da142d`](https://github.com/karmaniverous/jeeves-server/commit/3da142d7ce7f958189dfe4f8143dea9ad4321535)
+- [GH-5] fix: SVG viewer zoom-to-fit — entire image visible in viewport, centered [`f0927ec`](https://github.com/karmaniverous/jeeves-server/commit/f0927ecd4909c8c32aa418dd9b43094c4d654dcc)
+- [GH-5] docs: Mermaid diagram for event gateway, link first repo references in guides [`3c5e98e`](https://github.com/karmaniverous/jeeves-server/commit/3c5e98e3195bf362804aa0e136982f5f45a8b815)
+- [GH-5] docs: rewrite README - position as AI-to-business publishing bridge [`c6e7c6e`](https://github.com/karmaniverous/jeeves-server/commit/c6e7c6e8f9f92d1b5d46238f86d26349827fbcc8)
+- [GH-5] fix: remove fullscreen toggle from SVG viewer — rendered view is the experience [`f744eea`](https://github.com/karmaniverous/jeeves-server/commit/f744eea50263f1607f4fc34444c03a3cc41ab3f4)
+- [GH-5] docs: replace ASCII access decision flow with Mermaid SVG in sharing guide [`f1455d0`](https://github.com/karmaniverous/jeeves-server/commit/f1455d0989eadac55f79fa1098bba0ac2db2debf)
+- [GH-5] feat: prose width toggle (narrow/wide) for rendered markdown [`2e5f19f`](https://github.com/karmaniverous/jeeves-server/commit/2e5f19f0b688477cc5ec21b14cf07fd206efd99b)
+- [GH-5] fix: SVG fullscreen fits drawing to viewport, allow zoom out feat: README prominently features Event Gateway [`080161c`](https://github.com/karmaniverous/jeeves-server/commit/080161cd8d5ce6850c7ed7c9a298e598f177e1b9)
+- [GH-5] Mobile TOC: hamburger menu left of Rendered/Raw tabs [`4b00ff6`](https://github.com/karmaniverous/jeeves-server/commit/4b00ff6d1d1e6662d83686cdb81c26510be9e8dc)
+- [GH-5] feat: add medium prose width option (three-way toggle) [`2b3dad4`](https://github.com/karmaniverous/jeeves-server/commit/2b3dad4228ae1cb44064bfe7ebdf553628c85bc3)
+- [GH-5] docs: clarify key derivation in event gateway guide [`e03c97e`](https://github.com/karmaniverous/jeeves-server/commit/e03c97e13facc207cda4da2874b3d7514d00c450)
+- [GH-5] fix: defer SvgViewer Panzoom init to next frame — fixes tab switch overflow [`39c28b5`](https://github.com/karmaniverous/jeeves-server/commit/39c28b54042c6864f330757e49f893642e653dc9)
+- [GH-5] Fix mobile header overflow and simplify sticky layout [`505bd5e`](https://github.com/karmaniverous/jeeves-server/commit/505bd5e4fd4b6837641b26ab6dd4e2b63267e367)
+- [GH-5] fix: center SVG vertically and horizontally in fullscreen panzoom [`ec683bc`](https://github.com/karmaniverous/jeeves-server/commit/ec683bc8043a1dd8a1a7268cc4704cfe67d46f56)
+- [GH-5] Fix code block contrast in light mode [`2051d65`](https://github.com/karmaniverous/jeeves-server/commit/2051d652775c551d172508ac3b784f3c6656d22a)
+- [GH-5] chore: bump version to 2.0.0 [`8864eaa`](https://github.com/karmaniverous/jeeves-server/commit/8864eaabe9c6ff2107d95725597fbd4f3d835965)
+- [GH-5] Fix CodeBlock component theme awareness [`678b7bb`](https://github.com/karmaniverous/jeeves-server/commit/678b7bbffb9e9be3cb611160c2590c280832fed3)
+- [GH-5] Fix TOC sidebar sticky position and anchor scroll offset [`6f2aa3f`](https://github.com/karmaniverous/jeeves-server/commit/6f2aa3fa4f8c212461a8be3293cb31015ffcb0c8)
+- [GH-5] fix: remove backtick pseudo-elements from inline code in prose [`f47cd60`](https://github.com/karmaniverous/jeeves-server/commit/f47cd6017b72c953191374db0e2ca74a19fc484c)
+- [GH-5] fix: anchor scroll offset - use getBoundingClientRect relative to scroll container [`a8f5e0c`](https://github.com/karmaniverous/jeeves-server/commit/a8f5e0cae7eb2bbfb99f6823f2cb5b98988e37ea)
+- [GH-5] fix: SVG fullscreen center/center - remove CSS centering, let Panzoom startX/startY handle positioning [`54c5aca`](https://github.com/karmaniverous/jeeves-server/commit/54c5acacd9a74c695e250ada343f38324e6cd957)
+- [GH-5] Fix TOC sticky top to match header + tabs + gap (7rem) [`c0d1a40`](https://github.com/karmaniverous/jeeves-server/commit/c0d1a406523b588c06b8691d3f4d03cba049e367)
+- [GH-5] Fix prose typography colors for light/dark mode [`39ce6f9`](https://github.com/karmaniverous/jeeves-server/commit/39ce6f94a5b6e723c3a51cc5fcb86be45b7ade6a)
+- [GH-5] fix: prose width buttons only appear for rendered markdown, not SVG/Mermaid [`4067119`](https://github.com/karmaniverous/jeeves-server/commit/40671199abd92c63053fb5ef85ac6e4172d3a42c)
+- [GH-5] docs: fix insider description — may be scoped, not always full access [`b481d3a`](https://github.com/karmaniverous/jeeves-server/commit/b481d3ad2dccdb4a132e5855490fdd2b147e9bbf)
+- [GH-5] docs: mention front-end event link button in event gateway guide [`bdb203c`](https://github.com/karmaniverous/jeeves-server/commit/bdb203c42c7c560e5e0fb76c58bad9d2999a1347)
+- feat: replace expiry text input with dropdown (never/1h/1d/1w/1m/1y) [`b247aa3`](https://github.com/karmaniverous/jeeves-server/commit/b247aa3490634169f75a6d5b51a2a20b8e600a5a)
+
+#### [v1.2.1](https://github.com/karmaniverous/jeeves-server/compare/v1.2.0...v1.2.1)
+
+> 15 February 2026
+
+- fix: wrap entire startup in try/catch, surface errors instead of silent exit [`1913fe1`](https://github.com/karmaniverous/jeeves-server/commit/1913fe13af0bc992df7d49fc2d3a953fb4b1b538)
+- fix: mobile header — hide redundant share UI on directories, allow header wrapping (GH-4) [`6306f27`](https://github.com/karmaniverous/jeeves-server/commit/6306f27da93700757a328de83f34c5179b89bfc5)
+- fix: header stretches to full content width when zoomed out [`bbebeec`](https://github.com/karmaniverous/jeeves-server/commit/bbebeec052f1d76a1e1b14a7574bf35ffd1a3dc5)
+- fix: restore header share UI on directories — shares current page, not redundant with per-row icons [`1f77d96`](https://github.com/karmaniverous/jeeves-server/commit/1f77d961e40c8db366a20d9d89f4697eb2aebd2c)
+
+#### [v1.2.0](https://github.com/karmaniverous/jeeves-server/compare/v1.1.0...v1.2.0)
+
+> 15 February 2026
+
+- Merge feature/GH-4-google-oauth: Google OAuth + per-row share icons [`4706828`](https://github.com/karmaniverous/jeeves-server/commit/470682852b610da5a262501a216feaf71c035d34)
+- [GH-4] feat: add Google OAuth and cookie sessions (GH-4) [`89b6d72`](https://github.com/karmaniverous/jeeves-server/commit/89b6d729edc6e9a360aa1d8c745de0cdcd8d573f)
+- [GH-4] feat: directory outsider links, new share UI, per-insider key age (GH-4) [`4cbc001`](https://github.com/karmaniverous/jeeves-server/commit/4cbc001b1ed163b6735ff1667c70008d20729b43)
+- [GH-4] refactor: merge configs into jeeves.config.json (GH-4) [`dae22f9`](https://github.com/karmaniverous/jeeves-server/commit/dae22f9178e943f34b55cf3cc77fa34767f13151)
+- [GH-4] feat: per-row share icons in directory listings — 🔗 page + ⬇ raw with shared expiry input (GH-4) [`f0e005e`](https://github.com/karmaniverous/jeeves-server/commit/f0e005ea5c3d5582d4b3eb91df26fdc1781367e2)
+- [GH-4] feat: remove dangerous executable distinction — all files navigable and downloadable (GH-4) [`d974f3b`](https://github.com/karmaniverous/jeeves-server/commit/d974f3b8d6e71b7714120aca1b9ebdc7fc09f877)
+- [GH-4] feat: outsider directory shares show navigable breadcrumbs from share root (GH-4) [`0e93d19`](https://github.com/karmaniverous/jeeves-server/commit/0e93d1900aa18e95c188ee290b4f55be599d3290)
+- [GH-4] feat: copy-key button, insider seeds for outsider URL auth (GH-4) [`aa4f42b`](https://github.com/karmaniverous/jeeves-server/commit/aa4f42ba55c86dc27cd86a3235770fec725c322e)
+- [GH-4] feat: remove key params from insider links — cookie auth makes them unnecessary (GH-4) [`5509823`](https://github.com/karmaniverous/jeeves-server/commit/550982334513818fcd6ec55344ed9b04cd00ab47)
+- [GH-4] fix: share endpoint supports insider seeds and session cookie auth (GH-4) [`4541572`](https://github.com/karmaniverous/jeeves-server/commit/45415724be21abbdcd4e5a1d07089f65fa3b091d)
+- [GH-3] Log full body for unmatched events (remove 200-char truncation) [`639c4df`](https://github.com/karmaniverous/jeeves-server/commit/639c4df46a7d09e4f6b75091cb107038c86776e0)
+- [GH-4] fix: serve favicon.svg route — was referenced in HTML but never served (GH-4) [`5543ff8`](https://github.com/karmaniverous/jeeves-server/commit/5543ff82e7b435fdf5d7bc465982bc0575ce35d5)
+- [GH-4] fix: redirect URI uses Host header for correct port (GH-4) [`2b6e43f`](https://github.com/karmaniverous/jeeves-server/commit/2b6e43f1be8d96d8d36f62674188f6dde19be5e3)
+- [GH-4] feat: Raw option in link dropdown for embeddable URLs (GH-4) [`14098a0`](https://github.com/karmaniverous/jeeves-server/commit/14098a02fd33411b4eae0936de79715fa054e947)
+- [GH-4] fix: session cookie secure flag for http dev [`903e00f`](https://github.com/karmaniverous/jeeves-server/commit/903e00fd793d2def90c9f46e37ab3205672064d5)
+
+#### [v1.1.0](https://github.com/karmaniverous/jeeves-server/compare/v1.0.3...v1.1.0)
+
+> 15 February 2026
+
+- v1.1.0: TypeScript/Fastify refactor, event gateway, named keys with scopes [`f3711f8`](https://github.com/karmaniverous/jeeves-server/commit/f3711f82ed0f30156c7980440ad55dec336be0df)
+- Merge feature/GH-3-ts-refactor: TypeScript/Fastify refactor with event gateway and named keys [`a920a99`](https://github.com/karmaniverous/jeeves-server/commit/a920a99e9975215c653a29decad2e9e578b438de)
+- [GH-3] TypeScript refactor scaffolding and core modules [`8dd0b92`](https://github.com/karmaniverous/jeeves-server/commit/8dd0b927e70eb89af416ce9708dcbc8de05a41da)
+- [GH-3] Decompose path route into sub-modules [`c369969`](https://github.com/karmaniverous/jeeves-server/commit/c3699698b0e52a4ea434824a4acd4e409de27869)
+- [GH-3] Complete path and about routes [`ffef74a`](https://github.com/karmaniverous/jeeves-server/commit/ffef74a17c2bb4a65a9c9c7209e432edcdebfa4f)
+- [GH-3] implement event gateway with durable queue and logging [`2eaef85`](https://github.com/karmaniverous/jeeves-server/commit/2eaef8595983de12778324f7ac60893f9ad0b7ee)
+- [GH-3] Add comprehensive tests for util modules (crypto, formatters, fileDetection) [`3536fdd`](https://github.com/karmaniverous/jeeves-server/commit/3536fddbe19d05e8e220755a7f4252a91c0f6616)
+- [GH-3] Auth: multiple API key seeds with optional scopes (preserve HMAC model) [`00b1e67`](https://github.com/karmaniverous/jeeves-server/commit/00b1e67e866e24581e9982793b2cc1fef8ee10cf)
+- Document event gateway and config redesign in README [`3f904ca`](https://github.com/karmaniverous/jeeves-server/commit/3f904cacffded8662815bd35efe2761d42c1ede9)
+- [GH-3] Fix lint errors [`09d8c28`](https://github.com/karmaniverous/jeeves-server/commit/09d8c28a29cf63cbb910f535fcc40bc68facbbb8)
+- [GH-3] Fix tsconfig, add prebuild clean, add tsconfig.eslint.json [`8d08742`](https://github.com/karmaniverous/jeeves-server/commit/8d08742a40123f4d470d33ab19b72f33e2631696)
+- [GH-3] Fix stan: add placeholder test, configure knip for in-progress refactor [`e91697d`](https://github.com/karmaniverous/jeeves-server/commit/e91697d56188c489a68b212b857e519590a52172)
+- [GH-3] fix build scripts: increase typecheck memory, ensure dist dir for lint, exclude dist from vitest [`d909a60`](https://github.com/karmaniverous/jeeves-server/commit/d909a60696359d3b7b81c844306aca7cd53b59d6)
+
+#### [v1.0.3](https://github.com/karmaniverous/jeeves-server/compare/v1.0.2...v1.0.3)
+
+> 8 February 2026
+
+- Reduce PDF/DOCX font sizes to 10pt base [`2617ac9`](https://github.com/karmaniverous/jeeves-server/commit/2617ac969c6dc3d503fdb63760d8d8f68cdae0c7)
+- Fix PDF font size - add 10pt to PDF-specific styles [`18b3505`](https://github.com/karmaniverous/jeeves-server/commit/18b35059f3eef267cdcb01e51dd49e1d8a9fb173)
+
+#### [v1.0.2](https://github.com/karmaniverous/jeeves-server/compare/v1.0.1...v1.0.2)
+
+> 7 February 2026
+
+- Fix raw download for markdown files [`25952cd`](https://github.com/karmaniverous/jeeves-server/commit/25952cd0362a47ebdaf4958fc86436a96c1f8c1f)
+- Add top hat branding to outsider pages, improve filename display [`cacbb60`](https://github.com/karmaniverous/jeeves-server/commit/cacbb605b58064002aba3911009c5fb3788990ff)
+- Add 'Jeeves Server' tooltip to top hat in all modes [`26902d4`](https://github.com/karmaniverous/jeeves-server/commit/26902d45d74aea615f706700ebdf2068c4f95bd7)
+
+### [v1.0.1](https://github.com/karmaniverous/jeeves-server/compare/v0.1.2...v1.0.1)
+
+> 7 February 2026
+
+#### [v0.1.2](https://github.com/karmaniverous/jeeves-server/compare/v0.1.1...v0.1.2)
+
+> 7 February 2026
+
+- Add HTML wrapper for SVG files with proper constraints [`edf794b`](https://github.com/karmaniverous/jeeves-server/commit/edf794beb8e1c81d4c4d698d4fc7ecef2412d66c)
+- Allow clickthrough on binary files, block only dangerous executables [`be338eb`](https://github.com/karmaniverous/jeeves-server/commit/be338ebdb7872b60682836ddd761f4e1a215ef5e)
+- Fix panzoom overlay sizing for tall SVGs - strip inline styles, size based on aspect ratio [`1fabf75`](https://github.com/karmaniverous/jeeves-server/commit/1fabf753cd0f22531cce2861e2fe80727dc00635)
+- Panzoom SVG overlay: pan/zoom wrapper div (overflow visible) to prevent initial right-shift [`e5d85c0`](https://github.com/karmaniverous/jeeves-server/commit/e5d85c009272b5ff089257b64727a93152f790c6)
+- Simplify panzoom SVG sizing - use max-width/max-height constraints [`9e61f4e`](https://github.com/karmaniverous/jeeves-server/commit/9e61f4e63491e6e94ac0a8e9d99d70246aac53da)
+- Fix zoom focal point: use margin centering instead of flex to avoid coordinate mismatch [`96d170d`](https://github.com/karmaniverous/jeeves-server/commit/96d170dfd7c6bc97d2d7ece85369798f44e99a03)
+- Fix panzoom overlay: calculate explicit pixel dimensions from viewBox to fit viewport [`5f5d9ce`](https://github.com/karmaniverous/jeeves-server/commit/5f5d9ce9544569666ae05d9368bae4f4dad52b06)
+- Fix tall SVG diagrams: remove width=100% attr and inline max-width style [`e9557ff`](https://github.com/karmaniverous/jeeves-server/commit/e9557ffa002ae3bdb16501723365af0b553f9f59)
+- Add top hat branding to outsider pages, improve filename display [`cacbb60`](https://github.com/karmaniverous/jeeves-server/commit/cacbb605b58064002aba3911009c5fb3788990ff)
+- Add 'Jeeves Server' tooltip to top hat in all modes [`26902d4`](https://github.com/karmaniverous/jeeves-server/commit/26902d45d74aea615f706700ebdf2068c4f95bd7)
+- v1.0.1: Fix SVG panzoom overlay sizing and zoom focal point [`da64150`](https://github.com/karmaniverous/jeeves-server/commit/da6415017487c30f79f3ff2c0bb7ccdabb321a8a)
+- Serve SVG files as images, not as code [`bdb021f`](https://github.com/karmaniverous/jeeves-server/commit/bdb021fc8cae1db9dc4a54515e446ee1a9dbc6a2)
+- Force SVG max-width with !important to override inline styles [`2ac1093`](https://github.com/karmaniverous/jeeves-server/commit/2ac1093f72e31443c609b9efe05a576b51e3dfa1)
+- Fix zoom focal point offset: attach wheel listener to panzoom target element [`b58f1b0`](https://github.com/karmaniverous/jeeves-server/commit/b58f1b0d285590b635621ad570f5ad5db9ff6394)
+- Force panzoom.reset() after init to ensure scale=1 [`991b9d2`](https://github.com/karmaniverous/jeeves-server/commit/991b9d216d3656b73224b510bc71bc7066898358)
+- Fix server.js template literal nesting bug [`4e73f87`](https://github.com/karmaniverous/jeeves-server/commit/4e73f8777bb960346b8a458e018616f663a46cbe)
+- Force panzoom to start at scale=1 with no translation [`6cbce2d`](https://github.com/karmaniverous/jeeves-server/commit/6cbce2dee74f14131c05301166743388643a4499)
+
+#### [v0.1.1](https://github.com/karmaniverous/jeeves-server/compare/v0.1.0...v0.1.1)
+
+> 7 February 2026
+
+- Fix DOCX image sizing: preserve aspect ratio within max bounds [`9755b15`](https://github.com/karmaniverous/jeeves-server/commit/9755b15d20e82c78c452e48c220214f1fb238293)
+- docs: add integration guide for other projects [`4512d9b`](https://github.com/karmaniverous/jeeves-server/commit/4512d9b881fd3de20f8c9c68fe3097fd4e97b7e7)
+- feat: detect text files by content (null bytes) instead of extension whitelist [`cf8c99a`](https://github.com/karmaniverous/jeeves-server/commit/cf8c99a911b268df9761da9efdde7526c4004e2b)
+- fix: constrain images to fit within page dimensions in PDF/DOCX export [`2e47e5a`](https://github.com/karmaniverous/jeeves-server/commit/2e47e5aed82c20f4d1088fa9874f2c75d91688a1)
+- fix: preserve image aspect ratio in PDF/DOCX export [`ee60f23`](https://github.com/karmaniverous/jeeves-server/commit/ee60f23fbc7efd743f7f26f60a296d2028ba7268)
+- fix: constrain SVGs and images to page dimensions for PDF export [`10993c7`](https://github.com/karmaniverous/jeeves-server/commit/10993c78aa646de2f8b11bcf352063b7e09942a2)
+
+#### v0.1.0
+
+> 7 February 2026
+
+- feat: track key rotation timestamp, display relative time, DRY up header components [`993023e`](https://github.com/karmaniverous/jeeves-server/commit/993023e240174cc420f43ca93187b69d9b49812f)
+- Add heading anchors, TOC, and Windows path linking [`f49962d`](https://github.com/karmaniverous/jeeves-server/commit/f49962da01488d244898aaceef4c5d0cecf72915)
+- Initial commit: Express server with webhook receiver, file server, and path-key auth [`31c83ca`](https://github.com/karmaniverous/jeeves-server/commit/31c83ca0593a09bfcece5501920dad7f8c78a74f)
+- feat: add /about page with usage instructions, info button in header, adjust glow to 1px 0.2 opacity [`e0492c6`](https://github.com/karmaniverous/jeeves-server/commit/e0492c69ced766e1e29127122dda38ba969cacff)
+- Add directory browser with breadcrumbs, drive listing, skip binaries [`06b66ea`](https://github.com/karmaniverous/jeeves-server/commit/06b66ea2a96355be741d187f76408abc2e7d0f5d)
+- Sticky TOC sidebar, TOC on by default, HTML viewer for all text files [`55ae006`](https://github.com/karmaniverous/jeeves-server/commit/55ae006dbd72d31afe30749ba71c1352cba30904)
+- Check path existence before linking, skip templates, handle directories, add syntax highlighting [`d2c6af9`](https://github.com/karmaniverous/jeeves-server/commit/d2c6af985c98d93c94b36091d9bf4538bea117aa)
+- docs: add 'Why Markdown?' value proposition to about page and README [`77a5769`](https://github.com/karmaniverous/jeeves-server/commit/77a5769e13aef5ced3a211e2e554e118facaf3e8)
+- Pre-process paths before marked, support all drives, serve jsonl as text [`00f1140`](https://github.com/karmaniverous/jeeves-server/commit/00f1140e55d7092315bed092b8c61a25dd739fdc)
+- feat: add Raw/PDF/DOCX export buttons to about page [`5141a78`](https://github.com/karmaniverous/jeeves-server/commit/5141a78b40c438fa0ac61397429039363d3a8c2b)
+- Add breadcrumb navigation to all file views [`e3cd472`](https://github.com/karmaniverous/jeeves-server/commit/e3cd472948a18962c546df4300a882ce937f3453)
+- feat: add key rotation to about page for insiders [`dcbb328`](https://github.com/karmaniverous/jeeves-server/commit/dcbb32887c32a3707477331ad998f733ecf44081)
+- Fix inline code path linking, add noindex/nofollow [`e3b7967`](https://github.com/karmaniverous/jeeves-server/commit/e3b796762fea3978e51ffd3860185054de6b83b3)
+- feat: display volume names on drives page [`86308a1`](https://github.com/karmaniverous/jeeves-server/commit/86308a1626749513f82e4742d798d54b4ad639c0)
+- feat: add top hat favicon [`541ca76`](https://github.com/karmaniverous/jeeves-server/commit/541ca76902219356d3128e0f85b3f641b6ebf00b)
+- feat: add tooltips to all header buttons [`9c6ecbf`](https://github.com/karmaniverous/jeeves-server/commit/9c6ecbfe8c214feebd2627ecb76c3e4b88a785d7)
+- fix: change TOC to position:fixed to prevent scroll jitter [`33257a8`](https://github.com/karmaniverous/jeeves-server/commit/33257a8f2bb3529c6585d6292e3f536ea57965f4)
+- fix: TOC sticky position below header (top: 42px) [`954027c`](https://github.com/karmaniverous/jeeves-server/commit/954027c6bdd321f7a749e8db430642a2da8b72ce)
+- feat: add download icon to files that will download in directory view [`78f5bea`](https://github.com/karmaniverous/jeeves-server/commit/78f5bea87fe622e3de425d1e24192b35e269da3f)
+- Handle bare drive letter paths (c -&gt; C:\\) [`49b10d6`](https://github.com/karmaniverous/jeeves-server/commit/49b10d6949c1caa1fb679ff2302cf4407cde8200)
+- style: truncate breadcrumb paths with ellipsis, nowrap header actions [`c53a82f`](https://github.com/karmaniverous/jeeves-server/commit/c53a82ff87f726deebbee7858dfc0457bc91d9e0)
+- fix: update in-memory API_KEY after rotation so new key works immediately [`c876198`](https://github.com/karmaniverous/jeeves-server/commit/c876198983d2fb9335ed91f7eead2dbae741567c)
+- style: replace info emoji with bold question mark [`90f2a48`](https://github.com/karmaniverous/jeeves-server/commit/90f2a4887e6647232d14c043385d868a43b2c560)
+- style: add padding-top to TOC title for more whitespace [`fae3a97`](https://github.com/karmaniverous/jeeves-server/commit/fae3a9797fd400f0742c6b0760bdee264466eba6)
+- style: add subtle shadow to header in light mode [`42e1bfe`](https://github.com/karmaniverous/jeeves-server/commit/42e1bfe53a8146c62f8c63767bdc3130f535d12e)
+- fix: add explicit font-family to header for consistency across pages [`19418f4`](https://github.com/karmaniverous/jeeves-server/commit/19418f4dcaf79e93d326af1b68fb8d50a4881ee6)
+- fix: include insider key in about link for insiders [`33172c9`](https://github.com/karmaniverous/jeeves-server/commit/33172c989a4c890e943904659b487862c3193642)
+- fix: restore spacing around breadcrumb separators with nbsp [`3b85d55`](https://github.com/karmaniverous/jeeves-server/commit/3b85d55b8f914b8d3b1196ac3532b1c28b6eb41f)
+- style: vertically center header items (align-items: center) [`68c9a57`](https://github.com/karmaniverous/jeeves-server/commit/68c9a576efc7241f90051e21168af5d1c240e04c)
+- style: align header items to bottom (flex-end) [`b60b30b`](https://github.com/karmaniverous/jeeves-server/commit/b60b30b1344893b4319f086812684d9dd6dd7ad2)
+- style: change header shadow to white outer glow [`4f72ef8`](https://github.com/karmaniverous/jeeves-server/commit/4f72ef84b42d471030ba2ed6844e7fb661e70666)
+- fix: increase scroll-margin-top to 80px [`c4a1ee0`](https://github.com/karmaniverous/jeeves-server/commit/c4a1ee023d9422615c7f09ba45c141a5d8d01a40)
+- fix: add scroll-margin-top to headings for sticky header offset [`9c649d1`](https://github.com/karmaniverous/jeeves-server/commit/9c649d10ab235f081ae863e6e368b350cd295f60)
+- Fix View Raw link to include key [`65fafdf`](https://github.com/karmaniverous/jeeves-server/commit/65fafdf1ba1ebee07b1082732f01ad325c0f8241)
+- style: vertically center breadcrumb text with flexbox [`19cebb9`](https://github.com/karmaniverous/jeeves-server/commit/19cebb979db52ee75382855bcca512f05e04b006)
