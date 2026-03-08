@@ -14,7 +14,7 @@ import {
 describe('deriveKey', () => {
   it('produces a hex string', () => {
     const key = deriveKey('test-seed');
-    expect(key).toMatch(/^[0-9a-f]{64}$/);
+    expect(key).toMatch(/^[0-9a-f]{32}$/);
   });
 
   it('is deterministic', () => {
@@ -31,7 +31,7 @@ describe('deriveKey', () => {
     const seed = 'test-seed-12345';
     // Manually compute what computeInsiderKey produces
     const { createHmac } = await import('node:crypto');
-    const expected = createHmac('sha256', seed).update('insider').digest('hex');
+    const expected = createHmac('sha256', seed).update('insider').digest('hex').substring(0, 32);
     expect(deriveKey(seed)).toBe(expected);
   });
 });

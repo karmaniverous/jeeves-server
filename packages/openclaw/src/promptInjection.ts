@@ -2,28 +2,33 @@
  * Generates the Server menu string for TOOLS.md injection.
  */
 
-import { fetchJson } from './helpers.js';
+import { fetchJson, withAuth } from './helpers.js';
 
 interface StatusResponse {
   version?: string;
   uptime?: number;
   port?: number;
   chrome?: boolean;
-  exportFormats?: string[];
+  exports?: {
+    documents?: string[];
+    directories?: string[];
+    diagrams?: string[];
+    chromeAvailable?: boolean;
+  };
   services?: Record<string, { url: string; reachable: boolean }>;
-  insiderCount?: number;
-  events?: Array<{ name: string; pattern?: string }>;
-  diagrams?: string[];
+  auth?: { insiderCount?: number; keyCount?: number };
+  events?: Array<{ name: string; cmd?: string }>;
+  diagrams?: { mermaid?: boolean; plantuml?: { localJar?: boolean; servers?: string[] } };
 }
 
 /**
  * Fetch server status and generate a Markdown menu string.
  */
-export async function generateServerMenu(apiUrl: string): Promise<string> {
+export async function generateServerMenu(apiUrl: string, keySeed?: string): Promise<string> {
   let status: StatusResponse;
 
   try {
-    status = (await fetchJson(apiUrl + '/api/status', {
+    status = (await fetchJson(withAuth(apiUrl + '/api/status', keySeed), {
       signal: AbortSignal.timeout(5000),
     })) as StatusResponse;
   } catch {
@@ -41,21 +46,39 @@ export async function generateServerMenu(apiUrl: string): Promise<string> {
     '',
   ];
 
-  // Export formats
-  if (status.exportFormats && status.exportFormats.length > 0) {
-    lines.push('### Export Formats');
-    lines.push('Available: ' + status.exportFormats.join(', '));
-    if (!status.chrome) {
-      lines.push('> **Note:** Chrome not detected — PDF export unavailable.');
+  // Export capabilities
+  if (status.exports) {
+    lines.push('### Export');
+    if (status.exports.documents) {
+      lines.push('* **Documents** (Markdown/HTML): ' + status.exports.documents.join(', '));
+      if (!status.exports.chromeAvailable) {
+        lines.push('  > Chrome not detected \u2014 PDF export unavailable.');
+      }
     }
+    if (status.exports.directories) {
+      lines.push('* **Directories**: ' + status.exports.directories.join(', '));
+    }
+    if (status.exports.diagrams) {
+      lines.push('* **Diagrams**: ' + status.exports.diagrams.join(', '));
+    }
+    lines.push('* **All files**: raw download');
+    lines.push('Use `server_link_info` to check available formats for a specific path.');
     lines.push('');
   }
 
   // Diagram support
-  if (status.diagrams && status.diagrams.length > 0) {
-    lines.push('### Diagram Support');
-    lines.push('Supported languages: ' + status.diagrams.join(', '));
-    lines.push('');
+  if (status.diagrams) {
+    const langs: string[] = [];
+    if (status.diagrams.mermaid) langs.push('Mermaid');
+    if (status.diagrams.plantuml) {
+      const pl = status.diagrams.plantuml;
+      langs.push('PlantUML' + (pl.localJar ? ' (local jar)' : ' (server-only)'));
+    }
+    if (langs.length > 0) {
+      lines.push('### Diagrams');
+      lines.push('Supported: ' + langs.join(', '));
+      lines.push('');
+    }
   }
 
   // Connected services
@@ -83,10 +106,10 @@ export async function generateServerMenu(apiUrl: string): Promise<string> {
     lines.push('');
   }
 
-  // Insider count
-  if (status.insiderCount !== undefined) {
+  // Access info
+  if (status.auth?.insiderCount !== undefined) {
     lines.push('### Access');
-    lines.push(String(status.insiderCount) + ' insider(s) configured.');
+    lines.push(String(status.auth.insiderCount) + ' insider(s) configured.');
     lines.push('');
   }
 

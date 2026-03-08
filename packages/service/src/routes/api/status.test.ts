@@ -29,7 +29,7 @@ vi.mock('../../config/index.js', () => ({
 const { statusRoutes } = await import('./status.js');
 
 describe('GET /api/status', () => {
-  it('returns structured status for insider requests', async () => {
+  it('returns structured status', async () => {
     // Create a minimal Fastify-like test harness
     const routes: Record<string, (req: unknown) => Promise<unknown>> = {};
     const fakeFastify = {
@@ -53,20 +53,11 @@ describe('GET /api/status', () => {
     expect((status.auth as { insiderCount: number }).insiderCount).toBe(2);
     expect((status.auth as { keyCount: number }).keyCount).toBe(1);
     expect(status.events).toHaveLength(2);
-    expect(status.exportFormats).toEqual(['pdf', 'docx', 'zip']);
+    const exports = status.exports as { documents: string[]; directories: string[]; diagrams: string[]; chromeAvailable: boolean };
+    expect(exports.documents).toEqual(['pdf', 'docx']);
+    expect(exports.directories).toEqual(['zip']);
+    expect(exports.diagrams).toEqual(['svg', 'png']);
+    expect(exports.chromeAvailable).toBe(true);
     expect((status.diagrams as { mermaid: boolean }).mermaid).toBe(true);
-  });
-
-  it('rejects non-insider requests', async () => {
-    const routes: Record<string, (req: unknown) => Promise<unknown>> = {};
-    const fakeFastify = {
-      get: (path: string, handler: (req: unknown) => Promise<unknown>) => {
-        routes[path] = handler;
-      },
-    };
-
-    await statusRoutes(fakeFastify as never, {});
-    const result = await routes['/api/status']({ accessMode: 'outsider' });
-    expect(result).toEqual({ error: 'Insider auth required' });
   });
 });

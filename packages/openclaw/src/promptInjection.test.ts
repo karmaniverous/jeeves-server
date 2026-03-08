@@ -30,8 +30,12 @@ describe('generateServerMenu', () => {
       json: () => ({
         version: '3.0.0',
         port: 1934,
-        exportFormats: ['pdf', 'docx'],
-        chrome: true,
+        exports: {
+          documents: ['pdf', 'docx'],
+          directories: ['zip'],
+          diagrams: ['svg', 'png'],
+          chromeAvailable: true,
+        },
       }),
     } as unknown as Response);
     const menu = await generateServerMenu('http://localhost:1934');
@@ -45,8 +49,10 @@ describe('generateServerMenu', () => {
       json: () => ({
         version: '3.0.0',
         port: 1934,
-        exportFormats: ['docx'],
-        chrome: false,
+        exports: {
+          documents: ['docx'],
+          chromeAvailable: false,
+        },
       }),
     } as unknown as Response);
     const menu = await generateServerMenu('http://localhost:1934');
@@ -60,7 +66,7 @@ describe('generateServerMenu', () => {
         version: '3.0.0',
         port: 1934,
         events: [{ name: 'webhook', pattern: '/event/*' }],
-        insiderCount: 3,
+        auth: { insiderCount: 3 },
       }),
     } as unknown as Response);
     const menu = await generateServerMenu('http://localhost:1934');

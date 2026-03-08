@@ -5,7 +5,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import { getApiUrl, type PluginApi } from './helpers.js';
+import { getApiUrl, getPluginKey, type PluginApi } from './helpers.js';
 import { generateServerMenu } from './promptInjection.js';
 
 const REFRESH_INTERVAL_MS = 60_000;
@@ -65,7 +65,8 @@ function upsertServerContent(existing: string, serverMenu: string): string {
  */
 async function refreshToolsMd(api: PluginApi): Promise<boolean> {
   const apiUrl = getApiUrl(api);
-  const menu = await generateServerMenu(apiUrl);
+  const keySeed = getPluginKey(api);
+  const menu = await generateServerMenu(apiUrl, keySeed);
 
   if (menu === lastWrittenMenu) return false;
 
@@ -94,9 +95,13 @@ async function refreshToolsMd(api: PluginApi): Promise<boolean> {
  * Start the periodic TOOLS.md writer.
  */
 export function startToolsWriter(api: PluginApi): void {
-  refreshToolsMd(api).catch((err: unknown) => {
-    console.error('[jeeves-server] Failed to write TOOLS.md:', err);
-  });
+  // Defer first write to allow OpenClaw to fully populate api.config
+  // (plugin config may not be available at register() time).
+  setTimeout(() => {
+    refreshToolsMd(api).catch((err: unknown) => {
+      console.error('[jeeves-server] Failed initial TOOLS.md write:', err);
+    });
+  }, 5000);
 
   if (intervalHandle) clearInterval(intervalHandle);
 

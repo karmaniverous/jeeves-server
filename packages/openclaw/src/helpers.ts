@@ -54,7 +54,7 @@ export function getPluginKey(api: PluginApi): string | undefined {
 
 /** Derive HMAC key from seed. */
 export function deriveKey(seed: string): string {
-  return createHmac('sha256', seed).update('insider').digest('hex');
+  return createHmac('sha256', seed).update('insider').digest('hex').substring(0, 32);
 }
 
 /** Append auth key query param to a URL. */
