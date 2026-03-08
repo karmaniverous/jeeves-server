@@ -40,16 +40,90 @@ export function normalizeScopes(raw: unknown): NormalizedScopes | null {
 }
 
 /**
+ * Resolve named scope references (string or string[]) against the top-level scopes map,
+ * optionally merging explicit allow/deny overrides.
+ *
+ * Returns null if no scopes are provided.
+ * Falls back to normalizeScopes() for legacy inline scope formats.
+ */
+export function resolveNamedScopes(
+  named: Record<string, { allow?: string[]; deny?: string[] }>,
+  rawScopes: unknown,
+  overrides?: { allow?: string[]; deny?: string[] },
+): NormalizedScopes | null {
+  if (rawScopes === undefined || rawScopes === null) {
+    if (overrides?.allow?.length || overrides?.deny?.length) {
+      return {
+        allow: overrides.allow ?? ['/**'],
+        deny: overrides.deny ?? [],
+      };
+    }
+    return null;
+  }
+
+  // Determine whether rawScopes is a named reference (identifier(s))
+  const isName = (v: string): boolean => /^[A-Za-z0-9_-]+$/.test(v);
+
+  const refs =
+    typeof rawScopes === 'string'
+      ? isName(rawScopes)
+        ? [rawScopes]
+        : null
+      : Array.isArray(rawScopes) && rawScopes.every((v) => typeof v === 'string')
+        ? (rawScopes.filter((v) => isName(String(v))) as string[])
+        : null;
+
+  if (refs && refs.length > 0) {
+    const allow: string[] = [];
+    const deny: string[] = [];
+
+    for (const ref of refs) {
+      const scope = named[ref];
+      if (!scope) continue; // schema should have validated
+      if (scope.allow) allow.push(...scope.allow);
+      if (scope.deny) deny.push(...scope.deny);
+    }
+
+    if (overrides?.allow) allow.push(...overrides.allow);
+    if (overrides?.deny) deny.push(...overrides.deny);
+
+    return {
+      allow: allow.length > 0 ? allow : ['/**'],
+      deny,
+    };
+  }
+
+  // Legacy inline scopes
+  const normalized = normalizeScopes(rawScopes);
+  if (!normalized) return null;
+  if (overrides?.allow) normalized.allow.push(...overrides.allow);
+  if (overrides?.deny) normalized.deny.push(...overrides.deny);
+  return normalized;
+}
+
+/**
  * Resolve raw key entries to ResolvedKey[].
  */
 export function resolveKeys(
-  keys: Record<string, string | { key: string; scopes?: unknown }>,
+  keys: Record<
+    string,
+    | string
+    | { key: string; scopes?: unknown; allow?: string[]; deny?: string[] }
+  >,
+  namedScopes: Record<string, { allow?: string[]; deny?: string[] }>,
 ): ResolvedKey[] {
   return Object.entries(keys).map(([name, entry]) => {
     if (typeof entry === 'string') {
       return { name, seed: entry, scopes: null };
     }
-    return { name, seed: entry.key, scopes: normalizeScopes(entry.scopes) };
+    return {
+      name,
+      seed: entry.key,
+      scopes: resolveNamedScopes(namedScopes, entry.scopes, {
+        allow: entry.allow,
+        deny: entry.deny,
+      }),
+    };
   });
 }
 
@@ -57,7 +131,11 @@ export function resolveKeys(
  * Resolve insider entries by merging config (identity + scopes) with state (keys).
  */
 export function resolveInsiders(
-  insiders: Record<string, { scopes?: unknown }>,
+  insiders: Record<
+    string,
+    { scopes?: unknown; allow?: string[]; deny?: string[] }
+  >,
+  namedScopes: Record<string, { allow?: string[]; deny?: string[] }>,
   stateFile: string,
 ): ResolvedInsider[] {
   let serverState: ServerState = {};
@@ -73,7 +151,10 @@ export function resolveInsiders(
 
   return Object.entries(insiders).map(([rawEmail, entry]) => {
     const email = rawEmail.toLowerCase();
-    const scopes = normalizeScopes(entry.scopes);
+    const scopes = resolveNamedScopes(namedScopes, entry.scopes, {
+      allow: entry.allow,
+      deny: entry.deny,
+    });
     const stateKey = serverState.insiderKeys?.[email];
     return {
       email,
@@ -135,10 +216,19 @@ export function buildRuntimeConfig(
   const stateFile = path.join(rootDir, 'state.json');
 
   const resolvedKeys = resolveKeys(
-    config.keys as Record<string, string | { key: string; scopes?: unknown }>,
+    config.keys as Record<
+      string,
+      | string
+      | { key: string; scopes?: unknown; allow?: string[]; deny?: string[] }
+    >,
+    config.scopes as Record<string, { allow?: string[]; deny?: string[] }>,
   );
   const resolvedInsiders = resolveInsiders(
-    config.insiders as Record<string, { scopes?: unknown }>,
+    config.insiders as Record<
+      string,
+      { scopes?: unknown; allow?: string[]; deny?: string[] }
+    >,
+    config.scopes as Record<string, { allow?: string[]; deny?: string[] }>,
     stateFile,
   );
 
@@ -152,7 +242,23 @@ export function buildRuntimeConfig(
     // eslint-disable-next-line @typescript-eslint/no-deprecated
     mermaidCliPath: config.mermaidCliPath,
     plantuml: resolvePlantuml(config.plantuml, rootDir),
-    outsiderPolicy: normalizeScopes(config.outsiderPolicy) ?? null,
+    outsiderPolicy:
+      resolveNamedScopes(
+        config.scopes as Record<string, { allow?: string[]; deny?: string[] }>,
+        (config.outsiderPolicy as unknown) &&
+          typeof config.outsiderPolicy === 'object' &&
+          !Array.isArray(config.outsiderPolicy)
+          ? (config.outsiderPolicy as { scopes?: unknown }).scopes ?? config.outsiderPolicy
+          : config.outsiderPolicy,
+        (config.outsiderPolicy as unknown) &&
+          typeof config.outsiderPolicy === 'object' &&
+          !Array.isArray(config.outsiderPolicy)
+          ? {
+              allow: (config.outsiderPolicy as { allow?: string[] }).allow,
+              deny: (config.outsiderPolicy as { deny?: string[] }).deny,
+            }
+          : undefined,
+      ) ?? null,
     events: config.events,
     authModes: config.auth.modes,
     resolvedKeys,
