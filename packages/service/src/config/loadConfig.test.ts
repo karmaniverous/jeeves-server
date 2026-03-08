@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { getConfig, initConfig, loadConfig, resetConfig } from './index.js';
+import { clearConfig, getConfig, initConfig, loadConfig } from './index.js';
 
 const VALID_CONFIG = {
   port: 9999,
@@ -28,12 +28,12 @@ describe('loadConfig', () => {
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jeeves-config-'));
-    resetConfig();
+    clearConfig();
   });
 
   afterEach(() => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
-    resetConfig();
+    clearConfig();
   });
 
   it('loads a valid JSON config file', async () => {
@@ -127,12 +127,12 @@ describe('config singleton', () => {
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jeeves-config-'));
-    resetConfig();
+    clearConfig();
   });
 
   afterEach(() => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
-    resetConfig();
+    clearConfig();
   });
 
   it('throws if getConfig called before initConfig', () => {
@@ -146,10 +146,10 @@ describe('config singleton', () => {
     expect(config.port).toBe(9999);
   });
 
-  it('resetConfig clears the singleton', async () => {
+  it('clearConfig clears the singleton', async () => {
     const configPath = writeConfig(tmpDir, VALID_CONFIG);
     await initConfig(configPath);
-    resetConfig();
+    clearConfig();
     expect(() => getConfig()).toThrow('Config not initialized');
   });
 });
