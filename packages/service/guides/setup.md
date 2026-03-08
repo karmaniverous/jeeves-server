@@ -2,70 +2,121 @@
 
 ## Prerequisites
 
-- **Node.js** ≥ 18
+- **Node.js** ≥ 20
 - **Chrome or Chromium** — required for PDF export (Puppeteer uses it headlessly)
-- **A domain or IP** where the server will be accessible (for Google OAuth callbacks)
 
 ## Installation
 
 ```bash
-git clone https://github.com/karmaniverous/jeeves-server.git
-cd jeeves-server
-npm install
+npm install -g @karmaniverous/jeeves-server
 ```
+
+The `postinstall` script automatically downloads the PlantUML jar for local diagram rendering.
 
 ## Configuration
 
-Jeeves Server uses a **TypeScript configuration file** validated at startup by a [Zod](https://github.com/colinhacks/zod) schema. The schema at `src/config/schema.ts` is the single source of truth — all types are derived from it.
-
-### Create your config
+Jeeves Server uses [cosmiconfig](https://github.com/cosmiconfig/cosmiconfig) for configuration. Create a config file in any supported format:
 
 ```bash
-cp jeeves.config.template.ts jeeves.config.ts
+# JSON (recommended for simplicity)
+jeeves-server.config.json
+
+# YAML
+jeeves-server.config.yaml
+
+# TypeScript (for type checking during authoring)
+jeeves-server.config.ts
+
+# Or any cosmiconfig-supported format
 ```
 
-Edit `jeeves.config.ts` with your values. This file is **gitignored** — it contains secrets and is never committed.
+The server searches for config files starting from its working directory and walking up. You can also specify an explicit path:
 
-### Config structure
-
-```typescript
-import type { JeevesConfig } from './src/config/schema.js';
-
-export default {
-  port: 1934,
-  chromePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-  auth: { ... },
-  insiders: { ... },
-  keys: { ... },
-  events: { ... },
-} satisfies JeevesConfig;
+```bash
+jeeves-server start --config /path/to/jeeves-server.config.json
 ```
 
-The `satisfies` keyword gives you type checking without losing literal types — your editor will autocomplete and validate as you type.
+### Config structure (JSON)
+
+```json
+{
+  "port": 1934,
+  "chromePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "auth": {
+    "modes": ["keys", "google"],
+    "google": {
+      "clientId": "your-google-client-id",
+      "clientSecret": "your-google-client-secret"
+    },
+    "sessionSecret": "random-session-signing-secret"
+  },
+  "scopes": {
+    "restricted": {
+      "allow": ["/d/projects/*"],
+      "deny": ["/d/projects/secret/*"]
+    }
+  },
+  "insiders": {
+    "alice@example.com": {},
+    "contractor@example.com": { "scopes": "restricted" }
+  },
+  "keys": {
+    "_internal": "random-hex-seed-for-pdf-export",
+    "_plugin": "random-hex-seed-for-openclaw-plugin",
+    "primary": "random-hex-seed-for-api-access",
+    "webhook-notion": {
+      "key": "random-hex-seed",
+      "scopes": ["/event"]
+    }
+  },
+  "events": {},
+  "watcherUrl": "http://localhost:1936",
+  "runnerUrl": "http://127.0.0.1:1937"
+}
+```
+
+### Environment variable substitution
+
+String values in the config support `${VAR_NAME}` substitution from `process.env`:
+
+```json
+{
+  "auth": {
+    "google": {
+      "clientId": "${GOOGLE_CLIENT_ID}",
+      "clientSecret": "${GOOGLE_CLIENT_SECRET}"
+    }
+  }
+}
+```
+
+### Validating your config
+
+```bash
+jeeves-server config validate [--config <path>]
+```
+
+This loads and validates the config against the Zod schema, reporting any errors. Use `config show` to see the fully resolved configuration with all derived keys and scope assignments.
 
 ### Platform-specific settings
 
 **Windows** — drives are auto-discovered; no `roots` config needed:
-```typescript
-chromePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+```json
+{ "chromePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" }
 ```
 
 **Linux** — configure filesystem roots for the file browser:
-```typescript
-chromePath: '/usr/bin/chromium-browser',
-roots: {
-  home: '/home',
-  projects: '/opt/projects',
-},
-mermaidCliPath: '/opt/mermaid-cli',  // optional
-plantuml: {                          // optional
-  jarPath: '/opt/plantuml/plantuml.jar',
-  javaPath: '/usr/bin/java',         // defaults to 'java' on PATH
-  servers: [],                       // private servers; community server always appended
-},
+```json
+{
+  "chromePath": "/usr/bin/chromium-browser",
+  "roots": {
+    "home": "/home",
+    "projects": "/opt/projects"
+  }
+}
 ```
 
-On Windows, `roots` is ignored. On Linux, if omitted, it defaults to `{ root: '/' }`.
+On Windows, `roots` is ignored. On Linux, if omitted, it defaults to `{ "root": "/" }`.
 
 ### Config is immutable at runtime
 
@@ -77,16 +128,17 @@ Once the server starts, the config is loaded once and never written to. Mutable 
 
 Jeeves Server supports two authentication methods, configured via `auth.modes`:
 
-```typescript
-auth: {
-  modes: ['google', 'keys'],  // Active modes, in priority order
-  // ...
+```json
+{
+  "auth": {
+    "modes": ["google", "keys"]
+  }
 }
 ```
 
 You can enable one or both. The order matters — modes are checked in the order listed.
 
-### Google OAuth (`'google'`)
+### Google OAuth (`"google"`)
 
 **Best for:** Teams where insiders log in via browser.
 
@@ -104,76 +156,85 @@ Users authenticate with their Google account. The server checks their email agai
 4. Authorized redirect URI: `https://your-domain.com/auth/google/callback`
 5. Copy the client ID and client secret into your config
 
-**Session secret generation:**
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-### Key-Based Auth (`'keys'`)
+### Key-Based Auth (`"keys"`)
 
 **Best for:** Headless access, bot integrations, simple setups without Google.
 
-Users authenticate by appending `?key=<value>` to any URL. The server derives keys from configured seeds using HMAC-SHA256 and checks the provided key against all known derived keys.
+Users authenticate by appending `?key=<value>` to any URL. The server derives keys from configured seeds using HMAC-SHA256.
 
 **Requirements when enabled:**
 - At least one entry in `keys`
 
-**How keys work:** You configure a **seed** (a random secret string). The server derives the actual insider key from it via HMAC. You never put the derived key in the config — only the seed. To get the derived key for use in URLs:
+**How keys work:** You configure a **seed** (a random secret string). The server derives the actual key from it via HMAC. You never put the derived key in the config — only the seed. To get the derived key:
 
 ```bash
-# Via the API (requires X-API-Key header with any seed)
 curl -H "X-API-Key: <seed>" https://your-domain.com/insider-key
 ```
 
 ### Both Modes Together
 
-```typescript
-auth: {
-  modes: ['keys', 'google'],  // Keys checked first
-}
-```
-
-When both are active:
-- Browser users can log in with Google for a session-based experience
-- Bots and scripts can use `?key=` for stateless access
-- Both methods work on every endpoint
-
-### Choosing a Mode
+When both are active, browser users log in with Google, and bots/scripts use `?key=` for stateless access. Both methods work on every endpoint.
 
 | Scenario | Recommended |
 |----------|-------------|
-| Team of humans accessing via browser | `['google']` |
-| Bot/script access only | `['keys']` |
-| Humans + bots on the same server | `['google', 'keys']` |
-| Quick local setup, no Google credentials | `['keys']` |
+| Team of humans accessing via browser | `["google"]` |
+| Bot/script access only | `["keys"]` |
+| Humans + bots on the same server | `["google", "keys"]` |
+| Quick local setup, no Google credentials | `["keys"]` |
+
+---
+
+## Named Access Scopes
+
+Define reusable scope policies at the top level, then reference them by name from insiders, keys, or the outsider policy:
+
+```json
+{
+  "scopes": {
+    "engineering": {
+      "allow": ["/d/repos/*", "/d/docs/*"],
+      "deny": ["/d/docs/hr/*"]
+    },
+    "readonly-projects": {
+      "allow": ["/d/projects/*"]
+    }
+  },
+  "insiders": {
+    "dev@example.com": { "scopes": "engineering" },
+    "contractor@example.com": {
+      "scopes": "readonly-projects",
+      "deny": ["/d/projects/secret/*"]
+    }
+  }
+}
+```
+
+Named scopes are **atomic** — composition happens at the point of use. An insider or key referencing a named scope can add extra `allow` and `deny` patterns that merge on top of the named scope's rules.
+
+Scopes can also be specified inline (without named references) using the same formats as before:
+
+```json
+{ "scopes": ["/d/projects/*"] }
+{ "scopes": { "allow": ["/d/*"], "deny": ["/d/secrets/*"] } }
+```
 
 ---
 
 ## Insiders
 
-The `insiders` map defines **who** has full browsing access. Each entry is an email address with optional path scopes:
+The `insiders` map defines **who** has full browsing access:
 
-```typescript
-insiders: {
-  // Full access
-  'alice@example.com': {},
-
-  // Restricted to specific paths (allow-only)
-  'contractor@example.com': {
-    scopes: ['/d/projects/client-x/*'],
-  },
-
-  // Broad access with cutouts (allow/deny)
-  'team-member@example.com': {
-    scopes: {
-      allow: ['/d/*'],
-      deny: ['/d/secrets/*', '/d/.private/*'],
-    },
-  },
-},
+```json
+{
+  "insiders": {
+    "alice@example.com": {},
+    "contractor@example.com": { "scopes": "restricted" },
+    "team@example.com": {
+      "scopes": { "allow": ["/d/*"], "deny": ["/d/secrets/*"] }
+    }
+  }
+}
 ```
-
-With Google auth, insiders log in via OAuth and the server checks their email. With key auth, each insider gets a derived URL key.
 
 See the [Insiders, Outsiders & Sharing](sharing.md) guide for the full access model.
 
@@ -181,22 +242,20 @@ See the [Insiders, Outsiders & Sharing](sharing.md) guide for the full access mo
 
 ## Keys
 
-The `keys` map defines **named API keys** for machine access:
+The `keys` map defines **named API keys** for machine and human access:
 
-```typescript
-keys: {
-  // Unscoped — full access to all paths
-  primary: 'a-random-64-char-hex-string',
-
-  // Scoped — restricted to specific paths
-  'webhook-notion': {
-    key: 'another-random-hex-string',
-    scopes: ['/event'],
-  },
-
-  // Reserved: internal server operations (Puppeteer export)
-  _internal: 'yet-another-random-hex-string',
-},
+```json
+{
+  "keys": {
+    "primary": "a-random-64-char-hex-string",
+    "webhook-notion": {
+      "key": "another-random-hex-string",
+      "scopes": ["/event"]
+    },
+    "_internal": "seed-for-pdf-export",
+    "_plugin": "seed-for-openclaw-plugin"
+  }
+}
 ```
 
 **Generate seeds with:**
@@ -204,110 +263,81 @@ keys: {
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-### The `_internal` key
+### Reserved keys
 
-The `_internal` key is reserved for the server's own use — specifically, Puppeteer uses it to authenticate when rendering PDFs and DOCX files. It **must not** have scopes (enforced by the schema).
+| Key | Purpose | Scopes |
+|-----|---------|--------|
+| `_internal` | Puppeteer uses this to authenticate when rendering PDFs/DOCX. **Required for export.** | Must be unscoped |
+| `_plugin` | OpenClaw plugin authentication. See [OpenClaw Integration](../../openclaw/guides/openclaw-integration.md). | Must be unscoped |
 
-If you don't configure `_internal`, PDF/DOCX export will not work.
-
-### Key names
-
-Key names are used for logging and identification. Choose meaningful names: `primary`, `webhook-notion`, `ci-bot`, etc.
+Both reserved keys are enforced unscoped by the Zod schema.
 
 ---
 
 ## Event Gateway
 
-The event gateway receives webhooks at `POST /event`, validates them against JSON Schema rules, and dispatches matched events to shell commands via a durable JSONL queue.
-
-```typescript
-events: {
-  'notion-page-update': {
-    // JSON Schema to match against incoming body
-    schema: {
-      type: 'object',
-      properties: { type: { const: 'page.content_updated' } },
-      required: ['type'],
-    },
-    // Command to execute when matched
-    cmd: 'node /path/to/handler.js',
-    // Optional: transform body before passing to command
-    map: {
-      pageId: { '$': { method: '$.lib._.get', params: ['$.input', 'data.page_id'] } },
-    },
-    // Optional: override default timeout
-    timeoutMs: 60000,
-  },
-},
-```
-
-Webhook callers authenticate with a scoped key:
-```bash
-curl -X POST "https://your-domain.com/event?key=<webhook-key>" \
-  -H "Content-Type: application/json" \
-  -d '{"type": "page.content_updated", "data": {"page_id": "abc123"}}'
-```
+See the [Event Gateway](event-gateway.md) guide for full configuration and usage.
 
 ---
 
-## Building
+## Optional Integrations
 
-```bash
-# Full build (server TypeScript + React client)
-npm run build                                      # Compiles server → dist/
-cd client && npx vite build --outDir ../dist/client && cd ..  # Builds React SPA → dist/client/
+### jeeves-watcher (Semantic Search)
+
+When `watcherUrl` is configured, the server proxies semantic search queries to [jeeves-watcher](https://github.com/karmaniverous/jeeves-watcher) and provides a search UI in the header, with filter facets and scope-aware result filtering.
+
+```json
+{ "watcherUrl": "http://localhost:1936" }
 ```
 
-> ⚠️ `npm run build` deletes the entire `dist/` directory (including `dist/client/`). Always rebuild the client after the server.
+### jeeves-runner (Process Dashboard)
+
+When `runnerUrl` is configured, the server proxies runner API calls for the process dashboard UI.
+
+```json
+{ "runnerUrl": "http://127.0.0.1:1937" }
+```
+
+### PlantUML
+
+Mermaid is bundled as a direct dependency — no configuration needed. PlantUML uses a fallback pipeline:
+
+1. **Local Java jar** (downloaded automatically via `postinstall`) — fastest, supports `!include`
+2. **Configured PlantUML servers** — private instances, tried in order
+3. **Public community server** (`plantuml.com`) — always appended as last resort
+
+```json
+{
+  "plantuml": {
+    "jarPath": "/opt/plantuml/plantuml.jar",
+    "javaPath": "/usr/bin/java",
+    "servers": ["https://internal.plantuml.example.com/plantuml"]
+  }
+}
+```
+
+If `plantuml` is omitted entirely, only the community server is used.
 
 ---
 
-## Running
+## Config Reference
 
-```bash
-node dist/server.js
-```
-
-### As a Windows service
-
-```bash
-nssm install JeevesServer "node" "/path/to/dist/server.js"
-nssm start JeevesServer
-```
-
-### Health check
-
-```
-GET /health
-```
-
-Returns `200 OK` with no authentication required.
-
----
-
-## File Layout
-
-```
-jeeves-server/
-├── jeeves.config.ts          # Your config (gitignored)
-├── jeeves.config.template.ts # Config template (committed)
-├── state.json                # Runtime state (gitignored, auto-managed)
-├── src/                      # Server source (TypeScript)
-│   ├── config/
-│   │   ├── schema.ts         # Zod schema (source of truth)
-│   │   ├── index.ts          # Config loader (jiti for TS)
-│   │   └── types.ts          # Runtime types
-│   ├── auth/                 # Google OAuth + key verification
-│   ├── routes/               # Fastify route handlers
-│   ├── services/             # Export, markdown, event queue
-│   └── server.ts             # Entry point
-├── client/                   # React SPA source
-│   └── src/
-│       ├── pages/            # FileBrowser, FileViewer, About
-│       ├── components/       # Header, dropdowns, viewers
-│       └── lib/              # API client, auth, theme
-├── dist/                     # Compiled output (gitignored)
-│   ├── server.js             # Compiled server
-│   └── client/               # Built React SPA
-└── guides/                   # Documentation
-```
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `port` | number | `1934` | Server port |
+| `chromePath` | string | *required* | Path to Chrome/Chromium executable |
+| `auth` | object | *required* | Authentication configuration |
+| `scopes` | object | `{}` | Named scope definitions |
+| `insiders` | object | `{}` | Email → insider entry map |
+| `keys` | object | `{}` | Named key entries |
+| `events` | object | `{}` | Event gateway schemas |
+| `eventTimeoutMs` | number | `30000` | Default event command timeout |
+| `eventLogPurgeMs` | number | `2592000000` | Event log retention (default: 30 days) |
+| `maxZipSizeMb` | number | `100` | Max directory size for ZIP export |
+| `roots` | object | — | Linux filesystem roots (ignored on Windows) |
+| `watcherUrl` | string | — | jeeves-watcher API URL for semantic search |
+| `runnerUrl` | string | — | jeeves-runner API URL for process dashboard |
+| `plantuml` | object | — | PlantUML rendering config |
+| `diagramCachePath` | string | `.diagram-cache` | Cached rendered diagram directory |
+| `outsiderPolicy` | scopes | — | Global outsider sharing constraints |
+| `mermaidCliPath` | string | — | **Deprecated.** Mermaid is now bundled. |

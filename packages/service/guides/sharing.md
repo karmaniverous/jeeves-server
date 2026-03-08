@@ -10,11 +10,11 @@ An insider is an **authenticated user** on the server. Depending on their config
 
 Anyone listed in the `insiders` map in your config:
 
-```typescript
-insiders: {
-  'alice@example.com': {},
-  'bob@example.com': { scopes: ['/d/projects/*'] },
-},
+```json
+{
+  "alice@example.com": {},
+  "bob@example.com": { "scopes": ["/d/projects/*"] }
+}
 ```
 
 ### How insiders authenticate
@@ -155,8 +155,8 @@ Use rotation when you need to revoke all shared links at once (e.g., a contracto
 
 In addition to insider-generated keys, the server supports **named machine keys** for programmatic access:
 
-```typescript
-keys: {
+```json
+"keys": {
   primary: 'random-seed-string',
   'webhook-notion': { key: 'another-seed', scopes: ['/event'] },
   _internal: 'internal-seed',

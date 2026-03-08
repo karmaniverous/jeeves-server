@@ -62,14 +62,16 @@ PDF generation uses [**Puppeteer**](https://github.com/puppeteer/puppeteer) with
 ### Requirements
 
 - **Chrome/Chromium** must be installed on the server
-- **`chromePath`** must point to the executable in `jeeves.config.ts`
+- **`chromePath`** must point to the executable in `your config file`
 - **`_internal` key** must be configured (Puppeteer uses it to authenticate)
 
-```typescript
-chromePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-keys: {
-  _internal: 'random-seed-string',  // Required for PDF/DOCX export
-},
+```json
+{
+  "chromePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "keys": {
+    "_internal": "random-seed-string"
+  }
+}
 ```
 
 ### What you see is what you get
@@ -111,13 +113,7 @@ Mermaid diagrams (`.mmd` files) can be exported as SVG, PNG, or PDF via the [Mer
 
 ### Requirements
 
-- **Mermaid CLI** must be installed (via npm)
-- **`mermaidCliPath`** must point to the `mmdc` binary in `jeeves.config.ts`
-- **Puppeteer/Chrome** is required by Mermaid CLI for rendering
-
-```typescript
-mermaidCliPath: '/usr/local/bin/mmdc',
-```
+Mermaid CLI is bundled as a direct dependency (`@mermaid-js/mermaid-cli`) — no separate installation or configuration needed. Chrome/Chromium is required for rendering.
 
 ### Export endpoint
 
@@ -139,12 +135,14 @@ PlantUML uses a **fallback rendering pipeline** — each method is tried in orde
 
 ### Configuration
 
-```typescript
-plantuml: {
-  jarPath: '/opt/plantuml/plantuml.jar',   // Local jar path (optional)
-  javaPath: '/usr/bin/java',               // Java binary (optional, defaults to 'java')
-  servers: ['https://internal.plantuml.example.com/plantuml'],  // Private servers (optional)
-},
+```json
+{
+  "plantuml": {
+    "jarPath": "/opt/plantuml/plantuml.jar",
+    "javaPath": "/usr/bin/java",
+    "servers": ["https://internal.plantuml.example.com/plantuml"]
+  }
+}
 ```
 
 If `plantuml` is omitted entirely, only the public community server is used.
@@ -219,7 +217,7 @@ Directories can be downloaded as ZIP archives. The header shows a ZIP download o
 
 The `maxZipSizeMb` config setting (default: 100 MB) prevents accidentally zipping enormous directories:
 
-```typescript
+```
 maxZipSizeMb: 100,  // Refuse ZIP for directories larger than this
 ```
 
