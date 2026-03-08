@@ -11,6 +11,7 @@ export interface PluginApi {
       entries?: Record<string, { config?: Record<string, unknown> }>;
     };
   };
+  resolvePath?: (input: string) => string;
   registerTool(
     tool: {
       name: string;

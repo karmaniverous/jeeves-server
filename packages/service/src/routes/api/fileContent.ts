@@ -276,7 +276,8 @@ async function tryWatcherRender(
     if (data.rules.length === 0) return null;
 
     return data;
-  } catch {
+  } catch (err) {
+    console.warn('Watcher render failed for ' + fsPath + ':', err);
     return null;
   }
 }

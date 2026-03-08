@@ -46,12 +46,14 @@ export function useScrollAnchor(
       const oldHeight = prevHeight.current;
       const delta = newHeight - oldHeight;
 
-      if (delta > 0 && prevScrollTop.current > 0) {
-        // Content grew — check if the growth happened above the viewport
-        // by comparing the new scroll position needed to keep the same content visible.
-        // If the scroller's scrollTop hasn't changed but content height grew,
-        // the growth was above or at the current position.
-        scroller.scrollTop = prevScrollTop.current + delta;
+      if (Math.abs(delta) > 0 && prevScrollTop.current > 0) {
+        // Only compensate if content grew above the current scroll position.
+        // If the scroller's scrollTop hasn't changed but scrollHeight grew,
+        // the browser didn't auto-adjust, meaning growth was above viewport.
+        const currentScrollTop = scroller.scrollTop;
+        if (currentScrollTop === prevScrollTop.current && delta > 0) {
+          scroller.scrollTop = currentScrollTop + delta;
+        }
         prevScrollTop.current = scroller.scrollTop;
       }
 

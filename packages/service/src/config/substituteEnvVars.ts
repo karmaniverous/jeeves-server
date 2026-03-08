@@ -36,7 +36,11 @@ export function substituteEnvVars<T>(value: T): T {
     return value.map((item: unknown) => substituteEnvVars(item)) as T;
   }
 
-  if (value !== null && typeof value === 'object') {
+  if (
+    value !== null &&
+    typeof value === 'object' &&
+    Object.getPrototypeOf(value) === Object.prototype
+  ) {
     const result: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(value)) {
       result[key] = substituteEnvVars(val);

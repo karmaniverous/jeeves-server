@@ -269,6 +269,7 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
 
   // Cached facets manifest
   let facetsCache: { data: unknown; fetchedAt: number } | null = null;
+  let facetsFetchPromise: Promise<unknown> | null = null;
   const FACETS_CACHE_TTL_MS = 60_000; // 1 minute
 
   fastify.get('/api/search/facets', async (request, reply) => {
@@ -290,18 +291,25 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const watcherRes = await fetch(`${config.watcherUrl}/search/facets`, {
-        signal: AbortSignal.timeout(5000),
-      });
-
-      if (!watcherRes.ok) {
-        return await reply
-          .code(watcherRes.status)
-          .send({ error: 'Watcher facets request failed' });
+      // Guard against cache stampede: reuse in-flight fetch
+      if (!facetsFetchPromise) {
+        const watcherUrl = config.watcherUrl;
+        facetsFetchPromise = (async () => {
+          const watcherRes = await fetch(`${watcherUrl}/search/facets`, {
+            signal: AbortSignal.timeout(5000),
+          });
+          if (!watcherRes.ok) {
+            throw new Error(`HTTP ${String(watcherRes.status)}`);
+          }
+          const data: unknown = await watcherRes.json();
+          facetsCache = { data, fetchedAt: Date.now() };
+          return data;
+        })().finally(() => {
+          facetsFetchPromise = null;
+        });
       }
 
-      const data: unknown = await watcherRes.json();
-      facetsCache = { data, fetchedAt: Date.now() };
+      const data = await facetsFetchPromise;
       return await reply.send(data);
     } catch (err) {
       return await reply.code(502).send({

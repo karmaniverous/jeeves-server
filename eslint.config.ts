@@ -39,7 +39,7 @@ export default [
     ignores: [
       '**/.stan/**/*',
       '**/coverage/**/*',
-      '**/dist/**',
+      '**/dist/**/*',
       '**/docs/**/*',
       'node_modules/**/*',
       '**/client/**/*',

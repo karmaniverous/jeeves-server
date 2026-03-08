@@ -26,11 +26,12 @@ export const linkInfoRoutes: FastifyPluginAsync = async (fastify) => {
       if (!fsPath) return reply.code(404).send({ error: 'Invalid path' });
       const resolved = path.resolve(fsPath);
 
-      if (!fs.existsSync(resolved)) {
+      let stats: ReturnType<typeof fs.statSync>;
+      try {
+        stats = fs.statSync(resolved);
+      } catch {
         return reply.send({ exists: false });
       }
-
-      const stats = fs.statSync(resolved);
       const isDirectory = stats.isDirectory();
       const ext = path.extname(resolved).toLowerCase();
 
