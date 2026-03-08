@@ -132,7 +132,7 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
     const newSeed = crypto.randomBytes(32).toString('hex');
     const now = new Date().toISOString();
     setInsiderKey(insider.email, newSeed, now);
-    resetConfig();
+    await resetConfig();
 
     return reply.send({ ok: true, keyCreatedAt: now });
   });

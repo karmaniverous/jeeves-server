@@ -75,6 +75,7 @@ export async function loadConfig(configPath?: string): Promise<RuntimeConfig> {
 }
 
 let configInstance: RuntimeConfig | null = null;
+let lastConfigPath: string | undefined;
 
 /**
  * Check if the config singleton has been initialized.
@@ -101,13 +102,22 @@ export function getConfig(): RuntimeConfig {
  * @param configPath - Optional explicit path to a config file.
  */
 export async function initConfig(configPath?: string): Promise<RuntimeConfig> {
+  lastConfigPath = configPath;
   configInstance = await loadConfig(configPath);
   return configInstance;
 }
 
 /**
- * Reset the config singleton (for testing).
+ * Reload the config singleton from the last-used config path.
+ * Call after mutating state that affects resolved config (e.g., key rotation).
  */
-export function resetConfig(): void {
+export async function resetConfig(): Promise<void> {
+  configInstance = await loadConfig(lastConfigPath);
+}
+
+/**
+ * Clear the config singleton (for testing only).
+ */
+export function clearConfig(): void {
   configInstance = null;
 }
