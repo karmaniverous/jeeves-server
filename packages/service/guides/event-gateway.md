@@ -8,37 +8,32 @@ Jeeves Server includes a webhook gateway that receives HTTP POST requests, valid
 
 ## Configuration
 
-Events are defined in `jeeves.config.ts`:
+Events are defined in your config file:
 
-```typescript
-events: {
-  'notion-page-update': {
-    // JSON Schema matched against the incoming POST body
-    schema: {
-      type: 'object',
-      properties: {
-        type: { const: 'page.content_updated' },
+```json
+{
+  "events": {
+    "notion-page-update": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": { "const": "page.content_updated" }
+        },
+        "required": ["type"]
       },
-      required: ['type'],
-    },
-
-    // Shell command to execute when matched
-    cmd: 'node /path/to/handler.js',
-
-    // Optional: transform the body before passing to the command
-    map: {
-      pageId: {
-        '$': { method: '$.lib._.get', params: ['$.input', 'data.page_id'] },
+      "cmd": "node /path/to/handler.js",
+      "map": {
+        "pageId": {
+          "$": { "method": "$.lib._.get", "params": ["$.input", "data.page_id"] }
+        },
+        "type": {
+          "$": { "method": "$.lib._.get", "params": ["$.input", "type"] }
+        }
       },
-      type: {
-        '$': { method: '$.lib._.get', params: ['$.input', 'type'] },
-      },
-    },
-
-    // Optional: override default timeout (ms)
-    timeoutMs: 60000,
-  },
-},
+      "timeoutMs": 60000
+    }
+  }
+}
 ```
 
 ### Schema matching
@@ -68,15 +63,15 @@ When `map` is omitted, the full webhook body is passed as-is.
 
 **Example — Notion sends a large payload, we extract just two fields:**
 
-```typescript
-map: {
-  pageId: {
-    '$': { method: '$.lib._.get', params: ['$.input', 'data.page_id'] },
+```json
+{
+  "pageId": {
+    "$": { "method": "$.lib._.get", "params": ["$.input", "data.page_id"] }
   },
-  type: {
-    '$': { method: '$.lib._.get', params: ['$.input', 'type'] },
-  },
-},
+  "type": {
+    "$": { "method": "$.lib._.get", "params": ["$.input", "type"] }
+  }
+}
 ```
 
 Input: `{ type: "page.content_updated", data: { page_id: "abc123", ... } }`
@@ -86,13 +81,15 @@ Output to command: `{ pageId: "abc123", type: "page.content_updated" }`
 
 Webhook callers must authenticate with a key that has scope access to `/event`:
 
-```typescript
-keys: {
-  'webhook-notion': {
-    key: 'random-seed-string',
-    scopes: ['/event'],
-  },
-},
+```json
+{
+  "keys": {
+    "webhook-notion": {
+      "key": "random-seed-string",
+      "scopes": ["/event"]
+    }
+  }
+}
 ```
 
 Your config contains a **seed** — a secret string that never leaves the server. The actual URL key is **derived** from the seed by the server. To get it:
@@ -171,12 +168,11 @@ process.stdin.on('end', () => {
 
 ## Global Settings
 
-```typescript
-// Default timeout for all event commands (ms)
-eventTimeoutMs: 30_000,
-
-// Purge log entries older than this (ms). Default: 30 days
-eventLogPurgeMs: 2_592_000_000,
+```json
+{
+  "eventTimeoutMs": 30000,
+  "eventLogPurgeMs": 2592000000
+}
 ```
 
 ## Monitoring
@@ -193,7 +189,7 @@ grep '"matched":false' logs/event-log.jsonl
 
 ## Example: Notion Webhook Integration
 
-1. **Configure the event** in `jeeves.config.ts` (see Configuration above)
+1. **Configure the event** in `your config file` (see Configuration above)
 2. **Create a scoped key** for the webhook
 3. **Register the webhook URL** in Notion:
    - Settings → Connections → Add a connection
