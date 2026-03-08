@@ -19,29 +19,27 @@ interface ServiceStatus {
 }
 
 async function checkService(url: string): Promise<ServiceStatus> {
-  try {
-    const res = await fetch(`${url}/status`, {
-      signal: AbortSignal.timeout(3000),
-    });
-    if (res.ok) {
-      const data = (await res.json()) as { version?: string };
-      return { url, reachable: true, version: data.version };
+  // Try /status first (watcher), then /health (runner)
+  for (const endpoint of ['/status', '/health']) {
+    try {
+      const res = await fetch(`${url}${endpoint}`, {
+        signal: AbortSignal.timeout(3000),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { version?: string };
+        return { url, reachable: true, version: data.version };
+      }
+    } catch {
+      // try next endpoint
     }
-    return { url, reachable: false };
-  } catch {
-    return { url, reachable: false };
   }
+  return { url, reachable: false };
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const statusRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/api/status', async (request) => {
     const config = getConfig();
-
-    // Only insiders get status
-    if (request.accessMode !== 'insider') {
-      return { error: 'Insider auth required' };
-    }
 
     const [watcher, runner] = await Promise.all([
       config.watcherUrl ? checkService(config.watcherUrl) : null,
@@ -65,9 +63,14 @@ export const statusRoutes: FastifyPluginAsync = async (fastify) => {
         name,
         cmd: schema.cmd,
       })),
-      exportFormats: ['pdf', 'docx', 'zip'],
+      exports: {
+        documents: ['pdf', 'docx'],
+        directories: ['zip'],
+        diagrams: ['svg', 'png'],
+        chromeAvailable: Boolean(config.chromePath),
+      },
       diagrams: {
-        mermaid: true, // bundled via @mermaid-js/mermaid-cli
+        mermaid: true,
         plantuml: {
           localJar: Boolean(config.plantuml.jarPath),
           servers: config.plantuml.servers,

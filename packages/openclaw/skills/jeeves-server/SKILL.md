@@ -127,7 +127,11 @@ Caddy handles TLS certificate provisioning automatically. Ensure DNS A/AAAA reco
 npx @karmaniverous/jeeves-server-openclaw install
 ```
 
-Configure the plugin in `openclaw.json` with `apiUrl` and `pluginKey` (matching the `_plugin` key seed from server config). Restart the OpenClaw gateway.
+Configure the plugin in `openclaw.json` with `apiUrl` and `pluginKey` (matching the `_plugin` key seed from server config). 
+
+**Important:** Add `"jeeves-server-openclaw"` to the `tools.allow` array in `openclaw.json` so the agent can use the plugin's tools.
+
+Restart the gateway to load the plugin.
 
 ## Troubleshooting
 
