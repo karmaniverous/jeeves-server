@@ -39,7 +39,7 @@ function cacheKey(type: string, source: string): string {
  * Look up a cached diagram. Returns the content as a string or null on miss.
  * @param format - Output format extension (e.g. 'svg', 'png', 'pdf'). Defaults to 'svg'.
  */
-export function getCachedDiagram(
+function getCachedDiagram(
   type: string,
   source: string,
   format: string = 'svg',
@@ -75,7 +75,7 @@ export function getCachedDiagramBuffer(
  * Store a rendered diagram in the cache (string content).
  * @param format - Output format extension. Defaults to 'svg'.
  */
-export function cacheDiagram(
+function cacheDiagram(
   type: string,
   source: string,
   content: string,

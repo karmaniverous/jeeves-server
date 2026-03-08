@@ -7,7 +7,7 @@ const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo';
 
-export interface GoogleTokens {
+interface GoogleTokens {
   access_token: string;
   id_token?: string;
   refresh_token?: string;
@@ -15,7 +15,7 @@ export interface GoogleTokens {
   token_type: string;
 }
 
-export interface GoogleUserInfo {
+interface GoogleUserInfo {
   sub: string;
   email: string;
   email_verified: boolean;

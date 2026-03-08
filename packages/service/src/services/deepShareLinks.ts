@@ -35,7 +35,7 @@ export function encodeStack(stack: string[]): string {
 /**
  * Compute the remaining depth for a given stack.
  */
-export function remainingDepth(maxDepth: number, stack: string[]): number {
+function remainingDepth(maxDepth: number, stack: string[]): number {
   return maxDepth - (stack.length - 1);
 }
 
@@ -43,7 +43,7 @@ export function remainingDepth(maxDepth: number, stack: string[]): number {
  * Compute a sub-link URL for an outgoing link target.
  * Returns null if the link should be stripped (depth exhausted or type not allowed).
  */
-export function computeSubLink(
+function computeSubLink(
   seed: string,
   targetUrlPath: string,
   currentStack: string[],

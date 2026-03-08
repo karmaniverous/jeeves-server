@@ -17,7 +17,7 @@ import {
 
 export type ExportFormat = 'pdf' | 'docx';
 
-export interface ExportOptions {
+interface ExportOptions {
   url: string;
   fileName: string;
   format: ExportFormat;
@@ -30,7 +30,7 @@ const MAX_HEIGHT_PX = 768;
 /**
  * Export page as PDF.
  */
-export async function exportPDF(options: ExportOptions): Promise<Buffer> {
+async function exportPDF(options: ExportOptions): Promise<Buffer> {
   const browser = await launchBrowser();
   try {
     const page = await browser.newPage();
@@ -53,7 +53,7 @@ export async function exportPDF(options: ExportOptions): Promise<Buffer> {
 /**
  * Export page as DOCX.
  */
-export async function exportDOCX(options: ExportOptions): Promise<Buffer> {
+async function exportDOCX(options: ExportOptions): Promise<Buffer> {
   const browser = await launchBrowser();
   try {
     const page = await browser.newPage();

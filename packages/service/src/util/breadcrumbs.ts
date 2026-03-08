@@ -2,7 +2,7 @@
  * Breadcrumb filtering utilities.
  */
 
-export interface Breadcrumb {
+interface Breadcrumb {
   label: string;
   path: string;
 }

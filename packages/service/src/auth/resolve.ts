@@ -19,7 +19,7 @@ import { formatRelativeTime } from '../util/formatters.js';
 import { verifyKey } from './keys.js';
 import { COOKIE_NAME, verifySessionCookie } from './session.js';
 
-export interface AuthResult {
+interface AuthResult {
   valid: boolean;
   mode?: AccessMode;
   seed?: string;

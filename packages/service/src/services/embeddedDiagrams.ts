@@ -50,7 +50,7 @@ function startCleanup(): void {
 /**
  * Compute content hash matching the cache key format.
  */
-export function diagramHash(type: string, source: string): string {
+function diagramHash(type: string, source: string): string {
   return crypto.createHash('sha256').update(`${type}\0${source}`).digest('hex');
 }
 

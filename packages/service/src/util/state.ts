@@ -10,7 +10,7 @@ import type { ServerState } from '../config/types.js';
 /**
  * Load state from file
  */
-export function loadState(): ServerState {
+function loadState(): ServerState {
   const { stateFile } = getConfig();
   try {
     if (fs.existsSync(stateFile)) {
@@ -26,7 +26,7 @@ export function loadState(): ServerState {
 /**
  * Save state to file
  */
-export function saveState(state: ServerState): void {
+function saveState(state: ServerState): void {
   const { stateFile } = getConfig();
   fs.writeFileSync(stateFile, JSON.stringify(state, null, 2), 'utf8');
 }
