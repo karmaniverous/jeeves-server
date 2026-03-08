@@ -1,5 +1,4 @@
 /**
- * @module plugin/toolsWriter
  * Writes the Server menu section directly to TOOLS.md on disk.
  */
 
@@ -18,10 +17,8 @@ let lastWrittenMenu = '';
  * Resolve the workspace TOOLS.md path.
  */
 function resolveToolsPath(api: PluginApi): string {
-  const resolvePath = (api as unknown as Record<string, unknown>)
-    .resolvePath as ((input: string) => string) | undefined;
-  if (typeof resolvePath === 'function') {
-    return resolvePath('TOOLS.md');
+  if (api.resolvePath) {
+    return api.resolvePath('TOOLS.md');
   }
   return resolve(process.cwd(), 'TOOLS.md');
 }

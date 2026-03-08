@@ -2,8 +2,8 @@
  * CLI for installing/uninstalling the jeeves-server OpenClaw plugin.
  *
  * Usage:
- *   npx @karmaniverous/jeeves-server-openclaw install
- *   npx @karmaniverous/jeeves-server-openclaw uninstall
+ *   npx \@karmaniverous/jeeves-server-openclaw install
+ *   npx \@karmaniverous/jeeves-server-openclaw uninstall
  */
 
 import {
@@ -97,7 +97,8 @@ export function patchConfig(
     messages.push('Removed "' + PLUGIN_ID + '" from plugins.entries');
   }
 
-  const tools = (config.tools ?? {}) as Record<string, unknown>;
+  if (!config.tools || typeof config.tools !== 'object') config.tools = {};
+  const tools = config.tools as Record<string, unknown>;
   const toolAllow = patchAllowList(tools, 'allow', 'tools.allow', mode);
   if (toolAllow) messages.push(toolAllow);
 

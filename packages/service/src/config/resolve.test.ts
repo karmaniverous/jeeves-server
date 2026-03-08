@@ -157,8 +157,7 @@ describe('deriveInternalKey', () => {
   it('derives a key from _internal seed', () => {
     const keys = [{ name: '_internal', seed: 'x'.repeat(64), scopes: null }];
     const result = deriveInternalKey(keys);
-    expect(result).toBeTruthy();
-    expect(typeof result).toBe('string');
+    expect(result).toBeTypeOf('string');
     expect(result!.length).toBeGreaterThan(0);
   });
 });
@@ -183,7 +182,9 @@ describe('buildRuntimeConfig', () => {
       '/srv/jeeves/config.json',
     );
     expect(result.stateFile).toBe(path.join('/srv/jeeves', 'state.json'));
-    expect(result.eventsLog).toContain('logs');
+    expect(result.eventsLog).toBe(
+      path.join('/srv/jeeves', 'logs', 'webhook-events.jsonl'),
+    );
     expect(result.configPath).toBe('/srv/jeeves/config.json');
     expect(result.port).toBe(1934);
     expect(result.authModes).toEqual(['keys']);
