@@ -224,7 +224,7 @@ export const jeevesConfigSchema = z
     }
 
     for (const [name, entry] of Object.entries(config.keys)) {
-      if (typeof entry === 'object' && entry !== null) {
+      if (typeof entry === 'object') {
         const refs = getScopeRefs(entry.scopes);
         if (refs.length > 0) validateRefs(refs, ['keys', name, 'scopes']);
       }

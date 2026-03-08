@@ -38,7 +38,7 @@ async function checkService(url: string): Promise<ServiceStatus> {
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const statusRoutes: FastifyPluginAsync = async (fastify) => {
-  fastify.get('/api/status', async (request) => {
+  fastify.get('/api/status', async () => {
     const config = getConfig();
 
     const [watcher, runner] = await Promise.all([

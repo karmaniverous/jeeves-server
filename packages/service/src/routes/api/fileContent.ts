@@ -269,7 +269,10 @@ async function tryWatcherRender(
       body: JSON.stringify({
         path: fsPath
           .replace(/\\/g, '/')
-          .replace(/^([A-Z]):/, (_, d) => d.toLowerCase() + ':'),
+          .replace(
+            /^([A-Z]):/,
+            (_: string, d: string) => d.toLowerCase() + ':',
+          ),
       }),
       signal: AbortSignal.timeout(5000),
     });

@@ -47,7 +47,7 @@ export function normalizeScopes(raw: unknown): NormalizedScopes | null {
  * Falls back to normalizeScopes() for legacy inline scope formats.
  */
 export function resolveNamedScopes(
-  named: Record<string, { allow?: string[]; deny?: string[] }>,
+  named: Record<string, { allow?: string[]; deny?: string[] } | undefined>,
   rawScopes: unknown,
   overrides?: { allow?: string[]; deny?: string[] },
 ): NormalizedScopes | null {
@@ -71,7 +71,7 @@ export function resolveNamedScopes(
         : null
       : Array.isArray(rawScopes) &&
           rawScopes.every((v) => typeof v === 'string')
-        ? rawScopes.filter((v) => isName(String(v)))
+        ? rawScopes.filter((v) => isName(v))
         : null;
 
   if (refs && refs.length > 0) {
