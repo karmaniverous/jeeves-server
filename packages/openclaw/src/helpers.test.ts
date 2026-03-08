@@ -56,7 +56,7 @@ describe('withAuth', () => {
 
 describe('getApiUrl', () => {
   it('returns default when no config', () => {
-    const api = {} as PluginApi;
+    const api = {} as unknown as PluginApi;
     expect(getApiUrl(api)).toBe('http://127.0.0.1:1934');
   });
 
@@ -71,7 +71,7 @@ describe('getApiUrl', () => {
           },
         },
       },
-    } as PluginApi;
+    } as unknown as PluginApi;
     expect(getApiUrl(api)).toBe('http://custom:9999');
   });
 });
@@ -92,7 +92,7 @@ describe('getPluginKey', () => {
           },
         },
       },
-    } as PluginApi;
+    } as unknown as PluginApi;
     expect(getPluginKey(api)).toBe('my-seed');
   });
 });
