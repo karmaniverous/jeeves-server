@@ -5,7 +5,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import { getApiUrl, getPluginKey, type PluginApi } from './helpers.js';
+import { getApiUrl, type PluginApi } from './helpers.js';
 import { generateServerMenu } from './promptInjection.js';
 
 const REFRESH_INTERVAL_MS = 60_000;
@@ -65,8 +65,7 @@ function upsertServerContent(existing: string, serverMenu: string): string {
  */
 async function refreshToolsMd(api: PluginApi): Promise<boolean> {
   const apiUrl = getApiUrl(api);
-  const keySeed = getPluginKey(api);
-  const menu = await generateServerMenu(apiUrl, keySeed);
+  const menu = await generateServerMenu(apiUrl);
 
   if (menu === lastWrittenMenu) return false;
 

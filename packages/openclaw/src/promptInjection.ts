@@ -2,7 +2,7 @@
  * Generates the Server menu string for TOOLS.md injection.
  */
 
-import { fetchJson, withAuth } from './helpers.js';
+import { fetchJson } from './helpers.js';
 
 interface StatusResponse {
   version?: string;
@@ -27,14 +27,11 @@ interface StatusResponse {
 /**
  * Fetch server status and generate a Markdown menu string.
  */
-export async function generateServerMenu(
-  apiUrl: string,
-  keySeed?: string,
-): Promise<string> {
+export async function generateServerMenu(apiUrl: string): Promise<string> {
   let status: StatusResponse;
 
   try {
-    status = (await fetchJson(withAuth(apiUrl + '/api/status', keySeed), {
+    status = (await fetchJson(apiUrl + '/api/status', {
       signal: AbortSignal.timeout(5000),
     })) as StatusResponse;
   } catch {
