@@ -2,6 +2,7 @@
  * Dispatches to the correct viewer based on file type.
  */
 import { Loader2 } from 'lucide-react';
+import { useRef } from 'react';
 import { lazy, Suspense, useEffect } from 'react';
 
 const CodeEditor = lazy(() => import('@/components/CodeEditor').then(m => ({ default: m.CodeEditor })));
@@ -11,6 +12,7 @@ import { PlantUmlViewer } from '@/components/PlantUmlViewer';
 import { SvgViewer } from '@/components/SvgViewer';
 import { MarkdownView, scrollToIdInContainer } from '@/components/MarkdownView';
 import { isRenderable } from '@/components/TabBar';
+import { useScrollAnchor } from '@/hooks/useScrollAnchor';
 import type { FileContent } from '@/lib/api';
 
 interface FileContentViewProps {
@@ -37,6 +39,8 @@ export function FileContentView({
   mobileTocOpen, setMobileTocOpen,
   onSave, loading: _loading,
 }: FileContentViewProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  useScrollAnchor(mainRef, contentRef);
   const renderable = file ? isRenderable(file) : false;
   const activeTab = renderable ? viewTab : 'raw';
   const fileLoading = !file;
@@ -51,7 +55,7 @@ export function FileContentView({
   }, [file, mainRef]);
 
   return (
-    <div className="px-4 md:px-6 pt-4">
+    <div ref={contentRef} className="px-4 md:px-6 pt-4">
       {/* Loading state */}
       {fileLoading && (
         <div className="flex items-center gap-2 text-muted-foreground text-sm py-8 justify-center">

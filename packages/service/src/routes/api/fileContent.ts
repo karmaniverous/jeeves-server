@@ -149,17 +149,13 @@ export const fileContentRoutes: FastifyPluginAsync = async (fastify) => {
         if (!rawOnly) {
           const renderResult = await tryWatcherRender(resolved);
           if (renderResult && renderResult.renderAs === 'md') {
-            // Pipe watcher-rendered markdown through the markdown pipeline
-            const urlDir = reqPath.includes('/')
-              ? reqPath.substring(0, reqPath.lastIndexOf('/'))
-              : '';
-            const fsDir = path.dirname(resolved);
-            setDiagramContext(fsDir);
-            const { headings, html: parsedHtml } = parseMarkdown(
+            const { html, headings } = await renderMarkdownContent(
               renderResult.content,
-              { linkWindowsPaths: true, basePath: urlDir },
+              request,
+              resolved,
+              reqPath,
+              isInsider,
             );
-            const html = await renderEmbeddedDiagrams(parsedHtml, fsDir);
 
             return await reply.send({
               type: 'markdown',
@@ -285,33 +281,26 @@ async function tryWatcherRender(
   }
 }
 
-/** Handle markdown file content. */
-async function handleMarkdown(
+/**
+ * Shared markdown rendering pipeline: parse → diagram hashes → optional
+ * diagram rendering → optional deep share link rewriting.
+ */
+async function renderMarkdownContent(
+  markdownSource: string,
   request: FastifyRequest,
-  reply: FastifyReply,
   resolved: string,
   reqPath: string,
-  rawOnly: boolean,
-  fileName: string,
-  breadcrumbs: { label: string; path: string }[],
   isInsider: boolean,
-) {
-  const markdown = fs.readFileSync(resolved, 'utf8');
-  if (rawOnly)
-    return reply.send({
-      type: 'markdown',
-      content: markdown,
-      fileName,
-      breadcrumbs,
-      isInsider,
-    });
-
+): Promise<{
+  html: string;
+  headings: { level: number; text: string; slug: string }[];
+}> {
   const urlDir = reqPath.includes('/')
     ? reqPath.substring(0, reqPath.lastIndexOf('/'))
     : '';
   const fsDir = path.dirname(resolved);
   setDiagramContext(fsDir);
-  const { headings, html: parsedHtml } = parseMarkdown(markdown, {
+  const { headings, html: parsedHtml } = parseMarkdown(markdownSource, {
     linkWindowsPaths: true,
     basePath: urlDir,
   });
@@ -350,6 +339,38 @@ async function handleMarkdown(
       );
     }
   }
+
+  return { html, headings };
+}
+
+/** Handle markdown file content. */
+async function handleMarkdown(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  resolved: string,
+  reqPath: string,
+  rawOnly: boolean,
+  fileName: string,
+  breadcrumbs: { label: string; path: string }[],
+  isInsider: boolean,
+) {
+  const markdown = fs.readFileSync(resolved, 'utf8');
+  if (rawOnly)
+    return reply.send({
+      type: 'markdown',
+      content: markdown,
+      fileName,
+      breadcrumbs,
+      isInsider,
+    });
+
+  const { html, headings } = await renderMarkdownContent(
+    markdown,
+    request,
+    resolved,
+    reqPath,
+    isInsider,
+  );
 
   return reply.send({
     type: 'markdown',
