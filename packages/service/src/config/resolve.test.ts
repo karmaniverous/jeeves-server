@@ -10,6 +10,7 @@ import {
   normalizeScopes,
   resolveInsiders,
   resolveKeys,
+  resolveNamedScopes,
   resolvePlantuml,
 } from './resolve.js';
 import type { JeevesConfig } from './schema.js';
@@ -49,7 +50,7 @@ describe('normalizeScopes', () => {
 
 describe('resolveKeys', () => {
   it('handles string key entries', () => {
-    const result = resolveKeys({ primary: 'seed123' });
+    const result = resolveKeys({ primary: 'seed123' }, {});
     expect(result).toEqual([
       { name: 'primary', seed: 'seed123', scopes: null },
     ]);
@@ -58,7 +59,7 @@ describe('resolveKeys', () => {
   it('handles object key entries with scopes', () => {
     const result = resolveKeys({
       scoped: { key: 'seed456', scopes: ['/docs'] },
-    });
+    }, {});
     expect(result[0].name).toBe('scoped');
     expect(result[0].seed).toBe('seed456');
     expect(result[0].scopes).toEqual({ allow: ['/docs'], deny: [] });
@@ -68,7 +69,7 @@ describe('resolveKeys', () => {
     const result = resolveKeys({
       plain: 'abc',
       complex: { key: 'def', scopes: { allow: ['/x'], deny: ['/y'] } },
-    });
+    }, {});
     expect(result).toHaveLength(2);
     expect(result[0].scopes).toBe(null);
     expect(result[1].scopes).toEqual({ allow: ['/x'], deny: ['/y'] });
@@ -88,7 +89,7 @@ describe('resolveInsiders', () => {
 
   it('normalizes email to lowercase', () => {
     const stateFile = path.join(tmpDir, 'state.json');
-    const result = resolveInsiders({ 'Test@Example.COM': {} }, stateFile);
+    const result = resolveInsiders({ 'Test@Example.COM': {} }, {}, stateFile);
     expect(result[0].email).toBe('test@example.com');
   });
 
@@ -102,16 +103,50 @@ describe('resolveInsiders', () => {
         },
       }),
     );
-    const result = resolveInsiders({ 'test@example.com': {} }, stateFile);
+    const result = resolveInsiders({ 'test@example.com': {} }, {}, stateFile);
     expect(result[0].seed).toBe('stateseed');
     expect(result[0].keyCreatedAt).toBe('2026-01-01');
   });
 
   it('returns empty seed when no state exists', () => {
     const stateFile = path.join(tmpDir, 'state.json');
-    const result = resolveInsiders({ 'new@example.com': {} }, stateFile);
+    const result = resolveInsiders({ 'new@example.com': {} }, {}, stateFile);
     expect(result[0].seed).toBe('');
     expect(result[0].keyCreatedAt).toBe(null);
+  });
+});
+
+describe('resolveNamedScopes', () => {
+  it('resolves a single named scope', () => {
+    const named = { restricted: { allow: ['/**'], deny: ['/secret'] } };
+    expect(resolveNamedScopes(named, 'restricted')).toEqual({
+      allow: ['/**'],
+      deny: ['/secret'],
+    });
+  });
+
+  it('unions multiple named scopes and merges overrides', () => {
+    const named = {
+      restricted: { allow: ['/**'], deny: ['/secret'] },
+      noVc: { deny: ['/vc/**'] },
+    };
+    expect(
+      resolveNamedScopes(named, ['restricted', 'noVc'], {
+        allow: ['/extra'],
+        deny: ['/more'],
+      }),
+    ).toEqual({
+      allow: ['/**', '/extra'],
+      deny: ['/secret', '/vc/**', '/more'],
+    });
+  });
+
+  it('falls back to legacy inline scope strings', () => {
+    const named = { restricted: { allow: ['/**'] } };
+    expect(resolveNamedScopes(named, '/docs')).toEqual({
+      allow: ['/docs'],
+      deny: [],
+    });
   });
 });
 
@@ -170,6 +205,7 @@ describe('buildRuntimeConfig', () => {
       eventLogPurgeMs: 2592000000,
       maxZipSizeMb: 100,
       chromePath: '/usr/bin/chrome',
+      scopes: {},
       events: {},
       auth: { modes: ['keys' as const] },
       keys: { primary: 'a'.repeat(64) },

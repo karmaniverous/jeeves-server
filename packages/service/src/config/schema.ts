@@ -57,6 +57,10 @@ export const scopesSchema = z.union([
 /** Insider entry (identity + scopes only; keys are in state.json) */
 export const insiderEntrySchema = z.object({
   scopes: scopesSchema.optional(),
+  /** Extra allow patterns merged on top of named scope references */
+  allow: z.array(z.string()).optional(),
+  /** Extra deny patterns merged on top of named scope references */
+  deny: z.array(z.string()).optional(),
 });
 
 /** Key entry â€" plain string (seed, no scopes) or object with key + optional scopes */
@@ -65,8 +69,32 @@ export const keyEntrySchema = z.union([
   z.object({
     key: z.string().min(1),
     scopes: scopesSchema.optional(),
+    /** Extra allow patterns merged on top of named scope references */
+    allow: z.array(z.string()).optional(),
+    /** Extra deny patterns merged on top of named scope references */
+    deny: z.array(z.string()).optional(),
   }),
 ]);
+
+/** Helper: collect named scope references from a scopes field value.
+ *
+ * Backward-compat note: `scopes` has historically accepted path globs like "/**" or ["/a","/b"].
+ * We only treat values as *named scope references* if they look like identifiers
+ * (e.g. "restricted", "no-vc") rather than path globs.
+ */
+function getScopeRefs(scopes: unknown): string[] {
+  const isName = (v: string): boolean => /^[A-Za-z0-9_-]+$/.test(v);
+
+  if (typeof scopes === 'string') return isName(scopes) ? [scopes] : [];
+
+  if (Array.isArray(scopes) && scopes.length > 0) {
+    const strs = scopes.filter((v) => typeof v === 'string');
+    if (strs.length !== scopes.length) return [];
+    return (strs as string[]).filter((v) => isName(v));
+  }
+
+  return [];
+}
 
 /** Top-level Jeeves Server configuration */
 export const jeevesConfigSchema = z
@@ -74,6 +102,8 @@ export const jeevesConfigSchema = z
     port: z.number().int().positive().default(1934),
     chromePath: z.string().min(1),
     auth: authSchema,
+    /** Named scope definitions, referenced by insiders/keys/outsiderPolicy */
+    scopes: z.record(z.string(), scopesObjectSchema).default({}),
     insiders: z.record(z.email(), insiderEntrySchema).default({}),
     keys: z.record(z.string(), keyEntrySchema).default({}),
     events: z.record(z.string(), eventConfigSchema).default({}),
@@ -125,7 +155,7 @@ export const jeevesConfigSchema = z
      * Uses the same allow/deny model as insider scopes.
      * If omitted, all paths are shareable with outsiders.
      */
-    outsiderPolicy: scopesObjectSchema.optional(),
+    outsiderPolicy: scopesSchema.optional(),
   })
   .superRefine((config, ctx) => {
     // Google auth mode requires google config + sessionSecret
@@ -170,6 +200,41 @@ export const jeevesConfigSchema = z
         });
       }
     }
+
+    // Validate all scope name references resolve to the top-level scopes map
+    const scopeNames = new Set(Object.keys(config.scopes));
+    const validateRefs = (
+      refs: string[],
+      refPath: (string | number)[],
+    ): void => {
+      for (const ref of refs) {
+        if (!scopeNames.has(ref)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: `Scope "${ref}" is not defined in the top-level scopes map`,
+            path: refPath,
+          });
+        }
+      }
+    };
+
+    for (const [email, entry] of Object.entries(config.insiders)) {
+      const refs = getScopeRefs(entry.scopes);
+      if (refs.length > 0)
+        validateRefs(refs, ['insiders', email, 'scopes']);
+    }
+
+    for (const [name, entry] of Object.entries(config.keys)) {
+      if (typeof entry === 'object' && entry !== null) {
+        const refs = getScopeRefs(entry.scopes);
+        if (refs.length > 0)
+          validateRefs(refs, ['keys', name, 'scopes']);
+      }
+    }
+
+    const outsiderRefs = getScopeRefs(config.outsiderPolicy);
+    if (outsiderRefs.length > 0)
+      validateRefs(outsiderRefs, ['outsiderPolicy']);
   });
 
 /** Inferred config type */

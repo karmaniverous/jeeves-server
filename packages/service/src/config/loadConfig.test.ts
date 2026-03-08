@@ -120,6 +120,36 @@ describe('loadConfig', () => {
       'c'.repeat(64),
     );
   });
+
+
+  it('rejects undefined named scope references', async () => {
+    const configPath = writeConfig(tmpDir, {
+      ...VALID_CONFIG,
+      scopes: { restricted: { allow: ['/**'], deny: ['/secret'] } },
+      insiders: {
+        'a@example.com': { scopes: 'restricted' },
+        'b@example.com': { scopes: 'missing' },
+      },
+    });
+
+    await expect(loadConfig(configPath)).rejects.toThrow(
+      'Scope "missing" is not defined',
+    );
+  });
+
+  it('does not treat path globs as named scope references', async () => {
+    const configPath = writeConfig(tmpDir, {
+      ...VALID_CONFIG,
+      insiders: {
+        'a@example.com': { scopes: ['/docs/**'] },
+      },
+    });
+
+    const config = await loadConfig(configPath);
+    expect(
+      config.resolvedInsiders.find((i) => i.email === 'a@example.com')?.scopes,
+    ).toEqual({ allow: ['/docs/**'], deny: [] });
+  });
 });
 
 describe('config singleton', () => {
