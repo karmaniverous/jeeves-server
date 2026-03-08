@@ -24,14 +24,8 @@ jobs:
       - name: Install server dependencies
         run: npm ci
 
-      - name: Install client dependencies
-        run: cd packages/service/client && npm ci
-
       - name: TypeScript compile
         run: npm run build
-
-      - name: Build client
-        run: cd packages/service/client && npx vite build --outDir ../dist/client
 
       - name: Write test config
         run: |

@@ -6,16 +6,12 @@ import { RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Header } from '@/components/layout/Header';
-import {
-  JobTableBody,
-  JobTableHeader,
-  nextSort,
-  sortJobs,
-} from '@/components/runner/JobTable';
+import { JobTableBody, JobTableHeader,  } from '@/components/runner/JobTable';
+import { nextSort, sortJobs } from '@/components/runner/jobTableUtils';
 import type { SortColumn, SortState } from '@/components/runner/JobTable';
 import { StatsBar } from '@/components/runner/StatsBar';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/AuthContext';
 import type { RunnerJob, RunnerStats } from '@/lib/runner-api';
 import { getRunnerJobs, getRunnerStats, triggerJobRun } from '@/lib/runner-api';
 import { useTheme } from '@/lib/theme';

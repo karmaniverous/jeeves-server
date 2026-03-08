@@ -1,7 +1,7 @@
 /**
  * Data fetching for file browser — drives, directories, and file content.
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import type { DirectoryListing, DriveEntry, FileContent } from '@/lib/api';
 import { getDrives, getDirectory, getFile, getFileRaw, saveFile } from '@/lib/api';
@@ -20,7 +20,7 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
 
   const file = fileRendered ?? fileRaw;
 
-  useEffect(() => {
+  const loadData = useCallback(async (path: string, params: URLSearchParams) => {
     setLoading(true);
     setError(null);
     setDrives(null);
@@ -28,30 +28,37 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
     setFileRaw(null);
     setFileRendered(null);
     setEditing(false);
-    setViewTabInternal(searchParams.get('tab') === 'raw' ? 'raw' : 'rendered');
+    setViewTabInternal(params.get('tab') === 'raw' ? 'raw' : 'rendered');
 
-    if (!reqPath) {
-      getDrives()
-        .then(setDrives)
-        .catch((e: Error) => setError(e.message))
-        .finally(() => setLoading(false));
+    if (!path) {
+      try {
+        const data = await getDrives();
+        setDrives(data);
+      } catch (e: unknown) {
+        setError((e as Error).message);
+      } finally {
+        setLoading(false);
+      }
     } else {
-      getDirectory(reqPath)
-        .then((data) => {
-          if ('entries' in data) {
-            setDirectory(data);
-            setLoading(false);
-          } else {
-            getFileRaw(reqPath).then((raw) => { setFileRaw(raw); setLoading(false); }).catch(() => {});
-            getFile(reqPath).then(setFileRendered).catch(() => {});
-          }
-        })
-        .catch(() => {
-          getFileRaw(reqPath).then((raw) => { setFileRaw(raw); setLoading(false); }).catch((e: Error) => { setError(e.message); setLoading(false); });
-          getFile(reqPath).then(setFileRendered).catch(() => {});
-        });
+      try {
+        const data = await getDirectory(path);
+        if ('entries' in data) {
+          setDirectory(data);
+          setLoading(false);
+        } else {
+          getFileRaw(path).then((raw) => { setFileRaw(raw); setLoading(false); }).catch(() => {});
+          getFile(path).then(setFileRendered).catch(() => {});
+        }
+      } catch {
+        getFileRaw(path).then((raw) => { setFileRaw(raw); setLoading(false); }).catch((e: Error) => { setError(e.message); setLoading(false); });
+        getFile(path).then(setFileRendered).catch(() => {});
+      }
     }
-  }, [reqPath]);
+  }, []);
+
+  useEffect(() => {
+    void loadData(reqPath, searchParams);
+  }, [loadData, reqPath, searchParams]);
 
   const handleSave = async (content: string) => {
     await saveFile(reqPath, content);

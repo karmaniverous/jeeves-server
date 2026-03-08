@@ -85,7 +85,6 @@ export function CodeViewer({ content, fileName }: CodeViewerProps) {
         viewRef.current = null;
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content, fileName, theme]);
 
   return (

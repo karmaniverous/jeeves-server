@@ -10,8 +10,9 @@ const CodeViewer = lazy(() => import('@/components/CodeViewer').then(m => ({ def
 import { MermaidViewer } from '@/components/MermaidViewer';
 import { PlantUmlViewer } from '@/components/PlantUmlViewer';
 import { SvgViewer } from '@/components/SvgViewer';
-import { MarkdownView, scrollToIdInContainer } from '@/components/MarkdownView';
-import { isRenderable } from '@/components/TabBar';
+import { MarkdownView } from '@/components/MarkdownView';
+import { scrollToIdInContainer } from '@/components/scrollUtils';
+import { isRenderable } from '@/components/renderableUtils';
 import { useScrollAnchor } from '@/hooks/useScrollAnchor';
 import type { FileContent } from '@/lib/api';
 
@@ -37,7 +38,7 @@ export function FileContentView({
   editing, setEditing,
   proseWidth, topBarHeight, mainRef,
   mobileTocOpen, setMobileTocOpen,
-  onSave, loading: _loading,
+  onSave,
 }: FileContentViewProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   useScrollAnchor(mainRef, contentRef);

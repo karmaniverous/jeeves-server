@@ -10,7 +10,7 @@ import { Header } from '@/components/layout/Header';
 import { RunHistory } from '@/components/runner/RunHistory';
 import { StatusPill } from '@/components/runner/StatusPill';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/AuthContext';
 import type { RunEntry, RunnerJob as RunnerJobType } from '@/lib/runner-api';
 import {
   disableJob,

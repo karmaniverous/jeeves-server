@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import type { BreadcrumbItem } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/AuthContext';
 import { useTheme } from '@/lib/theme';
 import { useFileData } from './useFileData';
 import { useShareSettings } from './useShareSettings';
@@ -83,7 +83,7 @@ export function useFileBrowser() {
   };
 
   // Layout
-  const { topBarRef, mainRef, topBarHeight } = useTopBar([file, directory, drives]);
+  const { topBarRef, mainRef, topBarHeight } = useTopBar(JSON.stringify([file, directory, drives]));
 
   return {
     reqPath, theme, toggleTheme,

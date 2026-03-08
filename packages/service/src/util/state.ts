@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 
 import { getConfig } from '../config/index.js';
-import type { InsiderKeyState, ServerState } from '../config/types.js';
+import type { ServerState } from '../config/types.js';
 
 /**
  * Load state from file
@@ -32,28 +32,12 @@ export function saveState(state: ServerState): void {
 }
 
 /**
- * Get key rotation timestamp
- */
-export function getKeyRotationTimestamp(): string | null {
-  const state = loadState();
-  return state.keyRotatedAt ?? null;
-}
-
-/**
  * Set key rotation timestamp
  */
 export function setKeyRotationTimestamp(timestamp: string): void {
   const state = loadState();
   state.keyRotatedAt = timestamp;
   saveState(state);
-}
-
-/**
- * Get an insider's auto-generated key from state
- */
-export function getInsiderKey(email: string): InsiderKeyState | null {
-  const state = loadState();
-  return state.insiderKeys?.[email.toLowerCase()] ?? null;
 }
 
 /**

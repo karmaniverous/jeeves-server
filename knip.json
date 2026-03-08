@@ -1,6 +1,25 @@
 {
   "workspaces": {
-    "packages/service": {},
+    "packages/service": {
+      "entry": [
+        "src/cli/index.ts",
+        "test-docs/**/*.js"
+      ],
+      "includeEntryExports": true
+    },
+    "packages/service/client": {
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ],
+      "ignore": [
+        "src/components/ui/**"
+      ],
+      "includeEntryExports": true
+    },
     "packages/openclaw": {}
-  }
+  },
+  "ignoreBinaries": [
+    "vite"
+  ],
+  "ignoreExportsUsedInFile": true
 }

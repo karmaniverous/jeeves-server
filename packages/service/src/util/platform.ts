@@ -10,7 +10,7 @@ import path from 'node:path';
 
 const IS_WINDOWS = process.platform === 'win32';
 
-export interface RootEntry {
+interface RootEntry {
   /** URL-safe identifier (drive letter lowercase on Windows, mount name on Linux) */
   id: string;
   /** Display label */
@@ -175,24 +175,4 @@ export function getDirSize(dirPath: string): number {
     /* skip inaccessible */
   }
   return totalSize;
-}
-
-/**
- * Resolve a URL path to a real filesystem path, verifying it exists.
- * Returns null if the path doesn't resolve to an accessible location.
- */
-export function resolveUrlPath(
-  urlPath: string,
-  roots: RootEntry[],
-): string | null {
-  const fsPath = urlPathToFs(urlPath, roots);
-  if (!fsPath) return null;
-
-  try {
-    const resolved = path.resolve(fsPath);
-    fs.accessSync(resolved, fs.constants.R_OK);
-    return resolved;
-  } catch {
-    return null;
-  }
 }

@@ -1,14 +1,11 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useAuth } from '@/lib/auth';
-import { useTheme } from '@/lib/theme';
+import { useAuth } from '@/lib/AuthContext';
 
 export function Home() {
   const { loading, authenticated } = useAuth();
   const navigate = useNavigate();
-  const [_theme] = useTheme();
-
   useEffect(() => {
     if (!loading && authenticated) {
       navigate('/browse', { replace: true });

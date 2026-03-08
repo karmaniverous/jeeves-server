@@ -1,7 +1,8 @@
 import { CloudDownload } from 'lucide-react';
 
 import { DropdownMenuSeparator, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { ActionDropdown, DropdownErrorBanner, useActionState, type ActionState } from '@/components/ActionDropdown';
+import { ActionDropdown, DropdownErrorBanner, type ActionState } from '@/components/ActionDropdown';
+import { useActionState } from '@/components/useActionState';
 import { clearCache, withKey } from '@/lib/api';
 
 interface DownloadDropdownProps {

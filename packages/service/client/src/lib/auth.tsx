@@ -1,26 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+/**
+ * Auth provider component.
+ */
+import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { getAuthStatus, rotateKey as apiRotateKey } from './api';
-
-interface AuthState {
-  loading: boolean;
-  authenticated: boolean;
-  email?: string;
-  picture?: string;
-  isInsider: boolean;
-  searchEnabled: boolean;
-  keyCreatedAt?: string | null;
-  rotateKey: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthState>({
-  loading: true,
-  authenticated: false,
-  isInsider: false,
-  searchEnabled: false,
-  rotateKey: async () => {},
-});
+import { AuthContext } from './AuthContext';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -32,7 +17,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [searchEnabled, setSearchEnabled] = useState(false);
 
   useEffect(() => {
-    // Extract the browsed path from the URL for outsider key verification
     const browsePath = window.location.pathname.replace(/^\/browse/, '') || '/';
     getAuthStatus(browsePath)
       .then((status) => {
@@ -63,8 +47,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth(): AuthState {
-  return useContext(AuthContext);
 }

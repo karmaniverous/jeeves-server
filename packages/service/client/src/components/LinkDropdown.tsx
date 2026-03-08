@@ -1,7 +1,8 @@
 import { Link as LinkIcon } from 'lucide-react';
 
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { ActionDropdown, DropdownErrorBanner, useActionState, type ActionState } from '@/components/ActionDropdown';
+import { ActionDropdown, DropdownErrorBanner, type ActionState } from '@/components/ActionDropdown';
+import { useActionState } from '@/components/useActionState';
 import { getShareLink, type ShareSettings } from '@/lib/api';
 
 interface LinkDropdownProps {

@@ -72,7 +72,7 @@ export function SvgViewer({ content }: SvgViewerProps) {
     wheelCleanupRef.current = () => container.removeEventListener('wheel', wheelHandler);
 
     setReady(true);
-  }, [html]);
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -88,7 +88,7 @@ export function SvgViewer({ content }: SvgViewerProps) {
       wheelCleanupRef.current?.();
       panzoomRef.current?.destroy();
     };
-  }, [initPanzoom]);
+  }, [html, initPanzoom]);
 
   return (
     <div className="relative bg-white rounded-lg border border-border overflow-hidden">
