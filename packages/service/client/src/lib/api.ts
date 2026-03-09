@@ -187,6 +187,7 @@ export interface SearchResult {
   title?: string;
   author?: string;
   participants?: string;
+  metadata?: Record<string, unknown>;
   chunks: SearchChunk[];
 }
 

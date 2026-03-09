@@ -61,6 +61,7 @@ interface GroupedResult {
   title?: string;
   author?: string;
   participants?: string;
+  metadata: Record<string, unknown>;
   chunks: Array<{
     text: string;
     index: number;
@@ -193,6 +194,25 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
         let group = fileMap.get(key);
         if (!group) {
           const parts = key.split('/');
+          // Extract all non-internal payload fields as metadata
+          const meta: Record<string, unknown> = {};
+          const internalKeys = new Set([
+            'file_path',
+            'chunk_text',
+            'chunk_index',
+            'total_chunks',
+            'content_hash',
+            'embedded_at',
+          ]);
+          for (const [k, v] of Object.entries(r.payload)) {
+            if (internalKeys.has(k) || v == null || v === '') continue;
+            // Normalize singular 'domain' to 'domains' array to match facet field name
+            if (k === 'domain') {
+              meta['domains'] = Array.isArray(v) ? v : [v];
+            } else {
+              meta[k] = v;
+            }
+          }
           group = {
             filePath: r.payload.file_path ?? key,
             browsePath: key,
@@ -206,6 +226,7 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
             title: r.payload.title,
             author: r.payload.author,
             participants: r.payload.participants,
+            metadata: meta,
             chunks: [],
           };
           fileMap.set(key, group);

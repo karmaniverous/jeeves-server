@@ -215,10 +215,77 @@ function FacetTextInput({
   );
 }
 
-function ResultRow({ result, onNavigate }: { result: SearchResult; onNavigate: (path: string) => void }) {
+/** Max chips shown in collapsed view */
+const COLLAPSED_CHIP_COUNT = 4;
+
+/** Internal fields to exclude from metadata chips */
+const META_INTERNAL_KEYS = new Set([
+  'file_path', 'chunk_text', 'chunk_index', 'total_chunks', 'content_hash',
+  'embedded_at',
+]);
+
+interface ResultRowProps {
+  result: SearchResult;
+  facets: SearchFacet[];
+  onNavigate: (path: string) => void;
+  onChipClick: (field: string, value: string) => void;
+}
+
+/** Build sorted chip entries from result metadata × facets. Lowest cardinality first; text/number last. */
+function buildChips(
+  result: SearchResult,
+  facets: SearchFacet[],
+): Array<{ field: string; label: string; value: string; cardinality: number }> {
+  const meta = result.metadata ?? {};
+  const chips: Array<{ field: string; label: string; value: string; cardinality: number }> = [];
+  const facetMap = new Map(facets.map((f) => [f.field, f]));
+
+  for (const [key, raw] of Object.entries(meta)) {
+    if (META_INTERNAL_KEYS.has(key)) continue;
+    const facet = facetMap.get(key);
+    if (!facet) continue; // only show facet-connected props
+
+    const values = Array.isArray(raw) ? raw.map(String) : [String(raw)];
+    const isEnum = facet.uiHint !== 'text' && facet.uiHint !== 'number';
+    const cardinality = isEnum ? facet.values.length : Infinity;
+
+    for (const v of values) {
+      if (!v || v === 'undefined' || v === 'null') continue;
+      chips.push({
+        field: key,
+        label: formatFieldLabel(key),
+        value: v,
+        cardinality,
+      });
+    }
+  }
+
+  chips.sort((a, b) => a.cardinality - b.cardinality);
+  return chips;
+}
+
+function ResultRow({ result, facets, onNavigate, onChipClick }: ResultRowProps) {
   const [expanded, setExpanded] = useState(false);
   const preview = result.chunks[0]?.text ?? '';
   const truncatedPreview = preview.length > 150 ? preview.slice(0, 150) + '…' : preview;
+
+  const allChips = buildChips(result, facets);
+  const collapsedChips = allChips.slice(0, COLLAPSED_CHIP_COUNT);
+  const hasMore = allChips.length > COLLAPSED_CHIP_COUNT;
+
+  const renderChip = (chip: { field: string; label: string; value: string }, i: number) => {
+    const display = chip.value.length > 30 ? chip.value.slice(0, 28) + '…' : chip.value;
+    return (
+      <button
+        key={`${chip.field}-${i}`}
+        onClick={(e) => { e.stopPropagation(); onChipClick(chip.field, chip.value); }}
+        className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-foreground border border-border hover:bg-primary/10 hover:border-primary/30 transition-colors cursor-pointer truncate max-w-[200px]"
+        title={`${chip.label}: ${chip.value} — click to filter`}
+      >
+        <span className="text-muted-foreground">{chip.label}:</span> {display}
+      </button>
+    );
+  };
 
   return (
     <div className="border-b border-border last:border-0 px-4 py-2">
@@ -232,11 +299,6 @@ function ResultRow({ result, onNavigate }: { result: SearchResult; onNavigate: (
             >
               {result.fileName}
             </button>
-            {result.domains && result.domains.length > 0 && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
-                {result.domains.join(', ')}
-              </span>
-            )}
             <span className="text-[10px] text-muted-foreground shrink-0">
               {(result.bestScore * 100).toFixed(0)}%
             </span>
@@ -259,18 +321,35 @@ function ResultRow({ result, onNavigate }: { result: SearchResult; onNavigate: (
           <div className="text-xs text-muted-foreground mt-0.5 break-words leading-relaxed">
             {result.browsePath}
           </div>
-          {!expanded && (
+          {/* Collapsed chips */}
+          {!expanded && collapsedChips.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1 mt-1">
+              {collapsedChips.map((c, i) => renderChip(c, i))}
+              {hasMore && (
+                <span className="text-[10px] text-muted-foreground">+{allChips.length - COLLAPSED_CHIP_COUNT} more</span>
+              )}
+            </div>
+          )}
+          {!expanded && collapsedChips.length === 0 && (
             <div className="text-sm text-foreground/70 mt-1 truncate">{truncatedPreview}</div>
           )}
+          {/* Expanded: all chips + chunks */}
           {expanded && (
-            <div className="mt-2 max-h-48 overflow-y-auto border border-border rounded bg-muted/30 divide-y divide-border">
-              {result.chunks.map((chunk, i) => (
-                <div key={i} className="px-3 py-2 text-sm text-foreground/80 leading-relaxed">
-                  <span className="text-[10px] text-muted-foreground mr-2">#{chunk.index}</span>
-                  {chunk.text}
+            <>
+              {allChips.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1 mt-1.5 mb-2">
+                  {allChips.map((c, i) => renderChip(c, i))}
                 </div>
-              ))}
-            </div>
+              )}
+              <div className="max-h-48 overflow-y-auto border border-border rounded bg-muted/30 divide-y divide-border">
+                {result.chunks.map((chunk, i) => (
+                  <div key={i} className="px-3 py-2 text-sm text-foreground/80 leading-relaxed">
+                    <span className="text-[10px] text-muted-foreground mr-2">#{chunk.index}</span>
+                    {chunk.text}
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -425,6 +504,23 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     onClose();
     navigate(path);
   }, [navigate, onClose]);
+
+  const handleChipClick = useCallback((field: string, value: string) => {
+    // Ensure the facet field is active
+    setActiveFacetFields((prev) => new Set([...prev, field]));
+    // Find the facet to determine uiHint
+    const facet = facets.find((f) => f.field === field);
+    if (facet && (facet.uiHint === 'text' || facet.uiHint === 'number')) {
+      setFacetTextInputs((prev) => ({ ...prev, [field]: value }));
+    } else {
+      setFacetSelections((prev) => {
+        const current = prev[field] ?? new Set<string>();
+        const next = new Set(current);
+        next.add(value);
+        return { ...prev, [field]: next };
+      });
+    }
+  }, [facets]);
 
   const toggleFacet = useCallback((field: string, value: string) => {
     setFacetSelections((prev) => {
@@ -620,7 +716,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
             </div>
           )}
           {results.map((r) => (
-            <ResultRow key={r.browsePath} result={r} onNavigate={handleNavigate} />
+            <ResultRow key={r.browsePath} result={r} facets={facets} onNavigate={handleNavigate} onChipClick={handleChipClick} />
           ))}
         </div>
 
