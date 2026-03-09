@@ -30,7 +30,7 @@ export function TabBar({
 }: TabBarProps) {
   if (!file && !loading) return null;
 
-  const renderable = file ? isRenderable(file) : isRenderableExt(reqPath);
+  const renderable = (fileRendered ? isRenderable(fileRendered) : false) || (file ? isRenderable(file) : isRenderableExt(reqPath));
   const activeTab = renderable ? viewTab : 'raw';
 
   return (
