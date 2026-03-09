@@ -55,7 +55,7 @@ In `openclaw.json`, configure the plugin entry:
 | `server_link_info` | Query available link types for a path |
 | `server_share` | Generate share links with optional expiry and depth |
 | `server_export` | Trigger export (PDF, DOCX, SVG, PNG, ZIP) |
-| `server_event_status` | Query event gateway schemas and recent events |
+| `server_event_status` | Query event gateway schemas and recent event log entries |
 
 ## TOOLS.md Injection
 

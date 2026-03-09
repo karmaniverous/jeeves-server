@@ -155,7 +155,7 @@ curl http://localhost:1934/health
 curl http://localhost:1934/api/status
 ```
 
-The `/api/status` endpoint returns version, uptime, connected services, export capabilities, and event schemas. Use `/health` for simple load balancer checks and `/api/status` for monitoring dashboards.
+The `/api/status` endpoint returns version, uptime, connected services, export capabilities, and event schemas. Add `?events=N` to include the N most recent event log entries. Use `/health` for simple load balancer checks and `/api/status` for monitoring dashboards.
 
 ## Updating
 

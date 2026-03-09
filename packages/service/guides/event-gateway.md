@@ -177,6 +177,17 @@ process.stdin.on('end', () => {
 
 ## Monitoring
 
+### Via API
+
+```bash
+# Get 20 most recent event log entries (no auth required)
+curl http://localhost:1934/api/status?events=20
+```
+
+The `eventLog` array in the response contains entries newest-first, each with `ts`, `event`, `matched`, `exitCode`, and `durationMs`.
+
+### Via log files
+
 Check the event log for failures:
 
 ```bash

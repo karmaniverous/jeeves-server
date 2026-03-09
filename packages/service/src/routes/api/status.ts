@@ -8,6 +8,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
+import { getRecentEvents } from '../../services/eventLog.js';
 import { packageVersion } from '../../util/packageVersion.js';
 
 const startTime = Date.now();
@@ -38,48 +39,58 @@ async function checkService(url: string): Promise<ServiceStatus> {
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const statusRoutes: FastifyPluginAsync = async (fastify) => {
-  fastify.get('/api/status', async () => {
-    const config = getConfig();
+  fastify.get<{ Querystring: { events?: string } }>(
+    '/api/status',
+    async (request) => {
+      const config = getConfig();
 
-    const [watcher, runner] = await Promise.all([
-      config.watcherUrl ? checkService(config.watcherUrl) : null,
-      config.runnerUrl ? checkService(config.runnerUrl) : null,
-    ]);
+      const [watcher, runner] = await Promise.all([
+        config.watcherUrl ? checkService(config.watcherUrl) : null,
+        config.runnerUrl ? checkService(config.runnerUrl) : null,
+      ]);
 
-    return {
-      version: packageVersion,
-      uptime: Math.floor((Date.now() - startTime) / 1000),
-      port: config.port,
-      chrome: {
-        configured: Boolean(config.chromePath),
-        path: config.chromePath,
-      },
-      auth: {
-        modes: config.authModes,
-        insiderCount: config.resolvedInsiders.length,
-        keyCount: config.resolvedKeys.length,
-      },
-      events: Object.entries(config.events).map(([name, schema]) => ({
-        name,
-        cmd: schema.cmd,
-      })),
-      exports: {
-        documents: ['pdf', 'docx'],
-        directories: ['zip'],
-        diagrams: ['svg', 'png'],
-        chromeAvailable: Boolean(config.chromePath),
-      },
-      diagrams: {
-        mermaid: true,
-        plantuml: {
-          localJar: Boolean(config.plantuml.jarPath),
-          servers: config.plantuml.servers,
+      return {
+        version: packageVersion,
+        uptime: Math.floor((Date.now() - startTime) / 1000),
+        port: config.port,
+        chrome: {
+          configured: Boolean(config.chromePath),
+          path: config.chromePath,
         },
-      },
-      services: {
-        watcher,
-        runner,
-      },
-    };
-  });
+        auth: {
+          modes: config.authModes,
+          insiderCount: config.resolvedInsiders.length,
+          keyCount: config.resolvedKeys.length,
+        },
+        events: Object.entries(config.events).map(([name, schema]) => ({
+          name,
+          cmd: schema.cmd,
+        })),
+        exports: {
+          documents: ['pdf', 'docx'],
+          directories: ['zip'],
+          diagrams: ['svg', 'png'],
+          chromeAvailable: Boolean(config.chromePath),
+        },
+        diagrams: {
+          mermaid: true,
+          plantuml: {
+            localJar: Boolean(config.plantuml.jarPath),
+            servers: config.plantuml.servers,
+          },
+        },
+        services: {
+          watcher,
+          runner,
+        },
+        ...(request.query.events
+          ? {
+              eventLog: getRecentEvents(
+                Math.min(parseInt(request.query.events, 10) || 20, 100),
+              ),
+            }
+          : {}),
+      };
+    },
+  );
 };
