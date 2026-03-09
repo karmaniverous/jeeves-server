@@ -66,3 +66,12 @@ export function logEvent(entry: Omit<EventLogEntry, 'ts'>): void {
   // Write back
   writeJsonl(eventLogPath, purgedEntries);
 }
+
+/**
+ * Get the most recent N event log entries (newest first).
+ */
+export function getRecentEvents(limit: number): EventLogEntry[] {
+  const { eventLogPath } = getConfig();
+  const entries = parseJsonl(eventLogPath);
+  return entries.slice(-limit).reverse();
+}

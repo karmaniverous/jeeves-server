@@ -43,7 +43,7 @@ describe('GET /api/status', () => {
     const handler = routes['/api/status'];
     expect(handler).toBeDefined();
 
-    const result = await handler({ accessMode: 'insider' });
+    const result = await handler({ accessMode: 'insider', query: {} });
     const status = result as Record<string, unknown>;
 
     expect(status).toHaveProperty('version');
