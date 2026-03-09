@@ -274,10 +274,14 @@ function AddFilterMenu({
   availableFacets,
   activeFacets,
   onAdd,
+  onLoad,
+  loading: facetsLoading,
 }: {
   availableFacets: SearchFacet[];
   activeFacets: Set<string>;
   onAdd: (field: string) => void;
+  onLoad?: () => void;
+  loading?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState('');
@@ -302,16 +306,19 @@ function AddFilterMenu({
       )
     : inactive;
 
-  if (inactive.length === 0) return null;
+  if (inactive.length === 0 && availableFacets.length > 0) return null;
 
   return (
     <div className="relative" ref={containerRef}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+            if (!open && onLoad) onLoad();
+            setOpen(!open);
+          }}
         className="text-xs px-2 py-0.5 rounded border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors flex items-center gap-1"
       >
         <Plus className="h-3 w-3" />
-        Add filter
+        {facetsLoading ? 'Loading...' : 'Add filter'}
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-1 z-50 bg-background border border-border rounded shadow-lg w-56 max-h-48 flex flex-col">
@@ -439,6 +446,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   /** Garbage entries removed during cleaning, for dev diagnostics */
   const [garbageEntries, setGarbageEntries] = useState<GarbageEntry[]>([]);
   const [showGarbage, setShowGarbage] = useState(false);
+  const [facetsLoading, setFacetsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -446,43 +454,49 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 50);
-      void fetchFacets()
-        .then((res) => {
-          const cleaned: SearchFacet[] = [];
-          const garbage: GarbageEntry[] = [];
-          for (const f of res.facets) {
-            if (f.uiHint === 'hidden') continue;
-            const goodValues = cleanFacetValues(f.values);
-            const badValues = f.values.filter((v) => !goodValues.includes(v));
-            if (badValues.length > 0) {
-              const reasons = badValues.map((v) => {
-                if (!v || !v.trim()) return 'empty';
-                if (v.includes('[object Object]')) return 'object-to-string';
-                if (/^\$\{.*\}$/.test(v)) return 'unresolved-template';
-                return 'unknown';
-              });
-              garbage.push({
-                field: f.field,
-                removed: badValues.map((v, i) => `${JSON.stringify(v)} (${reasons[i]})`),
-                reason: [...new Set(reasons)].join(', '),
-              });
-            }
-            if (goodValues.length > 0) {
-              cleaned.push({ ...f, values: goodValues });
-            } else {
-              garbage.push({
-                field: f.field,
-                removed: ['(all values filtered)'],
-                reason: 'no valid values remain',
-              });
-            }
-          }
-          setFacets(cleaned);
-          setGarbageEntries(garbage);
-        })
-        .catch(() => setFacets([]));
     }
   }, [open]);
+
+  /** Load and clean facets — called lazily when user opens "Add filter" */
+  const loadFacets = useCallback(async () => {
+    if (facets.length > 0) return; // already loaded
+    try {
+      const res = await fetchFacets();
+      const cleaned: SearchFacet[] = [];
+      const garbage: GarbageEntry[] = [];
+      for (const f of res.facets) {
+        if (f.uiHint === 'hidden') continue;
+        const goodValues = cleanFacetValues(f.values);
+        const badValues = f.values.filter((v) => !goodValues.includes(v));
+        if (badValues.length > 0) {
+          const reasons = badValues.map((v) => {
+            if (!v || !v.trim()) return 'empty';
+            if (v.includes('[object Object]')) return 'object-to-string';
+            if (/^\$\{.*\}$/.test(v)) return 'unresolved-template';
+            return 'unknown';
+          });
+          garbage.push({
+            field: f.field,
+            removed: badValues.map((v, i) => `${JSON.stringify(v)} (${reasons[i]})`),
+            reason: [...new Set(reasons)].join(', '),
+          });
+        }
+        if (goodValues.length > 0) {
+          cleaned.push({ ...f, values: goodValues });
+        } else {
+          garbage.push({
+            field: f.field,
+            removed: ['(all values filtered)'],
+            reason: 'no valid values remain',
+          });
+        }
+      }
+      setFacets(cleaned);
+      setGarbageEntries(garbage);
+    } catch {
+      setFacets([]);
+    }
+  }, [facets.length]);
 
   const resetSearch = useCallback(() => {
     setQuery('');
@@ -720,7 +734,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
         </div>
 
         {/* Schema-driven facet filters: two-step — "Add filter" button + active facets */}
-        {facets.length > 0 && (
+        {(
           <div className="px-4 py-2 border-b border-border flex flex-col gap-1.5">
             {activeFacets.map(renderFacet)}
             <div className="flex items-center gap-2">
@@ -728,6 +742,13 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
                 availableFacets={facets}
                 activeFacets={activeFacetFields}
                 onAdd={addFacetField}
+                onLoad={() => {
+                  if (facets.length === 0 && !facetsLoading) {
+                    setFacetsLoading(true);
+                    void loadFacets().finally(() => setFacetsLoading(false));
+                  }
+                }}
+                loading={facetsLoading}
               />
               {garbageEntries.length > 0 && (
                 <button
