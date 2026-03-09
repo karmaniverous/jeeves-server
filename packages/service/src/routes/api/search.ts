@@ -296,7 +296,7 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
         const watcherUrl = config.watcherUrl;
         facetsFetchPromise = (async () => {
           const watcherRes = await fetch(`${watcherUrl}/search/facets`, {
-            signal: AbortSignal.timeout(5000),
+            signal: AbortSignal.timeout(15000),
           });
           if (!watcherRes.ok) {
             throw new Error(`HTTP ${String(watcherRes.status)}`);

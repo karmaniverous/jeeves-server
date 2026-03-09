@@ -358,7 +358,8 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
       }
       setFacets(cleaned);
       setGarbageEntries(garbage);
-    } catch {
+    } catch (err) {
+      console.error("Failed to load facets:", err);
       setFacets([]);
     } finally {
       setFacetsLoading(false);
