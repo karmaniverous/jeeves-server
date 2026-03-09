@@ -115,7 +115,7 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
       },
       buildRequest: (params) => {
         const p = normalizePath(params);
-        return ['/api/directory/' + p];
+        return ['/api/path/' + p];
       },
     },
     {
@@ -173,7 +173,7 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
       buildRequest: (params) => {
         const p = normalizePath(params);
         const fmt = String(params.format);
-        return ['/export/' + p + '.' + fmt];
+        return ['/api/export/' + p + '?format=' + fmt];
       },
     },
     {
