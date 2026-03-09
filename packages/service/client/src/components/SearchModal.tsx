@@ -317,7 +317,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
         {facets.length > 0 && (
           <div className="px-4 py-2 border-b border-border flex flex-col gap-1.5">
             {facets
-              .filter((f) => f.values.length > 0 && f.uiHint !== 'hidden')
+              .filter((f) => f.values.length > 0 && f.values.length <= 30 && f.uiHint !== 'hidden')
               .map((f) => (
                 <FilterChips
                   key={f.field}
