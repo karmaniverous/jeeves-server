@@ -23,17 +23,18 @@ To convert a Windows file path to a browse path:
 
 ## Sharing
 
-- **Insiders** authenticate via Google OAuth — bare URLs work for them
+- **Insiders** authenticate via Google OAuth or key-based auth — bare URLs work for them
 - **Outsiders** need HMAC share links — use `server_share` to generate them
 - Share links have configurable expiry (default 30 days)
 - Directory shares support depth control for recursive access
+- An `outsiderPolicy` can constrain which paths are eligible for outsider sharing
 
 ## Export
 
 Available formats depend on file type and server capabilities:
 - **Markdown files:** PDF (requires Chrome), DOCX
-- **Mermaid diagrams:** SVG, PNG, PDF
-- **PlantUML diagrams:** Formats depend on server configuration
+- **Mermaid diagrams:** SVG, PNG, PDF (Mermaid CLI is bundled)
+- **PlantUML diagrams:** Formats depend on server configuration (jar downloaded automatically via postinstall)
 - **Directories:** ZIP (insider-only)
 
 Use `server_link_info` first to check which formats are available for a path.
@@ -51,8 +52,8 @@ Run `server_status` to check:
 ### Prerequisites
 
 - **Node.js 20+** and npm
-- **Java 8+** (optional, for local PlantUML rendering)
-- **Chrome/Chromium** (optional, for PDF export)
+- **Java 8+** (optional, for local PlantUML rendering — jar downloaded automatically)
+- **Chrome/Chromium** (required for PDF export)
 - **NSSM** (Windows) or **systemd** (Linux) for service management
 - **Caddy** (recommended) or nginx for reverse proxy with automatic TLS
 
@@ -64,49 +65,75 @@ npm install -g @karmaniverous/jeeves-server
 
 ### 2. Create config
 
-Create `jeeves-server.config.json` in the server's working directory:
+Create `jeeves-server.config.json` (or any cosmiconfig-supported format) in the server's working directory:
 
 ```json
 {
   "port": 1934,
-  "roots": {
-    "data": "/path/to/data"
+  "chromePath": "/usr/bin/chromium-browser",
+  "auth": {
+    "modes": ["keys", "google"],
+    "google": {
+      "clientId": "${GOOGLE_CLIENT_ID}",
+      "clientSecret": "${GOOGLE_CLIENT_SECRET}"
+    },
+    "sessionSecret": "${SESSION_SECRET}"
+  },
+  "scopes": {
+    "public-docs": {
+      "allow": ["/d/docs/*"]
+    }
+  },
+  "insiders": {
+    "you@example.com": {},
+    "contractor@example.com": { "scopes": "public-docs" }
   },
   "keys": {
     "_internal": "random-hex-seed-for-puppeteer",
-    "_plugin": "random-hex-seed-for-openclaw-plugin"
+    "_plugin": "random-hex-seed-for-openclaw-plugin",
+    "primary": "random-hex-seed-for-api-access"
   },
-  "insiders": [
-    { "email": "you@example.com" }
-  ],
-  "google": {
-    "clientId": "${GOOGLE_CLIENT_ID}",
-    "clientSecret": "${GOOGLE_CLIENT_SECRET}"
-  },
-  "sessionSecret": "${SESSION_SECRET}",
-  "watcherUrl": "http://127.0.0.1:1936"
+  "watcherUrl": "http://127.0.0.1:1936",
+  "runnerUrl": "http://127.0.0.1:1937"
 }
+```
+
+**Key fields:**
+- `chromePath` — **required**, path to Chrome/Chromium executable
+- `auth.modes` — **required**, array of `"keys"` and/or `"google"`
+- `scopes` — named scope definitions (allow/deny), referenced by name from insiders and keys
+- `insiders` — map of email → `{ scopes?, allow?, deny? }`
+- `keys._internal` — required for PDF/DOCX export (Puppeteer auth)
+- `keys._plugin` — required for OpenClaw plugin auth
+- `outsiderPolicy` — optional global constraints on outsider sharing
+
+Environment variable substitution is supported: `${VAR_NAME}` in string values.
+
+Generate key seeds with:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 ### 3. Validate config
 
 ```bash
-jeeves-server config validate
-jeeves-server config show
+jeeves-server config validate [--config <path>]
+jeeves-server config show [--config <path>]
 ```
 
 ### 4. Register as system service
 
 **Windows (NSSM):**
 ```bash
-jeeves-server service install
+jeeves-server service install [--config <path>]
 jeeves-server service start
 ```
 
 **Linux (systemd):**
 ```bash
-sudo jeeves-server service install
-sudo jeeves-server service start
+jeeves-server service install [--config <path>]
+sudo systemctl enable jeeves-server
+sudo systemctl start jeeves-server
 ```
 
 ### 5. Configure Caddy reverse proxy
@@ -127,9 +154,9 @@ Caddy handles TLS certificate provisioning automatically. Ensure DNS A/AAAA reco
 npx @karmaniverous/jeeves-server-openclaw install
 ```
 
-Configure the plugin in `openclaw.json` with `apiUrl` and `pluginKey` (matching the `_plugin` key seed from server config). 
+Configure the plugin in `openclaw.json` with `apiUrl` and `pluginKey` (matching the `_plugin` key seed from server config).
 
-**Important:** Add `"jeeves-server-openclaw"` to the `tools.allow` array in `openclaw.json` so the agent can use the plugin's tools.
+**Note:** The installer handles plugin registration in `openclaw.json` automatically. If using `openclaw plugins install` instead (when available), you may need to manually add the plugin entry to `plugins.entries` in `openclaw.json` with `apiUrl` and `pluginKey` config values.
 
 Restart the gateway to load the plugin.
 

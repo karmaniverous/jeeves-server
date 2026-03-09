@@ -142,13 +142,13 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
       },
       buildRequest: (params) => {
         const p = normalizePath(params);
-        const qs: string[] = [];
-        if (params.expiryDays !== undefined)
-          qs.push('exp=' + String(params.expiryDays as number));
-        if (params.depth !== undefined)
-          qs.push('d=' + String(params.depth as number));
-        const query = qs.length > 0 ? '?' + qs.join('&') : '';
-        return ['/api/share/' + p + query];
+        const body: Record<string, unknown> = { path: '/' + p };
+        if (params.expiryDays !== undefined) {
+          const ms = Date.now() + (params.expiryDays as number) * 86400000;
+          body.expiry = String(ms);
+        }
+        if (params.depth !== undefined) body.depth = params.depth;
+        return ['/api/share', 'POST', body];
       },
     },
     {
