@@ -665,7 +665,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
                         }}
                         className="w-full text-left text-xs px-3 py-1.5 hover:bg-accent transition-colors flex items-center justify-between"
                       >
-                        <span>{formatFieldLabel(f.field)}</span>
+                        <span className="text-foreground">{formatFieldLabel(f.field)}</span>
                         <span className="text-[10px] text-muted-foreground">
                           {f.uiHint === 'text' || f.uiHint === 'number' ? f.uiHint : `${f.values.length}`}
                         </span>
