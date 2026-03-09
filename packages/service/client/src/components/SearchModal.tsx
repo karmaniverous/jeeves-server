@@ -10,9 +10,10 @@ const CHIP_THRESHOLD = 8;
 /** Filter out empty, garbage, and unresolved template values */
 function cleanFacetValues(values: string[]): string[] {
   return values.filter((v) => {
-    if (!v || !v.trim()) return false;
-    if (v.includes('[object Object]')) return false;
-    if (/^\$\{.*\}$/.test(v)) return false;
+    const s = String(v ?? '');
+    if (!s || !s.trim()) return false;
+    if (s.includes('[object Object]')) return false;
+    if (/^\$\{.*\}$/.test(s)) return false;
     return true;
   });
 }
@@ -325,13 +326,18 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
       const garbage: GarbageEntry[] = [];
       for (const f of res.facets) {
         if (f.uiHint === 'hidden') continue;
+        // Text/number facets use free-text input — values array is irrelevant
+        if (f.uiHint === 'text' || f.uiHint === 'number') {
+          cleaned.push({ ...f, values: [] });
+          continue;
+        }
         const goodValues = cleanFacetValues(f.values);
         const badValues = f.values.filter((v) => !goodValues.includes(v));
         if (badValues.length > 0) {
           const reasons = badValues.map((v) => {
-            if (!v || !v.trim()) return 'empty';
-            if (v.includes('[object Object]')) return 'object-to-string';
-            if (/^\$\{.*\}$/.test(v)) return 'unresolved-template';
+            if (!v || !String(v).trim()) return 'empty';
+            if (String(v).includes('[object Object]')) return 'object-to-string';
+            if (/^\$\{.*\}$/.test(String(v))) return 'unresolved-template';
             return 'unknown';
           });
           garbage.push({
@@ -342,14 +348,16 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
         }
         if (goodValues.length > 0) {
           cleaned.push({ ...f, values: goodValues });
-        } else if (badValues.length > 0) {
+        } else {
+          // All values were garbage — include facet with empty values but log it
           garbage.push({
             field: f.field,
-            removed: ['(all values filtered)'],
-            reason: 'no valid values remain',
+            removed: badValues.length > 0 ? ['(all values filtered)'] : ['(no values)'],
+            reason: badValues.length > 0 ? 'no valid values remain' : 'empty values array',
           });
         }
       }
+      console.log('[SearchModal] Loaded facets:', cleaned.length, 'clean,', garbage.length, 'garbage entries');
       setFacets(cleaned);
       setGarbageEntries(garbage);
     } catch (err) {
