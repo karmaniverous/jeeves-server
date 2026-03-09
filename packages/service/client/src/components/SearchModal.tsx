@@ -326,7 +326,10 @@ function ResultRow({ result, facets, onNavigate, onChipClick }: ResultRowProps) 
             <div className="flex flex-wrap items-center gap-1 mt-1">
               {collapsedChips.map((c, i) => renderChip(c, i))}
               {hasMore && (
-                <span className="text-[10px] text-muted-foreground">+{allChips.length - COLLAPSED_CHIP_COUNT} more</span>
+                <button
+                  onClick={() => setExpanded(true)}
+                  className="text-[10px] text-blue-500 hover:underline cursor-pointer"
+                >+{allChips.length - COLLAPSED_CHIP_COUNT} more</button>
               )}
             </div>
           )}
