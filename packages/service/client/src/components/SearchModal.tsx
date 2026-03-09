@@ -6,6 +6,9 @@ import { fetchFacets, searchDocuments, type SearchFacet, type SearchResult, type
 
 type DatePreset = '24h' | '7d' | '30d' | 'custom' | null;
 
+/** Enumerated facets with ≤ this many values render as chips; above this → searchable dropdown */
+const CHIP_THRESHOLD = 8;
+
 const DATE_PRESETS: { label: string; value: DatePreset }[] = [
   { label: '24h', value: '24h' },
   { label: '7 days', value: '7d' },
@@ -59,7 +62,135 @@ function FilterChips({
   );
 }
 
+/**
+ * Searchable dropdown for enumerated facets with many values.
+ * Supports single-select or multi-select based on uiHint.
+ */
+function SearchableSelect({
+  label,
+  values,
+  selected,
+  onToggle,
+  multi,
+}: {
+  label: string;
+  values: string[];
+  selected: Set<string>;
+  onToggle: (value: string) => void;
+  multi: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [filter, setFilter] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setFilter('');
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const filtered = filter
+    ? values.filter((v) => v.toLowerCase().includes(filter.toLowerCase()))
+    : values;
+
+  const selectedLabel =
+    selected.size === 0
+      ? 'All'
+      : selected.size <= 2
+        ? [...selected].join(', ')
+        : `${selected.size} selected`;
+
+  return (
+    <div className="flex items-center gap-1.5" ref={containerRef}>
+      <span className="text-xs text-muted-foreground font-medium">{label}:</span>
+      <div className="relative">
+        <button
+          onClick={() => setOpen(!open)}
+          className={`text-xs px-2 py-0.5 rounded border transition-colors flex items-center gap-1 min-w-[100px] ${
+            selected.size > 0
+              ? 'bg-primary/10 text-primary border-primary'
+              : 'bg-muted text-muted-foreground border-border hover:bg-accent'
+          }`}
+        >
+          <span className="truncate max-w-[200px]">{selectedLabel}</span>
+          <ChevronDown className="h-3 w-3 shrink-0" />
+        </button>
+        {open && (
+          <div className="absolute top-full left-0 mt-1 z-50 bg-background border border-border rounded shadow-lg w-64 max-h-48 flex flex-col">
+            <div className="p-1.5 border-b border-border">
+              <input
+                type="text"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                placeholder="Search..."
+                className="text-xs w-full px-2 py-1 rounded border border-border bg-muted text-foreground placeholder:text-muted-foreground outline-none focus:border-primary"
+                autoFocus
+              />
+            </div>
+            <div className="overflow-y-auto flex-1">
+              {filtered.length === 0 && (
+                <div className="px-3 py-2 text-xs text-muted-foreground">No matches</div>
+              )}
+              {filtered.map((v) => (
+                <button
+                  key={v}
+                  onClick={() => {
+                    onToggle(v);
+                    if (!multi) {
+                      setOpen(false);
+                      setFilter('');
+                    }
+                  }}
+                  className={`w-full text-left text-xs px-3 py-1.5 hover:bg-accent transition-colors flex items-center gap-2 ${
+                    selected.has(v) ? 'bg-primary/10 text-primary' : 'text-foreground'
+                  }`}
+                >
+                  {multi && (
+                    <span
+                      className={`w-3 h-3 rounded-sm border flex items-center justify-center shrink-0 ${
+                        selected.has(v) ? 'bg-primary border-primary' : 'border-border'
+                      }`}
+                    >
+                      {selected.has(v) && <span className="text-[8px] text-primary-foreground">&#10003;</span>}
+                    </span>
+                  )}
+                  <span className="truncate">{v}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      {/* Show selected as removable pills */}
+      {selected.size > 0 && selected.size <= 5 && (
+        <>
+          {[...selected].map((v) => (
+            <button
+              key={v}
+              onClick={() => onToggle(v)}
+              className="text-xs px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 flex items-center gap-0.5"
+              title={`Remove ${v}`}
+            >
+              <span className="truncate max-w-[120px]">{v}</span>
+              <X className="h-2.5 w-2.5 shrink-0" />
+            </button>
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Free-text input for text/number facets (large-cardinality or free-form).
+ */
 function FacetTextInput({
   label,
   value,
@@ -205,7 +336,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     setLoading(true);
     setError(null);
     try {
-      // Build Qdrant filter from facet selections
+      // Build Qdrant filter from facet selections + text inputs
       const mustClauses: Record<string, unknown>[] = [];
       for (const [field, selected] of Object.entries(facetSelections)) {
         if (selected.size > 0) {
@@ -315,6 +446,53 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     return true;
   });
 
+  /**
+   * Render a single schema-driven facet based on its uiHint and value count.
+   * - text/number: free-text input
+   * - select/multiselect with <= CHIP_THRESHOLD values: chips
+   * - select/multiselect with > CHIP_THRESHOLD values: searchable dropdown
+   */
+  function renderFacet(f: SearchFacet) {
+    const label = f.field.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+    // Free-form text or number inputs
+    if (f.uiHint === 'text' || f.uiHint === 'number') {
+      return (
+        <FacetTextInput
+          key={f.field}
+          label={label}
+          value={facetTextInputs[f.field] ?? ''}
+          onChange={(v) => setFacetTextInputs((prev) => ({ ...prev, [f.field]: v }))}
+        />
+      );
+    }
+
+    // Enumerated: chips for small sets, searchable dropdown for large
+    const sel = facetSelections[f.field] ?? new Set<string>();
+    if (f.values.length <= CHIP_THRESHOLD) {
+      return (
+        <FilterChips
+          key={f.field}
+          label={label}
+          values={f.values}
+          selected={sel}
+          onToggle={(v) => toggleFacet(f.field, v)}
+        />
+      );
+    }
+
+    return (
+      <SearchableSelect
+        key={f.field}
+        label={label}
+        values={f.values}
+        selected={sel}
+        onToggle={(v) => toggleFacet(f.field, v)}
+        multi={f.uiHint === 'multiselect'}
+      />
+    );
+  }
+
   if (!open) return null;
 
   return (
@@ -351,16 +529,8 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
         {facets.length > 0 && (
           <div className="px-4 py-2 border-b border-border flex flex-col gap-1.5">
             {facets
-              .filter((f) => f.values.length > 0 && f.values.length <= 30 && f.uiHint !== 'hidden')
-              .map((f) => (
-                <FilterChips
-                  key={f.field}
-                  label={f.field.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
-                  values={f.values}
-                  selected={facetSelections[f.field] ?? new Set()}
-                  onToggle={(v) => toggleFacet(f.field, v)}
-                />
-              ))}
+              .filter((f) => f.values.length > 0 && f.uiHint !== 'hidden')
+              .map(renderFacet)}
           </div>
         )}
 
@@ -455,4 +625,3 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     </div>
   );
 }
-
