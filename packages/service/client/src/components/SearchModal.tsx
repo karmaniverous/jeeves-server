@@ -35,16 +35,14 @@ function cleanFacetValues(values: string[]): string[] {
   });
 }
 
-/** Clean a facet's values and return null if nothing usable remains */
-function cleanFacet(f: SearchFacet): SearchFacet | null {
-  if (f.uiHint === 'hidden') return null;
-  const cleaned = cleanFacetValues(f.values);
-  if (cleaned.length === 0) return null;
-  return { ...f, values: cleaned };
-}
-
 function formatFieldLabel(field: string): string {
   return field.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+interface GarbageEntry {
+  field: string;
+  removed: string[];
+  reason: string;
 }
 
 interface SearchModalProps {
@@ -438,6 +436,9 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   const [facetTextInputs, setFacetTextInputs] = useState<Record<string, string>>({});
   /** Which facets the user has chosen to display */
   const [activeFacetFields, setActiveFacetFields] = useState<Set<string>>(new Set());
+  /** Garbage entries removed during cleaning, for dev diagnostics */
+  const [garbageEntries, setGarbageEntries] = useState<GarbageEntry[]>([]);
+  const [showGarbage, setShowGarbage] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -447,8 +448,37 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
       setTimeout(() => inputRef.current?.focus(), 50);
       void fetchFacets()
         .then((res) => {
-          const cleaned = res.facets.map(cleanFacet).filter((f): f is SearchFacet => f !== null);
+          const cleaned: SearchFacet[] = [];
+          const garbage: GarbageEntry[] = [];
+          for (const f of res.facets) {
+            if (f.uiHint === 'hidden') continue;
+            const goodValues = cleanFacetValues(f.values);
+            const badValues = f.values.filter((v) => !goodValues.includes(v));
+            if (badValues.length > 0) {
+              const reasons = badValues.map((v) => {
+                if (!v || !v.trim()) return 'empty';
+                if (v.includes('[object Object]')) return 'object-to-string';
+                if (/^\$\{.*\}$/.test(v)) return 'unresolved-template';
+                return 'unknown';
+              });
+              garbage.push({
+                field: f.field,
+                removed: badValues.map((v, i) => `${JSON.stringify(v)} (${reasons[i]})`),
+                reason: [...new Set(reasons)].join(', '),
+              });
+            }
+            if (goodValues.length > 0) {
+              cleaned.push({ ...f, values: goodValues });
+            } else {
+              garbage.push({
+                field: f.field,
+                removed: ['(all values filtered)'],
+                reason: 'no valid values remain',
+              });
+            }
+          }
           setFacets(cleaned);
+          setGarbageEntries(garbage);
         })
         .catch(() => setFacets([]));
     }
@@ -468,6 +498,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     setFacetSelections({});
     setFacetTextInputs({});
     setActiveFacetFields(new Set());
+    setShowGarbage(false);
     inputRef.current?.focus();
   }, []);
 
@@ -692,11 +723,39 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
         {facets.length > 0 && (
           <div className="px-4 py-2 border-b border-border flex flex-col gap-1.5">
             {activeFacets.map(renderFacet)}
-            <AddFilterMenu
-              availableFacets={facets}
-              activeFacets={activeFacetFields}
-              onAdd={addFacetField}
-            />
+            <div className="flex items-center gap-2">
+              <AddFilterMenu
+                availableFacets={facets}
+                activeFacets={activeFacetFields}
+                onAdd={addFacetField}
+              />
+              {garbageEntries.length > 0 && (
+                <button
+                  onClick={() => setShowGarbage(!showGarbage)}
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/30 hover:bg-amber-500/20 transition-colors"
+                  title="Show inference rule issues"
+                >
+                  {garbageEntries.length} issue{garbageEntries.length !== 1 ? 's' : ''}
+                </button>
+              )}
+            </div>
+            {showGarbage && garbageEntries.length > 0 && (
+              <div className="mt-1 p-2 rounded border border-amber-500/30 bg-amber-500/5 text-xs max-h-32 overflow-y-auto">
+                <div className="text-amber-600 font-medium mb-1">Filtered facet values (inference rule issues):</div>
+                {garbageEntries.map((g) => (
+                  <div key={g.field} className="mb-1">
+                    <span className="text-foreground font-medium">{formatFieldLabel(g.field)}</span>
+                    <span className="text-muted-foreground">: </span>
+                    {g.removed.map((r, i) => (
+                      <span key={i} className="text-amber-700">
+                        {i > 0 && ', '}
+                        <code className="bg-amber-500/10 px-0.5 rounded">{r}</code>
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
