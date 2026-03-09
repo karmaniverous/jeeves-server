@@ -40,7 +40,7 @@ function insiderKey(seed) {
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/health` | Simple health check (200 OK) |
-| `GET` | `/api/status` | Server metadata: version, uptime, services, capabilities |
+| `GET` | `/api/status` | Server metadata: version, uptime, services, capabilities. Add `?events=N` for recent event log entries |
 
 ### File Access (auth required)
 
