@@ -302,12 +302,6 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   const navigate = useNavigate();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  useEffect(() => {
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [open]);
-
   // Close "Add filter" on outside click
   useEffect(() => {
     if (!addFilterOpen) return;
@@ -365,6 +359,13 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
       setFacetsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+      void loadFacets();
+    }
+  }, [open, loadFacets]);
 
   const resetSearch = useCallback(() => {
     setQuery('');
