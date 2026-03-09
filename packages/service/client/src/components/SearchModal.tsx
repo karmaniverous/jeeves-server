@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, FileText, RotateCcw, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, FileText, Plus, RotateCcw, Search, X } from 'lucide-react';
 
 import { fetchFacets, searchDocuments, type SearchFacet, type SearchResult, type SearchMetadata } from '@/lib/api';
 
 type DatePreset = '24h' | '7d' | '30d' | 'custom' | null;
 
-/** Enumerated facets with ≤ this many values render as chips; above this → searchable dropdown */
+/** Enumerated facets with ≤ this many values render as chips; above → searchable dropdown */
 const CHIP_THRESHOLD = 8;
 
 const DATE_PRESETS: { label: string; value: DatePreset }[] = [
@@ -25,6 +25,28 @@ function getPresetDate(preset: DatePreset): Date | null {
   return null;
 }
 
+/** Filter out empty, garbage, and unresolved template values */
+function cleanFacetValues(values: string[]): string[] {
+  return values.filter((v) => {
+    if (!v || !v.trim()) return false;
+    if (v.includes('[object Object]')) return false;
+    if (/^\$\{.*\}$/.test(v)) return false;
+    return true;
+  });
+}
+
+/** Clean a facet's values and return null if nothing usable remains */
+function cleanFacet(f: SearchFacet): SearchFacet | null {
+  if (f.uiHint === 'hidden') return null;
+  const cleaned = cleanFacetValues(f.values);
+  if (cleaned.length === 0) return null;
+  return { ...f, values: cleaned };
+}
+
+function formatFieldLabel(field: string): string {
+  return field.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 interface SearchModalProps {
   open: boolean;
   onClose: () => void;
@@ -35,11 +57,13 @@ function FilterChips({
   values,
   selected,
   onToggle,
+  onRemoveFacet,
 }: {
   label: string;
   values: string[];
   selected: Set<string>;
   onToggle: (value: string) => void;
+  onRemoveFacet?: () => void;
 }) {
   if (values.length === 0) return null;
   return (
@@ -58,13 +82,21 @@ function FilterChips({
           {v}
         </button>
       ))}
+      {onRemoveFacet && (
+        <button
+          onClick={onRemoveFacet}
+          className="text-muted-foreground hover:text-foreground ml-0.5"
+          title={`Remove ${label} filter`}
+        >
+          <X className="h-3 w-3" />
+        </button>
+      )}
     </div>
   );
 }
 
 /**
  * Searchable dropdown for enumerated facets with many values.
- * Supports single-select or multi-select based on uiHint.
  */
 function SearchableSelect({
   label,
@@ -72,18 +104,19 @@ function SearchableSelect({
   selected,
   onToggle,
   multi,
+  onRemoveFacet,
 }: {
   label: string;
   values: string[];
   selected: Set<string>;
   onToggle: (value: string) => void;
   multi: boolean;
+  onRemoveFacet?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
@@ -168,7 +201,7 @@ function SearchableSelect({
           </div>
         )}
       </div>
-      {/* Show selected as removable pills */}
+      {/* Removable pills for selections */}
       {selected.size > 0 && selected.size <= 5 && (
         <>
           {[...selected].map((v) => (
@@ -184,23 +217,34 @@ function SearchableSelect({
           ))}
         </>
       )}
+      {onRemoveFacet && (
+        <button
+          onClick={onRemoveFacet}
+          className="text-muted-foreground hover:text-foreground ml-0.5"
+          title={`Remove ${label} filter`}
+        >
+          <X className="h-3 w-3" />
+        </button>
+      )}
     </div>
   );
 }
 
 /**
- * Free-text input for text/number facets (large-cardinality or free-form).
+ * Free-text input for text/number facets.
  */
 function FacetTextInput({
   label,
   value,
   onChange,
   inputType = 'text',
+  onRemoveFacet,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   inputType?: 'text' | 'number';
+  onRemoveFacet?: () => void;
 }) {
   return (
     <div className="flex items-center gap-1.5">
@@ -212,6 +256,102 @@ function FacetTextInput({
         placeholder={`Filter by ${label.toLowerCase()}...`}
         className="text-xs px-2 py-0.5 rounded border border-border bg-muted text-foreground placeholder:text-muted-foreground w-64 outline-none focus:border-primary"
       />
+      {onRemoveFacet && (
+        <button
+          onClick={onRemoveFacet}
+          className="text-muted-foreground hover:text-foreground"
+          title={`Remove ${label} filter`}
+        >
+          <X className="h-3 w-3" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * "Add Filter" dropdown — lets user pick which facets to activate.
+ */
+function AddFilterMenu({
+  availableFacets,
+  activeFacets,
+  onAdd,
+}: {
+  availableFacets: SearchFacet[];
+  activeFacets: Set<string>;
+  onAdd: (field: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [filter, setFilter] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setFilter('');
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const inactive = availableFacets.filter((f) => !activeFacets.has(f.field));
+  const filtered = filter
+    ? inactive.filter((f) =>
+        formatFieldLabel(f.field).toLowerCase().includes(filter.toLowerCase()),
+      )
+    : inactive;
+
+  if (inactive.length === 0) return null;
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="text-xs px-2 py-0.5 rounded border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors flex items-center gap-1"
+      >
+        <Plus className="h-3 w-3" />
+        Add filter
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 z-50 bg-background border border-border rounded shadow-lg w-56 max-h-48 flex flex-col">
+          <div className="p-1.5 border-b border-border">
+            <input
+              type="text"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              placeholder="Search filters..."
+              className="text-xs w-full px-2 py-1 rounded border border-border bg-muted text-foreground placeholder:text-muted-foreground outline-none focus:border-primary"
+              autoFocus
+            />
+          </div>
+          <div className="overflow-y-auto flex-1">
+            {filtered.length === 0 && (
+              <div className="px-3 py-2 text-xs text-muted-foreground">No filters available</div>
+            )}
+            {filtered.map((f) => (
+              <button
+                key={f.field}
+                onClick={() => {
+                  onAdd(f.field);
+                  setOpen(false);
+                  setFilter('');
+                }}
+                className="w-full text-left text-xs px-3 py-1.5 hover:bg-accent transition-colors flex items-center justify-between"
+              >
+                <span>{formatFieldLabel(f.field)}</span>
+                <span className="text-[10px] text-muted-foreground">
+                  {f.uiHint === 'text' || f.uiHint === 'number'
+                    ? f.uiHint
+                    : `${f.values.length} values`}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -226,7 +366,6 @@ function ResultRow({ result, onNavigate }: { result: SearchResult; onNavigate: (
       <div className="flex items-start gap-2">
         <FileText className="h-4 w-4 text-zinc-400 shrink-0 mt-1" />
         <div className="min-w-0 flex-1">
-          {/* Header row: file name, domain, score, expand toggle */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => onNavigate(`/browse/${result.browsePath}`)}
@@ -261,13 +400,11 @@ function ResultRow({ result, onNavigate }: { result: SearchResult; onNavigate: (
           <div className="text-xs text-muted-foreground mt-0.5 break-words leading-relaxed">
             {result.browsePath}
           </div>
-          {/* Collapsed: one-line preview */}
           {!expanded && (
             <div className="text-sm text-foreground/70 mt-1 truncate">
               {truncatedPreview}
             </div>
           )}
-          {/* Expanded: scrollable chunk accordion */}
           {expanded && (
             <div className="mt-2 max-h-48 overflow-y-auto border border-border rounded bg-muted/30 divide-y divide-border">
               {result.chunks.map((chunk, i) => (
@@ -299,6 +436,8 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   const [facets, setFacets] = useState<SearchFacet[]>([]);
   const [facetSelections, setFacetSelections] = useState<Record<string, Set<string>>>({});
   const [facetTextInputs, setFacetTextInputs] = useState<Record<string, string>>({});
+  /** Which facets the user has chosen to display */
+  const [activeFacetFields, setActiveFacetFields] = useState<Set<string>>(new Set());
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -306,9 +445,11 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 50);
-      // Fetch facets on modal open
       void fetchFacets()
-        .then((res) => setFacets(res.facets))
+        .then((res) => {
+          const cleaned = res.facets.map(cleanFacet).filter((f): f is SearchFacet => f !== null);
+          setFacets(cleaned);
+        })
         .catch(() => setFacets([]));
     }
   }, [open]);
@@ -326,6 +467,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     setDateTo('');
     setFacetSelections({});
     setFacetTextInputs({});
+    setActiveFacetFields(new Set());
     inputRef.current?.focus();
   }, []);
 
@@ -338,7 +480,6 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     setLoading(true);
     setError(null);
     try {
-      // Build Qdrant filter from facet selections + text inputs
       const mustClauses: Record<string, unknown>[] = [];
       for (const [field, selected] of Object.entries(facetSelections)) {
         if (selected.size > 0) {
@@ -409,6 +550,29 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     [],
   );
 
+  const addFacetField = useCallback((field: string) => {
+    setActiveFacetFields((prev) => new Set([...prev, field]));
+  }, []);
+
+  const removeFacetField = useCallback((field: string) => {
+    setActiveFacetFields((prev) => {
+      const next = new Set(prev);
+      next.delete(field);
+      return next;
+    });
+    // Clear any selections for this facet
+    setFacetSelections((prev) => {
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+    setFacetTextInputs((prev) => {
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }, []);
+
   // Re-search when facet selections or text inputs change
   useEffect(() => {
     if (query.trim()) {
@@ -417,20 +581,17 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [facetSelections, facetTextInputs]);
 
-  // Extract extensions from results
   const extensions = [...new Set(results.map((r) => {
     const dot = r.fileName.lastIndexOf('.');
     return dot > 0 ? r.fileName.slice(dot).toLowerCase() : '(none)';
   }))].sort();
 
-  // Compute effective date range
   const effectiveDateFrom = datePreset && datePreset !== 'custom'
     ? getPresetDate(datePreset)
     : dateFrom ? new Date(dateFrom) : null;
   const effectiveDateTo = datePreset === 'custom' && dateTo
     ? new Date(dateTo + 'T23:59:59.999Z') : null;
 
-  // Apply client-side filters
   const filtered = results.filter((r) => {
     if (domainFilter.size > 0 && (!r.domains || !r.domains.some(d => domainFilter.has(d)))) return false;
     if (authorFilter.size > 0 && (!r.author || !authorFilter.has(r.author))) return false;
@@ -448,16 +609,13 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     return true;
   });
 
-  /**
-   * Render a single schema-driven facet based on its uiHint and value count.
-   * - text/number: free-text input
-   * - select/multiselect with <= CHIP_THRESHOLD values: chips
-   * - select/multiselect with > CHIP_THRESHOLD values: searchable dropdown
-   */
-  function renderFacet(f: SearchFacet) {
-    const label = f.field.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  /** Active facets the user has chosen to display */
+  const activeFacets = facets.filter((f) => activeFacetFields.has(f.field));
 
-    // Free-form text or number inputs
+  function renderFacet(f: SearchFacet) {
+    const label = formatFieldLabel(f.field);
+    const remove = () => removeFacetField(f.field);
+
     if (f.uiHint === 'text' || f.uiHint === 'number') {
       return (
         <FacetTextInput
@@ -466,11 +624,11 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
           value={facetTextInputs[f.field] ?? ''}
           onChange={(v) => setFacetTextInputs((prev) => ({ ...prev, [f.field]: v }))}
           inputType={f.uiHint === 'number' ? 'number' : 'text'}
+          onRemoveFacet={remove}
         />
       );
     }
 
-    // Enumerated: chips for small sets, searchable dropdown for large
     const sel = facetSelections[f.field] ?? new Set<string>();
     if (f.values.length <= CHIP_THRESHOLD) {
       return (
@@ -480,6 +638,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
           values={f.values}
           selected={sel}
           onToggle={(v) => toggleFacet(f.field, v)}
+          onRemoveFacet={remove}
         />
       );
     }
@@ -492,6 +651,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
         selected={sel}
         onToggle={(v) => toggleFacet(f.field, v)}
         multi={f.uiHint === 'multiselect'}
+        onRemoveFacet={remove}
       />
     );
   }
@@ -528,16 +688,19 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
           </button>
         </div>
 
-        {/* Schema-driven facet filters */}
+        {/* Schema-driven facet filters: two-step — "Add filter" button + active facets */}
         {facets.length > 0 && (
           <div className="px-4 py-2 border-b border-border flex flex-col gap-1.5">
-            {facets
-              .filter((f) => f.values.length > 0 && f.uiHint !== 'hidden')
-              .map(renderFacet)}
+            {activeFacets.map(renderFacet)}
+            <AddFilterMenu
+              availableFacets={facets}
+              activeFacets={activeFacetFields}
+              onAdd={addFacetField}
+            />
           </div>
         )}
 
-        {/* Post-hoc filter chips — Type always shown when results exist */}
+        {/* Post-hoc filter chips */}
         {results.length > 0 && (
           <div className="px-4 py-2 border-b border-border flex flex-col gap-1.5">
             <FilterChips
@@ -558,7 +721,6 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
               selected={authorFilter}
               onToggle={(v) => toggleFilter(authorFilter, setAuthorFilter, v)}
             />
-            {/* Date range filter */}
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-xs text-muted-foreground font-medium">Date:</span>
               {DATE_PRESETS.map((p) => (
