@@ -195,16 +195,18 @@ function FacetTextInput({
   label,
   value,
   onChange,
+  inputType = 'text',
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  inputType?: 'text' | 'number';
 }) {
   return (
     <div className="flex items-center gap-1.5">
       <span className="text-xs text-muted-foreground font-medium">{label}:</span>
       <input
-        type="text"
+        type={inputType}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={`Filter by ${label.toLowerCase()}...`}
@@ -463,6 +465,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
           label={label}
           value={facetTextInputs[f.field] ?? ''}
           onChange={(v) => setFacetTextInputs((prev) => ({ ...prev, [f.field]: v }))}
+          inputType={f.uiHint === 'number' ? 'number' : 'text'}
         />
       );
     }
