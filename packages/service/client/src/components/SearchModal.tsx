@@ -59,6 +59,30 @@ function FilterChips({
   );
 }
 
+
+function FacetTextInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-xs text-muted-foreground font-medium">{label}:</span>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={`Filter by ${label.toLowerCase()}...`}
+        className="text-xs px-2 py-0.5 rounded border border-border bg-muted text-foreground placeholder:text-muted-foreground w-64 outline-none focus:border-primary"
+      />
+    </div>
+  );
+}
+
 function ResultRow({ result, onNavigate }: { result: SearchResult; onNavigate: (path: string) => void }) {
   const [expanded, setExpanded] = useState(false);
   const preview = result.chunks[0]?.text ?? '';
@@ -141,6 +165,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   const [dateTo, setDateTo] = useState('');
   const [facets, setFacets] = useState<SearchFacet[]>([]);
   const [facetSelections, setFacetSelections] = useState<Record<string, Set<string>>>({});
+  const [facetTextInputs, setFacetTextInputs] = useState<Record<string, string>>({});
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -167,6 +192,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     setDateFrom('');
     setDateTo('');
     setFacetSelections({});
+    setFacetTextInputs({});
     inputRef.current?.focus();
   }, []);
 
@@ -189,6 +215,14 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
           });
         }
       }
+      for (const [field, text] of Object.entries(facetTextInputs)) {
+        if (text.trim()) {
+          mustClauses.push({
+            key: field,
+            match: { text: text.trim() },
+          });
+        }
+      }
       const filter = mustClauses.length > 0
         ? { must: mustClauses }
         : undefined;
@@ -200,7 +234,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     } finally {
       setLoading(false);
     }
-  }, [facetSelections]);
+  }, [facetSelections, facetTextInputs]);
 
   const handleInputChange = useCallback(
     (value: string) => {
@@ -242,13 +276,13 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     [],
   );
 
-  // Re-search when facet selections change
+  // Re-search when facet selections or text inputs change
   useEffect(() => {
     if (query.trim()) {
       void doSearch(query);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [facetSelections]);
+  }, [facetSelections, facetTextInputs]);
 
   // Extract extensions from results
   const extensions = [...new Set(results.map((r) => {
