@@ -105,7 +105,37 @@ Create `jeeves-server.config.json` (or any cosmiconfig-supported format) in the 
 - `insiders` — map of email → `{ scopes?, allow?, deny? }`
 - `keys._internal` — required for PDF/DOCX export (Puppeteer auth)
 - `keys._plugin` — required for OpenClaw plugin auth
-- `outsiderPolicy` — optional global constraints on outsider sharing
+- `outsiderPolicy` — optional global constraints on outsider sharing (can reference a named scope)
+
+### Named Scope Composition
+
+Define reusable scope policies at the top level, then reference them by name:
+
+```json
+{
+  "scopes": {
+    "standard": { "allow": ["/**"], "deny": ["/secrets/**"] },
+    "no-vc": { "deny": ["/projects/vc/**"] },
+    "no-private": { "deny": ["/projects/jill/**"] }
+  },
+  "insiders": {
+    "dev@example.com": { "scopes": ["standard", "no-vc"] },
+    "jill@example.com": {
+      "scopes": ["standard", "no-private"],
+      "allow": ["/projects/jill/**"]
+    }
+  }
+}
+```
+
+**Composition rules:**
+- Multiple named scopes are **unioned** — all `allow` and `deny` patterns merge
+- Explicit `allow`/`deny` on the insider or key entry act as **overrides** with highest precedence:
+  1. Explicit `deny` → **DENIED** (overrides named allow)
+  2. Explicit `allow` → **ALLOWED** (overrides named deny)
+  3. Standard named scope `allow AND NOT deny`
+
+This lets you compose broad policies (e.g. `no-private`) and surgically override them for specific users (e.g. Jill gets access to her own project).
 
 Environment variable substitution is supported: `${VAR_NAME}` in string values.
 
