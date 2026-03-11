@@ -11,10 +11,19 @@ export type { AuthMode, JeevesConfig };
 /**
  * Normalized scopes — always resolved to \{ allow, deny \} form.
  * null = unrestricted access.
+ *
+ * Explicit overrides take precedence over named scope patterns:
+ * 1. If explicitDeny matches → DENIED (overrides named allow)
+ * 2. If explicitAllow matches → ALLOWED (overrides named deny)
+ * 3. Otherwise: normal allow AND NOT deny evaluation
  */
 export interface NormalizedScopes {
   allow: string[];
   deny: string[];
+  /** Explicit allow patterns from the insider/key entry — override named scope denies. */
+  explicitAllow: string[];
+  /** Explicit deny patterns from the insider/key entry — override named scope allows. */
+  explicitDeny: string[];
 }
 
 /**

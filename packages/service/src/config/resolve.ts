@@ -27,13 +27,22 @@ import type {
  */
 export function normalizeScopes(raw: unknown): NormalizedScopes | null {
   if (raw === undefined || raw === null) return null;
-  if (typeof raw === 'string') return { allow: [raw], deny: [] };
-  if (Array.isArray(raw)) return { allow: raw as string[], deny: [] };
+  if (typeof raw === 'string')
+    return { allow: [raw], deny: [], explicitAllow: [], explicitDeny: [] };
+  if (Array.isArray(raw))
+    return {
+      allow: raw as string[],
+      deny: [],
+      explicitAllow: [],
+      explicitDeny: [],
+    };
   if (typeof raw === 'object') {
     const obj = raw as { allow?: string[]; deny?: string[] };
     return {
       allow: obj.allow ?? ['/**'],
       deny: obj.deny ?? [],
+      explicitAllow: [],
+      explicitDeny: [],
     };
   }
   return null;
@@ -56,6 +65,8 @@ export function resolveNamedScopes(
       return {
         allow: overrides.allow ?? ['/**'],
         deny: overrides.deny ?? [],
+        explicitAllow: overrides.allow ?? [],
+        explicitDeny: overrides.deny ?? [],
       };
     }
     return null;
@@ -91,6 +102,8 @@ export function resolveNamedScopes(
     return {
       allow: allow.length > 0 ? allow : ['/**'],
       deny,
+      explicitAllow: overrides?.allow ?? [],
+      explicitDeny: overrides?.deny ?? [],
     };
   }
 
@@ -99,6 +112,8 @@ export function resolveNamedScopes(
   if (!normalized) return null;
   if (overrides?.allow) normalized.allow.push(...overrides.allow);
   if (overrides?.deny) normalized.deny.push(...overrides.deny);
+  normalized.explicitAllow = overrides?.allow ?? [];
+  normalized.explicitDeny = overrides?.deny ?? [];
   return normalized;
 }
 
