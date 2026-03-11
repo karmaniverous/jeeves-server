@@ -4,6 +4,7 @@
 
 import fs from 'node:fs';
 
+import type { Token } from 'marked';
 import { marked } from 'marked';
 
 import { registerDiagram } from './embeddedDiagrams.js';
@@ -105,11 +106,24 @@ export function parseMarkdown(
   const renderer = new marked.Renderer();
 
   renderer.heading = function (
-    args: string | { text: string; raw?: string; depth: number },
+    args:
+      | string
+      | {
+          text: string;
+          raw?: string;
+          depth: number;
+          tokens?: Token[];
+        },
   ) {
     const text = typeof args === 'object' ? args.text : args;
     const raw = typeof args === 'object' && args.raw ? args.raw : text;
     const level = typeof args === 'object' ? args.depth : 1;
+
+    // Parse inline tokens to render code spans, bold, italic, links, etc.
+    const renderedText =
+      typeof args === 'object' && args.tokens
+        ? this.parser.parseInline(args.tokens)
+        : text;
 
     const slug = raw
       .toLowerCase()
@@ -119,9 +133,13 @@ export function parseMarkdown(
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
 
-    headings.push({ level, text: text.replace(/<[^>]+>/g, ''), slug });
+    headings.push({
+      level,
+      text: renderedText.replace(/<[^>]+>/g, ''),
+      slug,
+    });
 
-    return `<h${String(level)} id="${slug}">${text} <a href="#${slug}" class="anchor">#</a></h${String(level)}>\n`;
+    return `<h${String(level)} id="${slug}">${renderedText} <a href="#${slug}" class="anchor">#</a></h${String(level)}>\n`;
   };
 
   // Rewrite relative image src to /path/ URLs
