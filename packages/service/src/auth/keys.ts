@@ -44,12 +44,29 @@ function pathMatchesPatterns(requestPath: string, patterns: string[]): boolean {
 
 /**
  * Check whether a request path matches normalized scopes (allow/deny).
- * Path must match at least one allow rule AND NOT match any deny rule.
+ *
+ * Evaluation order (explicit overrides take highest precedence):
+ * 1. If explicitDeny matches → DENIED (overrides named allow)
+ * 2. If explicitAllow matches → ALLOWED (overrides named deny)
+ * 3. Path must match at least one allow rule AND NOT match any deny rule.
  */
 function pathMatchesScopes(
   requestPath: string,
   scopes: NormalizedScopes,
 ): boolean {
+  // Explicit overrides take precedence over named scope patterns
+  if (
+    scopes.explicitDeny.length > 0 &&
+    pathMatchesPatterns(requestPath, scopes.explicitDeny)
+  )
+    return false;
+  if (
+    scopes.explicitAllow.length > 0 &&
+    pathMatchesPatterns(requestPath, scopes.explicitAllow)
+  )
+    return true;
+
+  // Standard evaluation: allow AND NOT deny
   if (!pathMatchesPatterns(requestPath, scopes.allow)) return false;
   if (scopes.deny.length > 0 && pathMatchesPatterns(requestPath, scopes.deny))
     return false;

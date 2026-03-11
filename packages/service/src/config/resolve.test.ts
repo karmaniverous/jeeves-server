@@ -25,13 +25,20 @@ describe('normalizeScopes', () => {
   });
 
   it('wraps a string in allow array', () => {
-    expect(normalizeScopes('/docs')).toEqual({ allow: ['/docs'], deny: [] });
+    expect(normalizeScopes('/docs')).toEqual({
+      allow: ['/docs'],
+      deny: [],
+      explicitAllow: [],
+      explicitDeny: [],
+    });
   });
 
   it('wraps an array as allow', () => {
     expect(normalizeScopes(['/a', '/b'])).toEqual({
       allow: ['/a', '/b'],
       deny: [],
+      explicitAllow: [],
+      explicitDeny: [],
     });
   });
 
@@ -39,12 +46,18 @@ describe('normalizeScopes', () => {
     expect(normalizeScopes({ deny: ['/secret'] })).toEqual({
       allow: ['/**'],
       deny: ['/secret'],
+      explicitAllow: [],
+      explicitDeny: [],
     });
   });
 
   it('passes through complete object', () => {
     const scopes = { allow: ['/a'], deny: ['/b'] };
-    expect(normalizeScopes(scopes)).toEqual(scopes);
+    expect(normalizeScopes(scopes)).toEqual({
+      ...scopes,
+      explicitAllow: [],
+      explicitDeny: [],
+    });
   });
 });
 
@@ -65,7 +78,12 @@ describe('resolveKeys', () => {
     );
     expect(result[0].name).toBe('scoped');
     expect(result[0].seed).toBe('seed456');
-    expect(result[0].scopes).toEqual({ allow: ['/docs'], deny: [] });
+    expect(result[0].scopes).toEqual({
+      allow: ['/docs'],
+      deny: [],
+      explicitAllow: [],
+      explicitDeny: [],
+    });
   });
 
   it('handles mixed entries', () => {
@@ -78,7 +96,12 @@ describe('resolveKeys', () => {
     );
     expect(result).toHaveLength(2);
     expect(result[0].scopes).toBe(null);
-    expect(result[1].scopes).toEqual({ allow: ['/x'], deny: ['/y'] });
+    expect(result[1].scopes).toEqual({
+      allow: ['/x'],
+      deny: ['/y'],
+      explicitAllow: [],
+      explicitDeny: [],
+    });
   });
 });
 
@@ -128,6 +151,8 @@ describe('resolveNamedScopes', () => {
     expect(resolveNamedScopes(named, 'restricted')).toEqual({
       allow: ['/**'],
       deny: ['/secret'],
+      explicitAllow: [],
+      explicitDeny: [],
     });
   });
 
@@ -144,6 +169,8 @@ describe('resolveNamedScopes', () => {
     ).toEqual({
       allow: ['/**', '/extra'],
       deny: ['/secret', '/vc/**', '/more'],
+      explicitAllow: ['/extra'],
+      explicitDeny: ['/more'],
     });
   });
 
@@ -152,6 +179,8 @@ describe('resolveNamedScopes', () => {
     expect(resolveNamedScopes(named, '/docs')).toEqual({
       allow: ['/docs'],
       deny: [],
+      explicitAllow: [],
+      explicitDeny: [],
     });
   });
 });

@@ -147,7 +147,12 @@ describe('loadConfig', () => {
     const config = await loadConfig(configPath);
     expect(
       config.resolvedInsiders.find((i) => i.email === 'a@example.com')?.scopes,
-    ).toEqual({ allow: ['/docs/**'], deny: [] });
+    ).toEqual({
+      allow: ['/docs/**'],
+      deny: [],
+      explicitAllow: [],
+      explicitDeny: [],
+    });
   });
 });
 
