@@ -54,3 +54,6 @@ _do.cjs
 # PlantUML jar (downloaded at postinstall)
 packages/service/vendor/
 
+
+# Generated docs
+docs/
