@@ -85,7 +85,8 @@
     "output": "CHANGELOG.md",
     "unreleased": true,
     "commitLimit": false,
-    "hideCredit": true
+    "hideCredit": true,
+    "tagPrefix": "service/"
   },
   "release-it": {
     "git": {
