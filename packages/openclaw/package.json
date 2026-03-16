@@ -103,5 +103,12 @@
     "npm": {
       "publish": true
     }
+  },
+  "auto-changelog": {
+    "output": "CHANGELOG.md",
+    "tagPrefix": "openclaw/",
+    "unreleased": true,
+    "commitLimit": false,
+    "hideCredit": true
   }
 }
