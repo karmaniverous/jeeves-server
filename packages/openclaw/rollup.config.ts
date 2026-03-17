@@ -13,6 +13,7 @@ const nodeBuiltins = [
   'node:fs/promises',
   'node:path',
   'node:os',
+  'node:module',
   'node:url',
   'crypto',
   'child_process',

@@ -5,6 +5,8 @@
  * and starts a ComponentWriter to manage the Server section in TOOLS.md.
  */
 
+import { createRequire } from 'node:module';
+
 import {
   createAsyncContentCache,
   createComponentWriter,
@@ -19,8 +21,11 @@ import {
   createServiceCommands,
 } from './serviceCommands.js';
 
-/** Plugin version — kept in sync with package.json via release-it hook. */
-const PLUGIN_VERSION = '0.3.0';
+/** Plugin version derived from package.json at runtime. */
+const require = createRequire(import.meta.url);
+const { version: PLUGIN_VERSION } = require('../package.json') as {
+  version: string;
+};
 
 /** Default config root when not specified in plugin config. */
 const DEFAULT_CONFIG_ROOT = 'j:/config';
