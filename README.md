@@ -132,4 +132,9 @@ The monorepo uses npm workspaces. The dev server runs on port 19340 by default.
 
 ## License
 
-MIT
+BSD-3-Clause
+
+---
+
+Built for you with ❤️ on Bali by [Jason Williscroft](https://github.com/karmaniverous) & [Jeeves](https://github.com/jgs-jeeves).
+
