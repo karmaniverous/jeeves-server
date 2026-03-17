@@ -18,6 +18,11 @@
       "pluginKey": {
         "type": "string",
         "description": "Server _plugin key seed (for authenticated API calls)"
+      },
+      "configRoot": {
+        "type": "string",
+        "description": "Platform config root directory (e.g. j:/config). Core derives component config dirs from this path.",
+        "default": "j:/config"
       }
     }
   },
@@ -29,6 +34,10 @@
     "pluginKey": {
       "label": "Plugin Key Seed",
       "placeholder": "hex string from server config keys._plugin"
+    },
+    "configRoot": {
+      "label": "Config Root",
+      "placeholder": "j:/config"
     }
   }
 }

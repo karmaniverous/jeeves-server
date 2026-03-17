@@ -110,5 +110,8 @@
     "unreleased": true,
     "commitLimit": false,
     "hideCredit": true
+  },
+  "dependencies": {
+    "@karmaniverous/jeeves": "^0.1.0"
   }
 }

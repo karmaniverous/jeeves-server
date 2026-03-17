@@ -8,21 +8,25 @@ import type { RollupOptions } from 'rollup';
 
 const nodeBuiltins = [
   'node:crypto',
+  'node:child_process',
   'node:fs',
   'node:fs/promises',
   'node:path',
   'node:os',
   'node:url',
   'crypto',
+  'child_process',
   'fs',
   'path',
   'os',
   'url',
 ];
 
+const externalPackages = ['@karmaniverous/jeeves'];
+
 const pluginConfig: RollupOptions = {
   input: 'src/index.ts',
-  external: nodeBuiltins,
+  external: [...nodeBuiltins, ...externalPackages],
   output: {
     dir: 'dist',
     format: 'esm',
@@ -42,7 +46,7 @@ const pluginConfig: RollupOptions = {
 
 const cliConfig: RollupOptions = {
   input: 'src/cli.ts',
-  external: nodeBuiltins,
+  external: [...nodeBuiltins, ...externalPackages],
   output: {
     file: 'dist/cli.js',
     format: 'esm',
