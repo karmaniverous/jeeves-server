@@ -6,7 +6,7 @@
  */
 
 import {
-  type ComponentWriter,
+  createAsyncContentCache,
   createComponentWriter,
   init,
 } from '@karmaniverous/jeeves';
@@ -29,57 +29,6 @@ const DEFAULT_CONFIG_ROOT = 'j:/config';
 const REFRESH_INTERVAL_SECONDS = 61;
 
 /**
- * Cached server menu content.
- *
- * @remarks
- * `generateServerMenu()` is async (HTTP fetch), but `JeevesComponent.generateToolsContent()`
- * is sync. We run an async background refresh that populates this cache, and the sync
- * generator returns whatever was last fetched.
- */
-let cachedMenu =
-  '> Initializing jeeves-server…\n> (First refresh may take up to ~1 minute.)';
-
-/**
- * Background refresh handle for async menu fetching.
- */
-let refreshHandle: ReturnType<typeof setInterval> | null = null;
-
-/**
- * Fetch the server menu asynchronously and cache it.
- *
- * @param apiUrl - The server API base URL.
- */
-async function refreshMenuCache(apiUrl: string): Promise<void> {
-  try {
-    cachedMenu = await generateServerMenu(apiUrl);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.warn(`[jeeves-server] Menu cache refresh failed: ${message}`);
-  }
-}
-
-/**
- * Start the background menu cache refresh loop.
- *
- * @param apiUrl - The server API base URL.
- * @param intervalMs - Refresh interval in milliseconds.
- */
-function startMenuCacheRefresh(apiUrl: string, intervalMs: number): void {
-  // Immediate first fetch
-  void refreshMenuCache(apiUrl);
-
-  if (refreshHandle) clearInterval(refreshHandle);
-  refreshHandle = setInterval(() => void refreshMenuCache(apiUrl), intervalMs);
-
-  if (typeof refreshHandle === 'object' && 'unref' in refreshHandle) {
-    refreshHandle.unref();
-  }
-}
-
-/** Active writer instance (for cleanup if needed). */
-let writer: ComponentWriter | null = null;
-
-/**
  * Extract the configRoot from plugin config.
  */
 function getConfigRoot(api: PluginApi): string {
@@ -100,18 +49,24 @@ export default function register(api: PluginApi): void {
 
   init({ workspacePath, configRoot });
 
-  // Start async menu cache refresh (slightly faster than writer cycle
-  // so the cache is always fresh when generateToolsContent() is called)
-  const refreshMs = (REFRESH_INTERVAL_SECONDS - 2) * 1000;
-  startMenuCacheRefresh(baseUrl, refreshMs);
+  // Create async content cache: fetches server status on each writer cycle,
+  // returns cached content synchronously for generateToolsContent().
+  const getContent = createAsyncContentCache({
+    fetch: async () => generateServerMenu(baseUrl),
+    placeholder: '> Initializing jeeves-server…',
+    onError: (err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn(`[jeeves-server] Menu cache refresh failed: ${message}`);
+    },
+  });
 
   // Create and start the component writer
-  writer = createComponentWriter({
+  const writer = createComponentWriter({
     name: 'server',
     version: PLUGIN_VERSION,
     sectionId: 'Server',
     refreshIntervalSeconds: REFRESH_INTERVAL_SECONDS,
-    generateToolsContent: () => cachedMenu,
+    generateToolsContent: getContent,
     serviceCommands: createServiceCommands(),
     pluginCommands: createPluginCommands(),
   });
