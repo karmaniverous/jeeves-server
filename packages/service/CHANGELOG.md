@@ -2,20 +2,126 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [v3.1.3](https://github.com/karmaniverous/jeeves-server/compare/v2.9.3...v3.1.3)
+#### [3.2.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.1.3...3.2.0)
+
+- feat(openclaw): adopt jeeves core component writer [`#105`](https://github.com/karmaniverous/jeeves-server/pull/105)
+- test(openclaw): expand coverage for openclawPaths, pluginRemove, serviceCommands [`b38ecac`](https://github.com/karmaniverous/jeeves-server/commit/b38ecaccc1fe1129630c1be993b6eafb31d86f6b)
+- chore(openclaw): update deps, clean knip config [`82cb058`](https://github.com/karmaniverous/jeeves-server/commit/82cb0585004163f0ee92f17d231795bffef2e5bb)
+- docs: full documentation pass with PlantUML diagrams [`537a9d7`](https://github.com/karmaniverous/jeeves-server/commit/537a9d79ff23ea978697c44cb0bb91c908b761de)
+- refactor(openclaw): resolve SOLID/DRY violations [`87df443`](https://github.com/karmaniverous/jeeves-server/commit/87df44307cb40eddbc9e1b217232eda194d2921b)
+- refactor(openclaw): use createAsyncContentCache from jeeves v0.1.1 [`9732ad9`](https://github.com/karmaniverous/jeeves-server/commit/9732ad9635c747e78f9fe2d6fd5b3b893f51efc4)
+- npm audit fix [`7c578d4`](https://github.com/karmaniverous/jeeves-server/commit/7c578d4bb588514019cddf758d9f43252b25fe42)
+- test(openclaw): cover service commands [`08f478c`](https://github.com/karmaniverous/jeeves-server/commit/08f478cd4ad8aa9a1d9e06dc595535ae2e869a11)
+- fix(openclaw): address Gemini review — error handling and writer cleanup [`293b6bc`](https://github.com/karmaniverous/jeeves-server/commit/293b6bcf1d10f29ea3a384c23c0f7b328848a862)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.2.1 [`3881f52`](https://github.com/karmaniverous/jeeves-server/commit/3881f52392670516262452974cded267d63de6fe)
+- fix(openclaw): derive plugin version from package.json at runtime [`1a78435`](https://github.com/karmaniverous/jeeves-server/commit/1a78435e9322be1b6b610640dd0f7706298c08f6)
+- fix: add tagPrefix to auto-changelog config for monorepo tags [`4540873`](https://github.com/karmaniverous/jeeves-server/commit/4540873b120e1360043e7d4b57ca3c3ded26b046)
+- Change license to BSD-3-Clause and add credits [`bcb8225`](https://github.com/karmaniverous/jeeves-server/commit/bcb8225c96618a9ab1eb70889f188fa2f2558d8b)
+- docs: fix diagram image paths in guides [`e870be6`](https://github.com/karmaniverous/jeeves-server/commit/e870be6f52eab2b95cbd9c5dfb7855b0e00a3d87)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.3.0 [`b684be1`](https://github.com/karmaniverous/jeeves-server/commit/b684be19220f52fb2d28e8c4d4be8923a2e1355c)
+
+#### [service/3.1.3](https://github.com/karmaniverous/jeeves-server/compare/service/3.1.2...service/3.1.3)
+
+> 11 March 2026
 
 - docs: document scope override precedence in OpenClaw skill [`#95`](https://github.com/karmaniverous/jeeves-server/pull/95)
 - feat: explicit scope overrides take precedence over named scopes [`#94`](https://github.com/karmaniverous/jeeves-server/pull/94)
+- chore: release @karmaniverous/jeeves-server v3.1.3 [`801d362`](https://github.com/karmaniverous/jeeves-server/commit/801d362980ed40a8c4faf51c0a5d09d27a360f0d)
+
+#### [service/3.1.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.1.1...service/3.1.2)
+
+> 11 March 2026
+
 - fix: parse inline tokens in heading renderer [`#93`](https://github.com/karmaniverous/jeeves-server/pull/93)
+- fix: parse inline tokens in heading renderer (code spans, bold, italic) [`#92`](https://github.com/karmaniverous/jeeves-server/issues/92)
+- chore: add docs workflow, gitignore generated docs [`10bffb8`](https://github.com/karmaniverous/jeeves-server/commit/10bffb8b6ce9c45c31e88b07e26c4657cfba0776)
+- chore: release @karmaniverous/jeeves-server v3.1.2 [`d15fa4c`](https://github.com/karmaniverous/jeeves-server/commit/d15fa4c5d6ca2a31e28b6509d5566569025110ff)
+
+#### [service/3.1.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.1.0...service/3.1.1)
+
+> 9 March 2026
+
 - fix: prevent full data reload on tab switch [`#91`](https://github.com/karmaniverous/jeeves-server/pull/91)
 - fix: Rendered tab persists when switching to Raw on watcher-rendered files [`#90`](https://github.com/karmaniverous/jeeves-server/pull/90)
+- chore: release @karmaniverous/jeeves-server v3.1.1 [`736ec35`](https://github.com/karmaniverous/jeeves-server/commit/736ec35c550c0f8da5800413562f10643f9da6db)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.2.0 [`2e0319f`](https://github.com/karmaniverous/jeeves-server/commit/2e0319f221695daf16f38d34e3cff17c857a0725)
+- fix: prevent full data reload on tab switch (only reload on path change) [`6390b14`](https://github.com/karmaniverous/jeeves-server/commit/6390b1409db92ec001cd2071cea6757a4c8fa081)
+- Revert "fix: Rendered tab persists when switching to Raw on watcher-rendered files" [`71b79d4`](https://github.com/karmaniverous/jeeves-server/commit/71b79d4f8a839dcf5d865d7a747bb30e1cb43db3)
+
+#### [service/3.1.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.0.1...service/3.1.0)
+
+> 9 March 2026
+
 - feat: extend /api/status with ?events=N for recent event log [`#89`](https://github.com/karmaniverous/jeeves-server/pull/89)
 - fix: server_share sends POST with JSON body instead of GET [`#87`](https://github.com/karmaniverous/jeeves-server/pull/87)
+- chore: release @karmaniverous/jeeves-server v3.1.0 [`0688333`](https://github.com/karmaniverous/jeeves-server/commit/0688333e880847fc4c3beb773cdb0a907a3f82e9)
+- feat: search facets, metadata chips, and click-to-filter [`20eeee8`](https://github.com/karmaniverous/jeeves-server/commit/20eeee8b6524d6a29ba99822e06ea57bef994fef)
+- refactor: remove hardcoded filters, fix lazy facet loading [`ffb0f2a`](https://github.com/karmaniverous/jeeves-server/commit/ffb0f2aa4fc763ddce66dd3f666bf5db6cc6dfe8)
+- feat: two-step facet selection + garbage value filtering [`6c60e97`](https://github.com/karmaniverous/jeeves-server/commit/6c60e9753761e9b2a844bcc9212baadc73841a19)
+- feat: schema-driven facet rendering by uiHint [`97af834`](https://github.com/karmaniverous/jeeves-server/commit/97af834a29d3d4e95be3c157ecd07855b8aee403)
+- feat: metadata chips on search results with click-to-filter [`a11ce3d`](https://github.com/karmaniverous/jeeves-server/commit/a11ce3de4809d2639160886bbd719ff57d9b33ea)
+- perf: lazy-load facets only when 'Add filter' is clicked [`d0b111c`](https://github.com/karmaniverous/jeeves-server/commit/d0b111c8cd442a47238ad5e0512576221bac1572)
+- feat: garbage value diagnostics for inference rule debugging [`06e4f82`](https://github.com/karmaniverous/jeeves-server/commit/06e4f823fa87f991ca81c904d2eb55dc7ce59d26)
+- feat: render text/number facets as text inputs, chips for select/multiselect [`282adf8`](https://github.com/karmaniverous/jeeves-server/commit/282adf83c21b84d433ec23be5d1b6b51b5da8145)
+- fix: text/number facets skip value cleaning, cast values to String [`c9af039`](https://github.com/karmaniverous/jeeves-server/commit/c9af039c2fbdad59a7e9fdedd75f008ab5c1c148)
+- docs: document ?events=N query param on /api/status [`4a25f3b`](https://github.com/karmaniverous/jeeves-server/commit/4a25f3bcf5bf50e688cd7c38e0340a0f24341e96)
+- fix: restore eager facet loading on modal open [`a625bd0`](https://github.com/karmaniverous/jeeves-server/commit/a625bd08e47ab95cd5a05324a0a888bb0bf6fc4f)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.1.1 [`abfee9f`](https://github.com/karmaniverous/jeeves-server/commit/abfee9f6ee5b2ac1cf6c8e4838edd3e2e8133359)
+- fix: make +N more chip overflow a clickable link that expands the result [`d56ed6a`](https://github.com/karmaniverous/jeeves-server/commit/d56ed6a69526f96697ec8aa9922e104510b2a9f8)
+- fix: increase facets timeout to 15s, add error logging [`dfda5dd`](https://github.com/karmaniverous/jeeves-server/commit/dfda5dd22b06f9fbabff2572d4a8a2ddf3c55be9)
+- fix: use type=number input for number facets [`c245b6a`](https://github.com/karmaniverous/jeeves-server/commit/c245b6ae5dc9f7d762aebac21a9ca7f342f44024)
+- fix: close SearchableSelect dropdown on outside click (capture phase) [`f85d8dd`](https://github.com/karmaniverous/jeeves-server/commit/f85d8dda1db97016b9f6d8244fac34bdaba2d1b1)
+- fix: server_browse and server_export route mismatches [`82ef907`](https://github.com/karmaniverous/jeeves-server/commit/82ef907750dbb0d47158254cd21b7a8196d8eaeb)
+- fix: restore light mode text-foreground on Add Filter menu labels [`9bb9c7f`](https://github.com/karmaniverous/jeeves-server/commit/9bb9c7f70c5f785c3e21b01f2e0610851574b9c3)
+- fix: cap schema-driven facet chips to fields with ≤30 values [`de625e2`](https://github.com/karmaniverous/jeeves-server/commit/de625e2752f2da6fea350825361016a3fe43f84a)
+
+#### [service/3.0.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.0.0...service/3.0.1)
+
+> 8 March 2026
+
 - docs: guide index content + typedoc jsonl highlight [`#86`](https://github.com/karmaniverous/jeeves-server/pull/86)
 - docs: refresh README + guides for v3 [`#85`](https://github.com/karmaniverous/jeeves-server/pull/85)
+- updated docs [`86d88c7`](https://github.com/karmaniverous/jeeves-server/commit/86d88c76b04b32132195370328f434b427b7e23d)
+- updated docs [`cbd8537`](https://github.com/karmaniverous/jeeves-server/commit/cbd853764a9b5953afb847aa653a5182f74b1cd6)
+- docs: refresh README and guides for v3 CLI + config [`e437387`](https://github.com/karmaniverous/jeeves-server/commit/e4373875d454518b8f4d8dcf37613ddc36f2aace)
+- docs: add typedoc config and dependencies [`761bb8c`](https://github.com/karmaniverous/jeeves-server/commit/761bb8cef7c5d84f17c9193d688bd9b0be67a6ca)
+- docs: add guide index content and fix typedoc trailing comma [`3844271`](https://github.com/karmaniverous/jeeves-server/commit/3844271f0aacc6eb0af7dc6ddabe139edae95332)
+- updated docs [`075a6f3`](https://github.com/karmaniverous/jeeves-server/commit/075a6f36cee6279c83ba564e6efbde99ebac2f37)
+- chore: release @karmaniverous/jeeves-server v3.0.1 [`67cf001`](https://github.com/karmaniverous/jeeves-server/commit/67cf0014073c62b18134da2c1266b505a1228874)
+- docs: add changelogs as children of package guide indexes [`fd16b5b`](https://github.com/karmaniverous/jeeves-server/commit/fd16b5b7f80ad2b58d883fe3b7cf270668026f8e)
+- npm audit fix [`2f3b5c8`](https://github.com/karmaniverous/jeeves-server/commit/2f3b5c89af0bf56b17fd37719f5927812f2c8e24)
+
+### [service/3.0.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.0.0-1...service/3.0.0)
+
+> 8 March 2026
+
+- chore: release @karmaniverous/jeeves-server-openclaw v0.1.0-1 [`d08e571`](https://github.com/karmaniverous/jeeves-server/commit/d08e571d58bb6387e69441dc06511d92fb743c15)
+- chore: release @karmaniverous/jeeves-server v3.0.0 [`ef408c3`](https://github.com/karmaniverous/jeeves-server/commit/ef408c37ee306417ee24d58b256cba672f7984c1)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.1.0 [`bbeac17`](https://github.com/karmaniverous/jeeves-server/commit/bbeac17333ebad423b0fd8c2bcd310bbb0b63b27)
+
+#### [service/3.0.0-1](https://github.com/karmaniverous/jeeves-server/compare/service/3.0.0-0...service/3.0.0-1)
+
+> 8 March 2026
+
 - feat: named access scopes [`#84`](https://github.com/karmaniverous/jeeves-server/pull/84)
 - fix: plugin auth chain, status endpoint improvements [`#83`](https://github.com/karmaniverous/jeeves-server/pull/83)
 - fix: resetConfig should reload, not clear [`#82`](https://github.com/karmaniverous/jeeves-server/pull/82)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.1.0-0 [`b6c0f6d`](https://github.com/karmaniverous/jeeves-server/commit/b6c0f6db6ab8bbdcffb40affc00f9f573ca2caa5)
+- chore: add knip configs, remove dead exports, clean all code quality checks [`2a81072`](https://github.com/karmaniverous/jeeves-server/commit/2a81072cc5341047b2ef40333405a8cc9760dab4)
+- fix: make resetConfig reload runtime config [`79e8602`](https://github.com/karmaniverous/jeeves-server/commit/79e8602b4a8ee13c4de94bb3d262dd8bdb7cd2c8)
+- lintfix [`00dc2b2`](https://github.com/karmaniverous/jeeves-server/commit/00dc2b2ec30ea2a4365d93b86c66330b831737a7)
+- lintfix [`38a9376`](https://github.com/karmaniverous/jeeves-server/commit/38a937631ab2ac3c22240857f69b36d5d9570665)
+- chore: release @karmaniverous/jeeves-server v3.0.0-1 [`db96bc1`](https://github.com/karmaniverous/jeeves-server/commit/db96bc140b9cbca7ad52ddd562a805ac74ca67aa)
+- fix: resolve remaining lint errors (type annotations, unused params, unnecessary conditionals) [`e7714ae`](https://github.com/karmaniverous/jeeves-server/commit/e7714ae451a72a1dd9881d85c964d6d8aec17574)
+- fix: remove unnecessary auth from /api/status calls (endpoint is public) [`f651fe7`](https://github.com/karmaniverous/jeeves-server/commit/f651fe7bff4320eb28b5039278bcdcd032cac6d5)
+- fix: add pattern to StatusResponse events type [`f64e6af`](https://github.com/karmaniverous/jeeves-server/commit/f64e6af06ce51a54dee4bf69dd0e6fbae79dc683)
+- fix: normalize path for watcher render (Windows backslash + uppercase drive) [`f6c229d`](https://github.com/karmaniverous/jeeves-server/commit/f6c229d7f4ac7ec11099c884b75e6a90cc0cdf59)
+- zero version [`2c0db75`](https://github.com/karmaniverous/jeeves-server/commit/2c0db75d547d812fa638e15f2da732a7b91ad69c)
+
+#### [service/3.0.0-0](https://github.com/karmaniverous/jeeves-server/compare/v2.9.3...service/3.0.0-0)
+
+> 8 March 2026
+
 - chore: integrate client as npm workspace member [`#81`](https://github.com/karmaniverous/jeeves-server/pull/81)
 - fix: force white background in panzoom fullscreen (dark mode) [`#80`](https://github.com/karmaniverous/jeeves-server/pull/80)
 - chore: make both packages releasable [`#79`](https://github.com/karmaniverous/jeeves-server/pull/79)
@@ -37,47 +143,6 @@ All notable changes to this project will be documented in this file. Dates are d
 - fix: exit edit mode after save [`#63`](https://github.com/karmaniverous/jeeves-server/pull/63)
 - chore: add default port 1934 [`#62`](https://github.com/karmaniverous/jeeves-server/pull/62)
 - chore: add default port 1934 [`#61`](https://github.com/karmaniverous/jeeves-server/pull/61)
-- fix: parse inline tokens in heading renderer (code spans, bold, italic) [`#92`](https://github.com/karmaniverous/jeeves-server/issues/92)
-- chore: add docs workflow, gitignore generated docs [`10bffb8`](https://github.com/karmaniverous/jeeves-server/commit/10bffb8b6ce9c45c31e88b07e26c4657cfba0776)
-- updated docs [`86d88c7`](https://github.com/karmaniverous/jeeves-server/commit/86d88c76b04b32132195370328f434b427b7e23d)
-- updated docs [`cbd8537`](https://github.com/karmaniverous/jeeves-server/commit/cbd853764a9b5953afb847aa653a5182f74b1cd6)
-- docs: refresh README and guides for v3 CLI + config [`e437387`](https://github.com/karmaniverous/jeeves-server/commit/e4373875d454518b8f4d8dcf37613ddc36f2aace)
-- refactor: remove hardcoded filters, fix lazy facet loading [`ffb0f2a`](https://github.com/karmaniverous/jeeves-server/commit/ffb0f2aa4fc763ddce66dd3f666bf5db6cc6dfe8)
-- docs: add typedoc config and dependencies [`761bb8c`](https://github.com/karmaniverous/jeeves-server/commit/761bb8cef7c5d84f17c9193d688bd9b0be67a6ca)
-- feat: two-step facet selection + garbage value filtering [`6c60e97`](https://github.com/karmaniverous/jeeves-server/commit/6c60e9753761e9b2a844bcc9212baadc73841a19)
-- feat: schema-driven facet rendering by uiHint [`97af834`](https://github.com/karmaniverous/jeeves-server/commit/97af834a29d3d4e95be3c157ecd07855b8aee403)
-- feat: metadata chips on search results with click-to-filter [`a11ce3d`](https://github.com/karmaniverous/jeeves-server/commit/a11ce3de4809d2639160886bbd719ff57d9b33ea)
-- docs: add guide index content and fix typedoc trailing comma [`3844271`](https://github.com/karmaniverous/jeeves-server/commit/3844271f0aacc6eb0af7dc6ddabe139edae95332)
-- perf: lazy-load facets only when 'Add filter' is clicked [`d0b111c`](https://github.com/karmaniverous/jeeves-server/commit/d0b111c8cd442a47238ad5e0512576221bac1572)
-- chore: add knip configs, remove dead exports, clean all code quality checks [`2a81072`](https://github.com/karmaniverous/jeeves-server/commit/2a81072cc5341047b2ef40333405a8cc9760dab4)
-- feat: garbage value diagnostics for inference rule debugging [`06e4f82`](https://github.com/karmaniverous/jeeves-server/commit/06e4f823fa87f991ca81c904d2eb55dc7ce59d26)
-- chore: release @karmaniverous/jeeves-server v3.1.0 [`0688333`](https://github.com/karmaniverous/jeeves-server/commit/0688333e880847fc4c3beb773cdb0a907a3f82e9)
-- updated docs [`075a6f3`](https://github.com/karmaniverous/jeeves-server/commit/075a6f36cee6279c83ba564e6efbde99ebac2f37)
-- chore: release @karmaniverous/jeeves-server v3.1.1 [`736ec35`](https://github.com/karmaniverous/jeeves-server/commit/736ec35c550c0f8da5800413562f10643f9da6db)
-- chore: release @karmaniverous/jeeves-server v3.0.1 [`67cf001`](https://github.com/karmaniverous/jeeves-server/commit/67cf0014073c62b18134da2c1266b505a1228874)
-- lintfix [`00dc2b2`](https://github.com/karmaniverous/jeeves-server/commit/00dc2b2ec30ea2a4365d93b86c66330b831737a7)
-- feat: render text/number facets as text inputs, chips for select/multiselect [`282adf8`](https://github.com/karmaniverous/jeeves-server/commit/282adf83c21b84d433ec23be5d1b6b51b5da8145)
-- docs: add changelogs as children of package guide indexes [`fd16b5b`](https://github.com/karmaniverous/jeeves-server/commit/fd16b5b7f80ad2b58d883fe3b7cf270668026f8e)
-- lintfix [`38a9376`](https://github.com/karmaniverous/jeeves-server/commit/38a937631ab2ac3c22240857f69b36d5d9570665)
-- fix: text/number facets skip value cleaning, cast values to String [`c9af039`](https://github.com/karmaniverous/jeeves-server/commit/c9af039c2fbdad59a7e9fdedd75f008ab5c1c148)
-- chore: release @karmaniverous/jeeves-server v3.1.2 [`d15fa4c`](https://github.com/karmaniverous/jeeves-server/commit/d15fa4c5d6ca2a31e28b6509d5566569025110ff)
-- chore: release @karmaniverous/jeeves-server v3.0.0-1 [`db96bc1`](https://github.com/karmaniverous/jeeves-server/commit/db96bc140b9cbca7ad52ddd562a805ac74ca67aa)
-- docs: document ?events=N query param on /api/status [`4a25f3b`](https://github.com/karmaniverous/jeeves-server/commit/4a25f3bcf5bf50e688cd7c38e0340a0f24341e96)
-- fix: restore eager facet loading on modal open [`a625bd0`](https://github.com/karmaniverous/jeeves-server/commit/a625bd08e47ab95cd5a05324a0a888bb0bf6fc4f)
-- fix: resolve remaining lint errors (type annotations, unused params, unnecessary conditionals) [`e7714ae`](https://github.com/karmaniverous/jeeves-server/commit/e7714ae451a72a1dd9881d85c964d6d8aec17574)
-- chore: release @karmaniverous/jeeves-server-openclaw v0.2.0 [`2e0319f`](https://github.com/karmaniverous/jeeves-server/commit/2e0319f221695daf16f38d34e3cff17c857a0725)
-- chore: release @karmaniverous/jeeves-server-openclaw v0.1.1 [`abfee9f`](https://github.com/karmaniverous/jeeves-server/commit/abfee9f6ee5b2ac1cf6c8e4838edd3e2e8133359)
-- fix: remove unnecessary auth from /api/status calls (endpoint is public) [`f651fe7`](https://github.com/karmaniverous/jeeves-server/commit/f651fe7bff4320eb28b5039278bcdcd032cac6d5)
-- chore: release @karmaniverous/jeeves-server-openclaw v0.1.0-1 [`d08e571`](https://github.com/karmaniverous/jeeves-server/commit/d08e571d58bb6387e69441dc06511d92fb743c15)
-- chore: release @karmaniverous/jeeves-server v3.0.0 [`ef408c3`](https://github.com/karmaniverous/jeeves-server/commit/ef408c37ee306417ee24d58b256cba672f7984c1)
-- chore: release @karmaniverous/jeeves-server-openclaw v0.1.0 [`bbeac17`](https://github.com/karmaniverous/jeeves-server/commit/bbeac17333ebad423b0fd8c2bcd310bbb0b63b27)
-- fix: make +N more chip overflow a clickable link that expands the result [`d56ed6a`](https://github.com/karmaniverous/jeeves-server/commit/d56ed6a69526f96697ec8aa9922e104510b2a9f8)
-- fix: increase facets timeout to 15s, add error logging [`dfda5dd`](https://github.com/karmaniverous/jeeves-server/commit/dfda5dd22b06f9fbabff2572d4a8a2ddf3c55be9)
-- fix: use type=number input for number facets [`c245b6a`](https://github.com/karmaniverous/jeeves-server/commit/c245b6ae5dc9f7d762aebac21a9ca7f342f44024)
-- fix: prevent full data reload on tab switch (only reload on path change) [`6390b14`](https://github.com/karmaniverous/jeeves-server/commit/6390b1409db92ec001cd2071cea6757a4c8fa081)
-- fix: close SearchableSelect dropdown on outside click (capture phase) [`f85d8dd`](https://github.com/karmaniverous/jeeves-server/commit/f85d8dda1db97016b9f6d8244fac34bdaba2d1b1)
-- Revert "fix: Rendered tab persists when switching to Raw on watcher-rendered files" [`71b79d4`](https://github.com/karmaniverous/jeeves-server/commit/71b79d4f8a839dcf5d865d7a747bb30e1cb43db3)
-- feat: search facets, metadata chips, and click-to-filter [`20eeee8`](https://github.com/karmaniverous/jeeves-server/commit/20eeee8b6524d6a29ba99822e06ea57bef994fef)
 - chore: add client as workspace member, align puppeteer versions [`6e3a40d`](https://github.com/karmaniverous/jeeves-server/commit/6e3a40dfdb91ffe2e39877d1b69b36db3e01f863)
 - feat: internalize diagram dependencies (mermaid/plantuml) [`9c7f8a7`](https://github.com/karmaniverous/jeeves-server/commit/9c7f8a7d331a4e4f6013f1c7c2fff373769c6fbb)
 - feat: implement OpenClaw plugin (Phase 3, Steps 11-15) [`72a04e0`](https://github.com/karmaniverous/jeeves-server/commit/72a04e030352ca105c160b331328863c9ce41058)
@@ -88,7 +153,6 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore: SOLID/DRY pass #3 + plugin test coverage [`7dcc4c3`](https://github.com/karmaniverous/jeeves-server/commit/7dcc4c3ad36a45a46dc99c8a1e749dfd2ec01e47)
 - feat: add CLI commands (start, config validate/show, service) [`0437984`](https://github.com/karmaniverous/jeeves-server/commit/0437984e7f783604f9cbdd333db61f8d1af42961)
 - fix: resolve knip unused files, dependencies, and exports [`964beba`](https://github.com/karmaniverous/jeeves-server/commit/964beba273f99be8d3302648c2dd442a3e3dcc07)
-- chore: release @karmaniverous/jeeves-server-openclaw v0.1.0-0 [`b6c0f6d`](https://github.com/karmaniverous/jeeves-server/commit/b6c0f6db6ab8bbdcffb40affc00f9f573ca2caa5)
 - fix: address all gap analysis findings [`1eb02ab`](https://github.com/karmaniverous/jeeves-server/commit/1eb02abf0634be38c687d4927a2360cd27c3aad8)
 - npm audit fix [`3a144b4`](https://github.com/karmaniverous/jeeves-server/commit/3a144b4b07e1387cf40733486e60aeaf7a34d0a6)
 - feat: add GET /api/link-info endpoint [`02ece39`](https://github.com/karmaniverous/jeeves-server/commit/02ece3960aa91861455034aa4bfe8850c0b0f363)
@@ -98,7 +162,6 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore: SOLID/DRY/test coverage pass [`e491bfb`](https://github.com/karmaniverous/jeeves-server/commit/e491bfbbce7fef13252c2488378b85e983a2207a)
 - refactor: extract buildRuntimeConfig to resolve.ts (DRY) [`87bd749`](https://github.com/karmaniverous/jeeves-server/commit/87bd749c6827e3c95e2ff9996ab1b781cb316932)
 - fix: address Gemini code review feedback across PRs #65-#76 [`2fef919`](https://github.com/karmaniverous/jeeves-server/commit/2fef9192b00c80605c9cca348ea7feff5af2602a)
-- fix: make resetConfig reload runtime config [`79e8602`](https://github.com/karmaniverous/jeeves-server/commit/79e8602b4a8ee13c4de94bb3d262dd8bdb7cd2c8)
 - refactor: extract shared renderMarkdownContent pipeline [`244dddf`](https://github.com/karmaniverous/jeeves-server/commit/244dddf83da846d2863e776ae78a029610532d2d)
 - feat: schema-driven search facet filters (Step 10) [`c305c2a`](https://github.com/karmaniverous/jeeves-server/commit/c305c2ae261514411b6329bdc84052ee5c189759)
 - feat: add scroll anchoring for async diagram renders [`e4bd972`](https://github.com/karmaniverous/jeeves-server/commit/e4bd97293dbb8a9a63d5cf3bceb6e0cbb7a26916)
@@ -116,14 +179,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - fix: update linux-compat CI for monorepo paths [`22dd30f`](https://github.com/karmaniverous/jeeves-server/commit/22dd30ffe5543042287a299523e5b1125c86381e)
 - chore: eliminate all lint warnings [`ed12c86`](https://github.com/karmaniverous/jeeves-server/commit/ed12c868546a3f14f7d809d7378235ac91415be7)
 - fix: CI rimraf resolution and remove redundant client steps [`757c45c`](https://github.com/karmaniverous/jeeves-server/commit/757c45cf429e7c70358442e353922f7999d74640)
-- fix: server_browse and server_export route mismatches [`82ef907`](https://github.com/karmaniverous/jeeves-server/commit/82ef907750dbb0d47158254cd21b7a8196d8eaeb)
-- npm audit fix [`2f3b5c8`](https://github.com/karmaniverous/jeeves-server/commit/2f3b5c89af0bf56b17fd37719f5927812f2c8e24)
 - publishconfig public access [`8e4358c`](https://github.com/karmaniverous/jeeves-server/commit/8e4358cc43dc2f131840047d34f2644eb6293fe2)
-- fix: restore light mode text-foreground on Add Filter menu labels [`9bb9c7f`](https://github.com/karmaniverous/jeeves-server/commit/9bb9c7f70c5f785c3e21b01f2e0610851574b9c3)
-- fix: cap schema-driven facet chips to fields with ≤30 values [`de625e2`](https://github.com/karmaniverous/jeeves-server/commit/de625e2752f2da6fea350825361016a3fe43f84a)
-- fix: add pattern to StatusResponse events type [`f64e6af`](https://github.com/karmaniverous/jeeves-server/commit/f64e6af06ce51a54dee4bf69dd0e6fbae79dc683)
-- fix: normalize path for watcher render (Windows backslash + uppercase drive) [`f6c229d`](https://github.com/karmaniverous/jeeves-server/commit/f6c229d7f4ac7ec11099c884b75e6a90cc0cdf59)
-- zero version [`2c0db75`](https://github.com/karmaniverous/jeeves-server/commit/2c0db75d547d812fa638e15f2da732a7b91ad69c)
 - merge: incorporate main (PR #77 gap-analysis) [`845268d`](https://github.com/karmaniverous/jeeves-server/commit/845268de8d3b990187f078f0135053d52c311009)
 - fix: add missing return-await in facets handler [`b08d4a3`](https://github.com/karmaniverous/jeeves-server/commit/b08d4a34b1bc2a648edf4e9aeb23d4db0be45afc)
 - fix: remove unused parameter in linkInfo test [`36fca9a`](https://github.com/karmaniverous/jeeves-server/commit/36fca9ad8e051a47902ce75dab360ac98c169321)
