@@ -18,19 +18,10 @@ import { homedir } from 'os';
 import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
-const PLUGIN_ID = 'jeeves-server-openclaw';
-
-function resolveOpenClawHome(): string {
-  if (process.env.OPENCLAW_CONFIG)
-    return dirname(resolve(process.env.OPENCLAW_CONFIG));
-  if (process.env.OPENCLAW_HOME) return resolve(process.env.OPENCLAW_HOME);
-  return join(homedir(), '.openclaw');
-}
-
-function resolveConfigPath(home: string): string {
-  if (process.env.OPENCLAW_CONFIG) return resolve(process.env.OPENCLAW_CONFIG);
-  return join(home, 'openclaw.json');
-}
+import { patchConfig } from './configPatch.js';
+import { PLUGIN_ID } from './constants.js';
+import { resolveConfigPath, resolveOpenClawHome } from './openclawPaths.js';
+import { removePlugin } from './pluginRemove.js';
 
 function getPackageRoot(): string {
   return resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -46,63 +37,6 @@ function readJson(p: string): Record<string, unknown> | null {
 
 function writeJson(p: string, data: unknown): void {
   writeFileSync(p, JSON.stringify(data, null, 2) + '\n');
-}
-
-function patchAllowList(
-  parent: Record<string, unknown>,
-  key: string,
-  label: string,
-  mode: 'add' | 'remove',
-): string | undefined {
-  if (!Array.isArray(parent[key]) || (parent[key] as unknown[]).length === 0)
-    return undefined;
-  const list = parent[key] as string[];
-  if (mode === 'add') {
-    if (!list.includes(PLUGIN_ID)) {
-      list.push(PLUGIN_ID);
-      return 'Added "' + PLUGIN_ID + '" to ' + label;
-    }
-  } else {
-    const filtered = list.filter((id) => id !== PLUGIN_ID);
-    if (filtered.length !== list.length) {
-      parent[key] = filtered;
-      return 'Removed "' + PLUGIN_ID + '" from ' + label;
-    }
-  }
-  return undefined;
-}
-
-export function patchConfig(
-  config: Record<string, unknown>,
-  mode: 'add' | 'remove',
-): string[] {
-  const messages: string[] = [];
-  if (!config.plugins || typeof config.plugins !== 'object')
-    config.plugins = {};
-  const plugins = config.plugins as Record<string, unknown>;
-
-  const pluginAllow = patchAllowList(plugins, 'allow', 'plugins.allow', mode);
-  if (pluginAllow) messages.push(pluginAllow);
-
-  if (!plugins.entries || typeof plugins.entries !== 'object')
-    plugins.entries = {};
-  const entries = plugins.entries as Record<string, unknown>;
-  if (mode === 'add') {
-    if (!entries[PLUGIN_ID]) {
-      entries[PLUGIN_ID] = { enabled: true };
-      messages.push('Added "' + PLUGIN_ID + '" to plugins.entries');
-    }
-  } else if (PLUGIN_ID in entries) {
-    Reflect.deleteProperty(entries, PLUGIN_ID);
-    messages.push('Removed "' + PLUGIN_ID + '" from plugins.entries');
-  }
-
-  if (!config.tools || typeof config.tools !== 'object') config.tools = {};
-  const tools = config.tools as Record<string, unknown>;
-  const toolAllow = patchAllowList(tools, 'allow', 'tools.allow', mode);
-  if (toolAllow) messages.push(toolAllow);
-
-  return messages;
 }
 
 function install(): void {
@@ -163,27 +97,13 @@ function install(): void {
 function uninstall(): void {
   const home = resolveOpenClawHome();
   const configPath = resolveConfigPath(home);
-  const extDir = join(home, 'extensions', PLUGIN_ID);
 
   console.log('OpenClaw home:  ' + home);
   console.log('Config:         ' + configPath);
-  console.log('Extensions dir: ' + extDir);
   console.log();
 
-  if (existsSync(extDir)) {
-    rmSync(extDir, { recursive: true, force: true });
-    console.log('\u2713 Removed ' + extDir);
-  } else console.log('  (extensions directory not found, skipping)');
-
-  if (existsSync(configPath)) {
-    console.log('Patching OpenClaw config...');
-    const config = readJson(configPath);
-    if (config) {
-      for (const msg of patchConfig(config, 'remove'))
-        console.log('  \u2713 ' + msg);
-      writeJson(configPath, config);
-    }
-  }
+  const messages = removePlugin(home, configPath);
+  for (const msg of messages) console.log('  \u2713 ' + msg);
 
   // Clean up TOOLS.md server section
   cleanupToolsMd(home, configPath);

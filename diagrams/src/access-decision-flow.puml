@@ -1,0 +1,47 @@
+@startuml access-decision-flow
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam ActivityDiamondBackgroundColor #ECECFF
+skinparam ActivityDiamondBorderColor #9370DB
+skinparam ActivityBackgroundColor #ECECFF
+skinparam ActivityBorderColor #9370DB
+
+start
+
+:Request arrives;
+
+if (Has session cookie?\n(Google OAuth)) then (Yes)
+  if (Email in insiders map?) then (Yes)
+    :INSIDER access\n(within scopes);<<#22c55e>>
+    stop
+  else (No)
+    :DENIED;<<#ef4444>>
+    stop
+  endif
+else (No)
+  if (Has ?key= parameter?) then (Yes)
+    if (Matches machine\ninsider key?) then (Yes)
+      :INSIDER access\n(within scopes);<<#22c55e>>
+      stop
+    else (No)
+      if (Matches outsider key?\n(machine or insider seed)) then (Yes)
+        if (Path matches key\npath or ancestor?) then (Yes)
+          :OUTSIDER access;<<#22c55e>>
+          stop
+        else (No)
+          :DENIED;<<#ef4444>>
+          stop
+        endif
+      else (No)
+        :DENIED;<<#ef4444>>
+        stop
+      endif
+    endif
+  else (No)
+    :DENIED\n(or redirect to Google login);<<#f59e0b>>
+    stop
+  endif
+endif
+
+@enduml

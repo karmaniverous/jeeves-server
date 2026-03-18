@@ -13,7 +13,6 @@
     "rollup",
     "tsx",
     "eslint",
-    "vitest",
     "tsc",
     "auto-changelog",
     "knip",

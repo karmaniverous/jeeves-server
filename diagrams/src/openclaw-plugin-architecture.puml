@@ -1,0 +1,53 @@
+@startuml openclaw-plugin-architecture
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+package "OpenClaw Gateway" {
+  [Plugin: register(api)] as register
+}
+
+package "jeeves-server-openclaw" {
+  [registerServerTools()] as tools
+  [init(workspacePath, configRoot)] as init
+  [createAsyncContentCache()] as cache
+  [createComponentWriter()] as writer
+
+  package "ServiceCommands" {
+    [stop / uninstall / status\n(NSSM JeevesServer)] as svc
+  }
+
+  package "PluginCommands" {
+    [uninstall\n(removePlugin)] as plg
+  }
+}
+
+package "@karmaniverous/jeeves (core)" {
+  [ComponentWriter] as cw
+  [updateManagedSection()] as ums
+  [refreshPlatformContent()] as rpc
+}
+
+cloud "jeeves-server API" as api
+
+file "TOOLS.md\n## Server" as tools_md
+file "SOUL.md / AGENTS.md\nPlatform section" as platform_md
+
+register --> tools : Register server_* tools
+register --> init : Initialize core paths
+register --> cache : Async fetch → sync accessor
+register --> writer : Start writer (61s prime)
+
+cache ..> api : GET /api/status
+writer --> cw : Delegates to core
+cw --> ums : Write ## Server section
+cw --> rpc : Maintain platform content
+ums --> tools_md
+rpc --> platform_md
+
+writer --> svc : serviceCommands
+writer --> plg : pluginCommands
+
+@enduml

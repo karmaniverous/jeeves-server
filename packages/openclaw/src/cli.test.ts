@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { patchConfig } from './cli.js';
+import { patchConfig } from './configPatch.js';
 
 describe('patchConfig', () => {
   describe('add mode', () => {
