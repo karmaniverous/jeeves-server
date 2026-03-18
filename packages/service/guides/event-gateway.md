@@ -4,7 +4,7 @@ Jeeves Server includes a webhook gateway that receives HTTP POST requests, valid
 
 ## Overview
 
-![Event Gateway Flow](../../diagrams/out/event-gateway-flow.png)
+![Event Gateway Flow](../../../diagrams/out/event-gateway-flow.png)
 
 ## Configuration
 

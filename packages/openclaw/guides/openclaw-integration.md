@@ -4,7 +4,7 @@
 
 The plugin integrates with the Jeeves platform via `@karmaniverous/jeeves` (the shared core library). On startup it initializes the core, registers server tools, and starts a `ComponentWriter` that manages the `## Server` section in TOOLS.md.
 
-![Plugin Architecture](../../diagrams/out/openclaw-plugin-architecture.png)
+![Plugin Architecture](../../../diagrams/out/openclaw-plugin-architecture.png)
 
 ## Installation
 
