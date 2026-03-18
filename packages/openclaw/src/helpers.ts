@@ -9,6 +9,7 @@ import { PLUGIN_ID } from './constants.js';
 /** Minimal OpenClaw plugin API surface used for tool registration. */
 export interface PluginApi {
   config?: {
+    agents?: { defaults?: { workspace?: string } };
     plugins?: {
       entries?: Record<string, { config?: Record<string, unknown> }>;
     };

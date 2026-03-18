@@ -12,6 +12,7 @@ import {
   createAsyncContentCache,
   createComponentWriter,
   init,
+  resolveWorkspacePath,
 } from '@karmaniverous/jeeves';
 
 import { getApiUrl, getPluginConfig, type PluginApi } from './helpers.js';
@@ -57,7 +58,7 @@ export default function register(api: PluginApi): void {
   registerServerTools(api, baseUrl);
 
   // Initialize jeeves-core
-  const workspacePath = api.resolvePath ? api.resolvePath('.') : process.cwd();
+  const workspacePath = resolveWorkspacePath(api);
   const configRoot = getConfigRoot(api);
 
   init({ workspacePath, configRoot });
