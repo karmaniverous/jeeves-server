@@ -1,0 +1,35 @@
+@startuml event-gateway-flow
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam componentStyle rectangle
+
+actor "Webhook Caller" as caller
+participant "POST /event" as endpoint
+participant "Auth" as auth
+participant "Schema Matcher\n(ajv)" as matcher
+participant "Body Mapper\n(jsonmap)" as mapper
+database "event-queue.jsonl" as queue
+participant "Queue Processor" as processor
+participant "Command\n(stdin JSON)" as cmd
+database "event-log.jsonl" as log
+
+caller -> endpoint : POST body + ?key=
+endpoint -> auth : Verify key\n(scope: /event)
+auth --> endpoint : ✅ Authorized
+
+endpoint -> matcher : Match body\nagainst schemas
+matcher --> endpoint : First match:\nevent config
+
+endpoint -> mapper : Transform body\nvia map config
+mapper --> endpoint : Mapped payload
+
+endpoint -> queue : Append entry\n(event, cmd, body, timeout)
+endpoint --> caller : 200 OK
+
+queue -> processor : Read next entry
+processor -> cmd : Spawn process\n(pipe JSON to stdin)
+cmd --> processor : exit code
+processor -> log : Log result\n(event, matched, exitCode, duration)
+
+@enduml

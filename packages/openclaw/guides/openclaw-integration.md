@@ -1,5 +1,11 @@
 # OpenClaw Integration Guide
 
+## Architecture
+
+The plugin integrates with the Jeeves platform via `@karmaniverous/jeeves` (the shared core library). On startup it initializes the core, registers server tools, and starts a `ComponentWriter` that manages the `## Server` section in TOOLS.md.
+
+![Plugin Architecture](../../diagrams/out/openclaw-plugin-architecture.png)
+
 ## Installation
 
 ```bash
@@ -38,13 +44,20 @@ In `openclaw.json`, configure the plugin entry:
         "enabled": true,
         "config": {
           "apiUrl": "http://127.0.0.1:1934",
-          "pluginKey": "same-hex-seed-as-server-_plugin-key"
+          "pluginKey": "same-hex-seed-as-server-_plugin-key",
+          "configRoot": "j:/config"
         }
       }
     }
   }
 }
 ```
+
+| Config field | Required | Default | Description |
+|-------------|----------|---------|-------------|
+| `apiUrl` | No | `http://127.0.0.1:1934` | jeeves-server API base URL |
+| `pluginKey` | No | — | Server `_plugin` key seed (for authenticated API calls) |
+| `configRoot` | No | `j:/config` | Platform config root directory. Core derives component config dirs from this path. |
 
 ## Tools
 
@@ -59,7 +72,9 @@ In `openclaw.json`, configure the plugin entry:
 
 ## TOOLS.md Injection
 
-The plugin automatically maintains a `## Server` section in your workspace `TOOLS.md` file, refreshing every 60 seconds. This provides agents with live context about server capabilities, export formats, connected services, and event gateway schemas.
+The plugin uses `@karmaniverous/jeeves` core's `ComponentWriter` to manage the `## Server` section in TOOLS.md. The writer runs on a 61-second prime interval. Core handles file locking, version stamps, section ordering, and platform content maintenance (SOUL.md, AGENTS.md).
+
+The server menu content (export formats, connected services, event schemas, insider count) is fetched asynchronously from the server's `/api/status` endpoint via `createAsyncContentCache()`, bridging the sync `generateToolsContent()` interface.
 
 ## Uninstalling
 

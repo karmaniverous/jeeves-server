@@ -1,6 +1,8 @@
 # @karmaniverous/jeeves-server-openclaw
 
-OpenClaw plugin for Jeeves Server. Provides agents with tools for:
+OpenClaw plugin for Jeeves Server. Integrates with `@karmaniverous/jeeves` core for managed TOOLS.md writing, service lifecycle commands, and platform content maintenance.
+
+Provides agents with tools for:
 
 - Server status and capabilities
 - File/directory metadata browsing
@@ -35,7 +37,8 @@ Add an unscoped `_plugin` key to your Jeeves Server config:
         "enabled": true,
         "config": {
           "apiUrl": "http://127.0.0.1:1934",
-          "pluginKey": "<same-seed-as-server-_plugin>"
+          "pluginKey": "<same-seed-as-server-_plugin>",
+          "configRoot": "j:/config"
         }
       }
     }
@@ -43,7 +46,13 @@ Add an unscoped `_plugin` key to your Jeeves Server config:
 }
 ```
 
+| Config | Default | Description |
+|--------|---------|-------------|
+| `apiUrl` | `http://127.0.0.1:1934` | Server API base URL |
+| `pluginKey` | — | Server `_plugin` key seed |
+| `configRoot` | `j:/config` | Platform config root (core derives component config dirs) |
+
 ## Docs
 
-- OpenClaw Integration: ./guides/openclaw-integration.md
+- [OpenClaw Integration](./guides/openclaw-integration.md) — Full configuration, tool reference, architecture
 

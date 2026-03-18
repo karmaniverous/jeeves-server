@@ -178,7 +178,7 @@ Reserved for server-side operations. Puppeteer uses this key when rendering PDFs
 
 When a request arrives, the server determines access as follows:
 
-![Access Decision Flow](access-decision-flow.svg)
+![Access Decision Flow](../../diagrams/out/access-decision-flow.png)
 
 ### Insider vs outsider UI
 
