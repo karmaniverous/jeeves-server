@@ -17,14 +17,14 @@
     "release:pre": "dotenvx run -f .env.local -- release-it --no-git.requireBranch --github.prerelease --preRelease"
   },
   "devDependencies": {
-    "@dotenvx/dotenvx": "^1.54.1",
+    "@dotenvx/dotenvx": "^1.55.1",
     "@rollup/plugin-typescript": "^12.3.0",
     "auto-changelog": "^2.5.0",
     "cross-env": "^10.1.0",
     "release-it": "^19.2.4",
     "rollup": "^4.59.0",
     "tslib": "^2.8.1",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.0"
   },
   "author": "Jason Williscroft",
   "description": "OpenClaw plugin for jeeves-server — file browsing, sharing, export, and event gateway tools",
