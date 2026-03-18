@@ -6,7 +6,7 @@
  * plugin commands.
  */
 
-const PLUGIN_ID = 'jeeves-server-openclaw';
+import { PLUGIN_ID } from './constants.js';
 
 function patchAllowList(
   parent: Record<string, unknown>,

@@ -2,13 +2,10 @@
  * Service and plugin lifecycle commands for the JeevesComponent interface.
  *
  * Wraps NSSM service management (JeevesServer) and plugin uninstall
- * via the existing CLI patchConfig() logic.
+ * via shared removal logic.
  */
 
 import { execSync } from 'node:child_process';
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
 
 import type {
   PluginCommands,
@@ -16,10 +13,10 @@ import type {
   ServiceStatus,
 } from '@karmaniverous/jeeves';
 
-import { patchConfig } from './configPatch.js';
+import { resolveConfigPath, resolveOpenClawHome } from './openclawPaths.js';
+import { removePlugin } from './pluginRemove.js';
 
 const NSSM_SERVICE_NAME = 'JeevesServer';
-const PLUGIN_ID = 'jeeves-server-openclaw';
 
 /**
  * Run an NSSM command and return stdout.
@@ -29,24 +26,6 @@ const PLUGIN_ID = 'jeeves-server-openclaw';
  */
 function nssmExec(args: string): string {
   return execSync(`nssm ${args}`, { encoding: 'utf8', timeout: 15_000 });
-}
-
-/**
- * Resolve the OpenClaw home directory.
- */
-function resolveOpenClawHome(): string {
-  if (process.env.OPENCLAW_CONFIG)
-    return dirname(resolve(process.env.OPENCLAW_CONFIG));
-  if (process.env.OPENCLAW_HOME) return resolve(process.env.OPENCLAW_HOME);
-  return join(homedir(), '.openclaw');
-}
-
-/**
- * Resolve the OpenClaw config file path.
- */
-function resolveConfigPath(home: string): string {
-  if (process.env.OPENCLAW_CONFIG) return resolve(process.env.OPENCLAW_CONFIG);
-  return join(home, 'openclaw.json');
 }
 
 /**
@@ -93,21 +72,7 @@ export function createPluginCommands(): PluginCommands {
     uninstall(): Promise<void> {
       const home = resolveOpenClawHome();
       const configPath = resolveConfigPath(home);
-      const extDir = join(home, 'extensions', PLUGIN_ID);
-
-      // Remove extension directory
-      if (existsSync(extDir)) {
-        rmSync(extDir, { recursive: true, force: true });
-      }
-
-      // Patch config to remove plugin
-      if (existsSync(configPath)) {
-        const raw = readFileSync(configPath, 'utf8');
-        const config = JSON.parse(raw) as Record<string, unknown>;
-        patchConfig(config, 'remove');
-        writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
-      }
-
+      removePlugin(home, configPath);
       return Promise.resolve();
     },
   };

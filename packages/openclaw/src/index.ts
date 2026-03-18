@@ -13,7 +13,7 @@ import {
   init,
 } from '@karmaniverous/jeeves';
 
-import { getApiUrl, type PluginApi } from './helpers.js';
+import { getApiUrl, getPluginConfig, type PluginApi } from './helpers.js';
 import { generateServerMenu } from './promptInjection.js';
 import { registerServerTools } from './serverTools.js';
 import {
@@ -37,9 +37,7 @@ const REFRESH_INTERVAL_SECONDS = 61;
  * Extract the configRoot from plugin config.
  */
 function getConfigRoot(api: PluginApi): string {
-  const config =
-    api.config?.plugins?.entries?.['jeeves-server-openclaw']?.config;
-  const root = config?.configRoot;
+  const root = getPluginConfig(api)?.configRoot;
   return typeof root === 'string' ? root : DEFAULT_CONFIG_ROOT;
 }
 

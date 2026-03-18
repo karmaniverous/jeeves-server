@@ -19,20 +19,9 @@ import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 import { patchConfig } from './configPatch.js';
-
-const PLUGIN_ID = 'jeeves-server-openclaw';
-
-function resolveOpenClawHome(): string {
-  if (process.env.OPENCLAW_CONFIG)
-    return dirname(resolve(process.env.OPENCLAW_CONFIG));
-  if (process.env.OPENCLAW_HOME) return resolve(process.env.OPENCLAW_HOME);
-  return join(homedir(), '.openclaw');
-}
-
-function resolveConfigPath(home: string): string {
-  if (process.env.OPENCLAW_CONFIG) return resolve(process.env.OPENCLAW_CONFIG);
-  return join(home, 'openclaw.json');
-}
+import { PLUGIN_ID } from './constants.js';
+import { resolveConfigPath, resolveOpenClawHome } from './openclawPaths.js';
+import { removePlugin } from './pluginRemove.js';
 
 function getPackageRoot(): string {
   return resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -108,27 +97,13 @@ function install(): void {
 function uninstall(): void {
   const home = resolveOpenClawHome();
   const configPath = resolveConfigPath(home);
-  const extDir = join(home, 'extensions', PLUGIN_ID);
 
   console.log('OpenClaw home:  ' + home);
   console.log('Config:         ' + configPath);
-  console.log('Extensions dir: ' + extDir);
   console.log();
 
-  if (existsSync(extDir)) {
-    rmSync(extDir, { recursive: true, force: true });
-    console.log('\u2713 Removed ' + extDir);
-  } else console.log('  (extensions directory not found, skipping)');
-
-  if (existsSync(configPath)) {
-    console.log('Patching OpenClaw config...');
-    const config = readJson(configPath);
-    if (config) {
-      for (const msg of patchConfig(config, 'remove'))
-        console.log('  \u2713 ' + msg);
-      writeJson(configPath, config);
-    }
-  }
+  const messages = removePlugin(home, configPath);
+  for (const msg of messages) console.log('  \u2713 ' + msg);
 
   // Clean up TOOLS.md server section
   cleanupToolsMd(home, configPath);

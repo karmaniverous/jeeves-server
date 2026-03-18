@@ -4,6 +4,8 @@
 
 import { createHmac } from 'node:crypto';
 
+import { PLUGIN_ID } from './constants.js';
+
 /** Minimal OpenClaw plugin API surface used for tool registration. */
 export interface PluginApi {
   config?: {
@@ -33,10 +35,11 @@ export interface ToolResult {
 }
 
 const DEFAULT_API_URL = 'http://127.0.0.1:1934';
-const PLUGIN_ID = 'jeeves-server-openclaw';
 
-/** Extract plugin config from the API object */
-function getPluginConfig(api: PluginApi): Record<string, unknown> | undefined {
+/** Extract plugin config from the API object. */
+export function getPluginConfig(
+  api: PluginApi,
+): Record<string, unknown> | undefined {
   return api.config?.plugins?.entries?.[PLUGIN_ID]?.config;
 }
 
