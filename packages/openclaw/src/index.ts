@@ -83,6 +83,8 @@ export default function register(api: PluginApi): void {
     generateToolsContent: getContent,
     serviceCommands: createServiceCommands(),
     pluginCommands: createPluginCommands(),
+    servicePackage: '@karmaniverous/jeeves-server',
+    pluginPackage: '@karmaniverous/jeeves-server-openclaw',
   });
 
   activeWriter.start();
