@@ -36,8 +36,14 @@ function nssmExec(args: string): string {
 export function createServiceCommands(): ServiceCommands {
   return {
     stop(): Promise<void> {
-      nssmExec(`stop ${NSSM_SERVICE_NAME}`);
-      return Promise.resolve();
+      try {
+        nssmExec(`stop ${NSSM_SERVICE_NAME}`);
+        return Promise.resolve();
+      } catch (err: unknown) {
+        return Promise.reject(
+          err instanceof Error ? err : new Error(String(err)),
+        );
+      }
     },
 
     uninstall(): Promise<void> {
@@ -46,8 +52,14 @@ export function createServiceCommands(): ServiceCommands {
       } catch {
         // Service may not be running
       }
-      nssmExec(`remove ${NSSM_SERVICE_NAME} confirm`);
-      return Promise.resolve();
+      try {
+        nssmExec(`remove ${NSSM_SERVICE_NAME} confirm`);
+        return Promise.resolve();
+      } catch (err: unknown) {
+        return Promise.reject(
+          err instanceof Error ? err : new Error(String(err)),
+        );
+      }
     },
 
     status(): Promise<ServiceStatus> {

@@ -8,6 +8,7 @@
 import { createRequire } from 'node:module';
 
 import {
+  type ComponentWriter,
   createAsyncContentCache,
   createComponentWriter,
   init,
@@ -33,6 +34,9 @@ const DEFAULT_CONFIG_ROOT = 'j:/config';
 /** Refresh interval in seconds (must be prime). */
 const REFRESH_INTERVAL_SECONDS = 61;
 
+/** Active writer instance — stopped on re-registration to prevent leaks. */
+let activeWriter: ComponentWriter | null = null;
+
 /**
  * Extract the configRoot from plugin config.
  */
@@ -43,6 +47,12 @@ function getConfigRoot(api: PluginApi): string {
 
 /** Register all jeeves-server tools and start the TOOLS.md writer. */
 export default function register(api: PluginApi): void {
+  // Stop any previous writer to prevent timer leaks on re-registration.
+  if (activeWriter) {
+    activeWriter.stop();
+    activeWriter = null;
+  }
+
   const baseUrl = getApiUrl(api);
   registerServerTools(api, baseUrl);
 
@@ -64,7 +74,7 @@ export default function register(api: PluginApi): void {
   });
 
   // Create and start the component writer
-  const writer = createComponentWriter({
+  activeWriter = createComponentWriter({
     name: 'server',
     version: PLUGIN_VERSION,
     sectionId: 'Server',
@@ -74,5 +84,5 @@ export default function register(api: PluginApi): void {
     pluginCommands: createPluginCommands(),
   });
 
-  writer.start();
+  activeWriter.start();
 }
