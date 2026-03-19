@@ -2,13 +2,24 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.2.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.1.3...3.2.0)
+#### [3.2.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.2.0...3.2.1)
+
+- fix(openclaw): bundle @karmaniverous/jeeves into plugin dist [`61fb7ac`](https://github.com/karmaniverous/jeeves-server/commit/61fb7ac3f91a036cef16720c16c33fe399f7c4e6)
+- chore(openclaw): use resolveWorkspacePath from jeeves 0.1.4 [`71ddd58`](https://github.com/karmaniverous/jeeves-server/commit/71ddd588f1b5736f0cbd4d81d42bb0f9356eafe8)
+- chore(openclaw): update jeeves to 0.1.6, add servicePackage/pluginPackage [`1847ff7`](https://github.com/karmaniverous/jeeves-server/commit/1847ff750613b3770198b20b4bacd7e93bf0ec52)
+- chore(openclaw): update @karmaniverous/jeeves to 0.1.5 [`c8b040b`](https://github.com/karmaniverous/jeeves-server/commit/c8b040bfa945b3814cbde9395cf1d3f00cdd64a8)
+- chore(openclaw): update @karmaniverous/jeeves to 0.1.3 [`6de1c66`](https://github.com/karmaniverous/jeeves-server/commit/6de1c667a2f1b6de3660c92f96774fccbb927321)
+
+#### [service/3.2.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.1.3...service/3.2.0)
+
+> 18 March 2026
 
 - feat(openclaw): adopt jeeves core component writer [`#105`](https://github.com/karmaniverous/jeeves-server/pull/105)
 - test(openclaw): expand coverage for openclawPaths, pluginRemove, serviceCommands [`b38ecac`](https://github.com/karmaniverous/jeeves-server/commit/b38ecaccc1fe1129630c1be993b6eafb31d86f6b)
 - chore(openclaw): update deps, clean knip config [`82cb058`](https://github.com/karmaniverous/jeeves-server/commit/82cb0585004163f0ee92f17d231795bffef2e5bb)
 - docs: full documentation pass with PlantUML diagrams [`537a9d7`](https://github.com/karmaniverous/jeeves-server/commit/537a9d79ff23ea978697c44cb0bb91c908b761de)
 - refactor(openclaw): resolve SOLID/DRY violations [`87df443`](https://github.com/karmaniverous/jeeves-server/commit/87df44307cb40eddbc9e1b217232eda194d2921b)
+- chore: release @karmaniverous/jeeves-server v3.2.0 [`fda70c6`](https://github.com/karmaniverous/jeeves-server/commit/fda70c6bbacb109f00e13468ebf9052176b045d9)
 - refactor(openclaw): use createAsyncContentCache from jeeves v0.1.1 [`9732ad9`](https://github.com/karmaniverous/jeeves-server/commit/9732ad9635c747e78f9fe2d6fd5b3b893f51efc4)
 - npm audit fix [`7c578d4`](https://github.com/karmaniverous/jeeves-server/commit/7c578d4bb588514019cddf758d9f43252b25fe42)
 - test(openclaw): cover service commands [`08f478c`](https://github.com/karmaniverous/jeeves-server/commit/08f478cd4ad8aa9a1d9e06dc595535ae2e869a11)
