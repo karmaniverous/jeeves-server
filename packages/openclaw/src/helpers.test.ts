@@ -1,15 +1,7 @@
+import type { PluginApi } from '@karmaniverous/jeeves';
 import { describe, expect, it } from 'vitest';
 
-import {
-  connectionFail,
-  deriveKey,
-  fail,
-  getApiUrl,
-  getPluginKey,
-  ok,
-  type PluginApi,
-  withAuth,
-} from './helpers.js';
+import { deriveKey, getPluginKey, withAuth } from './helpers.js';
 
 describe('deriveKey', () => {
   it('produces a hex string', () => {
@@ -57,28 +49,6 @@ describe('withAuth', () => {
   });
 });
 
-describe('getApiUrl', () => {
-  it('returns default when no config', () => {
-    const api = {} as unknown as PluginApi;
-    expect(getApiUrl(api)).toBe('http://127.0.0.1:1934');
-  });
-
-  it('returns configured URL', () => {
-    const api = {
-      config: {
-        plugins: {
-          entries: {
-            'jeeves-server-openclaw': {
-              config: { apiUrl: 'http://custom:9999' },
-            },
-          },
-        },
-      },
-    } as unknown as PluginApi;
-    expect(getApiUrl(api)).toBe('http://custom:9999');
-  });
-});
-
 describe('getPluginKey', () => {
   it('returns undefined when no config', () => {
     expect(getPluginKey({} as PluginApi)).toBeUndefined();
@@ -97,47 +67,5 @@ describe('getPluginKey', () => {
       },
     } as unknown as PluginApi;
     expect(getPluginKey(api)).toBe('my-seed');
-  });
-});
-
-describe('ok', () => {
-  it('wraps data as JSON text content', () => {
-    const result = ok({ foo: 'bar' });
-    expect(result.content).toHaveLength(1);
-    expect(result.content[0].type).toBe('text');
-    expect(JSON.parse(result.content[0].text)).toEqual({ foo: 'bar' });
-    expect(result.isError).toBeUndefined();
-  });
-});
-
-describe('fail', () => {
-  it('wraps error message', () => {
-    const result = fail(new Error('boom'));
-    expect(result.content[0].text).toBe('Error: boom');
-    expect(result.isError).toBe(true);
-  });
-
-  it('handles string errors', () => {
-    const result = fail('something broke');
-    expect(result.content[0].text).toBe('Error: something broke');
-  });
-});
-
-describe('connectionFail', () => {
-  it('provides actionable guidance for ECONNREFUSED', () => {
-    const err = new Error('connect failed');
-    (err as unknown as Record<string, unknown>).cause = {
-      code: 'ECONNREFUSED',
-    };
-    const result = connectionFail(err, 'http://localhost:1934');
-    expect(result.content[0].text).toContain('Server not reachable');
-    expect(result.content[0].text).toContain('jeeves-server-openclaw');
-    expect(result.isError).toBe(true);
-  });
-
-  it('falls back to generic error for other errors', () => {
-    const result = connectionFail(new Error('timeout'), 'http://localhost');
-    expect(result.content[0].text).toBe('Error: timeout');
-    expect(result.isError).toBe(true);
   });
 });

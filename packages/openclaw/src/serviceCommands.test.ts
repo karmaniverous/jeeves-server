@@ -8,10 +8,14 @@ vi.mock('node:child_process', () => ({
   execSync: vi.fn(),
 }));
 
-vi.mock('./openclawPaths.js', () => ({
-  resolveOpenClawHome: () => '/mock/.openclaw',
-  resolveConfigPath: () => '/mock/.openclaw/openclaw.json',
-}));
+vi.mock('@karmaniverous/jeeves', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    resolveOpenClawHome: () => '/mock/.openclaw',
+    resolveConfigPath: () => '/mock/.openclaw/openclaw.json',
+  };
+});
 
 vi.mock('./pluginRemove.js', () => ({
   removePlugin: vi.fn(() => ['Removed extension']),
