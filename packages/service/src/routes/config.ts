@@ -13,7 +13,7 @@ import { getConfig } from '../config/index.js';
 import type { RuntimeConfig } from '../config/types.js';
 
 /** Return a sanitized copy of the config (redact sensitive fields). */
-function sanitizeConfig(config: RuntimeConfig): unknown {
+export function sanitizeConfig(config: RuntimeConfig): unknown {
   return {
     ...config,
     sessionSecret: config.sessionSecret ? '[REDACTED]' : null,
