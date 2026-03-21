@@ -4,6 +4,13 @@
  * Usage:
  *   npx \@karmaniverous/jeeves-server-openclaw install
  *   npx \@karmaniverous/jeeves-server-openclaw uninstall
+ *
+ * Supports non-default installations via:
+ *   - OPENCLAW_CONFIG env var (path to openclaw.json)
+ *   - OPENCLAW_HOME env var (path to .openclaw directory)
+ *   - Default: ~/.openclaw/openclaw.json
+ *
+ * @module cli
  */
 
 import {
@@ -13,20 +20,25 @@ import {
   readFileSync,
   rmSync,
   writeFileSync,
-} from 'fs';
-import { homedir } from 'os';
-import { dirname, join, resolve } from 'path';
-import { fileURLToPath } from 'url';
+} from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { patchConfig } from './configPatch.js';
+import {
+  patchConfig,
+  removeManagedSection,
+  resolveConfigPath,
+  resolveOpenClawHome,
+} from '@karmaniverous/jeeves';
+
 import { PLUGIN_ID } from './constants.js';
-import { resolveConfigPath, resolveOpenClawHome } from './openclawPaths.js';
-import { removePlugin } from './pluginRemove.js';
 
+/** Get the package root (where this CLI lives). */
 function getPackageRoot(): string {
   return resolve(dirname(fileURLToPath(import.meta.url)), '..');
 }
 
+/** Read and parse JSON, returning null on failure. */
 function readJson(p: string): Record<string, unknown> | null {
   try {
     return JSON.parse(readFileSync(p, 'utf8')) as Record<string, unknown>;
@@ -35,31 +47,41 @@ function readJson(p: string): Record<string, unknown> | null {
   }
 }
 
+/** Write JSON with 2-space indent + trailing newline. */
 function writeJson(p: string, data: unknown): void {
   writeFileSync(p, JSON.stringify(data, null, 2) + '\n');
 }
 
+/** Install the plugin into OpenClaw's extensions directory. */
 function install(): void {
   const home = resolveOpenClawHome();
   const configPath = resolveConfigPath(home);
   const extDir = join(home, 'extensions', PLUGIN_ID);
   const pkgRoot = getPackageRoot();
 
-  console.log('OpenClaw home:  ' + home);
-  console.log('Config:         ' + configPath);
-  console.log('Extensions dir: ' + extDir);
-  console.log('Package root:   ' + pkgRoot);
+  console.log(`OpenClaw home:  ${home}`);
+  console.log(`Config:         ${configPath}`);
+  console.log(`Extensions dir: ${extDir}`);
+  console.log(`Package root:   ${pkgRoot}`);
   console.log();
 
   if (!existsSync(home)) {
-    console.error('Error: OpenClaw home not found at ' + home);
-    process.exit(1);
-  }
-  if (!existsSync(configPath)) {
-    console.error('Error: OpenClaw config not found at ' + configPath);
+    console.error(`Error: OpenClaw home directory not found at ${home}`);
+    console.error(
+      'Set OPENCLAW_HOME or OPENCLAW_CONFIG if using a non-default installation.',
+    );
     process.exit(1);
   }
 
+  if (!existsSync(configPath)) {
+    console.error(`Error: OpenClaw config not found at ${configPath}`);
+    console.error(
+      'Set OPENCLAW_CONFIG if using a non-default config location.',
+    );
+    process.exit(1);
+  }
+
+  // Copy package to extensions directory
   console.log('Copying plugin to extensions directory...');
   if (existsSync(extDir)) rmSync(extDir, { recursive: true, force: true });
   mkdirSync(extDir, { recursive: true });
@@ -69,7 +91,7 @@ function install(): void {
     const dest = join(extDir, file);
     if (existsSync(src)) {
       cpSync(src, dest, { recursive: true });
-      console.log('  \u2713 ' + file);
+      console.log(`  \u2713 ${file}`);
     }
   }
 
@@ -79,14 +101,18 @@ function install(): void {
     console.log('  \u2713 node_modules');
   }
 
+  // Patch config
   console.log();
   console.log('Patching OpenClaw config...');
   const config = readJson(configPath);
   if (!config) {
-    console.error('Error: Could not parse ' + configPath);
+    console.error(`Error: Could not parse ${configPath}`);
     process.exit(1);
   }
-  for (const msg of patchConfig(config, 'add')) console.log('  \u2713 ' + msg);
+
+  for (const msg of patchConfig(config, PLUGIN_ID, 'add')) {
+    console.log(`  \u2713 ${msg}`);
+  }
   writeJson(configPath, config);
 
   console.log();
@@ -94,56 +120,58 @@ function install(): void {
   console.log('   Restart the OpenClaw gateway to load the plugin.');
 }
 
-function uninstall(): void {
+/** Uninstall the plugin from OpenClaw's extensions directory. */
+async function uninstall(): Promise<void> {
   const home = resolveOpenClawHome();
   const configPath = resolveConfigPath(home);
+  const extDir = join(home, 'extensions', PLUGIN_ID);
 
-  console.log('OpenClaw home:  ' + home);
-  console.log('Config:         ' + configPath);
+  console.log(`OpenClaw home:  ${home}`);
+  console.log(`Config:         ${configPath}`);
+  console.log(`Extensions dir: ${extDir}`);
   console.log();
 
-  const messages = removePlugin(home, configPath);
-  for (const msg of messages) console.log('  \u2713 ' + msg);
+  if (existsSync(extDir)) {
+    rmSync(extDir, { recursive: true, force: true });
+    console.log(`\u2713 Removed ${extDir}`);
+  } else {
+    console.log('  (extensions directory not found, skipping)');
+  }
 
-  // Clean up TOOLS.md server section
-  cleanupToolsMd(home, configPath);
+  if (existsSync(configPath)) {
+    console.log('Patching OpenClaw config...');
+    const config = readJson(configPath);
+    if (config) {
+      for (const msg of patchConfig(config, PLUGIN_ID, 'remove')) {
+        console.log(`  \u2713 ${msg}`);
+      }
+      writeJson(configPath, config);
+    }
+  }
+
+  // Remove managed TOOLS.md section
+  const workspacePath = process.cwd();
+  const toolsPath = join(workspacePath, 'TOOLS.md');
+  if (existsSync(toolsPath)) {
+    console.log('Removing managed TOOLS.md section...');
+    await removeManagedSection(toolsPath, { sectionId: 'Server' });
+    console.log('  \u2713 Removed Server section from TOOLS.md');
+  }
 
   console.log();
   console.log('\u2705 Plugin uninstalled successfully.');
   console.log('   Restart the OpenClaw gateway to complete removal.');
 }
 
-function resolveWorkspaceDir(home: string, configPath: string): string | null {
-  const config = readJson(configPath);
-  if (!config) return null;
-  const agents = config.agents as Record<string, unknown> | undefined;
-  const defaults = agents?.defaults as Record<string, unknown> | undefined;
-  const workspace = defaults?.workspace as string | undefined;
-  if (workspace) return resolve(workspace.replace(/^~/, homedir()));
-  return join(home, 'workspace');
-}
-
-function cleanupToolsMd(home: string, configPath: string): void {
-  const workspaceDir = resolveWorkspaceDir(home, configPath);
-  if (!workspaceDir) return;
-  const toolsPath = join(workspaceDir, 'TOOLS.md');
-  if (!existsSync(toolsPath)) return;
-  let content = readFileSync(toolsPath, 'utf8');
-  const serverRe = /^## Server\n[\s\S]*?(?=\n## |\n# |$(?![\s\S]))/m;
-  if (!serverRe.test(content)) return;
-  content = content.replace(serverRe, '').replace(/\n{3,}/g, '\n\n');
-  content = content.trim() + '\n';
-  writeFileSync(toolsPath, content);
-  console.log('\u2713 Cleaned up TOOLS.md (removed Server section)');
-}
-
+// Main
 const command = process.argv[2];
+
 switch (command) {
   case 'install':
     install();
     break;
   case 'uninstall':
-    uninstall();
+    void uninstall();
     break;
   default:
     console.log(
@@ -161,13 +189,15 @@ switch (command) {
     console.log('Environment variables:');
     console.log('  OPENCLAW_CONFIG  Path to openclaw.json (overrides all)');
     console.log('  OPENCLAW_HOME    Path to .openclaw directory');
+    console.log();
+    console.log('Default: ~/.openclaw/openclaw.json');
     if (
       command &&
       command !== 'help' &&
       command !== '--help' &&
       command !== '-h'
     ) {
-      console.error('\nUnknown command: ' + command);
+      console.error(`\nUnknown command: ${command}`);
       process.exit(1);
     }
     break;

@@ -7,13 +7,14 @@
 
 import { execSync } from 'node:child_process';
 
-import type {
-  PluginCommands,
-  ServiceCommands,
-  ServiceStatus,
+import {
+  type PluginCommands,
+  resolveConfigPath,
+  resolveOpenClawHome,
+  type ServiceCommands,
+  type ServiceStatus,
 } from '@karmaniverous/jeeves';
 
-import { resolveConfigPath, resolveOpenClawHome } from './openclawPaths.js';
 import { removePlugin } from './pluginRemove.js';
 
 const NSSM_SERVICE_NAME = 'JeevesServer';

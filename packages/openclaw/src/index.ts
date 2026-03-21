@@ -12,10 +12,12 @@ import {
   createAsyncContentCache,
   createComponentWriter,
   init,
+  type PluginApi,
+  resolvePluginSetting,
   resolveWorkspacePath,
 } from '@karmaniverous/jeeves';
 
-import { getApiUrl, getPluginConfig, type PluginApi } from './helpers.js';
+import { PLUGIN_ID } from './constants.js';
 import { generateServerMenu } from './promptInjection.js';
 import { registerServerTools } from './serverTools.js';
 import {
@@ -29,21 +31,32 @@ const { version: PLUGIN_VERSION } = require('../package.json') as {
   version: string;
 };
 
-/** Default config root when not specified in plugin config. */
-const DEFAULT_CONFIG_ROOT = 'j:/config';
-
 /** Refresh interval in seconds (must be prime). */
 const REFRESH_INTERVAL_SECONDS = 61;
 
 /** Active writer instance — stopped on re-registration to prevent leaks. */
 let activeWriter: ComponentWriter | null = null;
 
-/**
- * Extract the configRoot from plugin config.
- */
+/** Resolve the server API base URL from plugin config or environment. */
+function getServiceUrl(api: PluginApi): string {
+  return resolvePluginSetting(
+    api,
+    PLUGIN_ID,
+    'apiUrl',
+    'JEEVES_SERVER_URL',
+    'http://127.0.0.1:1934',
+  );
+}
+
+/** Resolve the platform config root from plugin config or environment. */
 function getConfigRoot(api: PluginApi): string {
-  const root = getPluginConfig(api)?.configRoot;
-  return typeof root === 'string' ? root : DEFAULT_CONFIG_ROOT;
+  return resolvePluginSetting(
+    api,
+    PLUGIN_ID,
+    'configRoot',
+    'JEEVES_CONFIG_ROOT',
+    'j:/config',
+  );
 }
 
 /** Register all jeeves-server tools and start the TOOLS.md writer. */
@@ -54,7 +67,7 @@ export default function register(api: PluginApi): void {
     activeWriter = null;
   }
 
-  const baseUrl = getApiUrl(api);
+  const baseUrl = getServiceUrl(api);
   registerServerTools(api, baseUrl);
 
   // Initialize jeeves-core

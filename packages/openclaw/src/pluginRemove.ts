@@ -9,7 +9,8 @@
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { patchConfig } from './configPatch.js';
+import { patchConfig } from '@karmaniverous/jeeves';
+
 import { PLUGIN_ID } from './constants.js';
 
 /**
@@ -31,7 +32,7 @@ export function removePlugin(home: string, configPath: string): string[] {
   if (existsSync(configPath)) {
     const raw = readFileSync(configPath, 'utf8');
     const config = JSON.parse(raw) as Record<string, unknown>;
-    const patchMessages = patchConfig(config, 'remove');
+    const patchMessages = patchConfig(config, PLUGIN_ID, 'remove');
     if (patchMessages.length > 0) {
       writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
       messages.push(...patchMessages);

@@ -2,7 +2,7 @@
  * Generates the Server menu string for TOOLS.md injection.
  */
 
-import { fetchJson } from './helpers.js';
+import { fetchJson } from '@karmaniverous/jeeves';
 
 interface StatusResponse {
   version?: string;

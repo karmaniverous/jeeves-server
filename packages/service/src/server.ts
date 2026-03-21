@@ -14,6 +14,7 @@ import Fastify from 'fastify';
 import { getConfig, initConfig, isConfigInitialized } from './config/index.js';
 import { apiRoute } from './routes/api/index.js';
 import { authRoute } from './routes/auth.js';
+import { registerConfigRoute } from './routes/config.js';
 import { eventRoute } from './routes/event.js';
 import { healthRoute } from './routes/health.js';
 import { keysRoute } from './routes/keys.js';
@@ -44,6 +45,7 @@ async function start() {
     // Register routes
     await fastify.register(staticRoutes);
     await fastify.register(healthRoute);
+    registerConfigRoute(fastify);
     await fastify.register(authRoute);
     await fastify.register(keysRoute);
     await fastify.register(eventRoute);
