@@ -2,9 +2,17 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.2.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.2.0...3.2.1)
+#### [3.3.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.2.1...3.3.0)
+
+- feat: core v0.2.0 SDK adoption [`#111`](https://github.com/karmaniverous/jeeves-server/pull/111)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.3.1 [`11309c1`](https://github.com/karmaniverous/jeeves-server/commit/11309c1c3d82f6950b3d0291546206b523df83fa)
+
+#### [service/3.2.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.2.0...service/3.2.1)
+
+> 19 March 2026
 
 - fix(openclaw): bundle @karmaniverous/jeeves into plugin dist [`61fb7ac`](https://github.com/karmaniverous/jeeves-server/commit/61fb7ac3f91a036cef16720c16c33fe399f7c4e6)
+- chore: release @karmaniverous/jeeves-server v3.2.1 [`f13677b`](https://github.com/karmaniverous/jeeves-server/commit/f13677bd1cd020416ba510eaabc58ad85ee9aabf)
 - chore(openclaw): use resolveWorkspacePath from jeeves 0.1.4 [`71ddd58`](https://github.com/karmaniverous/jeeves-server/commit/71ddd588f1b5736f0cbd4d81d42bb0f9356eafe8)
 - chore(openclaw): update jeeves to 0.1.6, add servicePackage/pluginPackage [`1847ff7`](https://github.com/karmaniverous/jeeves-server/commit/1847ff750613b3770198b20b4bacd7e93bf0ec52)
 - chore(openclaw): update @karmaniverous/jeeves to 0.1.5 [`c8b040b`](https://github.com/karmaniverous/jeeves-server/commit/c8b040bfa945b3814cbde9395cf1d3f00cdd64a8)
