@@ -32,6 +32,7 @@ import {
 } from '@karmaniverous/jeeves';
 
 import { PLUGIN_ID } from './constants.js';
+import { removePlugin } from './pluginRemove.js';
 
 /** Get the package root (where this CLI lives). */
 function getPackageRoot(): string {
@@ -124,34 +125,18 @@ function install(): void {
 async function uninstall(): Promise<void> {
   const home = resolveOpenClawHome();
   const configPath = resolveConfigPath(home);
-  const extDir = join(home, 'extensions', PLUGIN_ID);
 
   console.log(`OpenClaw home:  ${home}`);
   console.log(`Config:         ${configPath}`);
-  console.log(`Extensions dir: ${extDir}`);
   console.log();
 
-  if (existsSync(extDir)) {
-    rmSync(extDir, { recursive: true, force: true });
-    console.log(`\u2713 Removed ${extDir}`);
-  } else {
-    console.log('  (extensions directory not found, skipping)');
-  }
-
-  if (existsSync(configPath)) {
-    console.log('Patching OpenClaw config...');
-    const config = readJson(configPath);
-    if (config) {
-      for (const msg of patchConfig(config, PLUGIN_ID, 'remove')) {
-        console.log(`  \u2713 ${msg}`);
-      }
-      writeJson(configPath, config);
-    }
+  // Delegate extension removal + config patching to shared module
+  for (const msg of removePlugin(home, configPath)) {
+    console.log(`  \u2713 ${msg}`);
   }
 
   // Remove managed TOOLS.md section
-  const workspacePath = process.cwd();
-  const toolsPath = join(workspacePath, 'TOOLS.md');
+  const toolsPath = join(process.cwd(), 'TOOLS.md');
   if (existsSync(toolsPath)) {
     console.log('Removing managed TOOLS.md section...');
     await removeManagedSection(toolsPath, { sectionId: 'Server' });
