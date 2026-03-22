@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 // Mock config
 const mockConfig = {
   port: 1934,
+  host: '0.0.0.0',
   chromePath: '/usr/bin/chromium',
   authModes: ['keys'],
   resolvedInsiders: [{ email: 'a@b.com' }, { email: 'c@d.com' }],
@@ -18,6 +19,7 @@ const mockConfig = {
   },
   watcherUrl: null,
   runnerUrl: null,
+  metaUrl: null,
   exportFormats: ['pdf', 'docx', 'zip'],
 };
 

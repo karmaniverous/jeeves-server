@@ -6,7 +6,7 @@
  * authenticated requests to jeeves-server. Generic helpers (ok, fail,
  * connectionFail, fetchJson, etc.) are imported from `@karmaniverous/jeeves`.
  *
- * @module helpers
+ * @packageDocumentation
  */
 
 import { createHmac } from 'node:crypto';

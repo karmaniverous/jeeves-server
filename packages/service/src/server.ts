@@ -85,8 +85,10 @@ async function start() {
     // Start queue processor
     startQueueProcessor();
 
-    await fastify.listen({ port: config.port, host: '0.0.0.0' });
-    console.log(`Jeeves server listening on port ${String(config.port)}`);
+    await fastify.listen({ port: config.port, host: config.host });
+    console.log(
+      `Jeeves server listening on ${config.host}:${String(config.port)}`,
+    );
     console.log(`Endpoints:`);
     console.log(`  GET  /browse/* - File browser SPA`);
     console.log(`  GET  /api/raw/*    - Raw file serving`);

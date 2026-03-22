@@ -27,6 +27,7 @@ export function registerConfigCommand(cli: Command): void {
         const cfg = await loadConfig(options.config);
         console.log('\u2713 Configuration valid');
         console.log(`  Port: ${String(cfg.port)}`);
+        console.log(`  Host: ${cfg.host}`);
         console.log(`  Auth modes: ${cfg.authModes.join(', ')}`);
         console.log(`  Keys: ${String(cfg.resolvedKeys.length)}`);
         console.log(`  Insiders: ${String(cfg.resolvedInsiders.length)}`);
@@ -35,6 +36,7 @@ export function registerConfigCommand(cli: Command): void {
         );
         if (cfg.watcherUrl) console.log(`  Watcher: ${cfg.watcherUrl}`);
         if (cfg.runnerUrl) console.log(`  Runner: ${cfg.runnerUrl}`);
+        if (cfg.metaUrl) console.log(`  Meta: ${cfg.metaUrl}`);
       } catch (error) {
         console.error('\u2717 Configuration invalid');
         console.error(error instanceof Error ? error.message : String(error));
@@ -53,6 +55,7 @@ export function registerConfigCommand(cli: Command): void {
         console.log('');
         console.log('Server:');
         console.log(`  port: ${String(cfg.port)}`);
+        console.log(`  host: ${cfg.host}`);
         console.log(`  chromePath: ${cfg.chromePath}`);
         if (cfg.roots) {
           console.log(`  roots: ${JSON.stringify(cfg.roots)}`);
@@ -78,6 +81,7 @@ export function registerConfigCommand(cli: Command): void {
         console.log('Integrations:');
         console.log(`  watcherUrl: ${cfg.watcherUrl ?? 'not configured'}`);
         console.log(`  runnerUrl: ${cfg.runnerUrl ?? 'not configured'}`);
+        console.log(`  metaUrl: ${cfg.metaUrl ?? 'not configured'}`);
         console.log('');
         console.log('Events:');
         const eventNames = Object.keys(cfg.events);
