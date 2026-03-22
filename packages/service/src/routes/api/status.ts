@@ -44,9 +44,10 @@ export const statusRoutes: FastifyPluginAsync = async (fastify) => {
     async (request) => {
       const config = getConfig();
 
-      const [watcher, runner] = await Promise.all([
+      const [watcher, runner, meta] = await Promise.all([
         config.watcherUrl ? checkService(config.watcherUrl) : null,
         config.runnerUrl ? checkService(config.runnerUrl) : null,
+        config.metaUrl ? checkService(config.metaUrl) : null,
       ]);
 
       return {
@@ -82,6 +83,7 @@ export const statusRoutes: FastifyPluginAsync = async (fastify) => {
         services: {
           watcher,
           runner,
+          meta,
         },
         ...(request.query.events
           ? {

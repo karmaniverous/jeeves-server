@@ -250,6 +250,7 @@ export function buildRuntimeConfig(
 
   return {
     port: config.port,
+    host: config.host,
     eventTimeoutMs: config.eventTimeoutMs,
     eventLogPurgeMs: config.eventLogPurgeMs,
     maxZipSizeMb: config.maxZipSizeMb,
@@ -285,6 +286,7 @@ export function buildRuntimeConfig(
     internalInsiderKey: deriveInternalKey(resolvedKeys),
     runnerUrl: config.runnerUrl,
     watcherUrl: config.watcherUrl,
+    metaUrl: config.metaUrl,
     diagramCachePath: config.diagramCachePath,
     configPath,
     eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),

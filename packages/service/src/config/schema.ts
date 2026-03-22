@@ -100,6 +100,12 @@ function getScopeRefs(scopes: unknown): string[] {
 export const jeevesConfigSchema = z
   .object({
     port: z.number().int().positive().default(1934),
+    /**
+     * Network interface to bind the server to.
+     * Default: '0.0.0.0' (all interfaces — required for external access by insiders, share links, etc.)
+     * Set to '127.0.0.1' to restrict to loopback only.
+     */
+    host: z.string().min(1).default('0.0.0.0'),
     chromePath: z.string().min(1),
     auth: authSchema,
     /** Named scope definitions, referenced by insiders/keys/outsiderPolicy */
@@ -150,6 +156,11 @@ export const jeevesConfigSchema = z
      * When set, the search UI appears in the header. Example: 'http://localhost:3458'
      */
     watcherUrl: z.url().optional(),
+    /**
+     * URL of the jeeves-meta API for synthesis engine health checks.
+     * Default: 'http://127.0.0.1:1938'
+     */
+    metaUrl: z.url().default('http://127.0.0.1:1938'),
     /**
      * Global outsider policy â€" constrains which paths are eligible for outsider sharing.
      * Uses the same allow/deny model as insider scopes.

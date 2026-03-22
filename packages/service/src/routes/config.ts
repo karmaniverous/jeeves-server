@@ -3,7 +3,7 @@
  *
  * Uses the core SDK's `createConfigQueryHandler()` for JSONPath support.
  *
- * @module routes/config
+ * @packageDocumentation
  */
 
 import { createConfigQueryHandler } from '@karmaniverous/jeeves';
