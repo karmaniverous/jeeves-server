@@ -16,10 +16,10 @@ import { apiRoute } from './routes/api/index.js';
 import { authRoute } from './routes/auth.js';
 import { registerConfigRoute } from './routes/config.js';
 import { eventRoute } from './routes/event.js';
-import { healthRoute } from './routes/health.js';
 import { keysRoute } from './routes/keys.js';
 import { pathRoute } from './routes/path/index.js';
 import { staticRoutes } from './routes/static.js';
+import { statusRoutes } from './routes/status.js';
 import { initDiagramCache } from './services/diagramCache.js';
 import { startQueueProcessor } from './services/eventQueue.js';
 import { initExportCache } from './services/exportCache.js';
@@ -44,8 +44,8 @@ async function start() {
 
     // Register routes
     await fastify.register(staticRoutes);
-    await fastify.register(healthRoute);
     registerConfigRoute(fastify);
+    await fastify.register(statusRoutes);
     await fastify.register(authRoute);
     await fastify.register(keysRoute);
     await fastify.register(eventRoute);
@@ -95,7 +95,7 @@ async function start() {
     console.log(`  GET  /api/export/* - PDF/DOCX/ZIP export`);
     console.log(`  POST /event    - Event Gateway (key auth)`);
     console.log(`  GET  /key      - Compute path key (X-API-Key auth)`);
-    console.log(`  GET  /health   - Health check (no auth)`);
+    console.log(`  GET  /status   - Server status (no auth)`);
   } catch (err) {
     console.error('Fatal startup error:', err);
     process.exit(1);

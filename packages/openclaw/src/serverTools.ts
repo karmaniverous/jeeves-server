@@ -79,7 +79,7 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
       description:
         'Get jeeves-server health: version, uptime, port, Chrome availability, export formats, connected services.',
       parameters: { type: 'object', properties: {} },
-      buildRequest: () => ['/api/status'],
+      buildRequest: () => ['/status'],
     },
     {
       name: 'server_link_info',
@@ -193,7 +193,7 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
       },
       buildRequest: (params) => {
         const limit = params.limit ? String(params.limit as number) : '20';
-        return ['/api/status?events=' + limit];
+        return ['/status?events=' + limit];
       },
     },
   ];

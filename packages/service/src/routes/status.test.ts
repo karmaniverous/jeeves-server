@@ -23,14 +23,14 @@ const mockConfig = {
   exportFormats: ['pdf', 'docx', 'zip'],
 };
 
-vi.mock('../../config/index.js', () => ({
+vi.mock('../config/index.js', () => ({
   getConfig: () => mockConfig,
 }));
 
 // Must import AFTER mock
 const { statusRoutes } = await import('./status.js');
 
-describe('GET /api/status', () => {
+describe('GET /status', () => {
   it('returns structured status', async () => {
     // Create a minimal Fastify-like test harness
     const routes: Record<string, (req: unknown) => Promise<unknown>> = {};
@@ -42,7 +42,7 @@ describe('GET /api/status', () => {
 
     await statusRoutes(fakeFastify as never, {});
 
-    const handler = routes['/api/status'];
+    const handler = routes['/status'];
     expect(handler).toBeDefined();
 
     const result = await handler({ accessMode: 'insider', query: {} });

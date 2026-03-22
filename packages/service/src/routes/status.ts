@@ -7,9 +7,9 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 
-import { getConfig } from '../../config/index.js';
-import { getRecentEvents } from '../../services/eventLog.js';
-import { packageVersion } from '../../util/packageVersion.js';
+import { getConfig } from '../config/index.js';
+import { getRecentEvents } from '../services/eventLog.js';
+import { packageVersion } from '../util/packageVersion.js';
 
 const startTime = Date.now();
 
@@ -40,7 +40,7 @@ async function checkService(url: string): Promise<ServiceStatus> {
 // eslint-disable-next-line @typescript-eslint/require-await
 export const statusRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Querystring: { events?: string } }>(
-    '/api/status',
+    '/status',
     async (request) => {
       const config = getConfig();
 

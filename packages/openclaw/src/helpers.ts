@@ -11,15 +11,21 @@
 
 import { createHmac } from 'node:crypto';
 
-import type { PluginApi } from '@karmaniverous/jeeves';
+import {
+  type PluginApi,
+  resolveOptionalPluginSetting,
+} from '@karmaniverous/jeeves';
 
 import { PLUGIN_ID } from './constants.js';
 
 /** Resolve the plugin key seed from plugin config. */
 export function getPluginKey(api: PluginApi): string | undefined {
-  const config = api.config?.plugins?.entries?.[PLUGIN_ID]?.config;
-  const key = config?.pluginKey;
-  return typeof key === 'string' ? key : undefined;
+  return resolveOptionalPluginSetting(
+    api,
+    PLUGIN_ID,
+    'pluginKey',
+    'JEEVES_SERVER_PLUGIN_KEY',
+  );
 }
 
 /** Derive HMAC key from seed. */
