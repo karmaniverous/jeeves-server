@@ -31,7 +31,7 @@ export async function generateServerMenu(apiUrl: string): Promise<string> {
   let status: StatusResponse;
 
   try {
-    status = (await fetchJson(apiUrl + '/api/status', {
+    status = (await fetchJson(apiUrl + '/status', {
       signal: AbortSignal.timeout(5000),
     })) as StatusResponse;
   } catch {
