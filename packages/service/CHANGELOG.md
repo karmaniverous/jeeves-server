@@ -2,10 +2,20 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.3.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.2.1...3.3.0)
+#### [3.3.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.3.0...3.3.1)
+
+- Add configurable host bind + metaUrl service probe [`#114`](https://github.com/karmaniverous/jeeves-server/pull/114)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.4.0 [`566e438`](https://github.com/karmaniverous/jeeves-server/commit/566e438a5262e5f2e80db4690c9907b6658e5519)
+- [113] feat: add host bind and metaUrl config options [`798d133`](https://github.com/karmaniverous/jeeves-server/commit/798d133825f99f5a5fc19bb0ba9093b757f62f0f)
+- npm audit fix [`a07adac`](https://github.com/karmaniverous/jeeves-server/commit/a07adac906ca032bedeef25b16b9e0c05231b4b0)
+
+#### [service/3.3.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.2.1...service/3.3.0)
+
+> 21 March 2026
 
 - feat: core v0.2.0 SDK adoption [`#111`](https://github.com/karmaniverous/jeeves-server/pull/111)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.3.1 [`11309c1`](https://github.com/karmaniverous/jeeves-server/commit/11309c1c3d82f6950b3d0291546206b523df83fa)
+- chore: release @karmaniverous/jeeves-server v3.3.0 [`1b1aec6`](https://github.com/karmaniverous/jeeves-server/commit/1b1aec644106ce05576e608d278a37860a47de61)
 
 #### [service/3.2.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.2.0...service/3.2.1)
 
