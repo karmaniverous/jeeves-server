@@ -2,11 +2,21 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.3.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.3.0...3.3.1)
+#### [3.4.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.3.1...3.4.0)
+
+- Bump core to v0.3.0 and consolidate status endpoint [`#119`](https://github.com/karmaniverous/jeeves-server/pull/119)
+- [117] feat: bump core to v0.3.0 and consolidate status endpoint (#117) [`c80be62`](https://github.com/karmaniverous/jeeves-server/commit/c80be62a3f512f7524c917b153ca6ecb053a6ce4)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.4.1 [`01a64b8`](https://github.com/karmaniverous/jeeves-server/commit/01a64b8693ffedb307022ed6d48ebd515aef10ab)
+- [117] refactor(openclaw): use resolveOptionalPluginSetting for getPluginKey (#112) [`6b36937`](https://github.com/karmaniverous/jeeves-server/commit/6b3693725b3e6211fab250cdd935aa9e4a0091cc)
+
+#### [service/3.3.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.3.0...service/3.3.1)
+
+> 22 March 2026
 
 - Add configurable host bind + metaUrl service probe [`#114`](https://github.com/karmaniverous/jeeves-server/pull/114)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.4.0 [`566e438`](https://github.com/karmaniverous/jeeves-server/commit/566e438a5262e5f2e80db4690c9907b6658e5519)
 - [113] feat: add host bind and metaUrl config options [`798d133`](https://github.com/karmaniverous/jeeves-server/commit/798d133825f99f5a5fc19bb0ba9093b757f62f0f)
+- chore: release @karmaniverous/jeeves-server v3.3.1 [`bf01414`](https://github.com/karmaniverous/jeeves-server/commit/bf01414184cc7b1b64a46f955f3bb850ab8d6e92)
 - npm audit fix [`a07adac`](https://github.com/karmaniverous/jeeves-server/commit/a07adac906ca032bedeef25b16b9e0c05231b4b0)
 
 #### [service/3.3.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.2.1...service/3.3.0)
