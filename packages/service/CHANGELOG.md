@@ -2,11 +2,22 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.4.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.3.1...3.4.0)
+#### [3.4.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.4.0...3.4.1)
+
+- Remove /health proxy, rename /stats to /status, align client types [`#122`](https://github.com/karmaniverous/jeeves-server/pull/122)
+- Fix runner proxy routes calling wrong endpoints [`#121`](https://github.com/karmaniverous/jeeves-server/pull/121)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.5.0 [`5f29c12`](https://github.com/karmaniverous/jeeves-server/commit/5f29c12a227209676c37fe2cafac498b8b845876)
+- [120] fix: runner proxy routes call /status instead of /stats and /health (#120) [`6a9aa21`](https://github.com/karmaniverous/jeeves-server/commit/6a9aa212819c9ab3cf8ce9fee9052697e7a2da9d)
+- [120] fix: runner proxy routes call /status instead of /stats and /health (#120) [`8310b32`](https://github.com/karmaniverous/jeeves-server/commit/8310b32f2e3e0a0ca02f4c41230f663ef610f8cd)
+
+#### [service/3.4.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.3.1...service/3.4.0)
+
+> 23 March 2026
 
 - Bump core to v0.3.0 and consolidate status endpoint [`#119`](https://github.com/karmaniverous/jeeves-server/pull/119)
 - [117] feat: bump core to v0.3.0 and consolidate status endpoint (#117) [`c80be62`](https://github.com/karmaniverous/jeeves-server/commit/c80be62a3f512f7524c917b153ca6ecb053a6ce4)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.4.1 [`01a64b8`](https://github.com/karmaniverous/jeeves-server/commit/01a64b8693ffedb307022ed6d48ebd515aef10ab)
+- chore: release @karmaniverous/jeeves-server v3.4.0 [`ed98759`](https://github.com/karmaniverous/jeeves-server/commit/ed98759eea126bb02666117ae8426c265c679736)
 - [117] refactor(openclaw): use resolveOptionalPluginSetting for getPluginKey (#112) [`6b36937`](https://github.com/karmaniverous/jeeves-server/commit/6b3693725b3e6211fab250cdd935aa9e4a0091cc)
 
 #### [service/3.3.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.3.0...service/3.3.1)
