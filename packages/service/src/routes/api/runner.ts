@@ -44,10 +44,6 @@ export const runnerRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  fastify.get('/api/runner/health', async (_req, reply) => {
-    await proxyToRunner(reply, '/status');
-  });
-
   fastify.get('/api/runner/jobs', async (_req, reply) => {
     await proxyToRunner(reply, '/jobs');
   });
@@ -101,7 +97,7 @@ export const runnerRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  fastify.get('/api/runner/stats', async (_req, reply) => {
+  fastify.get('/api/runner/status', async (_req, reply) => {
     await proxyToRunner(reply, '/status');
   });
 };

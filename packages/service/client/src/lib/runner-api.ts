@@ -54,8 +54,12 @@ interface RawRun {
 }
 
 interface RawStats {
+  status: string;
+  version: string;
+  uptime: number;
   totalJobs: number;
   running: number;
+  failedRegistrations: number;
   okLastHour: number;
   errorsLastHour: number;
 }
@@ -63,8 +67,12 @@ interface RawStats {
 // --- Public types (camelCase) ---
 
 export interface RunnerStats {
+  status: string;
+  version: string;
+  uptime: number;
   totalJobs: number;
   running: number;
+  failedRegistrations: number;
   okLastHour: number;
   errorsLastHour: number;
 }
@@ -124,7 +132,7 @@ function mapRun(raw: RawRun): RunEntry {
 }
 
 export async function getRunnerStats(): Promise<RunnerStats> {
-  const raw = await runnerFetch<RawStats>('/stats');
+  const raw = await runnerFetch<RawStats>('/status');
   return raw;
 }
 
