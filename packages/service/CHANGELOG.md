@@ -2,12 +2,20 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.4.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.4.0...3.4.1)
+#### [3.4.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.4.1...3.4.2)
+
+- ci: replace bespoke docs workflow with shared version [`9521d00`](https://github.com/karmaniverous/jeeves-server/commit/9521d00c45901c20e81ad58627ad0d961c472973)
+- chore: bump @karmaniverous/jeeves to 0.3.1 [`df78ac9`](https://github.com/karmaniverous/jeeves-server/commit/df78ac9a0e43b08adaac34f3476db8fe37ca78af)
+
+#### [service/3.4.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.4.0...service/3.4.1)
+
+> 23 March 2026
 
 - Remove /health proxy, rename /stats to /status, align client types [`#122`](https://github.com/karmaniverous/jeeves-server/pull/122)
 - Fix runner proxy routes calling wrong endpoints [`#121`](https://github.com/karmaniverous/jeeves-server/pull/121)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.5.0 [`5f29c12`](https://github.com/karmaniverous/jeeves-server/commit/5f29c12a227209676c37fe2cafac498b8b845876)
 - [120] fix: runner proxy routes call /status instead of /stats and /health (#120) [`6a9aa21`](https://github.com/karmaniverous/jeeves-server/commit/6a9aa212819c9ab3cf8ce9fee9052697e7a2da9d)
+- chore: release @karmaniverous/jeeves-server v3.4.1 [`9a338bb`](https://github.com/karmaniverous/jeeves-server/commit/9a338bbbb193767b963a0df046f0916c097c183e)
 - [120] fix: runner proxy routes call /status instead of /stats and /health (#120) [`8310b32`](https://github.com/karmaniverous/jeeves-server/commit/8310b32f2e3e0a0ca02f4c41230f663ef610f8cd)
 
 #### [service/3.4.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.3.1...service/3.4.0)
