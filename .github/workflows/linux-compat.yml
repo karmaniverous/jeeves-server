@@ -2,24 +2,29 @@ name: Linux Compatibility
 
 on:
   push:
-    branches: [feature/GH-13-linux-compat, main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-  build-and-test:
+  linux-compat:
+    uses: karmaniverous/gha-workflows/.github/workflows/linux-compat.yml@main
+
+  smoke-tests:
+    needs: linux-compat
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [20, 22, 24]
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22
+          cache: npm
 
       - name: Install server dependencies
         run: npm ci
@@ -52,8 +57,6 @@ jobs:
           node packages/service/dist/src/cli/index.js start --config packages/service/jeeves-server.config.json &
           SERVER_PID=$!
           echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
-
-          # Wait for server to be ready
           for i in $(seq 1 30); do
             if curl -s http://localhost:1934/api/drives > /dev/null 2>&1; then
               echo "Server ready after ${i}s"
