@@ -109,7 +109,7 @@ export const exportRoutes: FastifyPluginAsync = async (fastify) => {
           .code(500)
           .send({ error: 'Export unavailable — no internal key configured' });
 
-      const exportUrl = `http://localhost:${String(port)}/browse/${reqPath}?key=${exportKey}&render_diagrams=1&plain_code=1`;
+      const exportUrl = `http://127.0.0.1:${String(port)}/browse/${reqPath}?key=${exportKey}&render_diagrams=1&plain_code=1`;
       const fileName = path.basename(resolved);
       const baseName = fileName.replace(/\.md$/i, '');
 
