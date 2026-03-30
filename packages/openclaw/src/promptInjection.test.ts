@@ -78,7 +78,7 @@ describe('generateServerMenu', () => {
     expect(menu).toContain('3 insider(s)');
   });
 
-  it('renders connected services with reachability icons', async () => {
+  it('does not render connected services (plugin isolation #128)', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: () => ({
@@ -92,8 +92,7 @@ describe('generateServerMenu', () => {
       }),
     } as unknown as Response);
     const menu = await generateServerMenu('http://localhost:1934');
-    expect(menu).toContain('✅');
-    expect(menu).toContain('❌');
-    expect(menu).toContain('watcher');
+    expect(menu).not.toContain('Connected Services');
+    expect(menu).not.toContain('watcher');
   });
 });

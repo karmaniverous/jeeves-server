@@ -4,11 +4,6 @@
 
 import { fetchJson } from '@karmaniverous/jeeves';
 
-interface ServiceProbe {
-  url: string;
-  reachable: boolean;
-}
-
 interface HealthPayload {
   port?: number;
   chrome?: { configured?: boolean; path?: string | null };
@@ -18,7 +13,6 @@ interface HealthPayload {
     diagrams?: string[];
     chromeAvailable?: boolean;
   };
-  services?: Record<string, ServiceProbe>;
   auth?: { insiderCount?: number; keyCount?: number };
   events?: Array<{ name: string; cmd?: string; pattern?: string }>;
   diagrams?: {
@@ -96,16 +90,6 @@ export async function generateServerMenu(apiUrl: string): Promise<string> {
       lines.push('Supported: ' + langs.join(', '));
       lines.push('');
     }
-  }
-
-  // Connected services
-  if (health.services) {
-    lines.push('### Connected Services');
-    for (const [name, svc] of Object.entries(health.services)) {
-      const icon = svc.reachable ? '✅' : '❌';
-      lines.push(`* ${icon} **${name}**: ${svc.url}`);
-    }
-    lines.push('');
   }
 
   // Event gateway
