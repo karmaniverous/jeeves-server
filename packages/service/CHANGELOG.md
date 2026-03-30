@@ -2,9 +2,46 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.4.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.4.1...3.4.2)
+#### [3.5.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.4.2...3.5.0)
+
+- Fix config validate test assertion [`#136`](https://github.com/karmaniverous/jeeves-server/pull/136)
+- [35] Component SDK adoption (core v0.4.4) + plugin/CLI factories [`#134`](https://github.com/karmaniverous/jeeves-server/pull/134)
+- [35] refactor: replace hand-rolled package.json walk with packageDirectorySync [`#96`](https://github.com/karmaniverous/jeeves-server/pull/96)
+- [35] fix: show user-friendly search error messages [`#98`](https://github.com/karmaniverous/jeeves-server/pull/98)
+- [35] fix: decode HTML entities in TOC heading text [`#102`](https://github.com/karmaniverous/jeeves-server/pull/102)
+- [35] refactor: remove Connected Services from TOOLS.md writer (closes #128) [`#128`](https://github.com/karmaniverous/jeeves-server/issues/128)
+- [35] chore: update deps (peer-safe) [`c87c3a1`](https://github.com/karmaniverous/jeeves-server/commit/c87c3a1d10a15654ceac04c493d90abd65fe05d6)
+- [35] refactor: migrate openclaw plugin to core v0.4.4 SDK [`e29773a`](https://github.com/karmaniverous/jeeves-server/commit/e29773a63dc0313a42c41d03289b5cc1f6a0e2bb)
+- [35] refactor: SOLID/DRY cleanup [`78a0b2d`](https://github.com/karmaniverous/jeeves-server/commit/78a0b2d92391ae273d8c2b50fb855420a509ef30)
+- [35] refactor: replace hand-rolled CLI with createServiceCli(descriptor) (#106) [`9b7517f`](https://github.com/karmaniverous/jeeves-server/commit/9b7517f58af9226088f034add21b9a58700d2e50)
+- [35] refactor: adopt createPluginToolset, health-nested status, event endpoint (#87, #112, #118, #128) [`8ead7ae`](https://github.com/karmaniverous/jeeves-server/commit/8ead7aedbe5799f29ee21d0c6de49531ac174b9a)
+- [35] test: add tests for diagramExport and sharing helpers [`1caaa1b`](https://github.com/karmaniverous/jeeves-server/commit/1caaa1ba28a978b8640bc06d3ba80ba62f5c375b)
+- [35] feat: replace cosmiconfig with direct JSON config loading [`6f888c6`](https://github.com/karmaniverous/jeeves-server/commit/6f888c690e0a9711bd42f9f02e128bd70f0c62e4)
+- [35] docs: sync documentation with SDK adoption changes [`aefbf73`](https://github.com/karmaniverous/jeeves-server/commit/aefbf73798c938dc449b20bbed81a20074aeaaed)
+- [35] refactor: migrate GET /status to createStatusHandler factory [`3526b46`](https://github.com/karmaniverous/jeeves-server/commit/3526b4676f47460d094602dd8ffe66f52da8d3ad)
+- npm audit fix [`a2db7c5`](https://github.com/karmaniverous/jeeves-server/commit/a2db7c5df23813bf1f1533f3bc8a1a8c733dda8a)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.5.1 [`3aa5827`](https://github.com/karmaniverous/jeeves-server/commit/3aa5827fd79b6236aea09439fa0e7d7dc14ccfbb)
+- [35] fix: resolve lint errors from core v0.4.4 migration [`4b0c11d`](https://github.com/karmaniverous/jeeves-server/commit/4b0c11d89f22a00f0f86583e484551682bb57c06)
+- [35] chore: bump @karmaniverous/jeeves to ^0.4.3, remove cosmiconfig dep [`8d3162b`](https://github.com/karmaniverous/jeeves-server/commit/8d3162b572167dcb5be5725956f37845d4518677)
+- [35] feat: define JeevesComponentDescriptor for server component [`16c5b56`](https://github.com/karmaniverous/jeeves-server/commit/16c5b56ffa3600f613562b5a5e3a08629c5b1b5a)
+- [35] feat: use getBindAddress from core, replace localhost with 127.0.0.1 [`1df9dc6`](https://github.com/karmaniverous/jeeves-server/commit/1df9dc60df3ba838bc692ada8143eb06723a3671)
+- [35] docs: add title front matter to all guides [`840f9c7`](https://github.com/karmaniverous/jeeves-server/commit/840f9c77d0c746d13983931ec69185f935036ac6)
+- [35] fix: encode browse path segments in API calls, add SPA catch-all (#50, #127) [`dce3f11`](https://github.com/karmaniverous/jeeves-server/commit/dce3f111018937535f4e614208312653e5ea5f18)
+- [35] fix: use static bind default, bump openclaw core dep, remove local stub [`6420e8c`](https://github.com/karmaniverous/jeeves-server/commit/6420e8c96633138a1c176434e1fa662a4aec8445)
+- ci: refactor linux-compat to use shared workflow + dedicated smoke-tests job [`e2f91f1`](https://github.com/karmaniverous/jeeves-server/commit/e2f91f1a53fd6df23e31dfda7ab4fcfb26abd499)
+- [35] feat: add GET /api/events endpoint for event log queries [`c5e6505`](https://github.com/karmaniverous/jeeves-server/commit/c5e65058682f006efdd6ef604f6938b6f9f8d980)
+- [35] feat: add POST /config/apply endpoint using createConfigApplyHandler [`d1281b8`](https://github.com/karmaniverous/jeeves-server/commit/d1281b87161b17547c0e9ff236db5bc38fc2d7b6)
+- [35] fix: resolve startCommand path absolutely for CI compatibility [`25d23cd`](https://github.com/karmaniverous/jeeves-server/commit/25d23cd66b4e82d70f1b7b7295df826a7f1b34cd)
+- [35] ci: add cloud-sync workflow (parity with watcher/runner) [`aed95e7`](https://github.com/karmaniverous/jeeves-server/commit/aed95e7daa7326ae193ab824d3b1bdf62fbc9b83)
+- [35] fix: add missing dirs param to server_share plugin tool (#99, #87) [`359189a`](https://github.com/karmaniverous/jeeves-server/commit/359189a0f8e425e35be73e95e94136d60b04864f)
+- fix: align config validate test assertion with core SDK output [`5c776ca`](https://github.com/karmaniverous/jeeves-server/commit/5c776ca69104056f3d1f51c0f85b0922ca08cdc2)
+
+#### [service/3.4.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.4.1...service/3.4.2)
+
+> 25 March 2026
 
 - ci: replace bespoke docs workflow with shared version [`9521d00`](https://github.com/karmaniverous/jeeves-server/commit/9521d00c45901c20e81ad58627ad0d961c472973)
+- chore: release @karmaniverous/jeeves-server v3.4.2 [`30e700c`](https://github.com/karmaniverous/jeeves-server/commit/30e700ca9ddaafc019cf1fc8f284f9b926e0b3e7)
 - chore: bump @karmaniverous/jeeves to 0.3.1 [`df78ac9`](https://github.com/karmaniverous/jeeves-server/commit/df78ac9a0e43b08adaac34f3476db8fe37ca78af)
 
 #### [service/3.4.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.4.0...service/3.4.1)
