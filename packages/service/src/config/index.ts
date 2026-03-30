@@ -54,6 +54,7 @@ export function loadConfig(configPath?: string): RuntimeConfig {
   } catch (err) {
     throw new Error(
       `Failed to parse config file ${resolvedPath}: ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err },
     );
   }
 

@@ -1,5 +1,4 @@
 /* eslint-disable no-undef */
-/* eslint-env node */
 
 /**
  * Downloads a pinned PlantUML jar to vendor/plantuml.jar.
