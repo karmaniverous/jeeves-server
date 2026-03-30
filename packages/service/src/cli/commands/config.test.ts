@@ -53,7 +53,7 @@ describe('jeeves-server config validate', () => {
   it('validates a valid config and prints success', async () => {
     const configPath = writeConfig(tmpDir, VALID_CONFIG);
     const { stdout } = await runCli(['config', 'validate', '-c', configPath]);
-    expect(stdout).toContain('Configuration valid');
+    expect(stdout).toContain('Config is valid');
   });
 
   it('exits with error for invalid config', async () => {

@@ -42,6 +42,11 @@ export const serverDescriptor = jeevesComponentDescriptorSchema.parse({
     const { resetConfig } = await import('./config/index.js');
     resetConfig();
   },
+  run: async (configPath: string) => {
+    const { initConfig } = await import('./config/index.js');
+    initConfig(configPath);
+    await import('./server.js');
+  },
   startCommand: (configPath: string) => [
     'node',
     startServerPath,
