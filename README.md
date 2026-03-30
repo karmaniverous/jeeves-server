@@ -19,9 +19,10 @@ This is a monorepo with two published packages:
 # Install globally
 npm install -g @karmaniverous/jeeves-server
 
-# Create a config file (JSON, YAML, JS, or TS — via cosmiconfig)
+# Create a config file (JSON only)
 # See guides/setup.md for full config reference
-cat > jeeves-server.config.json << 'EOF'
+mkdir -p jeeves-server
+cat > jeeves-server/config.json << 'EOF'
 {
   "chromePath": "/usr/bin/chromium-browser",
   "auth": {
@@ -56,19 +57,22 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 - **Event Gateway** — Webhook receiver with JSON Schema validation and durable queue
 - **Semantic Search** — Full-text search via [jeeves-watcher](https://github.com/karmaniverous/jeeves-watcher) integration
 - **OpenClaw Plugin** — AI agents can browse, share, export, and query server status via tools
-- **CLI** — `jeeves-server start`, `config validate`, `config show`, `service install`
+- **CLI** — `start`, `status`, `config [jsonpath]`, `config validate`, `config apply`, `init`, `service install/start/stop/restart`
 - **Zero CDN** — All assets served locally, no external dependencies
 
 ## Configuration
 
-Jeeves Server uses [cosmiconfig](https://github.com/cosmiconfig/cosmiconfig) for configuration. It searches for:
+Jeeves Server uses **JSON-only** configuration. The config file follows the path convention `<configDir>/jeeves-server/config.json`. Legacy paths (`jeeves-server.config.json`) are auto-migrated on first use.
 
-- `jeeves-server.config.json` / `.yaml` / `.yml`
-- `jeeves-server.config.js` / `.ts` / `.mjs` / `.cjs`
-- `.jeeves-serverrc` / `.jeeves-serverrc.json` / `.jeeves-serverrc.yaml`
-- `package.json` (`"jeeves-server"` key)
+```bash
+# Generate a starter config
+jeeves-server init --config /path/to/config-dir
 
-Configuration is validated at startup against a [Zod](https://github.com/colinhacks/zod) schema. The schema in `packages/service/src/config/schema.ts` is the single source of truth.
+# Or specify explicitly
+jeeves-server start --config /path/to/jeeves-server/config.json
+```
+
+Configuration is validated at startup against a [Zod 4](https://github.com/colinhacks/zod) schema. The schema in `packages/service/src/config/schema.ts` is the single source of truth.
 
 **Environment variable substitution:** Use `${VAR_NAME}` in string config values and they'll be replaced from `process.env` at load time.
 
@@ -80,18 +84,25 @@ See the [Setup & Configuration](packages/service/guides/setup.md) guide for full
 # Start the server
 jeeves-server start [--config <path>]
 
+# Query running server status
+jeeves-server status
+
+# Query resolved configuration (supports JSONPath)
+jeeves-server config [jsonpath] [--config <path>]
+
 # Validate configuration
 jeeves-server config validate [--config <path>]
 
-# Show resolved configuration (insiders, keys, scopes)
-jeeves-server config show [--config <path>]
+# Apply a config patch to the running server
+jeeves-server config apply [--config <path>]
 
-# Print service install/uninstall instructions (NSSM on Windows, systemd on Linux)
+# Generate a starter config file
+jeeves-server init [--config <path>]
+
+# Service management (executes directly — NSSM on Windows, systemd on Linux)
 jeeves-server service install [--config <path>] [--name <service-name>]
 jeeves-server service uninstall [--name <service-name>]
-
-# Manage installed service
-jeeves-server service start|stop|restart [--name <service-name>]
+jeeves-server service start|stop|restart|status [--name <service-name>]
 ```
 
 ## Guides

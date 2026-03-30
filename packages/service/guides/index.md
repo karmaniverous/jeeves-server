@@ -12,7 +12,7 @@ children:
 
 # Service Guides
 
-- [Setup & Configuration](./setup.md) — Installation, auth modes, cosmiconfig, named scopes, and config reference.
+- [Setup & Configuration](./setup.md) — Installation, auth modes, JSON config, named scopes, and config reference.
 - [Insiders, Outsiders & Sharing](./sharing.md) — The access model, HMAC key derivation, expiring links, and key rotation.
 - [Exporting & Downloads](./exports.md) — PDF, DOCX, SVG, PNG, and ZIP export via Puppeteer and bundled Mermaid/PlantUML.
 - [Event Gateway](./event-gateway.md) — Webhook receiving, JSON Schema matching, JsonMap body transforms, and durable queue processing.

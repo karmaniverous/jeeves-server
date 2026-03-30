@@ -4,6 +4,7 @@
 
 import fs from 'node:fs';
 
+import * as cheerio from 'cheerio';
 import type { Token } from 'marked';
 import { marked } from 'marked';
 
@@ -135,7 +136,7 @@ export function parseMarkdown(
 
     headings.push({
       level,
-      text: renderedText.replace(/<[^>]+>/g, ''),
+      text: cheerio.load(renderedText).text(),
       slug,
     });
 

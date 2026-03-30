@@ -1,4 +1,5 @@
-﻿import { z } from 'zod';
+﻿import { SERVER_PORT } from '@karmaniverous/jeeves';
+import { z } from 'zod';
 
 /** Supported authentication methods */
 export const authModeSchema = z.enum(['google', 'keys']);
@@ -99,7 +100,7 @@ function getScopeRefs(scopes: unknown): string[] {
 /** Top-level Jeeves Server configuration */
 export const jeevesConfigSchema = z
   .object({
-    port: z.number().int().positive().default(1934),
+    port: z.number().int().positive().default(SERVER_PORT),
     /**
      * Network interface to bind the server to.
      * Default: '0.0.0.0' (all interfaces — required for external access by insiders, share links, etc.)
@@ -126,7 +127,7 @@ export const jeevesConfigSchema = z
     roots: z.record(z.string(), z.string()).optional(),
     /**
      * URL of the jeeves-runner API for process dashboard proxy.
-     * Default: 'http://127.0.0.1:3100'
+     * Default: 'http://127.0.0.1:1937'
      */
     runnerUrl: z.url().optional(),
     /** @deprecated Mermaid is now bundled. This field is ignored but kept for backward compatibility. */
@@ -153,7 +154,7 @@ export const jeevesConfigSchema = z
     diagramCachePath: z.string().optional(),
     /**
      * URL of the jeeves-watcher API for semantic search.
-     * When set, the search UI appears in the header. Example: 'http://localhost:3458'
+     * When set, the search UI appears in the header. Example: 'http://127.0.0.1:1936'
      */
     watcherUrl: z.url().optional(),
     /**

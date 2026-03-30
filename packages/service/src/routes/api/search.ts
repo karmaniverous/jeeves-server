@@ -1,18 +1,20 @@
 /**
  * Search API route — proxies to jeeves-watcher for semantic search.
  *
- * Handles: POST /api/search
+ * Handles: POST /api/search, GET /api/search/facets.
  * Insider-only. Results filtered by insider's scope.
+ *
+ * @packageDocumentation
  */
 
 import { stat } from 'node:fs/promises';
-import path from 'node:path';
 
 import type { FastifyPluginAsync } from 'fastify';
 import picomatch from 'picomatch';
 
 import { getConfig } from '../../config/index.js';
 import type { NormalizedScopes } from '../../config/types.js';
+import { fsPathToUrl, getRoots, urlPathToFs } from '../../util/platform.js';
 
 /** Check if a path passes the insider's scope rules. */
 function pathAllowedByScope(
@@ -69,62 +71,6 @@ interface GroupedResult {
   }>;
 }
 
-/**
- * Resolve a browse path back to a filesystem path using roots config.
- * Inverse of fsPathToBrowsePath.
- */
-function browsePathToFsPath(
-  browsePath: string,
-  roots: Record<string, string>,
-): string | null {
-  const parts = browsePath.split('/');
-  const label = parts[0];
-  const rest = parts.slice(1).join('/');
-
-  // Check if label matches a root
-  if (roots[label]) {
-    return path.join(roots[label], rest);
-  }
-
-  // Windows drive letter: j/foo/bar → J:\foo\bar
-  if (/^[a-zA-Z]$/.test(label)) {
-    return `${label.toUpperCase()}:\\${rest.replace(/\//g, '\\')}`;
-  }
-
-  return null;
-}
-
-/**
- * Convert an absolute filesystem path to a browse URL path.
- * Maps drive letters and root mounts back to the URL scheme.
- */
-function fsPathToBrowsePath(
-  fsPath: string,
-  roots: Record<string, string>,
-): string | null {
-  const normalized = fsPath.replace(/\\/g, '/');
-
-  // Windows drive letter: j:/foo/bar → j/foo/bar
-  const driveMatch = normalized.match(/^([a-zA-Z]):\/(.*)$/);
-  if (driveMatch) {
-    return `${driveMatch[1].toLowerCase()}/${driveMatch[2]}`;
-  }
-
-  // Linux roots: find matching root prefix
-  for (const [label, rootPath] of Object.entries(roots)) {
-    const normalizedRoot = rootPath.replace(/\\/g, '/').replace(/\/$/, '');
-    if (normalized.startsWith(normalizedRoot + '/')) {
-      const relative = normalized.slice(normalizedRoot.length + 1);
-      return `${label}/${relative}`;
-    }
-    if (normalized === normalizedRoot) {
-      return label;
-    }
-  }
-
-  return null;
-}
-
 // eslint-disable-next-line @typescript-eslint/require-await
 export const searchRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post<{
@@ -150,7 +96,7 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const insiderScopes = request.insiderScopes;
-    const roots = config.roots ?? {};
+    const roots = getRoots(config.roots);
 
     // Over-fetch to account for scope filtering
     const fetchLimit = Math.min(limit * 5, 200);
@@ -177,11 +123,11 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
         const fp = r.payload.file_path;
         if (!fp) continue;
 
-        const browsePath = fsPathToBrowsePath(fp, roots);
-        if (!browsePath) continue;
+        const urlPath = fsPathToUrl(fp, roots);
+        // fsPathToUrl returns "/drive/path"; strip leading slash for browsePath
+        const browsePath = urlPath.replace(/^\//, '');
 
         // Check insider scope
-        const urlPath = `/${browsePath}`;
         if (!pathAllowedByScope(urlPath, insiderScopes ?? null)) continue;
 
         permitted.push({ ...r, browsePath });
@@ -248,7 +194,7 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
       await Promise.all(
         grouped.map(async (g) => {
           g.chunks.sort((a, b) => a.index - b.index);
-          const fsPath = browsePathToFsPath(g.browsePath, roots);
+          const fsPath = urlPathToFs(g.browsePath, roots);
           if (fsPath) {
             try {
               const s = await stat(fsPath);

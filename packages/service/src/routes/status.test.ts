@@ -31,7 +31,7 @@ vi.mock('../config/index.js', () => ({
 const { statusRoutes } = await import('./status.js');
 
 describe('GET /status', () => {
-  it('returns structured status', async () => {
+  it('returns structured status with SDK shape', async () => {
     // Create a minimal Fastify-like test harness
     const routes: Record<string, (req: unknown) => Promise<unknown>> = {};
     const fakeFastify = {
@@ -48,14 +48,20 @@ describe('GET /status', () => {
     const result = await handler({ accessMode: 'insider', query: {} });
     const status = result as Record<string, unknown>;
 
+    // Standard SDK fields at top level
+    expect(status).toHaveProperty('name', 'server');
     expect(status).toHaveProperty('version');
     expect(status).toHaveProperty('uptime');
-    expect(status.port).toBe(1934);
-    expect((status.chrome as { configured: boolean }).configured).toBe(true);
-    expect((status.auth as { insiderCount: number }).insiderCount).toBe(2);
-    expect((status.auth as { keyCount: number }).keyCount).toBe(1);
-    expect(status.events).toHaveLength(2);
-    const exports = status.exports as {
+    expect(status).toHaveProperty('status', 'healthy');
+
+    // Server-specific fields nested under health
+    const health = status.health as Record<string, unknown>;
+    expect(health.port).toBe(1934);
+    expect((health.chrome as { configured: boolean }).configured).toBe(true);
+    expect((health.auth as { insiderCount: number }).insiderCount).toBe(2);
+    expect((health.auth as { keyCount: number }).keyCount).toBe(1);
+    expect(health.events).toHaveLength(2);
+    const exports = health.exports as {
       documents: string[];
       directories: string[];
       diagrams: string[];
@@ -65,6 +71,6 @@ describe('GET /status', () => {
     expect(exports.directories).toEqual(['zip']);
     expect(exports.diagrams).toEqual(['svg', 'png']);
     expect(exports.chromeAvailable).toBe(true);
-    expect((status.diagrams as { mermaid: boolean }).mermaid).toBe(true);
+    expect((health.diagrams as { mermaid: boolean }).mermaid).toBe(true);
   });
 });

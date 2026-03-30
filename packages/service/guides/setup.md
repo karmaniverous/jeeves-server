@@ -1,3 +1,7 @@
+---
+title: "Setup & Configuration"
+---
+
 # Setup & Configuration
 
 ## Prerequisites
@@ -15,26 +19,17 @@ The `postinstall` script automatically downloads the PlantUML jar for local diag
 
 ## Configuration
 
-Jeeves Server uses [cosmiconfig](https://github.com/cosmiconfig/cosmiconfig) for configuration. Create a config file in any supported format:
+Jeeves Server uses **JSON-only** configuration. Config files follow the path convention `<configDir>/jeeves-server/config.json`.
 
 ```bash
-# JSON (recommended for simplicity)
-jeeves-server.config.json
+# Generate a starter config
+jeeves-server init --config /path/to/config-dir
 
-# YAML
-jeeves-server.config.yaml
-
-# TypeScript (for type checking during authoring)
-jeeves-server.config.ts
-
-# Or any cosmiconfig-supported format
+# Or specify an explicit path
+jeeves-server start --config /path/to/jeeves-server/config.json
 ```
 
-The server searches for config files starting from its working directory and walking up. You can also specify an explicit path:
-
-```bash
-jeeves-server start --config /path/to/jeeves-server.config.json
-```
+Legacy paths (`jeeves-server.config.json`) are auto-migrated to the new convention on first use.
 
 ### Config structure (JSON)
 
@@ -96,7 +91,13 @@ String values in the config support `${VAR_NAME}` substitution from `process.env
 jeeves-server config validate [--config <path>]
 ```
 
-This loads and validates the config against the Zod schema, reporting any errors. Use `config show` to see the fully resolved configuration with all derived keys and scope assignments.
+This loads and validates the config against the Zod schema, reporting any errors. Use `config [jsonpath]` to query the fully resolved configuration:
+
+```bash
+jeeves-server config                        # Full resolved config
+jeeves-server config '$.port'               # Query specific field
+jeeves-server config '$.auth.modes'         # Nested query
+```
 
 ### Platform-specific settings
 

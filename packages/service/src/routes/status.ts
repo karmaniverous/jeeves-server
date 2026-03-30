@@ -1,17 +1,15 @@
 /**
- * Server status endpoint — structured metadata for diagnostics and TOOLS.md generation.
+ * Server status endpoint — uses the SDK's `createStatusHandler` factory.
  *
- * Returns version, uptime, port, connected services reachability,
- * event schemas, insider count (no PII), and export capabilities.
+ * Returns standard `{ name, version, uptime, status, health }` shape
+ * with server-specific details nested under `health`.
  */
 
+import { createStatusHandler } from '@karmaniverous/jeeves';
 import type { FastifyPluginAsync } from 'fastify';
 
 import { getConfig } from '../config/index.js';
-import { getRecentEvents } from '../services/eventLog.js';
 import { packageVersion } from '../util/packageVersion.js';
-
-const startTime = Date.now();
 
 interface ServiceStatus {
   url: string;
@@ -20,7 +18,6 @@ interface ServiceStatus {
 }
 
 async function checkService(url: string): Promise<ServiceStatus> {
-  // Try /status first (watcher), then /health (runner)
   for (const endpoint of ['/status', '/health']) {
     try {
       const res = await fetch(`${url}${endpoint}`, {
@@ -37,62 +34,59 @@ async function checkService(url: string): Promise<ServiceStatus> {
   return { url, reachable: false };
 }
 
+const handleStatus = createStatusHandler({
+  name: 'server',
+  version: packageVersion,
+  getHealth: async () => {
+    const config = getConfig();
+
+    const [watcher, runner, meta] = await Promise.all([
+      config.watcherUrl ? checkService(config.watcherUrl) : null,
+      config.runnerUrl ? checkService(config.runnerUrl) : null,
+      config.metaUrl ? checkService(config.metaUrl) : null,
+    ]);
+
+    return {
+      port: config.port,
+      chrome: {
+        configured: Boolean(config.chromePath),
+        path: config.chromePath,
+      },
+      auth: {
+        modes: config.authModes,
+        insiderCount: config.resolvedInsiders.length,
+        keyCount: config.resolvedKeys.length,
+      },
+      events: Object.entries(config.events).map(([name, schema]) => ({
+        name,
+        cmd: schema.cmd,
+      })),
+      exports: {
+        documents: ['pdf', 'docx'],
+        directories: ['zip'],
+        diagrams: ['svg', 'png'],
+        chromeAvailable: Boolean(config.chromePath),
+      },
+      diagrams: {
+        mermaid: true,
+        plantuml: {
+          localJar: Boolean(config.plantuml.jarPath),
+          servers: config.plantuml.servers,
+        },
+      },
+      services: {
+        watcher,
+        runner,
+        meta,
+      },
+    };
+  },
+});
+
 // eslint-disable-next-line @typescript-eslint/require-await
 export const statusRoutes: FastifyPluginAsync = async (fastify) => {
-  fastify.get<{ Querystring: { events?: string } }>(
-    '/status',
-    async (request) => {
-      const config = getConfig();
-
-      const [watcher, runner, meta] = await Promise.all([
-        config.watcherUrl ? checkService(config.watcherUrl) : null,
-        config.runnerUrl ? checkService(config.runnerUrl) : null,
-        config.metaUrl ? checkService(config.metaUrl) : null,
-      ]);
-
-      return {
-        version: packageVersion,
-        uptime: Math.floor((Date.now() - startTime) / 1000),
-        port: config.port,
-        chrome: {
-          configured: Boolean(config.chromePath),
-          path: config.chromePath,
-        },
-        auth: {
-          modes: config.authModes,
-          insiderCount: config.resolvedInsiders.length,
-          keyCount: config.resolvedKeys.length,
-        },
-        events: Object.entries(config.events).map(([name, schema]) => ({
-          name,
-          cmd: schema.cmd,
-        })),
-        exports: {
-          documents: ['pdf', 'docx'],
-          directories: ['zip'],
-          diagrams: ['svg', 'png'],
-          chromeAvailable: Boolean(config.chromePath),
-        },
-        diagrams: {
-          mermaid: true,
-          plantuml: {
-            localJar: Boolean(config.plantuml.jarPath),
-            servers: config.plantuml.servers,
-          },
-        },
-        services: {
-          watcher,
-          runner,
-          meta,
-        },
-        ...(request.query.events
-          ? {
-              eventLog: getRecentEvents(
-                Math.min(parseInt(request.query.events, 10) || 20, 100),
-              ),
-            }
-          : {}),
-      };
-    },
-  );
+  fastify.get('/status', async () => {
+    const result = await handleStatus();
+    return result.body;
+  });
 };

@@ -1,3 +1,7 @@
+---
+title: "Exporting & Downloads"
+---
+
 # Exporting & Downloads
 
 Jeeves Server can export files as PDF, DOCX, or ZIP — turning Markdown into business-ready documents with one click.

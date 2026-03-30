@@ -36,28 +36,26 @@ describe('loadConfig', () => {
     clearConfig();
   });
 
-  it('loads a valid JSON config file', async () => {
+  it('loads a valid JSON config file', () => {
     const configPath = writeConfig(tmpDir, VALID_CONFIG);
-    const config = await loadConfig(configPath);
+    const config = loadConfig(configPath);
     expect(config.port).toBe(9999);
     expect(config.chromePath).toBe('/usr/bin/chromium');
-    expect(config.configPath).toBe(configPath);
+    // Migration moves jeeves-server.config.json → jeeves-server/config.json
+    const expectedPath = path.join(tmpDir, 'jeeves-server', 'config.json');
+    expect(config.configPath).toBe(expectedPath);
   });
 
-  it('throws on missing config', async () => {
-    await expect(
-      loadConfig(path.join(tmpDir, 'nonexistent.json')),
-    ).rejects.toThrow();
+  it('throws on missing config', () => {
+    expect(() => loadConfig(path.join(tmpDir, 'nonexistent.json'))).toThrow();
   });
 
-  it('throws on invalid config (missing auth)', async () => {
+  it('throws on invalid config (missing auth)', () => {
     const configPath = writeConfig(tmpDir, { port: 1234 });
-    await expect(loadConfig(configPath)).rejects.toThrow(
-      'Invalid configuration',
-    );
+    expect(() => loadConfig(configPath)).toThrow('Invalid configuration');
   });
 
-  it('applies env var substitution', async () => {
+  it('applies env var substitution', () => {
     const original = process.env['TEST_CHROME_PATH'];
     process.env['TEST_CHROME_PATH'] = '/custom/chrome';
     try {
@@ -65,7 +63,7 @@ describe('loadConfig', () => {
         ...VALID_CONFIG,
         chromePath: '${TEST_CHROME_PATH}',
       });
-      const config = await loadConfig(configPath);
+      const config = loadConfig(configPath);
       expect(config.chromePath).toBe('/custom/chrome');
     } finally {
       if (original === undefined) delete process.env['TEST_CHROME_PATH'];
@@ -73,15 +71,15 @@ describe('loadConfig', () => {
     }
   });
 
-  it('applies default port when omitted', async () => {
+  it('applies default port when omitted', () => {
     const noPort = { ...VALID_CONFIG };
     delete (noPort as Record<string, unknown>).port;
     const configPath = writeConfig(tmpDir, noPort);
-    const config = await loadConfig(configPath);
+    const config = loadConfig(configPath);
     expect(config.port).toBe(1934);
   });
 
-  it('rejects _plugin key with scopes', async () => {
+  it('rejects _plugin key with scopes', () => {
     const configPath = writeConfig(tmpDir, {
       ...VALID_CONFIG,
       keys: {
@@ -89,12 +87,12 @@ describe('loadConfig', () => {
         _plugin: { key: 'c'.repeat(64), scopes: ['/restricted'] },
       },
     });
-    await expect(loadConfig(configPath)).rejects.toThrow(
+    expect(() => loadConfig(configPath)).toThrow(
       '_plugin key must not have scopes',
     );
   });
 
-  it('rejects _internal key with scopes', async () => {
+  it('rejects _internal key with scopes', () => {
     const configPath = writeConfig(tmpDir, {
       ...VALID_CONFIG,
       keys: {
@@ -102,12 +100,12 @@ describe('loadConfig', () => {
         _internal: { key: 'b'.repeat(64), scopes: ['/restricted'] },
       },
     });
-    await expect(loadConfig(configPath)).rejects.toThrow(
+    expect(() => loadConfig(configPath)).toThrow(
       '_internal key must not have scopes',
     );
   });
 
-  it('accepts _plugin key without scopes', async () => {
+  it('accepts _plugin key without scopes', () => {
     const configPath = writeConfig(tmpDir, {
       ...VALID_CONFIG,
       keys: {
@@ -115,13 +113,13 @@ describe('loadConfig', () => {
         _plugin: 'c'.repeat(64),
       },
     });
-    const config = await loadConfig(configPath);
+    const config = loadConfig(configPath);
     expect(config.resolvedKeys.find((k) => k.name === '_plugin')?.seed).toBe(
       'c'.repeat(64),
     );
   });
 
-  it('rejects undefined named scope references', async () => {
+  it('rejects undefined named scope references', () => {
     const configPath = writeConfig(tmpDir, {
       ...VALID_CONFIG,
       scopes: { restricted: { allow: ['/**'], deny: ['/secret'] } },
@@ -131,12 +129,12 @@ describe('loadConfig', () => {
       },
     });
 
-    await expect(loadConfig(configPath)).rejects.toThrow(
+    expect(() => loadConfig(configPath)).toThrow(
       'Scope "missing" is not defined',
     );
   });
 
-  it('does not treat path globs as named scope references', async () => {
+  it('does not treat path globs as named scope references', () => {
     const configPath = writeConfig(tmpDir, {
       ...VALID_CONFIG,
       insiders: {
@@ -144,7 +142,7 @@ describe('loadConfig', () => {
       },
     });
 
-    const config = await loadConfig(configPath);
+    const config = loadConfig(configPath);
     expect(
       config.resolvedInsiders.find((i) => i.email === 'a@example.com')?.scopes,
     ).toEqual({
@@ -173,16 +171,16 @@ describe('config singleton', () => {
     expect(() => getConfig()).toThrow('Config not initialized');
   });
 
-  it('initConfig populates getConfig', async () => {
+  it('initConfig populates getConfig', () => {
     const configPath = writeConfig(tmpDir, VALID_CONFIG);
-    await initConfig(configPath);
+    initConfig(configPath);
     const config = getConfig();
     expect(config.port).toBe(9999);
   });
 
-  it('clearConfig clears the singleton', async () => {
+  it('clearConfig clears the singleton', () => {
     const configPath = writeConfig(tmpDir, VALID_CONFIG);
-    await initConfig(configPath);
+    initConfig(configPath);
     clearConfig();
     expect(() => getConfig()).toThrow('Config not initialized');
   });

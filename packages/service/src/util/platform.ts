@@ -10,7 +10,7 @@ import path from 'node:path';
 
 const IS_WINDOWS = process.platform === 'win32';
 
-interface RootEntry {
+export interface RootEntry {
   /** URL-safe identifier (drive letter lowercase on Windows, mount name on Linux) */
   id: string;
   /** Display label */

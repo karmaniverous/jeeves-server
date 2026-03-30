@@ -1,4 +1,4 @@
-import { Moon, Sun, BookOpen, KeyRound, Github, Search, Activity } from 'lucide-react';
+import { Moon, Sun, BookOpen, KeyRound, GitBranch, Search, Activity } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -133,7 +133,7 @@ export function Header({
     breakpoint: 'md',
     node: (
       <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className={menuItemClass}>
-        <Github className="h-4 w-4 shrink-0" />
+        <GitBranch className="h-4 w-4 shrink-0" />
         GitHub
       </a>
     ),
@@ -239,7 +239,7 @@ export function Header({
           {/* GitHub: visible md+ (768px) */}
           <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" title="GitHub" className="hidden md:inline-flex">
             <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white hover:bg-white/10 h-8 w-8">
-              <Github className="h-4 w-4" />
+              <GitBranch className="h-4 w-4" />
             </Button>
           </a>
 

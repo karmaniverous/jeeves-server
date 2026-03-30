@@ -6,24 +6,26 @@
  */
 
 import { createRequire } from 'node:module';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 
 import {
   type ComponentWriter,
   createAsyncContentCache,
   createComponentWriter,
+  createPluginToolset,
   init,
+  jeevesComponentDescriptorSchema,
   type PluginApi,
   resolvePluginSetting,
   resolveWorkspacePath,
+  SERVER_PORT,
 } from '@karmaniverous/jeeves';
+import { z } from 'zod';
 
 import { PLUGIN_ID } from './constants.js';
 import { generateServerMenu } from './promptInjection.js';
 import { registerServerTools } from './serverTools.js';
-import {
-  createPluginCommands,
-  createServiceCommands,
-} from './serviceCommands.js';
 
 /** Plugin version derived from package.json at runtime. */
 const require = createRequire(import.meta.url);
@@ -59,6 +61,60 @@ function getConfigRoot(api: PluginApi): string {
   );
 }
 
+/** Resolve the globally installed service CLI entry point on Windows. */
+function getGlobalServiceCliEntry(): string {
+  const appData =
+    process.env['APPDATA'] ?? join(homedir(), 'AppData', 'Roaming');
+  return join(
+    appData,
+    'npm',
+    'node_modules',
+    '@karmaniverous',
+    'jeeves-server',
+    'dist',
+    'src',
+    'cli',
+    'index.js',
+  );
+}
+
+/** Build the command used by service managers to launch jeeves-server. */
+function getServiceStartCommand(configPath: string): string[] {
+  if (process.platform === 'win32') {
+    return [
+      process.execPath,
+      getGlobalServiceCliEntry(),
+      'start',
+      '--config',
+      configPath,
+    ];
+  }
+
+  return ['jeeves-server', 'start', '--config', configPath];
+}
+
+/**
+ * Build the plugin-side descriptor used by the ComponentWriter and standard
+ * plugin toolset.
+ */
+function createPluginDescriptor(generateToolsContent: () => string) {
+  return jeevesComponentDescriptorSchema.parse({
+    name: 'server',
+    version: PLUGIN_VERSION,
+    servicePackage: '@karmaniverous/jeeves-server',
+    pluginPackage: '@karmaniverous/jeeves-server-openclaw',
+    defaultPort: SERVER_PORT,
+    configSchema: z.looseObject({}),
+    configFileName: 'config.json',
+    initTemplate: () => ({}),
+    startCommand: getServiceStartCommand,
+    sectionId: 'Server',
+    refreshIntervalSeconds: REFRESH_INTERVAL_SECONDS,
+    generateToolsContent,
+    dependencies: { hard: [], soft: ['watcher', 'runner', 'meta'] },
+  });
+}
+
 /** Register all jeeves-server tools and start the TOOLS.md writer. */
 export default function register(api: PluginApi): void {
   // Stop any previous writer to prevent timer leaks on re-registration.
@@ -68,12 +124,10 @@ export default function register(api: PluginApi): void {
   }
 
   const baseUrl = getServiceUrl(api);
-  registerServerTools(api, baseUrl);
 
-  // Initialize jeeves-core
+  // Initialize jeeves-core before creating descriptors/writers.
   const workspacePath = resolveWorkspacePath(api);
   const configRoot = getConfigRoot(api);
-
   init({ workspacePath, configRoot });
 
   // Create async content cache: fetches server status on each writer cycle,
@@ -87,18 +141,14 @@ export default function register(api: PluginApi): void {
     },
   });
 
-  // Create and start the component writer
-  activeWriter = createComponentWriter({
-    name: 'server',
-    version: PLUGIN_VERSION,
-    sectionId: 'Server',
-    refreshIntervalSeconds: REFRESH_INTERVAL_SECONDS,
-    generateToolsContent: getContent,
-    serviceCommands: createServiceCommands(),
-    pluginCommands: createPluginCommands(),
-    servicePackage: '@karmaniverous/jeeves-server',
-    pluginPackage: '@karmaniverous/jeeves-server-openclaw',
-  });
+  const descriptor = createPluginDescriptor(getContent);
 
+  for (const tool of createPluginToolset(descriptor)) {
+    api.registerTool(tool, { optional: true });
+  }
+
+  registerServerTools(api, baseUrl);
+
+  activeWriter = createComponentWriter(descriptor);
   activeWriter.start();
 }

@@ -491,7 +491,17 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
       const res = await searchDocuments(q, 30, filter);
       setResults(res.results);
     } catch (err) {
-      setError(String(err));
+      const raw = String(err);
+      if (raw.includes('502') || raw.includes('Watcher unreachable'))
+        setError('Search service is unavailable. Please try again later.');
+      else if (raw.includes('501') || raw.includes('not configured'))
+        setError('Search is not configured on this server.');
+      else if (raw.includes('403'))
+        setError('You do not have permission to search.');
+      else if (raw.includes('400'))
+        setError('Invalid search query. Please revise and try again.');
+      else
+        setError('Search failed. Please try again later.');
     } finally {
       setLoading(false);
     }

@@ -1,3 +1,7 @@
+---
+title: "API & Integration Guide"
+---
+
 # API & Integration Guide
 
 How to interact with Jeeves Server programmatically — for scripts, bots, AI assistants, and CI/CD pipelines.

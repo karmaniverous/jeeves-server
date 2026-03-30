@@ -2,6 +2,8 @@
  * Sharing API routes.
  *
  * Handles: /api/share, /api/util/share-for, /api/readme-link, /api/rotate-key
+ *
+ * @packageDocumentation
  */
 
 import crypto from 'node:crypto';
@@ -9,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginAsync, FastifyReply } from 'fastify';
 
 import { _pathMatchesScopes } from '../../auth/keys.js';
 import { findInsider } from '../../auth/resolve.js';
@@ -24,20 +26,41 @@ import {
 import { fsPathToUrl, getRoots } from '../../util/platform.js';
 import { setInsiderKey } from '../../util/state.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const serverRoot = path.resolve(__dirname, '..', '..', '..');
+
+/** Build a deep-share browse URL from its constituent parts. */
+function buildDeepShareUrl(
+  targetPath: string,
+  key: string,
+  params: { depth: number; dirs: boolean; stack: string; exp?: string },
+): string {
+  let url = `/browse${targetPath}?key=${key}&d=${String(params.depth)}&dirs=${params.dirs ? '1' : '0'}&s=${params.stack}`;
+  if (params.exp) url += `&exp=${params.exp}`;
+  return url;
+}
+
 // eslint-disable-next-line @typescript-eslint/require-await
 export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
   const roots = getRoots(getConfig().roots);
 
+  /** Resolve the _internal key seed, or send a 503 error. */
+  function getInternalSeed(reply: FastifyReply): string | null {
+    const internalKey = getConfig().resolvedKeys.find(
+      (k) => k.name === '_internal',
+    );
+    if (!internalKey?.seed) {
+      void reply.code(503).send({ error: 'No _internal key configured' });
+      return null;
+    }
+    return internalKey.seed;
+  }
+
   // GET /api/readme-link
   fastify.get('/api/readme-link', async (_request, reply) => {
-    const config = getConfig();
-    const internalKey = config.resolvedKeys.find((k) => k.name === '_internal');
-    if (!internalKey?.seed)
-      return reply.code(503).send({ error: 'No _internal key configured' });
+    const seed = getInternalSeed(reply);
+    if (!seed) return;
 
-    const seed = internalKey.seed;
-    const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    const serverRoot = path.resolve(__dirname, '..', '..', '..');
     const readmePath = path.join(serverRoot, 'README.md');
     if (!fs.existsSync(readmePath))
       return reply.code(404).send({ error: 'README.md not found' });
@@ -46,25 +69,21 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
     const stack = encodeStack([urlPath]);
     const deepParams = { depth: 2, dirs: false, stack, exp: undefined };
     const key = computeDeepShareKey(seed, urlPath, deepParams);
-    const shareUrl = `/browse${urlPath}?key=${key}&d=2&dirs=0&s=${stack}`;
 
-    return reply.send({ url: shareUrl });
+    return reply.send({
+      url: buildDeepShareUrl(urlPath, key, { depth: 2, dirs: false, stack }),
+    });
   });
 
   // GET /api/content-link/:file — share link for content/*.md (terms, privacy)
   fastify.get('/api/content-link/:file', async (request, reply) => {
-    const config = getConfig();
-    const internalKey = config.resolvedKeys.find((k) => k.name === '_internal');
-    if (!internalKey?.seed)
-      return reply.code(503).send({ error: 'No _internal key configured' });
+    const seed = getInternalSeed(reply);
+    if (!seed) return;
 
     const { file } = request.params as { file: string };
     if (!/^[\w-]+$/.test(file))
       return reply.code(400).send({ error: 'Invalid file name' });
 
-    const seed = internalKey.seed;
-    const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    const serverRoot = path.resolve(__dirname, '..', '..', '..');
     const contentPath = path.join(serverRoot, 'content', `${file}.md`);
     if (!fs.existsSync(contentPath))
       return reply.code(404).send({ error: `${file}.md not found` });
@@ -73,9 +92,10 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
     const stack = encodeStack([urlPath]);
     const deepParams = { depth: 0, dirs: false, stack, exp: undefined };
     const key = computeDeepShareKey(seed, urlPath, deepParams);
-    const shareUrl = `/browse${urlPath}?key=${key}&d=0&dirs=0&s=${stack}`;
 
-    return reply.send({ url: shareUrl });
+    return reply.send({
+      url: buildDeepShareUrl(urlPath, key, { depth: 0, dirs: false, stack }),
+    });
   });
 
   // POST /api/share
@@ -100,8 +120,12 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
         exp: expiry,
       };
       outsiderKey = computeDeepShareKey(seed, targetPath, deepParams);
-      shareUrl = `/browse${targetPath}?key=${outsiderKey}&d=${String(depth ?? 0)}&dirs=${dirs ? '1' : '0'}&s=${stack}`;
-      if (expiry) shareUrl += `&exp=${expiry}`;
+      shareUrl = buildDeepShareUrl(targetPath, outsiderKey, {
+        depth: depth ?? 0,
+        dirs: dirs ?? false,
+        stack,
+        exp: expiry,
+      });
     } else if (expiry) {
       outsiderKey = computeOutsiderKeyWithExpiry(seed, targetPath, expiry);
       shareUrl = `/browse${targetPath}?key=${outsiderKey}&exp=${expiry}`;
@@ -120,7 +144,7 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // POST /api/rotate-key
-  fastify.post('/api/rotate-key', async (request, reply) => {
+  fastify.post('/api/rotate-key', (request, reply) => {
     const insiderEmail = request.insiderEmail;
     if (!insiderEmail)
       return reply.code(403).send({ error: 'Insider auth required' });
@@ -132,7 +156,7 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
     const newSeed = crypto.randomBytes(32).toString('hex');
     const now = new Date().toISOString();
     setInsiderKey(insider.email, newSeed, now);
-    await resetConfig();
+    resetConfig();
 
     return reply.send({ ok: true, keyCreatedAt: now });
   });

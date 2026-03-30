@@ -16,7 +16,7 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
     '/path/*',
     async (request, reply) => {
       const reqPath = request.params['*'];
-      const url = new URL(request.url, 'http://localhost');
+      const url = new URL(request.url, 'http://127.0.0.1');
       const query = url.search;
       return reply.redirect(`/browse/${reqPath}${query}`);
     },

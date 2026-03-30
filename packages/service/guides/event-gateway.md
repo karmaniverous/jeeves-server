@@ -1,3 +1,7 @@
+---
+title: "Event Gateway"
+---
+
 # Event Gateway
 
 Jeeves Server includes a webhook gateway that receives HTTP POST requests, validates them against JSON Schema rules, and dispatches matched events to shell commands via a durable queue.

@@ -1,3 +1,7 @@
+---
+title: "Insiders, Outsiders & Sharing"
+---
+
 # Insiders, Outsiders & Sharing
 
 Jeeves Server has a clear access model built around two roles: **insiders** and **outsiders**. Understanding the difference is key to using sharing effectively.
