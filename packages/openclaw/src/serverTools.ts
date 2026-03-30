@@ -1,5 +1,8 @@
 /**
- * Server tool registrations (server_* tools) for the OpenClaw plugin.
+ * Domain-specific server tool registrations for the OpenClaw plugin.
+ *
+ * Standard tools (`server_status`, `server_config`, `server_config_apply`,
+ * `server_service`) come from `createPluginToolset(descriptor)` in core.
  */
 
 import {
@@ -18,6 +21,11 @@ function normalizePath(params: Record<string, unknown>): string {
   return String(params.path).replace(/^\//, '');
 }
 
+/** Resolve a possibly-relative API URL against the configured base URL. */
+function toAbsoluteUrl(baseUrl: string, url: string): string {
+  return new URL(url, baseUrl).toString();
+}
+
 /** Config for a server API tool. */
 interface ApiToolConfig {
   name: string;
@@ -27,6 +35,12 @@ interface ApiToolConfig {
   buildRequest: (
     params: Record<string, unknown>,
   ) => [string, string?, unknown?];
+  /** Optional response transformer. */
+  transformResponse?: (
+    data: unknown,
+    baseUrl: string,
+    params: Record<string, unknown>,
+  ) => unknown;
 }
 
 /** Register a single API tool with standard try/catch + ok/connectionFail. */
@@ -55,10 +69,13 @@ function registerApiTool(
             init.headers = { 'Content-Type': 'application/json' };
             init.body = JSON.stringify(body);
           }
-          const data = await fetchJson(
+          const rawData = await fetchJson(
             url,
             Object.keys(init).length > 0 ? init : undefined,
           );
+          const data = config.transformResponse
+            ? config.transformResponse(rawData, baseUrl, params)
+            : rawData;
           return ok(data);
         } catch (error) {
           return connectionFail(error, baseUrl, PLUGIN_ID);
@@ -69,18 +86,11 @@ function registerApiTool(
   );
 }
 
-/** Register all server_* tools with the OpenClaw plugin API. */
+/** Register all domain-specific server_* tools with the OpenClaw plugin API. */
 export function registerServerTools(api: PluginApi, baseUrl: string): void {
   const keySeed = getPluginKey(api);
 
   const tools: ApiToolConfig[] = [
-    {
-      name: 'server_status',
-      description:
-        'Get jeeves-server health: version, uptime, port, Chrome availability, export formats, connected services.',
-      parameters: { type: 'object', properties: {} },
-      buildRequest: () => ['/status'],
-    },
     {
       name: 'server_link_info',
       description:
@@ -122,7 +132,7 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
     {
       name: 'server_share',
       description:
-        'Generate a share link for a path. Returns an HMAC-signed URL with optional expiry and directory depth.',
+        'Generate a share link for a path. Returns an HMAC-signed page URL and raw URL (when applicable), with optional expiry and directory depth.',
       parameters: {
         type: 'object',
         properties: {
@@ -157,6 +167,27 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
         if (params.dirs !== undefined) body.dirs = params.dirs;
         return ['/api/share', 'POST', body];
       },
+      transformResponse: (data, baseUrl) => {
+        const result = data as {
+          url?: string;
+          path?: string;
+          exp?: string | null;
+          depth?: number;
+          dirs?: boolean;
+        };
+        const pageUrl = result.url ? toAbsoluteUrl(baseUrl, result.url) : null;
+        const rawUrl =
+          pageUrl && !result.dirs && (result.depth ?? 0) === 0
+            ? pageUrl.replace('/browse/', '/raw/')
+            : null;
+
+        return {
+          ...result,
+          url: pageUrl,
+          pageUrl,
+          rawUrl,
+        };
+      },
     },
     {
       name: 'server_export',
@@ -183,6 +214,13 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
         return ['/api/export/' + p + '?format=' + fmt];
       },
     },
+  ];
+
+  for (const tool of tools) {
+    registerApiTool(api, baseUrl, keySeed, tool);
+  }
+
+  api.registerTool(
     {
       name: 'server_event_status',
       description:
@@ -197,14 +235,38 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
           },
         },
       },
-      buildRequest: (params) => {
-        const limit = params.limit ? String(params.limit as number) : '20';
-        return ['/status?events=' + limit];
+      execute: async (
+        _id: string,
+        params: Record<string, unknown>,
+      ): Promise<ToolResult> => {
+        const limit = params.limit ? Number(params.limit) : 20;
+
+        try {
+          const [statusData, recentEvents] = await Promise.all([
+            fetchJson(baseUrl + '/status'),
+            fetchJson(
+              withAuth(baseUrl + `/api/events?limit=${String(limit)}`, keySeed),
+            ),
+          ]);
+
+          const health =
+            (statusData as { health?: { events?: unknown[] } }).health ?? {};
+          const activeSchemas = Array.isArray(health.events)
+            ? health.events
+            : [];
+          const recent = Array.isArray(recentEvents) ? recentEvents : [];
+
+          return ok({
+            activeSchemas,
+            schemaCount: activeSchemas.length,
+            recentEvents: recent,
+            recentCount: recent.length,
+          });
+        } catch (error) {
+          return connectionFail(error, baseUrl, PLUGIN_ID);
+        }
       },
     },
-  ];
-
-  for (const tool of tools) {
-    registerApiTool(api, baseUrl, keySeed, tool);
-  }
+    { optional: true },
+  );
 }

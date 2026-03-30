@@ -4,24 +4,35 @@
 
 import { fetchJson } from '@karmaniverous/jeeves';
 
-interface StatusResponse {
-  version?: string;
-  uptime?: number;
+interface ServiceProbe {
+  url: string;
+  reachable: boolean;
+}
+
+interface HealthPayload {
   port?: number;
-  chrome?: boolean;
+  chrome?: { configured?: boolean; path?: string | null };
   exports?: {
     documents?: string[];
     directories?: string[];
     diagrams?: string[];
     chromeAvailable?: boolean;
   };
-  services?: Record<string, { url: string; reachable: boolean }>;
+  services?: Record<string, ServiceProbe>;
   auth?: { insiderCount?: number; keyCount?: number };
   events?: Array<{ name: string; cmd?: string; pattern?: string }>;
   diagrams?: {
     mermaid?: boolean;
     plantuml?: { localJar?: boolean; servers?: string[] };
   };
+}
+
+interface StatusResponse {
+  name?: string;
+  version?: string;
+  uptime?: number;
+  status?: string;
+  health?: HealthPayload;
 }
 
 /**
@@ -35,37 +46,33 @@ export async function generateServerMenu(apiUrl: string): Promise<string> {
       signal: AbortSignal.timeout(5000),
     })) as StatusResponse;
   } catch {
-    return `> **ACTION REQUIRED: jeeves-server is unreachable.**
-> The server API at ${apiUrl} is down or not configured.
->
-> **Troubleshooting:**
-> - Check if the JeevesServer service is running
-> - Verify the apiUrl in plugins.entries.jeeves-server-openclaw.config
-> - Try: \`jeeves-server service start\``;
+    return '> jeeves-server status unavailable.';
   }
 
+  const health = status.health ?? {};
+
   const lines: string[] = [
-    `jeeves-server v${status.version ?? 'unknown'} running on port ${String(status.port ?? 'unknown')}.`,
+    `jeeves-server v${status.version ?? 'unknown'} running on port ${String(health.port ?? 'unknown')}.`,
     '',
   ];
 
   // Export capabilities
-  if (status.exports) {
+  if (health.exports) {
     lines.push('### Export');
-    if (status.exports.documents) {
+    if (health.exports.documents) {
       lines.push(
         '* **Documents** (Markdown/HTML): ' +
-          status.exports.documents.join(', '),
+          health.exports.documents.join(', '),
       );
-      if (!status.exports.chromeAvailable) {
-        lines.push('  > Chrome not detected \u2014 PDF export unavailable.');
+      if (!health.exports.chromeAvailable) {
+        lines.push('  > Chrome not detected — PDF export unavailable.');
       }
     }
-    if (status.exports.directories) {
-      lines.push('* **Directories**: ' + status.exports.directories.join(', '));
+    if (health.exports.directories) {
+      lines.push('* **Directories**: ' + health.exports.directories.join(', '));
     }
-    if (status.exports.diagrams) {
-      lines.push('* **Diagrams**: ' + status.exports.diagrams.join(', '));
+    if (health.exports.diagrams) {
+      lines.push('* **Diagrams**: ' + health.exports.diagrams.join(', '));
     }
     lines.push('* **All files**: raw download');
     lines.push(
@@ -75,11 +82,11 @@ export async function generateServerMenu(apiUrl: string): Promise<string> {
   }
 
   // Diagram support
-  if (status.diagrams) {
+  if (health.diagrams) {
     const langs: string[] = [];
-    if (status.diagrams.mermaid) langs.push('Mermaid');
-    if (status.diagrams.plantuml) {
-      const pl = status.diagrams.plantuml;
+    if (health.diagrams.mermaid) langs.push('Mermaid');
+    if (health.diagrams.plantuml) {
+      const pl = health.diagrams.plantuml;
       langs.push(
         'PlantUML' + (pl.localJar ? ' (local jar)' : ' (server-only)'),
       );
@@ -92,20 +99,20 @@ export async function generateServerMenu(apiUrl: string): Promise<string> {
   }
 
   // Connected services
-  if (status.services) {
+  if (health.services) {
     lines.push('### Connected Services');
-    for (const [name, svc] of Object.entries(status.services)) {
-      const icon = svc.reachable ? '\u2705' : '\u274c';
+    for (const [name, svc] of Object.entries(health.services)) {
+      const icon = svc.reachable ? '✅' : '❌';
       lines.push(`* ${icon} **${name}**: ${svc.url}`);
     }
     lines.push('');
   }
 
   // Event gateway
-  if (status.events && status.events.length > 0) {
+  if (health.events && health.events.length > 0) {
     lines.push('### Event Gateway');
     lines.push('Active schemas:');
-    for (const evt of status.events) {
+    for (const evt of health.events) {
       lines.push(
         '* **' +
           evt.name +
@@ -117,9 +124,9 @@ export async function generateServerMenu(apiUrl: string): Promise<string> {
   }
 
   // Access info
-  if (status.auth?.insiderCount !== undefined) {
+  if (health.auth?.insiderCount !== undefined) {
     lines.push('### Access');
-    lines.push(String(status.auth.insiderCount) + ' insider(s) configured.');
+    lines.push(String(health.auth.insiderCount) + ' insider(s) configured.');
     lines.push('');
   }
 

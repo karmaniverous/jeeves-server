@@ -6,11 +6,14 @@
  */
 
 import { createRequire } from 'node:module';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 
 import {
   type ComponentWriter,
   createAsyncContentCache,
   createComponentWriter,
+  createPluginToolset,
   init,
   jeevesComponentDescriptorSchema,
   type PluginApi,
@@ -58,12 +61,41 @@ function getConfigRoot(api: PluginApi): string {
   );
 }
 
+/** Resolve the globally installed service CLI entry point on Windows. */
+function getGlobalServiceCliEntry(): string {
+  const appData =
+    process.env['APPDATA'] ?? join(homedir(), 'AppData', 'Roaming');
+  return join(
+    appData,
+    'npm',
+    'node_modules',
+    '@karmaniverous',
+    'jeeves-server',
+    'dist',
+    'src',
+    'cli',
+    'index.js',
+  );
+}
+
+/** Build the command used by service managers to launch jeeves-server. */
+function getServiceStartCommand(configPath: string): string[] {
+  if (process.platform === 'win32') {
+    return [
+      process.execPath,
+      getGlobalServiceCliEntry(),
+      'start',
+      '--config',
+      configPath,
+    ];
+  }
+
+  return ['jeeves-server', 'start', '--config', configPath];
+}
+
 /**
- * Build the plugin-side descriptor used by the ComponentWriter.
- *
- * The OpenClaw plugin only needs the descriptor fields consumed by core's
- * writer/platform machinery. Server-side validation and config application are
- * handled by the running jeeves-server service itself.
+ * Build the plugin-side descriptor used by the ComponentWriter and standard
+ * plugin toolset.
  */
 function createPluginDescriptor(generateToolsContent: () => string) {
   return jeevesComponentDescriptorSchema.parse({
@@ -75,13 +107,7 @@ function createPluginDescriptor(generateToolsContent: () => string) {
     configSchema: z.looseObject({}),
     configFileName: 'config.json',
     initTemplate: () => ({}),
-    startCommand: (configPath: string) => [
-      'node',
-      'dist/src/cli/index.js',
-      'start',
-      '--config',
-      configPath,
-    ],
+    startCommand: getServiceStartCommand,
     sectionId: 'Server',
     refreshIntervalSeconds: REFRESH_INTERVAL_SECONDS,
     generateToolsContent,
@@ -98,12 +124,10 @@ export default function register(api: PluginApi): void {
   }
 
   const baseUrl = getServiceUrl(api);
-  registerServerTools(api, baseUrl);
 
-  // Initialize jeeves-core
+  // Initialize jeeves-core before creating descriptors/writers.
   const workspacePath = resolveWorkspacePath(api);
   const configRoot = getConfigRoot(api);
-
   init({ workspacePath, configRoot });
 
   // Create async content cache: fetches server status on each writer cycle,
@@ -117,6 +141,14 @@ export default function register(api: PluginApi): void {
     },
   });
 
-  activeWriter = createComponentWriter(createPluginDescriptor(getContent));
+  const descriptor = createPluginDescriptor(getContent);
+
+  for (const tool of createPluginToolset(descriptor)) {
+    api.registerTool(tool, { optional: true });
+  }
+
+  registerServerTools(api, baseUrl);
+
+  activeWriter = createComponentWriter(descriptor);
   activeWriter.start();
 }

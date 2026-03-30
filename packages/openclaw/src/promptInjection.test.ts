@@ -7,17 +7,17 @@ describe('generateServerMenu', () => {
     vi.restoreAllMocks();
   });
 
-  it('returns ACTION REQUIRED when server is unreachable', async () => {
+  it('returns a compact unavailable message when server is unreachable', async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('ECONNREFUSED'));
     const menu = await generateServerMenu('http://localhost:1934');
-    expect(menu).toContain('ACTION REQUIRED');
-    expect(menu).toContain('jeeves-server is unreachable');
+    expect(menu).toContain('status unavailable');
+    expect(menu).not.toContain('ACTION REQUIRED');
   });
 
-  it('renders version and port from status', async () => {
+  it('renders version and port from health-nested status', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
-      json: () => ({ version: '3.0.0', port: 1934 }),
+      json: () => ({ version: '3.0.0', health: { port: 1934 } }),
     } as unknown as Response);
     const menu = await generateServerMenu('http://localhost:1934');
     expect(menu).toContain('v3.0.0');
@@ -29,12 +29,13 @@ describe('generateServerMenu', () => {
       ok: true,
       json: () => ({
         version: '3.0.0',
-        port: 1934,
-        exports: {
-          documents: ['pdf', 'docx'],
-          directories: ['zip'],
-          diagrams: ['svg', 'png'],
-          chromeAvailable: true,
+        health: {
+          exports: {
+            documents: ['pdf', 'docx'],
+            directories: ['zip'],
+            diagrams: ['svg', 'png'],
+            chromeAvailable: true,
+          },
         },
       }),
     } as unknown as Response);
@@ -48,10 +49,11 @@ describe('generateServerMenu', () => {
       ok: true,
       json: () => ({
         version: '3.0.0',
-        port: 1934,
-        exports: {
-          documents: ['docx'],
-          chromeAvailable: false,
+        health: {
+          exports: {
+            documents: ['docx'],
+            chromeAvailable: false,
+          },
         },
       }),
     } as unknown as Response);
@@ -64,9 +66,10 @@ describe('generateServerMenu', () => {
       ok: true,
       json: () => ({
         version: '3.0.0',
-        port: 1934,
-        events: [{ name: 'webhook', pattern: '/event/*' }],
-        auth: { insiderCount: 3 },
+        health: {
+          events: [{ name: 'webhook', pattern: '/event/*' }],
+          auth: { insiderCount: 3 },
+        },
       }),
     } as unknown as Response);
     const menu = await generateServerMenu('http://localhost:1934');
@@ -80,16 +83,17 @@ describe('generateServerMenu', () => {
       ok: true,
       json: () => ({
         version: '3.0.0',
-        port: 1934,
-        services: {
-          watcher: { url: 'http://localhost:1936', reachable: true },
-          runner: { url: 'http://localhost:1937', reachable: false },
+        health: {
+          services: {
+            watcher: { url: 'http://localhost:1936', reachable: true },
+            runner: { url: 'http://localhost:1937', reachable: false },
+          },
         },
       }),
     } as unknown as Response);
     const menu = await generateServerMenu('http://localhost:1934');
-    expect(menu).toContain('\u2705');
-    expect(menu).toContain('\u274c');
+    expect(menu).toContain('✅');
+    expect(menu).toContain('❌');
     expect(menu).toContain('watcher');
   });
 });
