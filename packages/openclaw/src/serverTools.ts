@@ -138,6 +138,11 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
             type: 'number',
             description: 'Directory depth for deep shares (0 = file only)',
           },
+          dirs: {
+            type: 'boolean',
+            description:
+              'Include directory listings in deep share (default: false)',
+          },
         },
         required: ['path'],
       },
@@ -149,6 +154,7 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
           body.expiry = String(ms);
         }
         if (params.depth !== undefined) body.depth = params.depth;
+        if (params.dirs !== undefined) body.dirs = params.dirs;
         return ['/api/share', 'POST', body];
       },
     },
