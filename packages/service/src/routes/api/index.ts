@@ -6,6 +6,7 @@ import type { FastifyPluginAsync } from 'fastify';
 
 import { authStatusRoutes } from './auth-status.js';
 import { diagramsRoutes } from './diagrams.js';
+import { eventsRoutes } from './events.js';
 import { directoryRoutes } from './directory.js';
 import { drivesRoutes } from './drives.js';
 import { exportRoutes } from './export.js';
@@ -31,4 +32,5 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
   await fastify.register(searchRoutes);
   await fastify.register(sharingRoutes);
   await fastify.register(authStatusRoutes);
+  await fastify.register(eventsRoutes);
 };
