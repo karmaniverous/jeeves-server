@@ -2,7 +2,15 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.5.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.4.2...3.5.0)
+#### [3.5.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.5.0...3.5.1)
+
+- [51] Integrate descriptor.run from core v0.4.5 [`#137`](https://github.com/karmaniverous/jeeves-server/pull/137)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.6.0 [`bfa7501`](https://github.com/karmaniverous/jeeves-server/commit/bfa7501f80fb1c2c8a29f7e548b4092f1bc44395)
+- [51] feat: integrate descriptor.run from core v0.4.5 [`74bebef`](https://github.com/karmaniverous/jeeves-server/commit/74bebef9adfe433621c1f4dd1b4877634ee65f6f)
+
+#### [service/3.5.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.4.2...service/3.5.0)
+
+> 30 March 2026
 
 - Fix config validate test assertion [`#136`](https://github.com/karmaniverous/jeeves-server/pull/136)
 - [35] Component SDK adoption (core v0.4.4) + plugin/CLI factories [`#134`](https://github.com/karmaniverous/jeeves-server/pull/134)
@@ -24,6 +32,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - [35] fix: resolve lint errors from core v0.4.4 migration [`4b0c11d`](https://github.com/karmaniverous/jeeves-server/commit/4b0c11d89f22a00f0f86583e484551682bb57c06)
 - [35] chore: bump @karmaniverous/jeeves to ^0.4.3, remove cosmiconfig dep [`8d3162b`](https://github.com/karmaniverous/jeeves-server/commit/8d3162b572167dcb5be5725956f37845d4518677)
 - [35] feat: define JeevesComponentDescriptor for server component [`16c5b56`](https://github.com/karmaniverous/jeeves-server/commit/16c5b56ffa3600f613562b5a5e3a08629c5b1b5a)
+- chore: release @karmaniverous/jeeves-server v3.5.0 [`f41da11`](https://github.com/karmaniverous/jeeves-server/commit/f41da1126d2180996720107cfb340b47e1b50838)
 - [35] feat: use getBindAddress from core, replace localhost with 127.0.0.1 [`1df9dc6`](https://github.com/karmaniverous/jeeves-server/commit/1df9dc60df3ba838bc692ada8143eb06723a3671)
 - [35] docs: add title front matter to all guides [`840f9c7`](https://github.com/karmaniverous/jeeves-server/commit/840f9c77d0c746d13983931ec69185f935036ac6)
 - [35] fix: encode browse path segments in API calls, add SPA catch-all (#50, #127) [`dce3f11`](https://github.com/karmaniverous/jeeves-server/commit/dce3f111018937535f4e614208312653e5ea5f18)
