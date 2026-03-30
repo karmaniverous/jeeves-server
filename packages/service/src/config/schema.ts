@@ -1,8 +1,6 @@
 ﻿import { SERVER_PORT } from '@karmaniverous/jeeves';
 import { z } from 'zod';
 
-import { getBindAddress } from '../util/bindAddress.js';
-
 /** Supported authentication methods */
 export const authModeSchema = z.enum(['google', 'keys']);
 
@@ -108,7 +106,7 @@ export const jeevesConfigSchema = z
      * Default: '0.0.0.0' (all interfaces — required for external access by insiders, share links, etc.)
      * Set to '127.0.0.1' to restrict to loopback only.
      */
-    host: z.string().min(1).default(getBindAddress()),
+    host: z.string().min(1).default('0.0.0.0'),
     chromePath: z.string().min(1),
     auth: authSchema,
     /** Named scope definitions, referenced by insiders/keys/outsiderPolicy */
