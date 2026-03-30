@@ -117,12 +117,17 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** Encode each segment of a browse path for use in a URL. */
+function encodeBrowsePath(p: string): string {
+  return p.split('/').map(encodeURIComponent).join('/');
+}
+
 export async function getDrives(): Promise<DriveEntry[]> {
   return fetchJson<DriveEntry[]>(`${API_BASE}/drives`);
 }
 
 export async function getDirectory(path: string): Promise<DirectoryListing> {
-  return fetchJson<DirectoryListing>(`${API_BASE}/path/${path}`);
+  return fetchJson<DirectoryListing>(`${API_BASE}/path/${encodeBrowsePath(path)}`);
 }
 
 export async function getFile(path: string): Promise<FileContent> {
@@ -130,11 +135,11 @@ export async function getFile(path: string): Promise<FileContent> {
   const pageParams = new URLSearchParams(window.location.search);
   const renderDiagrams = pageParams.get('render_diagrams');
   const qs = renderDiagrams ? `?render_diagrams=${renderDiagrams}` : '';
-  return fetchJson<FileContent>(`${API_BASE}/file/${path}${qs}`);
+  return fetchJson<FileContent>(`${API_BASE}/file/${encodeBrowsePath(path)}${qs}`);
 }
 
 export async function getFileRaw(path: string): Promise<FileContent> {
-  return fetchJson<FileContent>(`${API_BASE}/file/${path}?raw=1`);
+  return fetchJson<FileContent>(`${API_BASE}/file/${encodeBrowsePath(path)}?raw=1`);
 }
 
 export async function getAuthStatus(browsePath?: string): Promise<AuthStatus> {
@@ -164,7 +169,7 @@ export async function getShareLink(
 }
 
 export async function saveFile(path: string, content: string): Promise<{ ok: boolean; size: number }> {
-  return fetchJson<{ ok: boolean; size: number }>(`${API_BASE}/file/${path}`, {
+  return fetchJson<{ ok: boolean; size: number }>(`${API_BASE}/file/${encodeBrowsePath(path)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content }),
@@ -233,7 +238,7 @@ export async function fetchFacets(): Promise<FacetsResponse> {
 
 export async function clearCache(path: string): Promise<{ cleared: { exports: number; diagrams: number } }> {
   return fetchJson<{ cleared: { exports: number; diagrams: number } }>(
-    `${API_BASE}/export-cache/${path}`,
+    `${API_BASE}/export-cache/${encodeBrowsePath(path)}`,
     { method: 'DELETE' },
   );
 }

@@ -76,6 +76,19 @@ async function start() {
       fastify.get('/runner/*', async (_request, reply) => {
         return reply.sendFile('index.html', clientDir);
       });
+
+      // Catch-all: serve SPA for any unmatched GET under /browse or /runner
+      // (handles edge cases like dotfile paths that wildcard routes may miss)
+      fastify.setNotFoundHandler(async (request, reply) => {
+        if (
+          request.method === 'GET' &&
+          (request.url.startsWith('/browse') ||
+            request.url.startsWith('/runner'))
+        ) {
+          return reply.sendFile('index.html', clientDir);
+        }
+        return reply.code(404).send({ error: 'Not found' });
+      });
     }
 
     // Initialize caches
