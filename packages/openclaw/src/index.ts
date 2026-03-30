@@ -107,6 +107,10 @@ function createPluginDescriptor(generateToolsContent: () => string) {
     configSchema: z.looseObject({}),
     configFileName: 'config.json',
     initTemplate: () => ({}),
+    run: () =>
+      Promise.reject(
+        new Error('Plugin-side descriptor does not support run()'),
+      ),
     startCommand: getServiceStartCommand,
     sectionId: 'Server',
     refreshIntervalSeconds: REFRESH_INTERVAL_SECONDS,
