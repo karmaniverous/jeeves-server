@@ -1,8 +1,8 @@
 /**
- * Server status endpoint — uses the SDK's createStatusHandler factory.
+ * Server status endpoint — uses the SDK's `createStatusHandler` factory.
  *
- * Returns standard { name, version, uptime, status, health } shape
- * with server-specific details nested under health.
+ * Returns standard `{ name, version, uptime, status, health }` shape
+ * with server-specific details nested under `health`.
  */
 
 import { createStatusHandler } from '@karmaniverous/jeeves';
@@ -83,6 +83,7 @@ const handleStatus = createStatusHandler({
   },
 });
 
+// eslint-disable-next-line @typescript-eslint/require-await
 export const statusRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/status', async () => {
     const result = await handleStatus();

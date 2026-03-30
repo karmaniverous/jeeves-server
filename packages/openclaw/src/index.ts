@@ -58,6 +58,37 @@ function getConfigRoot(api: PluginApi): string {
   );
 }
 
+/**
+ * Build the plugin-side descriptor used by the ComponentWriter.
+ *
+ * The OpenClaw plugin only needs the descriptor fields consumed by core's
+ * writer/platform machinery. Server-side validation and config application are
+ * handled by the running jeeves-server service itself.
+ */
+function createPluginDescriptor(generateToolsContent: () => string) {
+  return jeevesComponentDescriptorSchema.parse({
+    name: 'server',
+    version: PLUGIN_VERSION,
+    servicePackage: '@karmaniverous/jeeves-server',
+    pluginPackage: '@karmaniverous/jeeves-server-openclaw',
+    defaultPort: SERVER_PORT,
+    configSchema: z.looseObject({}),
+    configFileName: 'config.json',
+    initTemplate: () => ({}),
+    startCommand: (configPath: string) => [
+      'node',
+      'dist/src/cli/index.js',
+      'start',
+      '--config',
+      configPath,
+    ],
+    sectionId: 'Server',
+    refreshIntervalSeconds: REFRESH_INTERVAL_SECONDS,
+    generateToolsContent,
+    dependencies: { hard: [], soft: ['watcher', 'runner', 'meta'] },
+  });
+}
+
 /** Register all jeeves-server tools and start the TOOLS.md writer. */
 export default function register(api: PluginApi): void {
   // Stop any previous writer to prevent timer leaks on re-registration.
@@ -86,27 +117,6 @@ export default function register(api: PluginApi): void {
     },
   });
 
-  // Build a full component descriptor for the writer. Server-side-only fields
-  // (configSchema, initTemplate, startCommand) use stubs because the plugin
-  // doesn't validate config or manage the service — core handles that.
-  const descriptor = jeevesComponentDescriptorSchema.parse({
-    name: 'server',
-    version: PLUGIN_VERSION,
-    servicePackage: '@karmaniverous/jeeves-server',
-    pluginPackage: '@karmaniverous/jeeves-server-openclaw',
-    defaultPort: SERVER_PORT,
-    configSchema: z.record(z.string(), z.unknown()),
-    configFileName: 'config.json',
-    initTemplate: () => ({}),
-    startCommand: () => ['node', 'dist/src/cli/index.js', 'start'],
-    sectionId: 'Server',
-    refreshIntervalSeconds: REFRESH_INTERVAL_SECONDS,
-    generateToolsContent: getContent,
-    dependencies: { hard: [], soft: ['watcher', 'runner', 'meta'] },
-  });
-
-  // Create and start the component writer
-  activeWriter = createComponentWriter(descriptor);
-
+  activeWriter = createComponentWriter(createPluginDescriptor(getContent));
   activeWriter.start();
 }

@@ -18,7 +18,7 @@ describe('parseMarkdown', () => {
   });
 
   it('decodes &#39; and &quot; entities in headings', () => {
-    const md = "### It&#39;s a &quot;test&quot;";
+    const md = '### It&#39;s a &quot;test&quot;';
     const { headings } = parseMarkdown(md);
     expect(headings).toHaveLength(1);
     expect(headings[0].text).toBe('It\'s a "test"');

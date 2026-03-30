@@ -6,9 +6,9 @@ import type { FastifyPluginAsync } from 'fastify';
 
 import { authStatusRoutes } from './auth-status.js';
 import { diagramsRoutes } from './diagrams.js';
-import { eventsRoutes } from './events.js';
 import { directoryRoutes } from './directory.js';
 import { drivesRoutes } from './drives.js';
+import { eventsRoutes } from './events.js';
 import { exportRoutes } from './export.js';
 import { fileContentRoutes } from './fileContent.js';
 import { linkInfoRoutes } from './linkInfo.js';

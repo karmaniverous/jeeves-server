@@ -1,9 +1,9 @@
 /**
  * CLI for installing/uninstalling the jeeves-server OpenClaw plugin.
  *
- * Delegates to the standard `createPluginCli` factory from jeeves-core,
- * which handles extension copy, config patching, heartbeat management,
- * and managed-section cleanup.
+ * Usage:
+ *   `npx @karmaniverous/jeeves-server-openclaw install`
+ *   `npx @karmaniverous/jeeves-server-openclaw uninstall`
  *
  * @packageDocumentation
  */
@@ -15,9 +15,11 @@ import { createPluginCli } from '@karmaniverous/jeeves';
 
 import { PLUGIN_ID } from './constants.js';
 
+const distDir = resolve(dirname(fileURLToPath(import.meta.url)));
+
 const program = createPluginCli({
   pluginId: PLUGIN_ID,
-  distDir: resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist'),
+  distDir,
   pluginPackage: '@karmaniverous/jeeves-server-openclaw',
   componentName: 'server',
 });
