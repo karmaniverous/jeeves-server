@@ -1,3 +1,7 @@
+---
+title: "Setup & Configuration"
+---
+
 # Setup & Configuration
 
 ## Prerequisites

@@ -1,3 +1,7 @@
+---
+title: "Deployment"
+---
+
 # Deployment
 
 How to run Jeeves Server in production.

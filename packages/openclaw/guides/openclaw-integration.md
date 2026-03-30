@@ -1,3 +1,7 @@
+---
+title: "OpenClaw Integration Guide"
+---
+
 # OpenClaw Integration Guide
 
 ## Architecture
