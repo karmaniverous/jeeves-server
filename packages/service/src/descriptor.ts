@@ -1,6 +1,11 @@
 /**
  * Server-side JeevesComponentDescriptor for the jeeves-server component.
+ *
+ * @packageDocumentation
  */
+
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   jeevesComponentDescriptorSchema,
@@ -9,6 +14,11 @@ import {
 
 import { jeevesConfigSchema } from './config/schema.js';
 import { packageVersion } from './util/packageVersion.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/** Absolute path to the start-server entry point (resolves correctly from any cwd). */
+const startServerPath = path.resolve(__dirname, 'cli', 'start-server.js');
 
 export const serverDescriptor = jeevesComponentDescriptorSchema.parse({
   name: 'server',
@@ -34,7 +44,7 @@ export const serverDescriptor = jeevesComponentDescriptorSchema.parse({
   },
   startCommand: (configPath: string) => [
     'node',
-    'dist/src/cli/start-server.js',
+    startServerPath,
     '--config',
     configPath,
   ],
