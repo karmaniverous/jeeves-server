@@ -23,8 +23,9 @@ npm install -g @karmaniverous/jeeves-server
 Create your config file (see [Setup & Configuration](setup.md)):
 
 ```bash
-# Example: JSON config
-cat > /etc/jeeves-server.config.json << 'EOF'
+# Example: JSON config (new path convention)
+mkdir -p /etc/jeeves-server
+cat > /etc/jeeves-server/config.json << 'EOF'
 {
   "chromePath": "/usr/bin/chromium-browser",
   "auth": { "modes": ["keys"] },
@@ -48,18 +49,14 @@ The server listens on the configured port (default: 1934) on all interfaces.
 
 ### As a Windows Service (NSSM)
 
-Use the built-in CLI to generate NSSM install commands:
+The CLI installs and manages the NSSM service directly:
 
 ```bash
-jeeves-server service install --config "C:\\config\\jeeves-server.config.json"
-```
-
-This prints the `nssm install` commands. Run them, then:
-
-```bash
+jeeves-server service install --config "C:\\config\\jeeves-server\\config.json"
 jeeves-server service start
 jeeves-server service stop
 jeeves-server service restart
+jeeves-server service status
 ```
 
 Or use NSSM directly:
@@ -84,7 +81,7 @@ After=network.target
 [Service]
 Type=simple
 User=jeeves
-ExecStart=/usr/bin/env jeeves-server start --config /etc/jeeves-server.config.json
+ExecStart=/usr/bin/env jeeves-server start --config /etc/jeeves-server/config.json
 Restart=on-failure
 RestartSec=5
 Environment=NODE_ENV=production

@@ -6,12 +6,15 @@ Operate and interact with a jeeves-server deployment. Use for file browsing, doc
 
 | Tool | Purpose |
 |------|---------|
-| `server_status` | Server health: version, uptime, Chrome availability, export formats, connected services |
+| `server_status` | Server health: version, uptime, port, Chrome availability, export formats, auth info |
 | `server_browse` | Get file/directory metadata and listings for a browse path |
 | `server_link_info` | Query available link types for a path (page URL, raw URL, export links) |
 | `server_share` | Generate share links with optional expiry and directory depth |
 | `server_export` | Trigger export (PDF, DOCX, SVG, PNG, ZIP) and get download URL |
 | `server_event_status` | Query event gateway status, active schemas, and recent event log |
+| `server_config` | Query resolved server configuration (supports JSONPath) |
+| `server_config_apply` | Apply a configuration patch to the running server |
+| `server_service` | Manage the system service (install, uninstall, start, stop, restart, status) |
 
 ## Browse Paths
 
@@ -44,8 +47,11 @@ Use `server_link_info` first to check which formats are available for a path.
 Run `server_status` to check:
 - Server version and uptime
 - Chrome availability (required for PDF export)
-- Connected services (watcher, runner) and their reachability
 - Available export formats and diagram languages
+- Auth configuration (insider count, key count)
+- Event gateway schemas
+
+Service health for companion services (watcher, runner, meta) is mediated through the server's `/status` endpoint. The plugin queries the server only — never watcher or runner directly.
 
 ## Bootstrap: Full Stack Setup
 
@@ -65,7 +71,13 @@ npm install -g @karmaniverous/jeeves-server
 
 ### 2. Create config
 
-Create `jeeves-server.config.json` (or any cosmiconfig-supported format) in the server's working directory:
+Generate a starter config:
+
+```bash
+jeeves-server init --config /path/to/config-dir
+```
+
+Or create `jeeves-server/config.json` manually (JSON only — cosmiconfig was removed):
 
 ```json
 {
@@ -107,36 +119,6 @@ Create `jeeves-server.config.json` (or any cosmiconfig-supported format) in the 
 - `keys._plugin` — required for OpenClaw plugin auth
 - `outsiderPolicy` — optional global constraints on outsider sharing (can reference a named scope)
 
-### Named Scope Composition
-
-Define reusable scope policies at the top level, then reference them by name:
-
-```json
-{
-  "scopes": {
-    "standard": { "allow": ["/**"], "deny": ["/secrets/**"] },
-    "no-vc": { "deny": ["/projects/vc/**"] },
-    "no-private": { "deny": ["/projects/jill/**"] }
-  },
-  "insiders": {
-    "dev@example.com": { "scopes": ["standard", "no-vc"] },
-    "jill@example.com": {
-      "scopes": ["standard", "no-private"],
-      "allow": ["/projects/jill/**"]
-    }
-  }
-}
-```
-
-**Composition rules:**
-- Multiple named scopes are **unioned** — all `allow` and `deny` patterns merge
-- Explicit `allow`/`deny` on the insider or key entry act as **overrides** with highest precedence:
-  1. Explicit `deny` → **DENIED** (overrides named allow)
-  2. Explicit `allow` → **ALLOWED** (overrides named deny)
-  3. Standard named scope `allow AND NOT deny`
-
-This lets you compose broad policies (e.g. `no-private`) and surgically override them for specific users (e.g. Jill gets access to her own project).
-
 Environment variable substitution is supported: `${VAR_NAME}` in string values.
 
 Generate key seeds with:
@@ -148,10 +130,12 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ```bash
 jeeves-server config validate [--config <path>]
-jeeves-server config show [--config <path>]
+jeeves-server config [jsonpath] [--config <path>]
 ```
 
 ### 4. Register as system service
+
+Service commands execute directly (no more printing instructions):
 
 **Windows (NSSM):**
 ```bash
@@ -162,8 +146,7 @@ jeeves-server service start
 **Linux (systemd):**
 ```bash
 jeeves-server service install [--config <path>]
-sudo systemctl enable jeeves-server
-sudo systemctl start jeeves-server
+jeeves-server service start
 ```
 
 ### 5. Configure Caddy reverse proxy
@@ -186,14 +169,12 @@ npx @karmaniverous/jeeves-server-openclaw install
 
 Configure the plugin in `openclaw.json` with `apiUrl` and `pluginKey` (matching the `_plugin` key seed from server config).
 
-**Note:** The installer handles plugin registration in `openclaw.json` automatically. If using `openclaw plugins install` instead (when available), you may need to manually add the plugin entry to `plugins.entries` in `openclaw.json` with `apiUrl` and `pluginKey` config values.
-
 Restart the gateway to load the plugin.
 
 ## Troubleshooting
 
 If the server is unreachable:
-1. Is the service running? → `jeeves-server service start`
+1. Is the service running? → `jeeves-server service status`
 2. Is the apiUrl correct? → Default: `http://127.0.0.1:1934`
 3. Is the `_plugin` key configured in both server config and plugin config?
 4. Is Caddy proxying to the correct port? → Check `Caddyfile`

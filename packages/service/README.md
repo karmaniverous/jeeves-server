@@ -10,7 +10,7 @@ npm install -g @karmaniverous/jeeves-server
 
 ## Run
 
-Jeeves Server loads configuration via cosmiconfig. Create a config file such as `jeeves-server.config.json` and run:
+Create a JSON config file at `<configDir>/jeeves-server/config.json` (or use `jeeves-server init`), then:
 
 ```bash
 jeeves-server start [--config <path>]
@@ -21,25 +21,26 @@ Default port: **1934**.
 ## CLI
 
 ```bash
-jeeves-server start
-jeeves-server config validate
-jeeves-server config show
-jeeves-server service install
-jeeves-server service uninstall
-jeeves-server service start|stop|restart
+jeeves-server start                      # Start the server
+jeeves-server status                     # Query running server status
+jeeves-server config [jsonpath]          # Query resolved configuration
+jeeves-server config validate            # Validate config file
+jeeves-server config apply               # Apply config patch to running server
+jeeves-server init                       # Generate starter config
+jeeves-server service install|uninstall  # Register/remove system service
+jeeves-server service start|stop|restart|status  # Manage system service
 ```
 
 ## Docs
 
-- Setup & Configuration: ../../packages/service/guides/setup.md
-- Deployment: ../../packages/service/guides/deployment.md
-- Sharing: ../../packages/service/guides/sharing.md
-- Exports: ../../packages/service/guides/exports.md
-- Event Gateway: ../../packages/service/guides/event-gateway.md
-- API Integration: ../../packages/service/guides/api-integration.md
+- [Setup & Configuration](guides/setup.md)
+- [Deployment](guides/deployment.md)
+- [Sharing](guides/sharing.md)
+- [Exports](guides/exports.md)
+- [Event Gateway](guides/event-gateway.md)
+- [API Integration](guides/api-integration.md)
 
-## Public endpoints
+## Public Endpoints
 
-- `GET /health` — health check
-- `GET /api/status` — server metadata (public; no auth)
-
+- `GET /status` — server status (version, health, capabilities)
+- `GET /config [?path=jsonpath]` — query resolved config (auth required)

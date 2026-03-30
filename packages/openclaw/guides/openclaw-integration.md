@@ -63,18 +63,21 @@ In `openclaw.json`, configure the plugin entry:
 
 | Tool | Purpose |
 |------|---------|
-| `server_status` | Server health: version, uptime, Chrome availability, export formats |
+| `server_status` | Server health: version, uptime, port, Chrome availability, export formats, auth info |
 | `server_browse` | Get file/directory metadata and listings |
 | `server_link_info` | Query available link types for a path |
 | `server_share` | Generate share links with optional expiry and depth |
 | `server_export` | Trigger export (PDF, DOCX, SVG, PNG, ZIP) |
 | `server_event_status` | Query event gateway schemas and recent event log entries |
+| `server_config` | Query resolved server configuration (supports JSONPath) |
+| `server_config_apply` | Apply a configuration patch to the running server |
+| `server_service` | Manage the system service (install, uninstall, start, stop, restart, status) |
 
 ## TOOLS.md Injection
 
 The plugin uses `@karmaniverous/jeeves` core's `ComponentWriter` to manage the `## Server` section in TOOLS.md. The writer runs on a 61-second prime interval. Core handles file locking, version stamps, section ordering, and platform content maintenance (SOUL.md, AGENTS.md).
 
-The server menu content (export formats, connected services, event schemas, insider count) is fetched asynchronously from the server's `/api/status` endpoint via `createAsyncContentCache()`, bridging the sync `generateToolsContent()` interface.
+The server menu content (export formats, diagrams, event schemas, insider count) is fetched asynchronously from the server's `/status` endpoint via `createAsyncContentCache()`, bridging the sync `generateToolsContent()` interface. Per plugin isolation (#128), the plugin queries only the server — never watcher or runner directly.
 
 ## Uninstalling
 
