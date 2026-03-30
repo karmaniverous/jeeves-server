@@ -1,25 +1,18 @@
 #!/usr/bin/env node
 /**
- * @packageDocumentation
- *
  * jeeves-server CLI entrypoint.
- * Commands: start, config validate, config show, service install/uninstall.
+ *
+ * Uses `createServiceCli(descriptor)` from core for all standard commands.
+ * The `start` command uses `descriptor.startCommand` which points to
+ * `start-server.ts` for direct in-process server launch.
+ *
+ * @packageDocumentation
  */
 
-import { Command } from '@commander-js/extra-typings';
+import { createServiceCli } from '@karmaniverous/jeeves';
 
-import { packageVersion } from '../util/packageVersion.js';
-import { registerConfigCommand } from './commands/config.js';
-import { registerServiceCommand } from './commands/service.js';
-import { registerStartCommand } from './commands/start.js';
+import { serverDescriptor } from '../descriptor.js';
 
-const cli = new Command()
-  .name('jeeves-server')
-  .description('Self-hosted file browser, document server, and webhook gateway')
-  .version(packageVersion);
-
-registerStartCommand(cli);
-registerConfigCommand(cli);
-registerServiceCommand(cli);
+const cli = createServiceCli(serverDescriptor);
 
 cli.parse();

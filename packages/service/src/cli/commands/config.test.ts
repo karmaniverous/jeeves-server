@@ -25,7 +25,10 @@ const VALID_CONFIG = {
 };
 
 function writeConfig(dir: string, config: unknown): string {
-  const filePath = path.join(dir, 'jeeves-server.config.json');
+  // Write to the new convention path: {dir}/jeeves-server/config.json
+  const configDir = path.join(dir, 'jeeves-server');
+  fs.mkdirSync(configDir, { recursive: true });
+  const filePath = path.join(configDir, 'config.json');
   fs.writeFileSync(filePath, JSON.stringify(config));
   return filePath;
 }
@@ -47,13 +50,10 @@ describe('jeeves-server config validate', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('validates a valid config and prints summary', async () => {
+  it('validates a valid config and prints success', async () => {
     const configPath = writeConfig(tmpDir, VALID_CONFIG);
     const { stdout } = await runCli(['config', 'validate', '-c', configPath]);
-    expect(stdout).toContain('Configuration valid');
-    expect(stdout).toContain('Port: 8765');
-    expect(stdout).toContain('Auth modes: keys');
-    expect(stdout).toContain('Keys: 2');
+    expect(stdout).toContain('Config is valid');
   });
 
   it('exits with error for invalid config', async () => {
@@ -63,45 +63,5 @@ describe('jeeves-server config validate', () => {
     ).rejects.toMatchObject({
       code: 1,
     });
-  });
-});
-
-describe('jeeves-server config show', () => {
-  let tmpDir: string;
-
-  beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jeeves-cli-'));
-  });
-
-  afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
-  });
-
-  it('shows resolved config with key and insider details', async () => {
-    const configPath = writeConfig(tmpDir, {
-      ...VALID_CONFIG,
-      insiders: { 'test@example.com': {} },
-      watcherUrl: 'http://localhost:3458',
-    });
-    const { stdout } = await runCli(['config', 'show', '-c', configPath]);
-    expect(stdout).toContain('Config file:');
-    expect(stdout).toContain('port: 8765');
-    expect(stdout).toContain('modes: keys');
-    expect(stdout).toContain('primary:');
-    expect(stdout).toContain('unscoped');
-    expect(stdout).toContain('test@example.com');
-    expect(stdout).toContain('watcherUrl: http://localhost:3458');
-  });
-
-  it('shows scoped keys correctly', async () => {
-    const configPath = writeConfig(tmpDir, {
-      ...VALID_CONFIG,
-      keys: {
-        ...VALID_CONFIG.keys,
-        scoped: { key: 'c'.repeat(64), scopes: ['/docs'] },
-      },
-    });
-    const { stdout } = await runCli(['config', 'show', '-c', configPath]);
-    expect(stdout).toContain('scoped (allow: 1, deny: 0)');
   });
 });

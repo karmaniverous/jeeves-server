@@ -34,8 +34,7 @@ export const serverDescriptor = jeevesComponentDescriptorSchema.parse({
   },
   startCommand: (configPath: string) => [
     'node',
-    'dist/src/cli/index.js',
-    'start',
+    'dist/src/cli/start-server.js',
     '--config',
     configPath,
   ],
