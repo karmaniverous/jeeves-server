@@ -22,9 +22,9 @@ export function registerConfigCommand(cli: Command): void {
     .command('validate')
     .description('Validate the configuration file')
     .option('-c, --config <path>', 'Path to configuration file')
-    .action(async (options) => {
+    .action((options) => {
       try {
-        const cfg = await loadConfig(options.config);
+        const cfg = loadConfig(options.config);
         console.log('\u2713 Configuration valid');
         console.log(`  Port: ${String(cfg.port)}`);
         console.log(`  Host: ${cfg.host}`);
@@ -48,9 +48,9 @@ export function registerConfigCommand(cli: Command): void {
     .command('show')
     .description('Display resolved configuration with provenance')
     .option('-c, --config <path>', 'Path to configuration file')
-    .action(async (options) => {
+    .action((options) => {
       try {
-        const cfg = await loadConfig(options.config);
+        const cfg = loadConfig(options.config);
         console.log(`Config file: ${cfg.configPath}`);
         console.log('');
         console.log('Server:');

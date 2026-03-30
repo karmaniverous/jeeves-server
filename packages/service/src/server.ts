@@ -28,7 +28,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function start() {
   try {
-    const config = isConfigInitialized() ? getConfig() : await initConfig();
+    const config = isConfigInitialized() ? getConfig() : initConfig();
 
     const fastify = Fastify({
       logger: true,

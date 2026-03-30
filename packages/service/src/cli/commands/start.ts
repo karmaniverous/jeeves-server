@@ -15,7 +15,7 @@ export function registerStartCommand(cli: Command): void {
       try {
         // Dynamic import to avoid loading server code at CLI parse time
         const { initConfig } = await import('../../config/index.js');
-        await initConfig(options.config);
+        initConfig(options.config);
 
         // Import server after config is initialized
         await import('../../server.js');

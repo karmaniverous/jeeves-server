@@ -2,15 +2,15 @@
  * @packageDocumentation
  *
  * Config loading and singleton management.
- * Loads config via cosmiconfig, validates with Zod, applies env var substitution,
+ * Loads config from a JSON file, validates with Zod, applies env var substitution,
  * resolves runtime types via resolve.ts, and exposes getConfig()/resetConfig().
  */
 
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { cosmiconfig } from 'cosmiconfig';
-
+import { migrateConfigPath } from './migration.js';
 import { buildRuntimeConfig } from './resolve.js';
 import { jeevesConfigSchema } from './schema.js';
 import { substituteEnvVars } from './substituteEnvVars.js';
@@ -19,59 +19,71 @@ import type { RuntimeConfig } from './types.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '../../..');
 
-const MODULE_NAME = 'jeeves-server';
-
 /**
- * Load and validate jeeves-server configuration via cosmiconfig.
- *
- * Searches for `jeeves-server.config.{json,yaml,yml,js,ts,cjs,mjs}`
- * or `.jeeves-serverrc` in the package root and parent directories.
+ * Load and validate jeeves-server configuration from a JSON file.
  *
  * @param configPath - Optional explicit path to a config file.
  * @returns Resolved runtime configuration.
  */
-export async function loadConfig(configPath?: string): Promise<RuntimeConfig> {
-  const explorer = cosmiconfig(MODULE_NAME, {
-    searchPlaces: [
-      'package.json',
-      `.${MODULE_NAME}rc`,
-      `.${MODULE_NAME}rc.json`,
-      `.${MODULE_NAME}rc.yaml`,
-      `.${MODULE_NAME}rc.yml`,
-      `${MODULE_NAME}.config.json`,
-      `${MODULE_NAME}.config.yaml`,
-      `${MODULE_NAME}.config.yml`,
-      `${MODULE_NAME}.config.js`,
-      `${MODULE_NAME}.config.ts`,
-      `${MODULE_NAME}.config.mjs`,
-      `${MODULE_NAME}.config.cjs`,
-    ],
-  });
+export function loadConfig(configPath?: string): RuntimeConfig {
+  const resolvedPath = configPath
+    ? migrateConfigPath(configPath)
+    : findDefaultConfig();
 
-  const result = configPath
-    ? await explorer.load(configPath)
-    : await explorer.search(rootDir);
-
-  if (!result || result.isEmpty) {
+  if (!fs.existsSync(resolvedPath)) {
     throw new Error(
-      `No jeeves-server configuration found. Create a jeeves-server.config.json (or .yaml) file.\n` +
-        `Searched from: ${rootDir}`,
+      `Configuration file not found: ${resolvedPath}\n` +
+        `Create a jeeves-server config.json file or pass --config <path>.`,
     );
   }
 
-  const substituted = substituteEnvVars(
-    result.config as Record<string, unknown>,
-  );
+  // Reject non-JSON config files
+  const ext = path.extname(resolvedPath).toLowerCase();
+  if (ext && ext !== '.json') {
+    throw new Error(
+      `Unsupported config file format: ${ext}\n` +
+        `Only JSON configuration files are supported. ` +
+        `Please convert your config to JSON format.`,
+    );
+  }
+
+  const rawContent = fs.readFileSync(resolvedPath, 'utf8');
+  let rawConfig: Record<string, unknown>;
+  try {
+    rawConfig = JSON.parse(rawContent) as Record<string, unknown>;
+  } catch (err) {
+    throw new Error(
+      `Failed to parse config file ${resolvedPath}: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  const substituted = substituteEnvVars(rawConfig);
 
   const parseResult = jeevesConfigSchema.safeParse(substituted);
   if (!parseResult.success) {
     const issues = parseResult.error.issues
       .map((i) => `  - ${i.path.join('.')}: ${i.message}`)
       .join('\n');
-    throw new Error(`Invalid configuration in ${result.filepath}:\n${issues}`);
+    throw new Error(`Invalid configuration in ${resolvedPath}:\n${issues}`);
   }
 
-  return buildRuntimeConfig(parseResult.data, rootDir, result.filepath);
+  return buildRuntimeConfig(parseResult.data, rootDir, resolvedPath);
+}
+
+/**
+ * Find the default config file in the package root directory.
+ */
+function findDefaultConfig(): string {
+  // Try new convention first
+  const newPath = path.join(rootDir, 'jeeves-server', 'config.json');
+  if (fs.existsSync(newPath)) return newPath;
+
+  // Fall back to old convention
+  const oldPath = path.join(rootDir, 'jeeves-server.config.json');
+  if (fs.existsSync(oldPath)) return oldPath;
+
+  // Return new path for error message
+  return newPath;
 }
 
 let configInstance: RuntimeConfig | null = null;
@@ -101,9 +113,9 @@ export function getConfig(): RuntimeConfig {
  * Initialize the config singleton. Must be called once at startup.
  * @param configPath - Optional explicit path to a config file.
  */
-export async function initConfig(configPath?: string): Promise<RuntimeConfig> {
+export function initConfig(configPath?: string): RuntimeConfig {
   lastConfigPath = configPath;
-  configInstance = await loadConfig(configPath);
+  configInstance = loadConfig(configPath);
   return configInstance;
 }
 
@@ -111,8 +123,8 @@ export async function initConfig(configPath?: string): Promise<RuntimeConfig> {
  * Reload the config singleton from the last-used config path.
  * Call after mutating state that affects resolved config (e.g., key rotation).
  */
-export async function resetConfig(): Promise<void> {
-  configInstance = await loadConfig(lastConfigPath);
+export function resetConfig(): void {
+  configInstance = loadConfig(lastConfigPath);
 }
 
 /**
