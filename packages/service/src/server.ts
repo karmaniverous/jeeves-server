@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 import cookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';
-import Fastify from 'fastify';
+import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 
 import { getConfig, initConfig, isConfigInitialized } from './config/index.js';
 import { apiRoute } from './routes/api/index.js';
@@ -60,22 +60,21 @@ async function start() {
         prefix: '/app/',
       });
 
-      // SPA fallback for React routes
-      fastify.get('/', async (_request, reply) => {
-        return reply.sendFile('index.html', clientDir);
-      });
-      fastify.get('/browse', async (_request, reply) => {
-        return reply.sendFile('index.html', clientDir);
-      });
-      fastify.get('/browse/*', async (_request, reply) => {
-        return reply.sendFile('index.html', clientDir);
-      });
-      fastify.get('/runner', async (_request, reply) => {
-        return reply.sendFile('index.html', clientDir);
-      });
-      fastify.get('/runner/*', async (_request, reply) => {
-        return reply.sendFile('index.html', clientDir);
-      });
+      // SPA fallback — all these routes serve index.html for client-side routing
+      const spaFallback = async (
+        _request: FastifyRequest,
+        reply: FastifyReply,
+      ) => reply.sendFile('index.html', clientDir);
+
+      for (const route of [
+        '/',
+        '/browse',
+        '/browse/*',
+        '/runner',
+        '/runner/*',
+      ]) {
+        fastify.get(route, spaFallback);
+      }
 
       // Catch-all: serve SPA for any unmatched GET under /browse or /runner
       // (handles edge cases like dotfile paths that wildcard routes may miss)
