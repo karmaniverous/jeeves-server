@@ -60,6 +60,7 @@
     "lz-string": "^1.5.0",
     "marked": "^17.0.1",
     "mime-types": "^3.0.2",
+    "package-directory": "^8.2.0",
     "picomatch": "^4.0.3",
     "plantuml-encoder": "^1.4.0",
     "puppeteer": "^23.11.1",
