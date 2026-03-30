@@ -12,18 +12,17 @@ import {
   createAsyncContentCache,
   createComponentWriter,
   init,
+  jeevesComponentDescriptorSchema,
   type PluginApi,
   resolvePluginSetting,
   resolveWorkspacePath,
+  SERVER_PORT,
 } from '@karmaniverous/jeeves';
+import { z } from 'zod';
 
 import { PLUGIN_ID } from './constants.js';
 import { generateServerMenu } from './promptInjection.js';
 import { registerServerTools } from './serverTools.js';
-import {
-  createPluginCommands,
-  createServiceCommands,
-} from './serviceCommands.js';
 
 /** Plugin version derived from package.json at runtime. */
 const require = createRequire(import.meta.url);
@@ -87,18 +86,27 @@ export default function register(api: PluginApi): void {
     },
   });
 
-  // Create and start the component writer
-  activeWriter = createComponentWriter({
+  // Build a full component descriptor for the writer. Server-side-only fields
+  // (configSchema, initTemplate, startCommand) use stubs because the plugin
+  // doesn't validate config or manage the service — core handles that.
+  const descriptor = jeevesComponentDescriptorSchema.parse({
     name: 'server',
     version: PLUGIN_VERSION,
+    servicePackage: '@karmaniverous/jeeves-server',
+    pluginPackage: '@karmaniverous/jeeves-server-openclaw',
+    defaultPort: SERVER_PORT,
+    configSchema: z.record(z.string(), z.unknown()),
+    configFileName: 'config.json',
+    initTemplate: () => ({}),
+    startCommand: () => ['node', 'dist/src/cli/index.js', 'start'],
     sectionId: 'Server',
     refreshIntervalSeconds: REFRESH_INTERVAL_SECONDS,
     generateToolsContent: getContent,
-    serviceCommands: createServiceCommands(),
-    pluginCommands: createPluginCommands(),
-    servicePackage: '@karmaniverous/jeeves-server',
-    pluginPackage: '@karmaniverous/jeeves-server-openclaw',
+    dependencies: { hard: [], soft: ['watcher', 'runner', 'meta'] },
   });
+
+  // Create and start the component writer
+  activeWriter = createComponentWriter(descriptor);
 
   activeWriter.start();
 }
