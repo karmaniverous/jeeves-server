@@ -2,11 +2,22 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.5.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.5.0...3.5.1)
+#### [3.5.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.5.1...3.5.2)
+
+- [53] Fix pre-existing lint + knip errors (Commander type resolution) [`#140`](https://github.com/karmaniverous/jeeves-server/pull/140)
+- [53] Integrate core v0.4.6: init() before descriptor.run() + knip fixes [`#139`](https://github.com/karmaniverous/jeeves-server/pull/139)
+- [53] chore: bump core to v0.4.6 (init before run) + fix knip issues [`e5f466a`](https://github.com/karmaniverous/jeeves-server/commit/e5f466a0df574e1052601fc99b0110aaf2136666)
+- [53] chore: bump core to v0.4.6 (init before run) + fix knip issues [`cc2adb6`](https://github.com/karmaniverous/jeeves-server/commit/cc2adb6c4d2a540a145bdcb04a712b2f6b77fa9e)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.6.1 [`b0a4bec`](https://github.com/karmaniverous/jeeves-server/commit/b0a4bec47f5141d13e59070683f7d459e82a9faa)
+
+#### [service/3.5.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.5.0...service/3.5.1)
+
+> 31 March 2026
 
 - [51] Integrate descriptor.run from core v0.4.5 [`#137`](https://github.com/karmaniverous/jeeves-server/pull/137)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.6.0 [`bfa7501`](https://github.com/karmaniverous/jeeves-server/commit/bfa7501f80fb1c2c8a29f7e548b4092f1bc44395)
 - [51] feat: integrate descriptor.run from core v0.4.5 [`74bebef`](https://github.com/karmaniverous/jeeves-server/commit/74bebef9adfe433621c1f4dd1b4877634ee65f6f)
+- chore: release @karmaniverous/jeeves-server v3.5.1 [`fd56acc`](https://github.com/karmaniverous/jeeves-server/commit/fd56accdacacc97bf47f18e489df6d87b8d6be35)
 
 #### [service/3.5.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.4.2...service/3.5.0)
 
