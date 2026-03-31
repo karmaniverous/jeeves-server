@@ -2,8 +2,10 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [v0.6.1](https://github.com/karmaniverous/jeeves-server/compare/v2.9.3...v0.6.1)
+#### [v0.6.2](https://github.com/karmaniverous/jeeves-server/compare/v2.9.3...v0.6.2)
 
+- [53] Fix pre-existing lint + knip errors (Commander type resolution) [`#140`](https://github.com/karmaniverous/jeeves-server/pull/140)
+- [53] Integrate core v0.4.6: init() before descriptor.run() + knip fixes [`#139`](https://github.com/karmaniverous/jeeves-server/pull/139)
 - [51] Integrate descriptor.run from core v0.4.5 [`#137`](https://github.com/karmaniverous/jeeves-server/pull/137)
 - Fix config validate test assertion [`#136`](https://github.com/karmaniverous/jeeves-server/pull/136)
 - [35] Component SDK adoption (core v0.4.4) + plugin/CLI factories [`#134`](https://github.com/karmaniverous/jeeves-server/pull/134)
@@ -56,6 +58,8 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore: release @karmaniverous/jeeves-server-openclaw v0.3.1 [`11309c1`](https://github.com/karmaniverous/jeeves-server/commit/11309c1c3d82f6950b3d0291546206b523df83fa)
 - [35] refactor: migrate openclaw plugin to core v0.4.4 SDK [`e29773a`](https://github.com/karmaniverous/jeeves-server/commit/e29773a63dc0313a42c41d03289b5cc1f6a0e2bb)
 - [35] refactor: SOLID/DRY cleanup [`78a0b2d`](https://github.com/karmaniverous/jeeves-server/commit/78a0b2d92391ae273d8c2b50fb855420a509ef30)
+- [53] chore: bump core to v0.4.6 (init before run) + fix knip issues [`e5f466a`](https://github.com/karmaniverous/jeeves-server/commit/e5f466a0df574e1052601fc99b0110aaf2136666)
+- [53] chore: bump core to v0.4.6 (init before run) + fix knip issues [`cc2adb6`](https://github.com/karmaniverous/jeeves-server/commit/cc2adb6c4d2a540a145bdcb04a712b2f6b77fa9e)
 - [35] refactor: replace hand-rolled CLI with createServiceCli(descriptor) (#106) [`9b7517f`](https://github.com/karmaniverous/jeeves-server/commit/9b7517f58af9226088f034add21b9a58700d2e50)
 - [35] refactor: adopt createPluginToolset, health-nested status, event endpoint (#87, #112, #118, #128) [`8ead7ae`](https://github.com/karmaniverous/jeeves-server/commit/8ead7aedbe5799f29ee21d0c6de49531ac174b9a)
 - [35] test: add tests for diagramExport and sharing helpers [`1caaa1b`](https://github.com/karmaniverous/jeeves-server/commit/1caaa1ba28a978b8640bc06d3ba80ba62f5c375b)
@@ -67,7 +71,6 @@ All notable changes to this project will be documented in this file. Dates are d
 - docs: full documentation pass with PlantUML diagrams [`537a9d7`](https://github.com/karmaniverous/jeeves-server/commit/537a9d79ff23ea978697c44cb0bb91c908b761de)
 - refactor(openclaw): resolve SOLID/DRY violations [`87df443`](https://github.com/karmaniverous/jeeves-server/commit/87df44307cb40eddbc9e1b217232eda194d2921b)
 - chore: release @karmaniverous/jeeves-server v3.2.0 [`fda70c6`](https://github.com/karmaniverous/jeeves-server/commit/fda70c6bbacb109f00e13468ebf9052176b045d9)
-- feat: metadata chips on search results with click-to-filter [`a11ce3d`](https://github.com/karmaniverous/jeeves-server/commit/a11ce3de4809d2639160886bbd719ff57d9b33ea)
 - [35] refactor: migrate GET /status to createStatusHandler factory [`3526b46`](https://github.com/karmaniverous/jeeves-server/commit/3526b4676f47460d094602dd8ffe66f52da8d3ad)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.6.0 [`bfa7501`](https://github.com/karmaniverous/jeeves-server/commit/bfa7501f80fb1c2c8a29f7e548b4092f1bc44395)
 - refactor(openclaw): use createAsyncContentCache from jeeves v0.1.1 [`9732ad9`](https://github.com/karmaniverous/jeeves-server/commit/9732ad9635c747e78f9fe2d6fd5b3b893f51efc4)
@@ -79,6 +82,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore: release @karmaniverous/jeeves-server v3.1.1 [`736ec35`](https://github.com/karmaniverous/jeeves-server/commit/736ec35c550c0f8da5800413562f10643f9da6db)
 - [117] feat: bump core to v0.3.0 and consolidate status endpoint (#117) [`c80be62`](https://github.com/karmaniverous/jeeves-server/commit/c80be62a3f512f7524c917b153ca6ecb053a6ce4)
 - [35] chore: bump @karmaniverous/jeeves to ^0.4.3, remove cosmiconfig dep [`8d3162b`](https://github.com/karmaniverous/jeeves-server/commit/8d3162b572167dcb5be5725956f37845d4518677)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.6.1 [`b0a4bec`](https://github.com/karmaniverous/jeeves-server/commit/b0a4bec47f5141d13e59070683f7d459e82a9faa)
 - npm audit fix [`7c578d4`](https://github.com/karmaniverous/jeeves-server/commit/7c578d4bb588514019cddf758d9f43252b25fe42)
 - [35] feat: define JeevesComponentDescriptor for server component [`16c5b56`](https://github.com/karmaniverous/jeeves-server/commit/16c5b56ffa3600f613562b5a5e3a08629c5b1b5a)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.4.0 [`566e438`](https://github.com/karmaniverous/jeeves-server/commit/566e438a5262e5f2e80db4690c9907b6658e5519)
@@ -99,6 +103,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore: release @karmaniverous/jeeves-server-openclaw v0.2.1 [`3881f52`](https://github.com/karmaniverous/jeeves-server/commit/3881f52392670516262452974cded267d63de6fe)
 - [35] feat: add POST /config/apply endpoint using createConfigApplyHandler [`d1281b8`](https://github.com/karmaniverous/jeeves-server/commit/d1281b87161b17547c0e9ff236db5bc38fc2d7b6)
 - [120] fix: runner proxy routes call /status instead of /stats and /health (#120) [`6a9aa21`](https://github.com/karmaniverous/jeeves-server/commit/6a9aa212819c9ab3cf8ce9fee9052697e7a2da9d)
+- chore: release @karmaniverous/jeeves-server v3.5.2 [`08f6a37`](https://github.com/karmaniverous/jeeves-server/commit/08f6a37a4bc2802b9c1e65a2ed38482fffa2678b)
 - chore: release @karmaniverous/jeeves-server v3.4.1 [`9a338bb`](https://github.com/karmaniverous/jeeves-server/commit/9a338bbbb193767b963a0df046f0916c097c183e)
 - chore: release @karmaniverous/jeeves-server v3.2.1 [`f13677b`](https://github.com/karmaniverous/jeeves-server/commit/f13677bd1cd020416ba510eaabc58ad85ee9aabf)
 - chore: release @karmaniverous/jeeves-server v3.4.0 [`ed98759`](https://github.com/karmaniverous/jeeves-server/commit/ed98759eea126bb02666117ae8426c265c679736)
@@ -155,6 +160,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - fix: cosmiconfig searchPlaces, SOLID/DRY pass, test coverage [`08de751`](https://github.com/karmaniverous/jeeves-server/commit/08de751a26fe595f13d43970bb39bb8b4d609199)
 - feat: add GET /api/status endpoint [`764c3a7`](https://github.com/karmaniverous/jeeves-server/commit/764c3a7313bd895032cc17bdc811808cdc8eb80e)
 - chore: SOLID/DRY/test coverage pass [`e491bfb`](https://github.com/karmaniverous/jeeves-server/commit/e491bfbbce7fef13252c2488378b85e983a2207a)
+- feat: metadata chips on search results with click-to-filter [`a11ce3d`](https://github.com/karmaniverous/jeeves-server/commit/a11ce3de4809d2639160886bbd719ff57d9b33ea)
 - docs: add guide index content and fix typedoc trailing comma [`3844271`](https://github.com/karmaniverous/jeeves-server/commit/3844271f0aacc6eb0af7dc6ddabe139edae95332)
 - refactor: extract buildRuntimeConfig to resolve.ts (DRY) [`87bd749`](https://github.com/karmaniverous/jeeves-server/commit/87bd749c6827e3c95e2ff9996ab1b781cb316932)
 - perf: lazy-load facets only when 'Add filter' is clicked [`d0b111c`](https://github.com/karmaniverous/jeeves-server/commit/d0b111c8cd442a47238ad5e0512576221bac1572)
@@ -189,7 +195,9 @@ All notable changes to this project will be documented in this file. Dates are d
 - fix: resolve remaining lint errors (type annotations, unused params, unnecessary conditionals) [`e7714ae`](https://github.com/karmaniverous/jeeves-server/commit/e7714ae451a72a1dd9881d85c964d6d8aec17574)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.1.1 [`abfee9f`](https://github.com/karmaniverous/jeeves-server/commit/abfee9f6ee5b2ac1cf6c8e4838edd3e2e8133359)
 - fix: remove unnecessary auth from /api/status calls (endpoint is public) [`f651fe7`](https://github.com/karmaniverous/jeeves-server/commit/f651fe7bff4320eb28b5039278bcdcd032cac6d5)
+- fix: update linux-compat CI for monorepo paths [`22dd30f`](https://github.com/karmaniverous/jeeves-server/commit/22dd30ffe5543042287a299523e5b1125c86381e)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.1.0-1 [`d08e571`](https://github.com/karmaniverous/jeeves-server/commit/d08e571d58bb6387e69441dc06511d92fb743c15)
+- chore: eliminate all lint warnings [`ed12c86`](https://github.com/karmaniverous/jeeves-server/commit/ed12c868546a3f14f7d809d7378235ac91415be7)
 - fix: CI rimraf resolution and remove redundant client steps [`757c45c`](https://github.com/karmaniverous/jeeves-server/commit/757c45cf429e7c70358442e353922f7999d74640)
 - chore: release @karmaniverous/jeeves-server v3.0.0 [`ef408c3`](https://github.com/karmaniverous/jeeves-server/commit/ef408c37ee306417ee24d58b256cba672f7984c1)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.1.0 [`bbeac17`](https://github.com/karmaniverous/jeeves-server/commit/bbeac17333ebad423b0fd8c2bcd310bbb0b63b27)
@@ -204,8 +212,6 @@ All notable changes to this project will be documented in this file. Dates are d
 - fix: normalize path for watcher render (Windows backslash + uppercase drive) [`f6c229d`](https://github.com/karmaniverous/jeeves-server/commit/f6c229d7f4ac7ec11099c884b75e6a90cc0cdf59)
 - zero version [`2c0db75`](https://github.com/karmaniverous/jeeves-server/commit/2c0db75d547d812fa638e15f2da732a7b91ad69c)
 - merge: incorporate main (PR #77 gap-analysis) [`845268d`](https://github.com/karmaniverous/jeeves-server/commit/845268de8d3b990187f078f0135053d52c311009)
-- fix: update linux-compat CI for monorepo paths [`22dd30f`](https://github.com/karmaniverous/jeeves-server/commit/22dd30ffe5543042287a299523e5b1125c86381e)
-- chore: eliminate all lint warnings [`ed12c86`](https://github.com/karmaniverous/jeeves-server/commit/ed12c868546a3f14f7d809d7378235ac91415be7)
 - fix: add missing return-await in facets handler [`b08d4a3`](https://github.com/karmaniverous/jeeves-server/commit/b08d4a34b1bc2a648edf4e9aeb23d4db0be45afc)
 - fix: remove unused parameter in linkInfo test [`36fca9a`](https://github.com/karmaniverous/jeeves-server/commit/36fca9ad8e051a47902ce75dab360ac98c169321)
 - ci: add Node 24 to linux-compat matrix [`66f1008`](https://github.com/karmaniverous/jeeves-server/commit/66f1008c133f2543181636200f49979878925a05)
@@ -516,9 +522,18 @@ All notable changes to this project will be documented in this file. Dates are d
 - Add top hat branding to outsider pages, improve filename display [`cacbb60`](https://github.com/karmaniverous/jeeves-server/commit/cacbb605b58064002aba3911009c5fb3788990ff)
 - Add 'Jeeves Server' tooltip to top hat in all modes [`26902d4`](https://github.com/karmaniverous/jeeves-server/commit/26902d45d74aea615f706700ebdf2068c4f95bd7)
 
-### [v1.0.1](https://github.com/karmaniverous/jeeves-server/compare/openclaw/0.6.0...v1.0.1)
+### [v1.0.1](https://github.com/karmaniverous/jeeves-server/compare/openclaw/0.6.1...v1.0.1)
 
 > 7 February 2026
+
+#### [openclaw/0.6.1](https://github.com/karmaniverous/jeeves-server/compare/openclaw/0.6.0...openclaw/0.6.1)
+
+> 31 March 2026
+
+- [51] Integrate descriptor.run from core v0.4.5 [`#137`](https://github.com/karmaniverous/jeeves-server/pull/137)
+- [51] feat: integrate descriptor.run from core v0.4.5 [`74bebef`](https://github.com/karmaniverous/jeeves-server/commit/74bebef9adfe433621c1f4dd1b4877634ee65f6f)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.6.1 [`b0a4bec`](https://github.com/karmaniverous/jeeves-server/commit/b0a4bec47f5141d13e59070683f7d459e82a9faa)
+- chore: release @karmaniverous/jeeves-server v3.5.1 [`fd56acc`](https://github.com/karmaniverous/jeeves-server/commit/fd56accdacacc97bf47f18e489df6d87b8d6be35)
 
 #### [openclaw/0.6.0](https://github.com/karmaniverous/jeeves-server/compare/openclaw/0.5.1...openclaw/0.6.0)
 
