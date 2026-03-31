@@ -13,6 +13,10 @@ import { createServiceCli } from '@karmaniverous/jeeves';
 
 import { serverDescriptor } from '../descriptor.js';
 
-const cli = createServiceCli(serverDescriptor);
+// Type assertion: core's bundled .d.ts doesn't fully resolve the Command
+// return type for eslint, but the runtime value is a Commander instance.
+const cli = createServiceCli(serverDescriptor) as {
+  parse: (argv?: string[]) => void;
+};
 
 cli.parse();
