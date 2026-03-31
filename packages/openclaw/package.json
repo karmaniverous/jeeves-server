@@ -85,7 +85,7 @@
     },
     "hooks": {
       "after:bump": [
-        "node -e \"const f='openclaw.plugin.json';const j=JSON.parse(require('fs').readFileSync(f,'utf8'));j.version='${version}';require('fs').writeFileSync(f,JSON.stringify(j,null,2)+'\\n')\""
+        "node -e \"const f='openclaw.plugin.json';const j=JSON.parse(require('fs').readFileSync(f,'utf8'));j.version='${version}';require('fs').writeFileSync(f,JSON.stringify(j,null,2)+'')\""
       ],
       "after:init": [
         "npm run lint",
@@ -115,6 +115,7 @@
     "hideCredit": true
   },
   "dependencies": {
-    "@karmaniverous/jeeves": "^0.4.5"
+    "@karmaniverous/jeeves": "^0.4.6",
+    "zod": "^4.3.0"
   }
 }
