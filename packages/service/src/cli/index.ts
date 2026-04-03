@@ -9,15 +9,9 @@
  * @packageDocumentation
  */
 
-const major = Number(process.versions.node.split('.')[0]);
-if (major < 22) {
-  console.error(
-    'jeeves-server requires Node.js >= 22. Current: ' + process.version,
-  );
-  process.exit(1);
-}
+import { checkNodeVersion, createServiceCli } from '@karmaniverous/jeeves';
 
-import { createServiceCli } from '@karmaniverous/jeeves';
+checkNodeVersion();
 
 import { serverDescriptor } from '../descriptor.js';
 

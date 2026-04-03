@@ -74,7 +74,6 @@ export function parseCsvRows(csv: string): string[][] {
   }
 
   // Remove trailing empty row (from trailing newline)
-  // Remove trailing empty row (from trailing newline)
   const lastRow = rows.length > 0 ? rows[rows.length - 1] : undefined;
   if (lastRow && lastRow.length === 1 && lastRow[0] === '') {
     rows.pop();
