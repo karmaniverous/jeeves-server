@@ -24,6 +24,13 @@ To convert a Windows file path to a browse path:
 - `J:\domains\projects\readme.md` → `j/domains/projects/readme.md`
 - Strip the colon, lowercase the drive letter, use forward slashes
 
+## Browse Features
+
+- **Directory item counts:** Subdirectory rows display a nonrecursive item count in the Size column.
+- **CSV table rendering:** `.csv` files render as HTML tables (Rendered tab) with raw source in the Raw tab.
+- **Collapsible frontmatter:** YAML frontmatter blocks exceeding 10 lines are collapsed by default with a "Show all" toggle.
+- **Collapsible TOC:** The table of contents sidebar uses a tree structure with expand/collapse chevrons on headings that have children. Active headings auto-expand their ancestor chain.
+
 ## Sharing
 
 - **Insiders** authenticate via Google OAuth or key-based auth — bare URLs work for them
@@ -36,6 +43,7 @@ To convert a Windows file path to a browse path:
 
 Available formats depend on file type and server capabilities:
 - **Markdown files:** PDF (requires Chrome), DOCX
+- **CSV files:** rendered as HTML tables (no additional export formats)
 - **Mermaid diagrams:** SVG, PNG, PDF (Mermaid CLI is bundled)
 - **PlantUML diagrams:** Formats depend on server configuration (jar downloaded automatically via postinstall)
 - **Directories:** ZIP (insider-only)
@@ -57,7 +65,7 @@ Service health for companion services (watcher, runner, meta) is mediated throug
 
 ### Prerequisites
 
-- **Node.js 20+** and npm
+- **Node.js 22+** and npm
 - **Java 8+** (optional, for local PlantUML rendering — jar downloaded automatically)
 - **Chrome/Chromium** (required for PDF export)
 - **NSSM** (Windows) or **systemd** (Linux) for service management
@@ -77,7 +85,7 @@ Generate a starter config:
 jeeves-server init --config /path/to/config-dir
 ```
 
-Or create `jeeves-server/config.json` manually (JSON only — cosmiconfig was removed):
+Or create `jeeves-server/config.json` manually (JSON only):
 
 ```json
 {
@@ -104,9 +112,7 @@ Or create `jeeves-server/config.json` manually (JSON only — cosmiconfig was re
     "_internal": "random-hex-seed-for-puppeteer",
     "_plugin": "random-hex-seed-for-openclaw-plugin",
     "primary": "random-hex-seed-for-api-access"
-  },
-  "watcherUrl": "http://127.0.0.1:1936",
-  "runnerUrl": "http://127.0.0.1:1937"
+  }
 }
 ```
 
@@ -117,7 +123,9 @@ Or create `jeeves-server/config.json` manually (JSON only — cosmiconfig was re
 - `insiders` — map of email → `{ scopes?, allow?, deny? }`
 - `keys._internal` — required for PDF/DOCX export (Puppeteer auth)
 - `keys._plugin` — required for OpenClaw plugin auth
-- `outsiderPolicy` — optional global constraints on outsider sharing (can reference a named scope)
+- `outsiderPolicy` — optional global constraints on outsider sharing
+
+**Companion service URLs** (watcher, runner, meta) are resolved via core config at `{configRoot}/jeeves-core/config.json` under `services.{name}.url`. Port defaults are: watcher 1936, runner 1937, meta 1938. The deprecated `watcherUrl`, `runnerUrl`, `metaUrl`, and `host` config properties are ignored with a deprecation warning.
 
 Environment variable substitution is supported: `${VAR_NAME}` in string values.
 

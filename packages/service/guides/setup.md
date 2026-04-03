@@ -6,7 +6,7 @@ title: "Setup & Configuration"
 
 ## Prerequisites
 
-- **Node.js** ≥ 20
+- **Node.js** ≥ 22
 - **Chrome or Chromium** — required for PDF export (Puppeteer uses it headlessly)
 
 ## Installation
@@ -64,9 +64,7 @@ Legacy paths (`jeeves-server.config.json`) are auto-migrated to the new conventi
       "scopes": ["/event"]
     }
   },
-  "events": {},
-  "watcherUrl": "http://localhost:1936",
-  "runnerUrl": "http://127.0.0.1:1937"
+  "events": {}
 }
 ```
 
@@ -285,18 +283,22 @@ See the [Event Gateway](event-gateway.md) guide for full configuration and usage
 
 ### jeeves-watcher (Semantic Search)
 
-When `watcherUrl` is configured, the server proxies semantic search queries to [jeeves-watcher](https://github.com/karmaniverous/jeeves-watcher) and provides a search UI in the header, with filter facets and scope-aware result filtering.
+The server proxies semantic search queries to [jeeves-watcher](https://github.com/karmaniverous/jeeves-watcher) and provides a search UI in the header, with filter facets and scope-aware result filtering. The watcher URL is resolved automatically via core service discovery (default port 1936).
+
+To override the default URL, configure it in `{configRoot}/jeeves-core/config.json`:
 
 ```json
-{ "watcherUrl": "http://localhost:1936" }
+{ "services": { "watcher": { "url": "http://custom-host:1936" } } }
 ```
 
 ### jeeves-runner (Process Dashboard)
 
-When `runnerUrl` is configured, the server proxies runner API calls for the process dashboard UI.
+The server proxies runner API calls for the process dashboard UI. The runner URL is resolved automatically via core service discovery (default port 1937).
+
+To override the default URL, configure it in `{configRoot}/jeeves-core/config.json`:
 
 ```json
-{ "runnerUrl": "http://127.0.0.1:1937" }
+{ "services": { "runner": { "url": "http://custom-host:1937" } } }
 ```
 
 ### PlantUML
@@ -336,8 +338,10 @@ If `plantuml` is omitted entirely, only the community server is used.
 | `eventLogPurgeMs` | number | `2592000000` | Event log retention (default: 30 days) |
 | `maxZipSizeMb` | number | `100` | Max directory size for ZIP export |
 | `roots` | object | — | Linux filesystem roots (ignored on Windows) |
-| `watcherUrl` | string | — | jeeves-watcher API URL for semantic search |
-| `runnerUrl` | string | — | jeeves-runner API URL for process dashboard |
+| ~~`watcherUrl`~~ | — | — | **Deprecated in v3.6.0.** Use core service discovery. |
+| ~~`runnerUrl`~~ | — | — | **Deprecated in v3.6.0.** Use core service discovery. |
+| ~~`host`~~ | — | — | **Deprecated in v3.6.0.** Use `getBindAddress()` via core. |
+| ~~`metaUrl`~~ | — | — | **Deprecated in v3.6.0.** Use core service discovery. |
 | `plantuml` | object | — | PlantUML rendering config |
 | `diagramCachePath` | string | `.diagram-cache` | Cached rendered diagram directory |
 | `outsiderPolicy` | scopes | — | Global outsider sharing constraints |

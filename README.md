@@ -46,8 +46,9 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ## Features
 
-- **File Browser** — Navigate drives and directories through a modern React UI
-- **Markdown Rendering** — Prose with TOC sidebar, adjustable reading width, dark/light themes
+- **File Browser** — Navigate drives and directories through a modern React UI, with directory item counts
+- **Markdown Rendering** — Prose with collapsible TOC sidebar, collapsible frontmatter, adjustable reading width, dark/light themes
+- **CSV Table Rendering** — `.csv` files render as HTML tables with a Rendered/Raw tab
 - **PDF & DOCX Export** — One-click, perfectly rendered, business-ready
 - **Code Highlighting** — Syntax highlighting with copy buttons
 - **SVG, Mermaid & PlantUML Diagrams** — Rendered inline with pan/zoom; Mermaid is bundled, PlantUML uses a fallback pipeline (local jar → private servers → community server)
@@ -120,7 +121,7 @@ jeeves-server service start|stop|restart|status [--name <service-name>]
 - **Windows:** File browser auto-discovers drive letters (A–Z). Chrome path defaults to Program Files.
 - **Linux:** File browser uses configurable `roots` (e.g. `{ home: '/home', projects: '/opt/projects' }`). Chromium path is typically `/usr/bin/chromium-browser`.
 
-Both platforms are tested in CI (GitHub Actions on Ubuntu, Node 20 + 22).
+Both platforms are tested in CI (GitHub Actions on Ubuntu, Node 22+). Node.js 22 or later is required.
 
 ## Development
 
