@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  init,
   jeevesComponentDescriptorSchema,
   SERVER_PORT,
 } from '@karmaniverous/jeeves';
@@ -38,11 +39,18 @@ export const serverDescriptor = jeevesComponentDescriptorSchema.parse({
       default: 'CHANGE_ME_defaultKey',
     },
   }),
-  onConfigApply: async () => {
+  onConfigApply: async (config: Record<string, unknown> | undefined) => {
+    void config; // config argument reserved for future use
     const { resetConfig } = await import('./config/index.js');
     resetConfig();
   },
   run: async (configPath: string) => {
+    // Ensure core init() runs before server modules that depend on
+    // getServiceUrl() / getBindAddress()
+    init({
+      workspacePath: process.env['JEEVES_WORKSPACE'] ?? '.',
+      configRoot: process.env['JEEVES_CONFIG_ROOT'] ?? './config',
+    });
     const { initConfig } = await import('./config/index.js');
     initConfig(configPath);
     await import('./server.js');

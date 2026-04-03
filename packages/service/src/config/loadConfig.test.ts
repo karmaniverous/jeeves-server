@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { clearConfig, getConfig, initConfig, loadConfig } from './index.js';
 
@@ -151,6 +151,82 @@ describe('loadConfig', () => {
       explicitAllow: [],
       explicitDeny: [],
     });
+  });
+});
+
+describe('deprecated config property migration', () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jeeves-config-'));
+    clearConfig();
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+    clearConfig();
+  });
+
+  it('loads config with deprecated host, watcherUrl, runnerUrl, metaUrl', () => {
+    const configWithDeprecated = {
+      ...VALID_CONFIG,
+      host: '0.0.0.0',
+      watcherUrl: 'http://localhost:1936',
+      runnerUrl: 'http://localhost:1937',
+      metaUrl: 'http://localhost:1938',
+    };
+    const configPath = writeConfig(tmpDir, configWithDeprecated);
+    const config = loadConfig(configPath);
+    expect(config.port).toBe(9999);
+  });
+
+  it('logs deprecation warnings for each deprecated property', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const configWithDeprecated = {
+        ...VALID_CONFIG,
+        host: '0.0.0.0',
+        watcherUrl: 'http://localhost:1936',
+        runnerUrl: 'http://localhost:1937',
+        metaUrl: 'http://localhost:1938',
+      };
+      const configPath = writeConfig(tmpDir, configWithDeprecated);
+      loadConfig(configPath);
+
+      const deprecatedKeys = ['host', 'watcherUrl', 'runnerUrl', 'metaUrl'];
+      for (const key of deprecatedKeys) {
+        expect(
+          warnSpy.mock.calls.some(
+            (call) =>
+              typeof call[0] === 'string' && call[0].includes(`"${key}"`),
+          ),
+        ).toBe(true);
+      }
+      expect(warnSpy).toHaveBeenCalledTimes(4);
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it('strips deprecated properties from the resulting RuntimeConfig', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const configWithDeprecated = {
+        ...VALID_CONFIG,
+        host: '0.0.0.0',
+        watcherUrl: 'http://localhost:1936',
+      };
+      const configPath = writeConfig(tmpDir, configWithDeprecated);
+      const config = loadConfig(configPath);
+
+      const configAsRecord = config as unknown as Record<string, unknown>;
+      expect(configAsRecord['host']).toBeUndefined();
+      expect(configAsRecord['watcherUrl']).toBeUndefined();
+      expect(configAsRecord['runnerUrl']).toBeUndefined();
+      expect(configAsRecord['metaUrl']).toBeUndefined();
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });
 

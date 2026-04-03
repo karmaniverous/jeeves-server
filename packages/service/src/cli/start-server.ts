@@ -9,12 +9,26 @@
  * The CLI's `start` command uses this same logic in-process.
  */
 
+import { checkNodeVersion, init } from '@karmaniverous/jeeves';
+
+checkNodeVersion();
+
 import { initConfig } from '../config/index.js';
 
-const configIndex = process.argv.indexOf('--config');
-const configPath =
-  configIndex !== -1 ? process.argv[configIndex + 1] : undefined;
+function parseArg(name: string): string | undefined {
+  const idx = process.argv.indexOf(name);
+  return idx !== -1 && process.argv[idx + 1]
+    ? process.argv[idx + 1]
+    : undefined;
+}
 
+const configPath = parseArg('--config');
+const workspace =
+  parseArg('--workspace') ?? process.env['JEEVES_WORKSPACE'] ?? '.';
+const configRoot =
+  parseArg('--config-root') ?? process.env['JEEVES_CONFIG_ROOT'] ?? './config';
+
+init({ workspacePath: workspace, configRoot });
 initConfig(configPath);
 
 // Dynamic import to ensure config is initialized before server modules load

@@ -9,7 +9,9 @@
  * @packageDocumentation
  */
 
-import { createServiceCli } from '@karmaniverous/jeeves';
+import { checkNodeVersion, createServiceCli } from '@karmaniverous/jeeves';
+
+checkNodeVersion();
 
 import { serverDescriptor } from '../descriptor.js';
 

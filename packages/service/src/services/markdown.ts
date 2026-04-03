@@ -197,11 +197,31 @@ export function parseMarkdown(
 
   // Prepend frontmatter as a rendered YAML code block
   if (frontmatter) {
+    const FRONTMATTER_COLLAPSE_THRESHOLD = 10;
     const escaped = frontmatter
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
-    html = `<div class="frontmatter-block"><pre><code class="language-yaml">${escaped}</code></pre></div>\n${html}`;
+    const lines = frontmatter.split('\n');
+
+    if (lines.length > FRONTMATTER_COLLAPSE_THRESHOLD) {
+      const previewEscaped = lines
+        .slice(0, FRONTMATTER_COLLAPSE_THRESHOLD)
+        .join('\n')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      html =
+        `<div class="frontmatter-block frontmatter-collapsible">` +
+        `<div class="frontmatter-preview"><pre><code class="language-yaml">${previewEscaped}</code></pre></div>` +
+        `<div class="frontmatter-full"><pre><code class="language-yaml">${escaped}</code></pre></div>` +
+        `<button class="frontmatter-toggle" onclick="this.parentElement.classList.toggle('frontmatter-expanded'); ` +
+        `this.textContent = this.parentElement.classList.contains('frontmatter-expanded') ` +
+        `? 'Show less' : 'Show all (${String(lines.length)} lines)'">Show all (${String(lines.length)} lines)</button>` +
+        `</div>\n${html}`;
+    } else {
+      html = `<div class="frontmatter-block"><pre><code class="language-yaml">${escaped}</code></pre></div>\n${html}`;
+    }
   }
 
   return { html, headings };

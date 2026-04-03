@@ -50,7 +50,6 @@ export interface ResolvedInsider {
  */
 export interface RuntimeConfig {
   port: number;
-  host: string;
   eventTimeoutMs: number;
   eventLogPurgeMs: number;
   maxZipSizeMb: number;
@@ -63,9 +62,6 @@ export interface RuntimeConfig {
     servers: string[];
   };
   diagramCachePath?: string;
-  runnerUrl?: string;
-  watcherUrl?: string;
-  metaUrl?: string;
   outsiderPolicy: NormalizedScopes | null;
   events: JeevesConfig['events'];
   authModes: AuthMode[];

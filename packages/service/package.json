@@ -48,7 +48,7 @@
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
     "@fastify/static": "^8.3.0",
-    "@karmaniverous/jeeves": "^0.4.6",
+    "@karmaniverous/jeeves": "^0.5.1",
     "@karmaniverous/jsonmap": "^0.3.1",
     "@mermaid-js/mermaid-cli": "^11.12.0",
     "@turbodocx/html-to-docx": "^1.1.0",
@@ -59,7 +59,6 @@
     "lz-string": "^1.5.0",
     "marked": "^17.0.1",
     "mime-types": "^3.0.2",
-    "package-directory": "^8.2.0",
     "picomatch": "^4.0.3",
     "plantuml-encoder": "^1.4.0",
     "puppeteer": "^23.11.1",
@@ -118,6 +117,9 @@
     "npm": {
       "publish": true
     }
+  },
+  "engines": {
+    "node": ">=22"
   },
   "bin": {
     "jeeves-server": "./dist/src/cli/index.js"

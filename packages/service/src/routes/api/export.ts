@@ -10,6 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { getBindAddress } from '@karmaniverous/jeeves';
 import archiver from 'archiver';
 import type { FastifyPluginAsync } from 'fastify';
 
@@ -102,7 +103,10 @@ export const exportRoutes: FastifyPluginAsync = async (fastify) => {
           .code(500)
           .send({ error: 'Export unavailable — no internal key configured' });
 
-      const exportUrl = `http://127.0.0.1:${String(port)}/browse/${reqPath}?key=${exportKey}&render_diagrams=1&plain_code=1`;
+      const bindAddr = getBindAddress('server');
+      // Use loopback if bound to all interfaces (0.0.0.0 is not a valid request target)
+      const renderHost = bindAddr === '0.0.0.0' ? '127.0.0.1' : bindAddr;
+      const exportUrl = `http://${renderHost}:${String(port)}/browse/${reqPath}?key=${exportKey}&render_diagrams=1&plain_code=1`;
       const fileName = path.basename(resolved);
       const baseName = fileName.replace(/\.md$/i, '');
 

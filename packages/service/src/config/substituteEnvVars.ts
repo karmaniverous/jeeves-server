@@ -3,6 +3,8 @@
  *
  * Deep-walks config objects and replaces `${VAR_NAME}` patterns with environment variable values.
  * Ported from jeeves-watcher — candidate for hoisting to shared `@karmaniverous/jeeves-config`.
+ *
+ * // TODO: replace with core utility when hoisted (see jeeves-core issue for substituteEnvVars hoist)
  */
 
 const ENV_PATTERN = /\$\{([^}]+)\}/g;

@@ -1,10 +1,14 @@
 /**
- * Markdown rendered view with TOC sidebar.
+ * Markdown rendered view with collapsible TOC sidebar.
  */
-import type { FileContent } from '@/lib/api';
+import { useCallback, useMemo, useState } from 'react';
+
 import { initEmbeddedDiagramPanzoom } from '@/components/EmbeddedDiagramPanzoom';
 import { initLazyDiagrams } from '@/components/LazyDiagram';
 import { initInlineSvgPanzoom } from '@/components/InlineSvgPanzoom';
+import { TocSection } from '@/components/TocSection';
+import { buildTocTree, findAncestorSlugs } from '@/components/tocUtils';
+import type { FileContent } from '@/lib/api';
 import { initCodeBlockCm6 } from '@/lib/codeBlockCm6';
 import { injectCopyButtons } from '@/lib/codeBlockCopy';
 import { useTheme } from '@/lib/theme';
@@ -27,6 +31,47 @@ export function MarkdownView({
   const plainCode = new URLSearchParams(window.location.search).has('plain_code');
   const hasHeadings = fileRendered.headings && fileRendered.headings.length > 2;
 
+  // Build TOC tree and collapse state
+  const tocTree = useMemo(
+    () => (hasHeadings ? buildTocTree(fileRendered.headings!) : []),
+    [fileRendered.headings, hasHeadings],
+  );
+
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
+
+  const toggleCollapse = useCallback((slug: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      return next;
+    });
+  }, []);
+
+  const scrollToHeading = useCallback(
+    (slug: string) => {
+      // Auto-expand ancestors if collapsed
+      const ancestors = findAncestorSlugs(tocTree, slug);
+      if (ancestors.some((a) => collapsed.has(a))) {
+        setCollapsed((prev) => {
+          const next = new Set(prev);
+          for (const a of ancestors) next.delete(a);
+          return next;
+        });
+      }
+      scrollToIdInContainer(mainRef.current, slug);
+    },
+    [tocTree, collapsed, mainRef],
+  );
+
+  const mobileScrollTo = useCallback(
+    (slug: string) => {
+      scrollToHeading(slug);
+      setMobileTocOpen(false);
+    },
+    [scrollToHeading, setMobileTocOpen],
+  );
+
   return (
     <>
       {/* Mobile TOC overlay */}
@@ -38,16 +83,14 @@ export function MarkdownView({
             style={{ top: `${topBarHeight + 4}px` }}
           >
             <nav>
-              {fileRendered.headings!.map((h) => (
-                <button
-                  key={h.slug}
-                  type="button"
-                  onClick={() => { scrollToIdInContainer(mainRef.current, h.slug); setMobileTocOpen(false); }}
-                  className="block text-left text-sm text-muted-foreground hover:text-foreground cursor-pointer py-1 transition-colors w-full"
-                  style={{ paddingLeft: `${(h.level - 1) * 0.75}rem` }}
-                >
-                  {h.text}
-                </button>
+              {tocTree.map((node) => (
+                <TocSection
+                  key={node.heading.slug}
+                  node={node}
+                  collapsed={collapsed}
+                  toggleCollapse={toggleCollapse}
+                  scrollTo={mobileScrollTo}
+                />
               ))}
             </nav>
           </div>
@@ -63,16 +106,14 @@ export function MarkdownView({
           >
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Contents</div>
             <nav className="border-l border-border pl-3">
-              {fileRendered.headings!.map((h) => (
-                <button
-                  key={h.slug}
-                  type="button"
-                  onClick={() => scrollToIdInContainer(mainRef.current, h.slug)}
-                  className="block text-left text-sm text-muted-foreground hover:text-foreground cursor-pointer py-0.5 transition-colors"
-                  style={{ paddingLeft: `${(h.level - 1) * 0.75}rem` }}
-                >
-                  {h.text}
-                </button>
+              {tocTree.map((node) => (
+                <TocSection
+                  key={node.heading.slug}
+                  node={node}
+                  collapsed={collapsed}
+                  toggleCollapse={toggleCollapse}
+                  scrollTo={scrollToHeading}
+                />
               ))}
             </nav>
           </aside>

@@ -115,6 +115,13 @@ export function FileContentView({
         />
       )}
 
+      {/* CSV */}
+      {fileRendered?.type === 'csv' && fileRendered.html && activeTab === 'rendered' && (
+        <div className={`prose prose-sm dark:prose-invert max-w-none ${proseWidth === 'narrow' ? 'max-w-prose mx-auto' : proseWidth === 'medium' ? 'max-w-4xl mx-auto' : ''}`}>
+          <div className="overflow-x-auto" dangerouslySetInnerHTML={{ __html: fileRendered.html }} />
+        </div>
+      )}
+
       {/* SVG */}
       {fileRendered?.type === 'svg' && fileRendered.content && activeTab === 'rendered' && (
         <SvgViewer content={fileRendered.content} />

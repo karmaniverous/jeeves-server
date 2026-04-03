@@ -279,3 +279,39 @@ pre:hover .code-copy-btn {
 .diagram-retry-btn:hover {
   background: var(--color-accent);
 }
+
+/* CSV table styles */
+.csv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.csv-table th,
+.csv-table td {
+  border: 1px solid var(--color-border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.csv-table th {
+  font-weight: 600;
+  background: var(--color-muted);
+}
+.csv-table tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--color-muted) 40%, transparent);
+}
+
+/* Collapsible frontmatter */
+.frontmatter-collapsible .frontmatter-full { display: none; }
+.frontmatter-collapsible .frontmatter-preview { display: block; }
+.frontmatter-collapsible.frontmatter-expanded .frontmatter-full { display: block; }
+.frontmatter-collapsible.frontmatter-expanded .frontmatter-preview { display: none; }
+.frontmatter-toggle {
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  padding: 0.25rem 0;
+  border: none;
+  background: none;
+}
+.frontmatter-toggle:hover { text-decoration: underline; }

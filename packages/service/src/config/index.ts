@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 import { migrateConfigPath } from './migration.js';
 import { buildRuntimeConfig } from './resolve.js';
-import { jeevesConfigSchema } from './schema.js';
+import { DEPRECATED_CONFIG_PROPS, jeevesConfigSchema } from './schema.js';
 import { substituteEnvVars } from './substituteEnvVars.js';
 import type { RuntimeConfig } from './types.js';
 
@@ -58,7 +58,27 @@ export function loadConfig(configPath?: string): RuntimeConfig {
     );
   }
 
-  const substituted = substituteEnvVars(rawConfig);
+  // Strip deprecated v3.6.0 properties before validation
+  const cleanedConfig: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(rawConfig)) {
+    if (
+      DEPRECATED_CONFIG_PROPS.includes(
+        key as (typeof DEPRECATED_CONFIG_PROPS)[number],
+      )
+    ) {
+      console.warn(
+        `[jeeves-server] Deprecated config property "${key}" ignored. ` +
+          `Companion service URLs are now resolved via core config ` +
+          `({configRoot}/jeeves-core/config.json services.{name}.url). ` +
+          `Bind address is resolved via getBindAddress(). ` +
+          `Remove "${key}" from ${resolvedPath} to silence this warning.`,
+      );
+    } else {
+      cleanedConfig[key] = value;
+    }
+  }
+
+  const substituted = substituteEnvVars(cleanedConfig);
 
   const parseResult = jeevesConfigSchema.safeParse(substituted);
   if (!parseResult.success) {

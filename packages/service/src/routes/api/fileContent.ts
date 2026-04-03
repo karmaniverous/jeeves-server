@@ -7,9 +7,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
+import { csvToHtmlTable } from '../../services/csv.js';
 import { rewriteLinksForDeepShare } from '../../services/deepShareLinks.js';
 import { getOrRenderDiagram } from '../../services/diagramCache.js';
 import {
@@ -142,6 +144,29 @@ export const fileContentRoutes: FastifyPluginAsync = async (fastify) => {
         });
       }
 
+      // CSV
+      if (ext === '.csv') {
+        const content = fs.readFileSync(resolved, 'utf8');
+        if (rawOnly) {
+          return reply.send({
+            type: 'text',
+            content,
+            fileName,
+            breadcrumbs,
+            isInsider,
+          });
+        }
+        const html = csvToHtmlTable(content);
+        return reply.send({
+          type: 'csv',
+          content,
+          html,
+          fileName,
+          breadcrumbs,
+          isInsider,
+        });
+      }
+
       // Text files
       const buffer = fs.readFileSync(resolved);
       if (looksLikeText(buffer)) {
@@ -259,11 +284,10 @@ interface WatcherRenderResponse {
 async function tryWatcherRender(
   fsPath: string,
 ): Promise<WatcherRenderResponse | null> {
-  const config = getConfig();
-  if (!config.watcherUrl) return null;
+  const watcherUrl = getServiceUrl('watcher');
 
   try {
-    const res = await fetch(`${config.watcherUrl}/render`, {
+    const res = await fetch(`${watcherUrl}/render`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

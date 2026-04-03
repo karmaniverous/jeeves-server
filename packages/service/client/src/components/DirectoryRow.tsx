@@ -55,7 +55,11 @@ export function DirectoryRow({ entry, basePath, isInsider, shareSettings, onShar
         </div>
       </td>
       <td className="px-4 py-2.5 text-muted-foreground text-sm">{typeLabel}</td>
-      <td className="px-4 py-2.5 text-muted-foreground text-sm">{formatSize(entry.size)}</td>
+      <td className="px-4 py-2.5 text-muted-foreground text-sm">
+        {isDir
+          ? (entry.itemCount != null ? `${entry.itemCount} ${entry.itemCount === 1 ? 'item' : 'items'}` : '-')
+          : formatSize(entry.size)}
+      </td>
       <td className="px-4 py-2.5 text-muted-foreground text-sm">{entry.mtime ?? '-'}</td>
     </tr>
   );

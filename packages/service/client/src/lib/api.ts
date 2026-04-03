@@ -37,6 +37,7 @@ export interface DirectoryEntry {
   ext: string;
   size: number | null;
   mtime: string | null;
+  itemCount?: number | null;
 }
 
 export interface DirectoryListing {
@@ -59,7 +60,7 @@ export interface DriveEntry {
 }
 
 export interface FileContent {
-  type: 'markdown' | 'text' | 'svg' | 'mermaid' | 'plantuml' | 'image' | 'binary';
+  type: 'markdown' | 'text' | 'csv' | 'svg' | 'mermaid' | 'plantuml' | 'image' | 'binary';
   content?: string;
   html?: string;
   headings?: { level: number; text: string; slug: string }[];
