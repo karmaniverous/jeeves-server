@@ -11,6 +11,7 @@ import { getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
+import { csvToHtmlTable } from '../../services/csv.js';
 import { rewriteLinksForDeepShare } from '../../services/deepShareLinks.js';
 import { getOrRenderDiagram } from '../../services/diagramCache.js';
 import {
@@ -137,6 +138,29 @@ export const fileContentRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.send({
           type: 'svg',
           content,
+          fileName,
+          breadcrumbs,
+          isInsider,
+        });
+      }
+
+      // CSV
+      if (ext === '.csv') {
+        const content = fs.readFileSync(resolved, 'utf8');
+        if (rawOnly) {
+          return reply.send({
+            type: 'text',
+            content,
+            fileName,
+            breadcrumbs,
+            isInsider,
+          });
+        }
+        const html = csvToHtmlTable(content);
+        return reply.send({
+          type: 'csv',
+          content,
+          html,
           fileName,
           breadcrumbs,
           isInsider,

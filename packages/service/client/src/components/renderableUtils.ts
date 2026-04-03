@@ -3,7 +3,7 @@
  */
 import type { FileContent } from '@/lib/api';
 
-const RENDERABLE_EXTENSIONS = new Set(['.md', '.svg', '.mmd', '.puml', '.plantuml', '.pu']);
+const RENDERABLE_EXTENSIONS = new Set(['.md', '.csv', '.svg', '.mmd', '.puml', '.plantuml', '.pu']);
 
 export function isRenderable(file: FileContent): boolean {
   return file.type === 'markdown' || file.type === 'svg' || file.type === 'mermaid' || file.type === 'plantuml' || !!file.html;

@@ -86,11 +86,20 @@ export const directoryRoutes: FastifyPluginAsync = async (fastify) => {
         const entryPath = path.join(resolved, entry.name);
         let size: number | null = null;
         let mtime: string | null = null;
+        let itemCount: number | null = null;
         const ext = path.extname(entry.name).toLowerCase();
         try {
           const entryStats = fs.statSync(entryPath);
           mtime = entryStats.mtime.toISOString().split('T')[0];
-          if (!entry.isDirectory()) size = entryStats.size;
+          if (entry.isDirectory()) {
+            try {
+              itemCount = fs.readdirSync(entryPath).length;
+            } catch {
+              /* permission denied, etc. */
+            }
+          } else {
+            size = entryStats.size;
+          }
         } catch {
           /* ignore */
         }
@@ -100,6 +109,7 @@ export const directoryRoutes: FastifyPluginAsync = async (fastify) => {
           ext,
           size,
           mtime,
+          itemCount,
         };
       });
 
