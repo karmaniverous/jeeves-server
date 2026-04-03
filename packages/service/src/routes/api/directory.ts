@@ -5,6 +5,7 @@
  */
 
 import fs from 'node:fs';
+import fsp from 'node:fs/promises';
 import path from 'node:path';
 
 import type { FastifyPluginAsync } from 'fastify';
@@ -22,6 +23,57 @@ import {
   getRoots,
   urlPathToFs,
 } from '../../util/platform.js';
+
+/** Result shape returned by {@link mapDirectoryEntry}. */
+export interface DirectoryEntryInfo {
+  name: string;
+  type: string;
+  ext: string;
+  size: number | null;
+  mtime: string | null;
+  itemCount: number | null;
+}
+
+/**
+ * Map a single directory entry to its API representation.
+ *
+ * Uses async fs operations so the event loop is not blocked
+ * when listing large directories.
+ */
+export async function mapDirectoryEntry(
+  entry: fs.Dirent,
+  parentDir: string,
+): Promise<DirectoryEntryInfo> {
+  const entryPath = path.join(parentDir, entry.name);
+  let size: number | null = null;
+  let mtime: string | null = null;
+  let itemCount: number | null = null;
+  const ext = path.extname(entry.name).toLowerCase();
+  try {
+    const entryStats = await fsp.stat(entryPath);
+    mtime = entryStats.mtime.toISOString().split('T')[0];
+    if (entry.isDirectory()) {
+      try {
+        const children = await fsp.readdir(entryPath);
+        itemCount = children.length;
+      } catch {
+        /* permission denied, etc. */
+      }
+    } else {
+      size = entryStats.size;
+    }
+  } catch {
+    /* ignore */
+  }
+  return {
+    name: entry.name,
+    type: entry.isDirectory() ? 'directory' : 'file',
+    ext,
+    size,
+    mtime,
+    itemCount,
+  };
+}
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const directoryRoutes: FastifyPluginAsync = async (fastify) => {
@@ -41,7 +93,7 @@ export const directoryRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.code(404).send({ error: 'Not found', path: resolved });
       }
 
-      const stats = fs.statSync(resolved);
+      const stats = await fsp.stat(resolved);
       if (!stats.isDirectory()) {
         const ext = path.extname(resolved).toLowerCase();
         return reply.send({
@@ -56,7 +108,9 @@ export const directoryRoutes: FastifyPluginAsync = async (fastify) => {
       const isInsider = request.accessMode === 'insider';
       const insiderScopes = request.insiderScopes ?? null;
 
-      const allEntries = fs.readdirSync(resolved, { withFileTypes: true });
+      const allEntries = await fsp.readdir(resolved, {
+        withFileTypes: true,
+      });
 
       const entries = insiderScopes
         ? allEntries.filter((entry) => {
@@ -82,36 +136,9 @@ export const directoryRoutes: FastifyPluginAsync = async (fastify) => {
         return a.name.localeCompare(b.name);
       });
 
-      const result = sorted.map((entry) => {
-        const entryPath = path.join(resolved, entry.name);
-        let size: number | null = null;
-        let mtime: string | null = null;
-        let itemCount: number | null = null;
-        const ext = path.extname(entry.name).toLowerCase();
-        try {
-          const entryStats = fs.statSync(entryPath);
-          mtime = entryStats.mtime.toISOString().split('T')[0];
-          if (entry.isDirectory()) {
-            try {
-              itemCount = fs.readdirSync(entryPath).length;
-            } catch {
-              /* permission denied, etc. */
-            }
-          } else {
-            size = entryStats.size;
-          }
-        } catch {
-          /* ignore */
-        }
-        return {
-          name: entry.name,
-          type: entry.isDirectory() ? 'directory' : 'file',
-          ext,
-          size,
-          mtime,
-          itemCount,
-        };
-      });
+      const result = await Promise.all(
+        sorted.map((entry) => mapDirectoryEntry(entry, resolved)),
+      );
 
       const breadcrumbs = breadcrumbParts(resolved, roots);
       const matchedPath = request.authMatchedPath ?? null;

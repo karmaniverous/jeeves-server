@@ -94,6 +94,17 @@ describe('csvToHtmlTable', () => {
     expect(html).toMatch(/<table class="csv-table">/);
   });
 
+  it('normalizes rows with fewer or more columns than header', () => {
+    // Row with fewer columns gets padded, row with more gets truncated
+    const csv = 'a,b,c\n1\n4,5,6,7\n';
+    const html = csvToHtmlTable(csv);
+    // First data row: 1 field → padded to 3 columns
+    expect(html).toContain('<tr><td>1</td><td></td><td></td></tr>');
+    // Second data row: 4 fields → truncated to 3 columns (no "7")
+    expect(html).toContain('<tr><td>4</td><td>5</td><td>6</td></tr>');
+    expect(html).not.toContain('<td>7</td>');
+  });
+
   it('handles a large CSV (>100 rows) without issues', () => {
     const header = 'id,name,value\n';
     const rows = Array.from(

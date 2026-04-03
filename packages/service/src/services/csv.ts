@@ -102,8 +102,14 @@ export function csvToHtmlTable(csv: string): string {
   if (rows.length === 0) return '<p>Empty CSV</p>';
 
   const [headers, ...data] = rows as [string[], ...string[][]];
+  const colCount = headers.length;
   const thead = `<thead><tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>`;
-  const tbody = `<tbody>${data.map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('')}</tbody>`;
+  const tbody = `<tbody>${data
+    .map((row) => {
+      const cells = Array.from({ length: colCount }, (_, i) => row[i] ?? '');
+      return `<tr>${cells.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`;
+    })
+    .join('')}</tbody>`;
 
   return `<table class="csv-table">${thead}${tbody}</table>`;
 }
