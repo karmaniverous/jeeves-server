@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 import cookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';
+import { getBindAddress } from '@karmaniverous/jeeves';
 import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 
 import { getConfig, initConfig, isConfigInitialized } from './config/index.js';
@@ -97,9 +98,10 @@ async function start() {
     // Start queue processor
     startQueueProcessor();
 
-    await fastify.listen({ port: config.port, host: config.host });
+    const bindAddress = getBindAddress('server');
+    await fastify.listen({ port: config.port, host: bindAddress });
     console.log(
-      `Jeeves server listening on ${config.host}:${String(config.port)}`,
+      `Jeeves server listening on ${bindAddress}:${String(config.port)}`,
     );
     console.log(`Endpoints:`);
     console.log(`  GET  /browse/* - File browser SPA`);

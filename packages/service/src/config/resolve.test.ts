@@ -236,8 +236,6 @@ describe('buildRuntimeConfig', () => {
   it('constructs correct path fields', () => {
     const config = {
       port: 1934,
-      host: '0.0.0.0',
-      metaUrl: 'http://127.0.0.1:1938',
       eventTimeoutMs: 30000,
       eventLogPurgeMs: 2592000000,
       maxZipSizeMb: 100,

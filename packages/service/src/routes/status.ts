@@ -5,7 +5,7 @@
  * with server-specific details nested under `health`.
  */
 
-import { createStatusHandler } from '@karmaniverous/jeeves';
+import { createStatusHandler, getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyPluginAsync } from 'fastify';
 
 import { getConfig } from '../config/index.js';
@@ -41,9 +41,9 @@ const handleStatus = createStatusHandler({
     const config = getConfig();
 
     const [watcher, runner, meta] = await Promise.all([
-      config.watcherUrl ? checkService(config.watcherUrl) : null,
-      config.runnerUrl ? checkService(config.runnerUrl) : null,
-      config.metaUrl ? checkService(config.metaUrl) : null,
+      checkService(getServiceUrl('watcher')),
+      checkService(getServiceUrl('runner')),
+      checkService(getServiceUrl('meta')),
     ]);
 
     return {

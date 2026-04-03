@@ -11,7 +11,6 @@ import { sanitizeConfig } from './config.js';
 function makeConfig(overrides: Partial<RuntimeConfig> = {}): RuntimeConfig {
   return {
     port: 1934,
-    host: '0.0.0.0',
     eventTimeoutMs: 30_000,
     eventLogPurgeMs: 604_800_000,
     maxZipSizeMb: 100,

@@ -9,6 +9,7 @@
 
 import { stat } from 'node:fs/promises';
 
+import { getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyPluginAsync } from 'fastify';
 import picomatch from 'picomatch';
 
@@ -86,9 +87,7 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const config = getConfig();
-    if (!config.watcherUrl) {
-      return reply.code(501).send({ error: 'Search not configured' });
-    }
+    const watcherUrl = getServiceUrl('watcher');
 
     const { query, limit = 20, filter } = request.body;
     if (!query || typeof query !== 'string') {
@@ -102,7 +101,7 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
     const fetchLimit = Math.min(limit * 5, 200);
 
     try {
-      const watcherRes = await fetch(`${config.watcherUrl}/search`, {
+      const watcherRes = await fetch(`${watcherUrl}/search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, limit: fetchLimit, filter }),
@@ -244,10 +243,7 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.code(403).send({ error: 'Insider access required' });
     }
 
-    const config = getConfig();
-    if (!config.watcherUrl) {
-      return reply.code(501).send({ error: 'Search not configured' });
-    }
+    const watcherUrl = getServiceUrl('watcher');
 
     // Return cached if fresh
     if (
@@ -260,7 +256,6 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       // Guard against cache stampede: reuse in-flight fetch
       if (!facetsFetchPromise) {
-        const watcherUrl = config.watcherUrl;
         facetsFetchPromise = (async () => {
           const watcherRes = await fetch(`${watcherUrl}/search/facets`, {
             signal: AbortSignal.timeout(15000),

@@ -1,6 +1,14 @@
 ﻿import { SERVER_PORT } from '@karmaniverous/jeeves';
 import { z } from 'zod';
 
+/** Config properties deprecated in v3.6.0 (now resolved via core services). */
+export const DEPRECATED_CONFIG_PROPS = [
+  'host',
+  'runnerUrl',
+  'watcherUrl',
+  'metaUrl',
+] as const;
+
 /** Supported authentication methods */
 export const authModeSchema = z.enum(['google', 'keys']);
 
@@ -101,12 +109,6 @@ function getScopeRefs(scopes: unknown): string[] {
 export const jeevesConfigSchema = z
   .object({
     port: z.number().int().positive().default(SERVER_PORT),
-    /**
-     * Network interface to bind the server to.
-     * Default: '0.0.0.0' (all interfaces — required for external access by insiders, share links, etc.)
-     * Set to '127.0.0.1' to restrict to loopback only.
-     */
-    host: z.string().min(1).default('0.0.0.0'),
     chromePath: z.string().min(1),
     auth: authSchema,
     /** Named scope definitions, referenced by insiders/keys/outsiderPolicy */
@@ -125,11 +127,6 @@ export const jeevesConfigSchema = z
      * Default: \{ root: '/' \}
      */
     roots: z.record(z.string(), z.string()).optional(),
-    /**
-     * URL of the jeeves-runner API for process dashboard proxy.
-     * Default: 'http://127.0.0.1:1937'
-     */
-    runnerUrl: z.url().optional(),
     /** @deprecated Mermaid is now bundled. This field is ignored but kept for backward compatibility. */
     mermaidCliPath: z.string().optional(),
     /**
@@ -152,16 +149,6 @@ export const jeevesConfigSchema = z
      * Defaults to `.diagram-cache` in the server working directory.
      */
     diagramCachePath: z.string().optional(),
-    /**
-     * URL of the jeeves-watcher API for semantic search.
-     * When set, the search UI appears in the header. Example: 'http://127.0.0.1:1936'
-     */
-    watcherUrl: z.url().optional(),
-    /**
-     * URL of the jeeves-meta API for synthesis engine health checks.
-     * Default: 'http://127.0.0.1:1938'
-     */
-    metaUrl: z.url().default('http://127.0.0.1:1938'),
     /**
      * Global outsider policy â€" constrains which paths are eligible for outsider sharing.
      * Uses the same allow/deny model as insider scopes.

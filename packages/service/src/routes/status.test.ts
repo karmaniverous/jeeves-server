@@ -1,9 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('@karmaniverous/jeeves', async (importOriginal) => {
+  const mod = await importOriginal<Record<string, unknown>>();
+  return {
+    ...mod,
+    getServiceUrl: (name: string) =>
+      `http://127.0.0.1:${name === 'watcher' ? '1936' : name === 'runner' ? '1937' : '1938'}`,
+  };
+});
+
+// Mock fetch so service health checks don't make real HTTP calls
+const mockFetch = vi.fn().mockRejectedValue(new Error('not reachable'));
+vi.stubGlobal('fetch', mockFetch);
+
 // Mock config
 const mockConfig = {
   port: 1934,
-  host: '0.0.0.0',
   chromePath: '/usr/bin/chromium',
   authModes: ['keys'],
   resolvedInsiders: [{ email: 'a@b.com' }, { email: 'c@d.com' }],
@@ -17,9 +29,6 @@ const mockConfig = {
     jarPath: '/tools/plantuml.jar',
     servers: ['https://plantuml.com/plantuml'],
   },
-  watcherUrl: null,
-  runnerUrl: null,
-  metaUrl: null,
   exportFormats: ['pdf', 'docx', 'zip'],
 };
 

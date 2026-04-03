@@ -5,14 +5,11 @@
  * so jeeves-server acts as an authenticated gateway.
  */
 
+import { getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyPluginAsync, FastifyReply } from 'fastify';
 
-import { getConfig } from '../../config/index.js';
-
-const DEFAULT_RUNNER_URL = 'http://127.0.0.1:3100';
-
 function getRunnerUrl(): string {
-  return getConfig().runnerUrl ?? DEFAULT_RUNNER_URL;
+  return getServiceUrl('runner');
 }
 
 /** Proxy a request to the runner and send the response via reply. */

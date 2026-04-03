@@ -7,6 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
@@ -259,11 +260,10 @@ interface WatcherRenderResponse {
 async function tryWatcherRender(
   fsPath: string,
 ): Promise<WatcherRenderResponse | null> {
-  const config = getConfig();
-  if (!config.watcherUrl) return null;
+  const watcherUrl = getServiceUrl('watcher');
 
   try {
-    const res = await fetch(`${config.watcherUrl}/render`, {
+    const res = await fetch(`${watcherUrl}/render`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
