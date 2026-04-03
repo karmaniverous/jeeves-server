@@ -16,10 +16,12 @@ import {
   createPluginToolset,
   init,
   jeevesComponentDescriptorSchema,
+  loadWorkspaceConfig,
   type PluginApi,
   resolvePluginSetting,
   resolveWorkspacePath,
   SERVER_PORT,
+  WORKSPACE_CONFIG_DEFAULTS,
 } from '@karmaniverous/jeeves';
 import { z } from 'zod';
 
@@ -153,6 +155,11 @@ export default function register(api: PluginApi): void {
 
   registerServerTools(api, baseUrl);
 
-  activeWriter = createComponentWriter(descriptor);
+  // Resolve gatewayUrl for cleanup escalation
+  const wsConfig = loadWorkspaceConfig(workspacePath);
+  const gatewayUrl =
+    wsConfig?.core?.gatewayUrl ?? WORKSPACE_CONFIG_DEFAULTS.core.gatewayUrl;
+
+  activeWriter = createComponentWriter(descriptor, { gatewayUrl });
   activeWriter.start();
 }
