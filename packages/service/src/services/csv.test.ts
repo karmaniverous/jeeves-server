@@ -88,4 +88,29 @@ describe('csvToHtmlTable', () => {
     expect(html).not.toContain('<script>');
     expect(html).toContain('&lt;script&gt;');
   });
+
+  it('produces a table with csv-table class for client styling', () => {
+    const html = csvToHtmlTable('Name,Age\nAlice,30\n');
+    expect(html).toMatch(/<table class="csv-table">/);
+  });
+
+  it('handles a large CSV (>100 rows) without issues', () => {
+    const header = 'id,name,value\n';
+    const rows = Array.from(
+      { length: 150 },
+      (_, i) => `${String(i)},item${String(i)},${String(i * 10)}\n`,
+    ).join('');
+    const csv = header + rows;
+
+    const html = csvToHtmlTable(csv);
+    expect(html).toContain('csv-table');
+    expect(html).toContain('<thead>');
+    // Verify first and last data rows are present
+    expect(html).toContain('<td>0</td>');
+    expect(html).toContain('<td>149</td>');
+    // Count tbody rows
+    const trMatches = html.match(/<tr>/g);
+    // 1 header row + 150 data rows = 151
+    expect(trMatches).toHaveLength(151);
+  });
 });
