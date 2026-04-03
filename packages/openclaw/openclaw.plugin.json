@@ -2,7 +2,7 @@
   "id": "jeeves-server-openclaw",
   "name": "Jeeves Server",
   "description": "File browsing, document sharing, export, and event gateway tools for jeeves-server.",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "skills": [
     "dist/skills/jeeves-server"
   ],
