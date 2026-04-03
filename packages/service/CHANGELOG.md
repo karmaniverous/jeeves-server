@@ -2,13 +2,33 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.5.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.5.1...3.5.2)
+#### [3.6.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.5.2...3.6.0)
+
+- feat: v3.6.0 core v0.5.1 adoption + core service alignment + UX improvements [`#146`](https://github.com/karmaniverous/jeeves-server/pull/146)
+- [360] feat: Phase 3 — UX improvements (CSV tables, directory item counts, collapsible frontmatter, collapsible TOC) [`#48`](https://github.com/karmaniverous/jeeves-server/issues/48)
+- [360] feat: Phase 1 — core service adoption (getServiceUrl, getBindAddress, Node 22 fast-fail) [`#135`](https://github.com/karmaniverous/jeeves-server/issues/135)
+- [360] test: add missing test coverage for v3.6.0 features [`c23f7a1`](https://github.com/karmaniverous/jeeves-server/commit/c23f7a1dfa03517d2ed8a28eb0ef06da05379e38)
+- [360] refactor: address code review — async directory reads, CSV row normalization, extract mapDirectoryEntry [`3a1a389`](https://github.com/karmaniverous/jeeves-server/commit/3a1a389ee5f3a4ce1d8e28db204784ea9fefd1d5)
+- npm audit fix [`0be936a`](https://github.com/karmaniverous/jeeves-server/commit/0be936a6dbbfb07b1f7d62e334d307a0fb0db3f8)
+- [360] refactor: split TocSection.tsx — move utilities to tocUtils.ts (fixes react-refresh lint) [`d8e8d57`](https://github.com/karmaniverous/jeeves-server/commit/d8e8d57df8eefc419bdcafed08f0a60ccd4e481d)
+- [360] chore: remove TASK.md build artifact, DRY up Node version check and fix minor issues [`3e569db`](https://github.com/karmaniverous/jeeves-server/commit/3e569dbca069ea659ee5b1ca9030caa43ae4fea5)
+- [360] docs: Phase 4 — documentation updates for v3.6.0 [`8e0be64`](https://github.com/karmaniverous/jeeves-server/commit/8e0be6472e300c6117dc0c917b76686015931a85)
+- [360] feat: Phase 2 — core v0.5.1 wiring (cleanup escalation, getPackageVersion, substituteEnvVars TODO) [`2b97c20`](https://github.com/karmaniverous/jeeves-server/commit/2b97c209c0caaf99d27f36a6dff397ddbb4e168d)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.6.2 [`f120979`](https://github.com/karmaniverous/jeeves-server/commit/f1209795471958090f3fb18b4eda4bb62415da36)
+- [360] chore: Phase 5 — quality gates clean (knip fixes, remove package-directory dep) [`a436c46`](https://github.com/karmaniverous/jeeves-server/commit/a436c462311b07bf5975e6ba8b0d75c2e216e637)
+- [360] ci: drop Node 20 from Linux compatibility matrix (engine floor is now 22) [`5b690e6`](https://github.com/karmaniverous/jeeves-server/commit/5b690e6644e1e4dd2c7f66e089cf4d190daeeb32)
+- [360] docs: fix Node version in deployment guide (20 → 22) [`dde5cd2`](https://github.com/karmaniverous/jeeves-server/commit/dde5cd2f3d876a8227be823de78ccbda003e9f62)
+
+#### [service/3.5.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.5.1...service/3.5.2)
+
+> 31 March 2026
 
 - [53] Fix pre-existing lint + knip errors (Commander type resolution) [`#140`](https://github.com/karmaniverous/jeeves-server/pull/140)
 - [53] Integrate core v0.4.6: init() before descriptor.run() + knip fixes [`#139`](https://github.com/karmaniverous/jeeves-server/pull/139)
 - [53] chore: bump core to v0.4.6 (init before run) + fix knip issues [`e5f466a`](https://github.com/karmaniverous/jeeves-server/commit/e5f466a0df574e1052601fc99b0110aaf2136666)
 - [53] chore: bump core to v0.4.6 (init before run) + fix knip issues [`cc2adb6`](https://github.com/karmaniverous/jeeves-server/commit/cc2adb6c4d2a540a145bdcb04a712b2f6b77fa9e)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.6.1 [`b0a4bec`](https://github.com/karmaniverous/jeeves-server/commit/b0a4bec47f5141d13e59070683f7d459e82a9faa)
+- chore: release @karmaniverous/jeeves-server v3.5.2 [`08f6a37`](https://github.com/karmaniverous/jeeves-server/commit/08f6a37a4bc2802b9c1e65a2ed38482fffa2678b)
 
 #### [service/3.5.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.5.0...service/3.5.1)
 
