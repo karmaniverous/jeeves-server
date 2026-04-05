@@ -2,7 +2,16 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.6.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.0...3.6.1)
+#### [3.6.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.1...3.6.2)
+
+- fix: consume core importMetaUrl for plugin install (#150, #147) [`#151`](https://github.com/karmaniverous/jeeves-server/pull/151)
+- [150] fix: consume core importMetaUrl for plugin install [`#150`](https://github.com/karmaniverous/jeeves-server/pull/150)
+- [150] fix: consume core importMetaUrl for plugin install (#150) [`#150`](https://github.com/karmaniverous/jeeves-server/issues/150) [`#147`](https://github.com/karmaniverous/jeeves-server/issues/147)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.7.1 [`35299d1`](https://github.com/karmaniverous/jeeves-server/commit/35299d17ea3d13b28aee35815b91ca6501354df6)
+
+#### [service/3.6.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.0...service/3.6.1)
+
+> 5 April 2026
 
 - chore: dependency updates — jeeves ^0.5.3, jsonmap ^2.1.1, @types/node ^25.5.2, and minor/patch bumps [`#149`](https://github.com/karmaniverous/jeeves-server/pull/149)
 - chore: update @karmaniverous/jeeves to ^0.5.3 and bump minor/patch deps [`a73fd37`](https://github.com/karmaniverous/jeeves-server/commit/a73fd37cbdc235bd4d4a1ad011eac03d330755f6)
@@ -10,6 +19,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore: release @karmaniverous/jeeves-server-openclaw v0.7.0 [`3cce7a2`](https://github.com/karmaniverous/jeeves-server/commit/3cce7a2e8d97eb111ed3a5c82695cb11b7d9c54a)
 - chore: update @karmaniverous/jsonmap ^0.3.1 → ^2.1.1 [`12a848d`](https://github.com/karmaniverous/jeeves-server/commit/12a848d0efd77d7ae69bb2c03f1e887300f4ba51)
 - npm audit fix [`020edff`](https://github.com/karmaniverous/jeeves-server/commit/020edff96c18b52f39b67f30768b7b6821ffd227)
+- chore: release @karmaniverous/jeeves-server v3.6.1 [`b539679`](https://github.com/karmaniverous/jeeves-server/commit/b5396790b2db8861ca81e1b794d9cf6b8ec6bb1f)
 
 #### [service/3.6.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.5.2...service/3.6.0)
 
