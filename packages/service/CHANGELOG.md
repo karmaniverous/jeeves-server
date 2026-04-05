@@ -2,12 +2,20 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.6.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.1...3.6.2)
+#### [3.6.3](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.2...3.6.3)
+
+- hoisted jeeves [`0dd00f7`](https://github.com/karmaniverous/jeeves-server/commit/0dd00f7e8cf21d4b94fbd59b187283e9b4a55ea4)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.7.2 [`88ac709`](https://github.com/karmaniverous/jeeves-server/commit/88ac7093e2613eca69b856d89e7e645c69ad0717)
+
+#### [service/3.6.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.1...service/3.6.2)
+
+> 5 April 2026
 
 - fix: consume core importMetaUrl for plugin install (#150, #147) [`#151`](https://github.com/karmaniverous/jeeves-server/pull/151)
 - [150] fix: consume core importMetaUrl for plugin install [`#150`](https://github.com/karmaniverous/jeeves-server/pull/150)
 - [150] fix: consume core importMetaUrl for plugin install (#150) [`#150`](https://github.com/karmaniverous/jeeves-server/issues/150) [`#147`](https://github.com/karmaniverous/jeeves-server/issues/147)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.7.1 [`35299d1`](https://github.com/karmaniverous/jeeves-server/commit/35299d17ea3d13b28aee35815b91ca6501354df6)
+- chore: release @karmaniverous/jeeves-server v3.6.2 [`c69a014`](https://github.com/karmaniverous/jeeves-server/commit/c69a0146859740168bb4e4b87b7b0ed1f2e8beb5)
 
 #### [service/3.6.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.0...service/3.6.1)
 
