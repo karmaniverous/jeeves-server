@@ -2,7 +2,12 @@
  * Event Gateway webhook endpoint
  */
 
-import { JsonMap } from '@karmaniverous/jsonmap';
+import {
+  type Json,
+  JsonMap,
+  type JsonMapLib,
+  type JsonMapMap,
+} from '@karmaniverous/jsonmap';
 import Ajv from 'ajv';
 import type { FastifyPluginAsync } from 'fastify';
 import * as _ from 'radash';
@@ -24,7 +29,7 @@ interface EventRequest {
  */
 function matchEvent(
   body: Record<string, unknown>,
-): { name: string; cmd: string; map?: object; timeoutMs: number } | null {
+): { name: string; cmd: string; map?: JsonMapMap; timeoutMs: number } | null {
   const { events, eventTimeoutMs } = getConfig();
 
   for (const [name, eventConfig] of Object.entries(events)) {
@@ -34,7 +39,7 @@ function matchEvent(
       return {
         name,
         cmd: eventConfig.cmd,
-        map: eventConfig.map,
+        map: eventConfig.map as JsonMapMap | undefined,
         timeoutMs: eventConfig.timeoutMs ?? eventTimeoutMs,
       };
     }
@@ -48,13 +53,13 @@ function matchEvent(
  */
 async function transformBody(
   body: Record<string, unknown>,
-  map?: object,
+  map?: JsonMapMap,
 ): Promise<Record<string, unknown>> {
   if (!map) return body;
 
   // JsonMap with radash available as $.lib._
-  const mapper = new JsonMap(map, { _: _ as never });
-  const result = await mapper.transform(body);
+  const mapper = new JsonMap(map, { _: _ as unknown as JsonMapLib });
+  const result = await mapper.transform(body as unknown as Json);
   return result as Record<string, unknown>;
 }
 
