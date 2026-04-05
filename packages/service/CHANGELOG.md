@@ -2,7 +2,18 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.6.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.5.2...3.6.0)
+#### [3.6.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.0...3.6.1)
+
+- chore: dependency updates — jeeves ^0.5.3, jsonmap ^2.1.1, @types/node ^25.5.2, and minor/patch bumps [`#149`](https://github.com/karmaniverous/jeeves-server/pull/149)
+- chore: update @karmaniverous/jeeves to ^0.5.3 and bump minor/patch deps [`a73fd37`](https://github.com/karmaniverous/jeeves-server/commit/a73fd37cbdc235bd4d4a1ad011eac03d330755f6)
+- chore: update @types/node to ^25.5.2 [`696da29`](https://github.com/karmaniverous/jeeves-server/commit/696da297e5840a1c2ef72f0e5eee5df754144925)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.7.0 [`3cce7a2`](https://github.com/karmaniverous/jeeves-server/commit/3cce7a2e8d97eb111ed3a5c82695cb11b7d9c54a)
+- chore: update @karmaniverous/jsonmap ^0.3.1 → ^2.1.1 [`12a848d`](https://github.com/karmaniverous/jeeves-server/commit/12a848d0efd77d7ae69bb2c03f1e887300f4ba51)
+- npm audit fix [`020edff`](https://github.com/karmaniverous/jeeves-server/commit/020edff96c18b52f39b67f30768b7b6821ffd227)
+
+#### [service/3.6.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.5.2...service/3.6.0)
+
+> 3 April 2026
 
 - feat: v3.6.0 core v0.5.1 adoption + core service alignment + UX improvements [`#146`](https://github.com/karmaniverous/jeeves-server/pull/146)
 - [360] feat: Phase 3 — UX improvements (CSV tables, directory item counts, collapsible frontmatter, collapsible TOC) [`#48`](https://github.com/karmaniverous/jeeves-server/issues/48)
@@ -15,6 +26,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - [360] docs: Phase 4 — documentation updates for v3.6.0 [`8e0be64`](https://github.com/karmaniverous/jeeves-server/commit/8e0be6472e300c6117dc0c917b76686015931a85)
 - [360] feat: Phase 2 — core v0.5.1 wiring (cleanup escalation, getPackageVersion, substituteEnvVars TODO) [`2b97c20`](https://github.com/karmaniverous/jeeves-server/commit/2b97c209c0caaf99d27f36a6dff397ddbb4e168d)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.6.2 [`f120979`](https://github.com/karmaniverous/jeeves-server/commit/f1209795471958090f3fb18b4eda4bb62415da36)
+- chore: release @karmaniverous/jeeves-server v3.6.0 [`40341f4`](https://github.com/karmaniverous/jeeves-server/commit/40341f4fb51177f7406c6f7071eec5131ff1ee1f)
 - [360] chore: Phase 5 — quality gates clean (knip fixes, remove package-directory dep) [`a436c46`](https://github.com/karmaniverous/jeeves-server/commit/a436c462311b07bf5975e6ba8b0d75c2e216e637)
 - [360] ci: drop Node 20 from Linux compatibility matrix (engine floor is now 22) [`5b690e6`](https://github.com/karmaniverous/jeeves-server/commit/5b690e6644e1e4dd2c7f66e089cf4d190daeeb32)
 - [360] docs: fix Node version in deployment guide (20 → 22) [`dde5cd2`](https://github.com/karmaniverous/jeeves-server/commit/dde5cd2f3d876a8227be823de78ccbda003e9f62)
