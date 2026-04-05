@@ -115,7 +115,6 @@
     "hideCredit": true
   },
   "dependencies": {
-    "@karmaniverous/jeeves": "^0.5.4",
     "zod": "^4.3.6"
   }
 }
