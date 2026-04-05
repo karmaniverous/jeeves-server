@@ -2,7 +2,7 @@
  * Event route tests
  */
 
-import { JsonMap } from '@karmaniverous/jsonmap';
+import { JsonMap, type JsonMapLib } from '@karmaniverous/jsonmap';
 import Ajv from 'ajv';
 import * as _ from 'radash';
 import { describe, expect, it } from 'vitest';
@@ -96,7 +96,7 @@ describe('event route', () => {
         },
       };
 
-      const mapper = new JsonMap(map, { _: _ as never });
+      const mapper = new JsonMap(map, { _: _ as unknown as JsonMapLib });
       const result = (await mapper.transform(body)) as Record<string, unknown>;
 
       expect(result.pageId).toBe('abc123');
@@ -117,7 +117,7 @@ describe('event route', () => {
         },
       };
 
-      const mapper = new JsonMap(map, { _: _ as never });
+      const mapper = new JsonMap(map, { _: _ as unknown as JsonMapLib });
       const result = (await mapper.transform(body)) as Record<string, unknown>;
 
       expect(result.pageId).toBeUndefined();
@@ -165,7 +165,7 @@ describe('event route', () => {
         },
       };
 
-      const mapper = new JsonMap(map, { _: _ as never });
+      const mapper = new JsonMap(map, { _: _ as unknown as JsonMapLib });
       const result = (await mapper.transform(body)) as Record<string, unknown>;
 
       expect(result.authorName).toBe('Alice');
