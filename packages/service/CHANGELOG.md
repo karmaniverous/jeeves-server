@@ -2,10 +2,18 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.6.4](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.3...3.6.4)
+#### [3.6.5](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.4...3.6.5)
+
+- npm audit fix [`9390169`](https://github.com/karmaniverous/jeeves-server/commit/9390169fd9763e5e81a96ff42b9d25eb0f32c38a)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.7.4 [`8e79660`](https://github.com/karmaniverous/jeeves-server/commit/8e79660b908f26ab90427023c0d18764a2829c29)
+
+#### [service/3.6.4](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.3...service/3.6.4)
+
+> 5 April 2026
 
 - chore: release @karmaniverous/jeeves-server-openclaw v0.7.3 [`70d398a`](https://github.com/karmaniverous/jeeves-server/commit/70d398a73c81193dfd0b93d6f1a6c009938aa954)
 - unhoisted jeeves [`8af782b`](https://github.com/karmaniverous/jeeves-server/commit/8af782b5f1d4977aa4d2564a2c4bb50411133a92)
+- chore: release @karmaniverous/jeeves-server v3.6.4 [`7f61abb`](https://github.com/karmaniverous/jeeves-server/commit/7f61abbd250eaa0542f936f5d9edd95344d3548a)
 
 #### [service/3.6.3](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.2...service/3.6.3)
 

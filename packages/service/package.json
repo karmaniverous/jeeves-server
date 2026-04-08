@@ -1,6 +1,6 @@
 {
   "name": "@karmaniverous/jeeves-server",
-  "version": "3.6.4",
+  "version": "3.6.5",
   "description": "Secure file browser, markdown viewer, and webhook gateway with PDF/DOCX export and expiring share links",
   "keywords": [
     "fastify",
