@@ -34,7 +34,6 @@ export function MarkdownView({
   const plainCode = new URLSearchParams(window.location.search).has('plain_code');
   const hasHeadings = fileRendered.headings && fileRendered.headings.length > 2;
   const articleRef = useRef<HTMLElement | null>(null);
-  const [toggling, setToggling] = useState(false);
   const mtimeRef = useRef<number>(fileRendered.mtime ?? 0);
 
   // Update mtime when fileRendered changes (e.g. after refetch)
@@ -87,60 +86,62 @@ export function MarkdownView({
     [scrollToHeading, setMobileTocOpen],
   );
 
-  // Setup checkbox interactivity after render
+  // Stable refs for the event delegation handler to close over.
+  // This avoids re-attaching the listener when these values change.
+  const reqPathRef = useRef(reqPath);
+  reqPathRef.current = reqPath;
+  const onRefetchRef = useRef(onRefetch);
+  onRefetchRef.current = onRefetch;
+  const isInsiderRef = useRef(isInsider);
+  isInsiderRef.current = isInsider;
+
+  // Enable/disable checkboxes when insider status or HTML changes
   useEffect(() => {
     const el = articleRef.current;
     if (!el) return;
-
     const checkboxes = el.querySelectorAll<HTMLInputElement>('input[type="checkbox"][data-checkbox-index]');
     checkboxes.forEach((cb) => {
-      if (isInsider && !toggling) {
-        cb.disabled = false;
-        cb.style.cursor = 'pointer';
-      } else {
-        cb.disabled = true;
-        cb.style.cursor = '';
-      }
+      cb.disabled = !isInsider;
+      cb.style.cursor = isInsider ? 'pointer' : '';
     });
-  }, [fileRendered.html, isInsider, toggling]);
+  }, [fileRendered.html, isInsider]);
 
-  const handleCheckboxClick = useCallback(async (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.tagName !== 'INPUT' || (target as HTMLInputElement).type !== 'checkbox') return;
+  // Checkbox click handler — attached in the ref callback below.
+  // Stored in a ref so the inline ref callback doesn't recreate it.
+  const checkboxHandlerRef = useRef<((evt: Event) => void) | null>(null);
+  if (!checkboxHandlerRef.current) {
+    checkboxHandlerRef.current = (evt: Event) => {
+      const target = evt.target as HTMLElement;
+      if (target.tagName !== 'INPUT' || (target as HTMLInputElement).type !== 'checkbox') return;
+      const input = target as HTMLInputElement;
+      const indexAttr = input.getAttribute('data-checkbox-index');
+      if (indexAttr === null) return;
+      if (!isInsiderRef.current) return;
 
-    const input = target as HTMLInputElement;
-    const indexAttr = input.getAttribute('data-checkbox-index');
-    if (indexAttr === null) return;
-    if (!isInsider) return;
+      evt.preventDefault();
+      evt.stopPropagation();
 
-    // Don't call e.preventDefault() — with dangerouslySetInnerHTML the browser
-    // has already toggled the native checkbox before this handler fires.
-    // Stop propagation to prevent any parent anchor/form from navigating.
-    e.stopPropagation();
+      const index = parseInt(indexAttr, 10);
+      const desired = !input.checked;
 
-    const index = parseInt(indexAttr, 10);
-    // The browser already toggled input.checked to the desired new state.
-    const checked = input.checked;
-
-    setToggling(true);
-    input.disabled = true;
-
-    try {
-      const result = await toggleCheckbox(reqPath, index, checked, mtimeRef.current);
-
-      if (result.conflict) {
-        // Stale write - refetch
-        onRefetch();
-      } else if (result.ok) {
-        mtimeRef.current = result.mtime;
-      }
-    } catch {
-      // Revert the visual toggle on error
-      input.checked = !checked;
-    } finally {
-      setToggling(false);
-    }
-  }, [isInsider, reqPath, onRefetch]);
+      input.disabled = true;
+      toggleCheckbox(reqPathRef.current, index, desired, mtimeRef.current)
+        .then((result) => {
+          if (result.conflict) {
+            onRefetchRef.current();
+          } else if (result.ok) {
+            input.checked = desired;
+            mtimeRef.current = result.mtime;
+          }
+        })
+        .catch(() => {
+          // Server error — leave checkbox unchanged
+        })
+        .finally(() => {
+          input.disabled = false;
+        });
+    };
+  }
 
   return (
     <>
@@ -192,8 +193,16 @@ export function MarkdownView({
         {/* Markdown article */}
         <article
           ref={(el) => {
+            // Remove handler from previous element if it changed
+            if (articleRef.current && articleRef.current !== el && checkboxHandlerRef.current) {
+              articleRef.current.removeEventListener('click', checkboxHandlerRef.current, true);
+            }
             articleRef.current = el;
             if (el) {
+              // Attach checkbox handler in capture phase
+              if (checkboxHandlerRef.current) {
+                el.addEventListener('click', checkboxHandlerRef.current, true);
+              }
               if (!plainCode) initCodeBlockCm6(el, theme);
               injectCopyButtons(el);
               initInlineSvgPanzoom(el);
@@ -221,12 +230,6 @@ export function MarkdownView({
           dangerouslySetInnerHTML={{ __html: fileRendered.html! }}
           onClick={(e) => {
             const target = e.target as HTMLElement;
-
-            // Handle checkbox clicks
-            if (target.tagName === 'INPUT' && (target as HTMLInputElement).type === 'checkbox') {
-              void handleCheckboxClick(e);
-              return;
-            }
 
             // Handle anchor clicks
             const anchor = target.closest('a');
