@@ -37,8 +37,12 @@ describe('GFM task-list checkbox indexing', () => {
   it('indexes both checked and unchecked checkboxes', () => {
     const md = '- [x] done\n- [ ] todo';
     const { html } = parseMarkdown(md);
-    expect(html).toContain('checked="" disabled="" type="checkbox" data-checkbox-index="0"');
-    expect(html).toContain('disabled="" type="checkbox" data-checkbox-index="1"');
+    expect(html).toContain(
+      'checked="" disabled="" type="checkbox" data-checkbox-index="0"',
+    );
+    expect(html).toContain(
+      'disabled="" type="checkbox" data-checkbox-index="1"',
+    );
   });
 
   it('does not add index to non-checkbox inputs', () => {
