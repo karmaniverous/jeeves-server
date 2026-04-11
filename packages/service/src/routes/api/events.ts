@@ -9,7 +9,7 @@ import { getRecentEvents } from '../../services/eventLog.js';
 // eslint-disable-next-line @typescript-eslint/require-await
 export const eventsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Querystring: { limit?: string } }>(
-    '/events',
+    '/api/events',
     // eslint-disable-next-line @typescript-eslint/require-await
     async (request) => {
       const limit = Math.min(
