@@ -195,6 +195,16 @@ export function parseMarkdown(
   marked.setOptions({ renderer });
   let html = marked(processedMarkdown) as string;
 
+  // Assign sequential data-checkbox-index to GFM task-list checkboxes
+  let checkboxIndex = 0;
+  html = html.replace(
+    /<input (checked="" )?disabled="" type="checkbox">/g,
+    (match) => {
+      const idx = checkboxIndex++;
+      return match.replace('>', ` data-checkbox-index="${String(idx)}">`);
+    },
+  );
+
   // Prepend frontmatter as a rendered YAML code block
   if (frontmatter) {
     const FRONTMATTER_COLLAPSE_THRESHOLD = 10;

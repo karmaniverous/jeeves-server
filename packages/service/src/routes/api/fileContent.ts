@@ -79,6 +79,7 @@ export const fileContentRoutes: FastifyPluginAsync = async (fastify) => {
           fileName,
           breadcrumbs,
           isInsider,
+          stats.mtimeMs,
         );
       }
 
@@ -190,6 +191,7 @@ export const fileContentRoutes: FastifyPluginAsync = async (fastify) => {
               fileName,
               breadcrumbs,
               isInsider,
+              mtime: stats.mtimeMs,
               renderAs: renderResult.renderAs,
               matchedRules: renderResult.rules,
             });
@@ -385,6 +387,7 @@ async function handleMarkdown(
   fileName: string,
   breadcrumbs: { label: string; path: string }[],
   isInsider: boolean,
+  mtime: number,
 ) {
   const markdown = fs.readFileSync(resolved, 'utf8');
   if (rawOnly)
@@ -412,6 +415,7 @@ async function handleMarkdown(
     fileName,
     breadcrumbs,
     isInsider,
+    mtime,
   });
 }
 
