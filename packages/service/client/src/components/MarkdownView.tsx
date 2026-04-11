@@ -18,7 +18,6 @@ import { scrollToIdInContainer } from './scrollUtils';
 interface MarkdownViewProps {
   fileRendered: FileContent;
   reqPath: string;
-  onRefetch: () => void;
   proseWidth: 'narrow' | 'medium' | 'wide';
   topBarHeight: number;
   mainRef: React.RefObject<HTMLElement | null>;
@@ -27,22 +26,13 @@ interface MarkdownViewProps {
 }
 
 export function MarkdownView({
-  fileRendered, reqPath, onRefetch, proseWidth, topBarHeight, mainRef,
+  fileRendered, reqPath, proseWidth, topBarHeight, mainRef,
   mobileTocOpen, setMobileTocOpen,
 }: MarkdownViewProps) {
   const [theme] = useTheme();
   const plainCode = new URLSearchParams(window.location.search).has('plain_code');
   const hasHeadings = fileRendered.headings && fileRendered.headings.length > 2;
   const articleRef = useRef<HTMLElement | null>(null);
-  const [toggling, setToggling] = useState(false);
-  const mtimeRef = useRef<number>(fileRendered.mtime ?? 0);
-
-  // Update mtime when fileRendered changes (e.g. after refetch)
-  useEffect(() => {
-    if (fileRendered.mtime !== undefined) {
-      mtimeRef.current = fileRendered.mtime;
-    }
-  }, [fileRendered.mtime]);
 
   const isInsider = fileRendered.isInsider;
 
@@ -87,60 +77,39 @@ export function MarkdownView({
     [scrollToHeading, setMobileTocOpen],
   );
 
-  // Setup checkbox interactivity after render
+  // Enable/disable checkboxes when insider status or HTML changes
   useEffect(() => {
     const el = articleRef.current;
     if (!el) return;
-
     const checkboxes = el.querySelectorAll<HTMLInputElement>('input[type="checkbox"][data-checkbox-index]');
     checkboxes.forEach((cb) => {
-      if (isInsider && !toggling) {
-        cb.disabled = false;
-        cb.style.cursor = 'pointer';
-      } else {
-        cb.disabled = true;
-        cb.style.cursor = '';
-      }
+      cb.disabled = !isInsider;
+      cb.style.cursor = isInsider ? 'pointer' : '';
     });
-  }, [fileRendered.html, isInsider, toggling]);
+  }, [fileRendered.html, isInsider]);
 
-  const handleCheckboxClick = useCallback(async (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.tagName !== 'INPUT' || (target as HTMLInputElement).type !== 'checkbox') return;
+  // Fire-and-forget checkbox toggle via 'change' event
+  useEffect(() => {
+    const el = articleRef.current;
+    if (!el || !isInsider) return;
 
-    const input = target as HTMLInputElement;
-    const indexAttr = input.getAttribute('data-checkbox-index');
-    if (indexAttr === null) return;
-    if (!isInsider) return;
+    const checkboxes = el.querySelectorAll<HTMLInputElement>('input[type="checkbox"][data-checkbox-index]');
 
-    // Don't call e.preventDefault() — with dangerouslySetInnerHTML the browser
-    // has already toggled the native checkbox before this handler fires.
-    // Stop propagation to prevent any parent anchor/form from navigating.
-    e.stopPropagation();
-
-    const index = parseInt(indexAttr, 10);
-    // The browser already toggled input.checked to the desired new state.
-    const checked = input.checked;
-
-    setToggling(true);
-    input.disabled = true;
-
-    try {
-      const result = await toggleCheckbox(reqPath, index, checked, mtimeRef.current);
-
-      if (result.conflict) {
-        // Stale write - refetch
-        onRefetch();
-      } else if (result.ok) {
-        mtimeRef.current = result.mtime;
-      }
-    } catch {
-      // Revert the visual toggle on error
-      input.checked = !checked;
-    } finally {
-      setToggling(false);
+    function handleChange(this: HTMLInputElement) {
+      const indexAttr = this.getAttribute('data-checkbox-index');
+      if (indexAttr === null) return;
+      const index = parseInt(indexAttr, 10);
+      const checked = this.checked;
+      toggleCheckbox(reqPath, index, checked).catch(() =>
+        console.warn('Checkbox toggle failed for index', index),
+      );
     }
-  }, [isInsider, reqPath, onRefetch]);
+
+    checkboxes.forEach((cb) => cb.addEventListener('change', handleChange));
+    return () => {
+      checkboxes.forEach((cb) => cb.removeEventListener('change', handleChange));
+    };
+  }, [fileRendered.html, isInsider, reqPath]);
 
   return (
     <>
@@ -221,12 +190,6 @@ export function MarkdownView({
           dangerouslySetInnerHTML={{ __html: fileRendered.html! }}
           onClick={(e) => {
             const target = e.target as HTMLElement;
-
-            // Handle checkbox clicks
-            if (target.tagName === 'INPUT' && (target as HTMLInputElement).type === 'checkbox') {
-              void handleCheckboxClick(e);
-              return;
-            }
 
             // Handle anchor clicks
             const anchor = target.closest('a');

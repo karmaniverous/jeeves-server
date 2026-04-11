@@ -70,17 +70,11 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
     setEditing(false);
   };
 
-  const refetchFile = useCallback(() => {
-    if (!reqPath) return;
-    getFileRaw(reqPath).then(setFileRaw).catch(() => {});
-    getFile(reqPath).then(setFileRendered).catch(() => {});
-  }, [reqPath]);
-
   return {
     drives, directory, fileRaw, fileRendered, file,
     loading, error,
     editing, setEditing,
     viewTab, setViewTab: setViewTabInternal,
-    handleSave, refetchFile,
+    handleSave,
   };
 }

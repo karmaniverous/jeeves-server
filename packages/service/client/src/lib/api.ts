@@ -238,37 +238,16 @@ export async function fetchFacets(): Promise<FacetsResponse> {
   return fetchJson<FacetsResponse>(`${API_BASE}/search/facets`);
 }
 
-export interface ToggleCheckboxResult {
-  ok: boolean;
-  mtime: number;
-  conflict?: boolean;
-}
-
 export async function toggleCheckbox(
   filePath: string,
   index: number,
   checked: boolean,
-  mtime: number,
-): Promise<ToggleCheckboxResult> {
-  const url = withKey(`${API_BASE}/toggle-checkbox/${encodeBrowsePath(filePath)}`);
-  const res = await fetch(url, {
+): Promise<{ ok: boolean }> {
+  return fetchJson<{ ok: boolean }>(`${API_BASE}/toggle-checkbox/${encodeBrowsePath(filePath)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ index, checked, mtime }),
-    credentials: 'same-origin',
+    body: JSON.stringify({ index, checked }),
   });
-
-  if (res.status === 409) {
-    const body = await res.json() as { conflict: boolean; mtime: number };
-    return { ok: false, conflict: true, mtime: body.mtime };
-  }
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Toggle failed: ${body}`);
-  }
-
-  return res.json() as Promise<ToggleCheckboxResult>;
 }
 
 export async function clearCache(path: string): Promise<{ cleared: { exports: number; diagrams: number } }> {
