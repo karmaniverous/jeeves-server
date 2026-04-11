@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file. Dates are d
 > 11 April 2026
 
 - feat: add checkbox indexing to markdown pipeline with sequential `data-checkbox-index` attributes [`#154`](https://github.com/karmaniverous/jeeves-server/pull/154)
-- feat: add `POST /api/file/*/toggle-checkbox` endpoint with insider-only access and mtime stale-write protection [`#154`](https://github.com/karmaniverous/jeeves-server/pull/154)
+- feat: add `POST /api/toggle-checkbox/*` endpoint with insider-only access and mtime stale-write protection [`#154`](https://github.com/karmaniverous/jeeves-server/pull/154)
 - feat: wire MarkdownView checkbox toggling with optimistic UI and conflict refetch [`#154`](https://github.com/karmaniverous/jeeves-server/pull/154)
 - fix: correct event log route path from `/events` to `/api/events` [`#156`](https://github.com/karmaniverous/jeeves-server/pull/156)
 

@@ -30,7 +30,7 @@ When the `publicUrl` plugin config is set (e.g. `https://jeeves.example.com`), a
 
 ## Checkbox Toggling
 
-Insiders can toggle GFM task-list checkboxes in rendered Markdown pages via the web UI. The server exposes `POST /api/file/*/toggle-checkbox` with stale-write protection (mtime-based conflict detection). This is a web-UI feature — no agent tool is required.
+Insiders can toggle GFM task-list checkboxes in rendered Markdown pages via the web UI. The server exposes `POST /api/toggle-checkbox/*` with stale-write protection (mtime-based conflict detection). This is a web-UI feature — no agent tool is required.
 
 ## Browse Features
 

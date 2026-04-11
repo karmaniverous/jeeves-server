@@ -74,7 +74,7 @@ export const toggleCheckboxRoutes: FastifyPluginAsync = (fastify) => {
   fastify.post<{
     Params: { '*': string };
     Body: { index: number; checked: boolean; mtime: number };
-  }>('/api/file/*/toggle-checkbox', async (request, reply) => {
+  }>('/api/toggle-checkbox/*', async (request, reply) => {
     // Insider-only
     if (request.accessMode !== 'insider') {
       return reply.code(403).send({ error: 'Insider access required' });

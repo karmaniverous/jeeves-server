@@ -250,7 +250,7 @@ export async function toggleCheckbox(
   checked: boolean,
   mtime: number,
 ): Promise<ToggleCheckboxResult> {
-  const url = withKey(`${API_BASE}/file/${encodeBrowsePath(filePath)}/toggle-checkbox`);
+  const url = withKey(`${API_BASE}/toggle-checkbox/${encodeBrowsePath(filePath)}`);
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
