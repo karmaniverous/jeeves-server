@@ -98,13 +98,9 @@ export const toggleCheckboxRoutes: FastifyPluginAsync = (fastify) => {
       checked: unknown;
     };
 
-    if (
-      typeof index !== 'number' ||
-      typeof checked !== 'boolean'
-    ) {
+    if (typeof index !== 'number' || typeof checked !== 'boolean') {
       return reply.code(400).send({
-        error:
-          'Request body must include index (number) and checked (boolean)',
+        error: 'Request body must include index (number) and checked (boolean)',
       });
     }
 
