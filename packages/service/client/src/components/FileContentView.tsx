@@ -30,7 +30,6 @@ interface FileContentViewProps {
   mobileTocOpen: boolean;
   setMobileTocOpen: (open: boolean) => void;
   onSave: (content: string) => Promise<void>;
-  onRefetch: () => void;
   loading: boolean;
 }
 
@@ -40,7 +39,6 @@ export function FileContentView({
   proseWidth, topBarHeight, mainRef,
   mobileTocOpen, setMobileTocOpen,
   onSave,
-  onRefetch,
 }: FileContentViewProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   useScrollAnchor(mainRef, contentRef);
@@ -110,7 +108,6 @@ export function FileContentView({
         <MarkdownView
           fileRendered={fileRendered}
           reqPath={reqPath}
-          onRefetch={onRefetch}
           proseWidth={proseWidth}
           topBarHeight={topBarHeight}
           mainRef={mainRef}

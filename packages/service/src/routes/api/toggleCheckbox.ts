@@ -1,6 +1,6 @@
 /**
  * Toggle-checkbox endpoint: flip a single GFM task-list checkbox.
- * Insider-only. Uses mtime-based stale-write protection.
+ * Insider-only. Fire-and-forget — last write wins.
  */
 
 import fs from 'node:fs/promises';
@@ -73,7 +73,7 @@ export const toggleCheckboxRoutes: FastifyPluginAsync = (fastify) => {
 
   fastify.post<{
     Params: { '*': string };
-    Body: { index: number; checked: boolean; mtime: number };
+    Body: { index: number; checked: boolean };
   }>('/api/toggle-checkbox/*', async (request, reply) => {
     // Insider-only
     if (request.accessMode !== 'insider') {
@@ -93,35 +93,23 @@ export const toggleCheckboxRoutes: FastifyPluginAsync = (fastify) => {
       return reply.code(404).send({ error: 'File not found' });
     }
 
-    const { index, checked, mtime } = request.body as {
+    const { index, checked } = request.body as {
       index: unknown;
       checked: unknown;
-      mtime: unknown;
     };
 
     if (
       typeof index !== 'number' ||
-      typeof checked !== 'boolean' ||
-      typeof mtime !== 'number'
+      typeof checked !== 'boolean'
     ) {
       return reply.code(400).send({
         error:
-          'Request body must include index (number), checked (boolean), and mtime (number)',
+          'Request body must include index (number) and checked (boolean)',
       });
     }
 
     // Serialize concurrent writes to the same file
     return withFileLock(resolved, async () => {
-      // Stale-write check
-      const stats = await fs.stat(resolved);
-      if (Math.abs(stats.mtimeMs - mtime) > 1) {
-        return reply.code(409).send({
-          conflict: true,
-          mtime: stats.mtimeMs,
-        });
-      }
-
-      // Read file and toggle the Nth checkbox
       const content = await fs.readFile(resolved, 'utf8');
       const toggled = toggleCheckbox(content, index, checked);
 
@@ -131,11 +119,8 @@ export const toggleCheckboxRoutes: FastifyPluginAsync = (fastify) => {
         });
       }
 
-      // Write the updated content
       await fs.writeFile(resolved, toggled.result, 'utf8');
-
-      const newStats = await fs.stat(resolved);
-      return reply.send({ ok: true, mtime: newStats.mtimeMs });
+      return reply.send({ ok: true });
     });
   });
 

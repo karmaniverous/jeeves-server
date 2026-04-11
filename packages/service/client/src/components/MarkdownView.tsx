@@ -18,7 +18,6 @@ import { scrollToIdInContainer } from './scrollUtils';
 interface MarkdownViewProps {
   fileRendered: FileContent;
   reqPath: string;
-  onRefetch: () => void;
   proseWidth: 'narrow' | 'medium' | 'wide';
   topBarHeight: number;
   mainRef: React.RefObject<HTMLElement | null>;
@@ -27,21 +26,13 @@ interface MarkdownViewProps {
 }
 
 export function MarkdownView({
-  fileRendered, reqPath, onRefetch, proseWidth, topBarHeight, mainRef,
+  fileRendered, reqPath, proseWidth, topBarHeight, mainRef,
   mobileTocOpen, setMobileTocOpen,
 }: MarkdownViewProps) {
   const [theme] = useTheme();
   const plainCode = new URLSearchParams(window.location.search).has('plain_code');
   const hasHeadings = fileRendered.headings && fileRendered.headings.length > 2;
   const articleRef = useRef<HTMLElement | null>(null);
-  const mtimeRef = useRef<number>(fileRendered.mtime ?? 0);
-
-  // Update mtime when fileRendered changes (e.g. after refetch)
-  useEffect(() => {
-    if (fileRendered.mtime !== undefined) {
-      mtimeRef.current = fileRendered.mtime;
-    }
-  }, [fileRendered.mtime]);
 
   const isInsider = fileRendered.isInsider;
 
@@ -86,15 +77,6 @@ export function MarkdownView({
     [scrollToHeading, setMobileTocOpen],
   );
 
-  // Stable refs for the event delegation handler to close over.
-  // This avoids re-attaching the listener when these values change.
-  const reqPathRef = useRef(reqPath);
-  reqPathRef.current = reqPath;
-  const onRefetchRef = useRef(onRefetch);
-  onRefetchRef.current = onRefetch;
-  const isInsiderRef = useRef(isInsider);
-  isInsiderRef.current = isInsider;
-
   // Enable/disable checkboxes when insider status or HTML changes
   useEffect(() => {
     const el = articleRef.current;
@@ -106,42 +88,28 @@ export function MarkdownView({
     });
   }, [fileRendered.html, isInsider]);
 
-  // Checkbox click handler — attached in the ref callback below.
-  // Stored in a ref so the inline ref callback doesn't recreate it.
-  const checkboxHandlerRef = useRef<((evt: Event) => void) | null>(null);
-  if (!checkboxHandlerRef.current) {
-    checkboxHandlerRef.current = (evt: Event) => {
-      const target = evt.target as HTMLElement;
-      if (target.tagName !== 'INPUT' || (target as HTMLInputElement).type !== 'checkbox') return;
-      const input = target as HTMLInputElement;
-      const indexAttr = input.getAttribute('data-checkbox-index');
+  // Fire-and-forget checkbox toggle via 'change' event
+  useEffect(() => {
+    const el = articleRef.current;
+    if (!el || !isInsider) return;
+
+    const checkboxes = el.querySelectorAll<HTMLInputElement>('input[type="checkbox"][data-checkbox-index]');
+
+    function handleChange(this: HTMLInputElement) {
+      const indexAttr = this.getAttribute('data-checkbox-index');
       if (indexAttr === null) return;
-      if (!isInsiderRef.current) return;
-
-      evt.preventDefault();
-      evt.stopPropagation();
-
       const index = parseInt(indexAttr, 10);
-      const desired = !input.checked;
+      const checked = this.checked;
+      toggleCheckbox(reqPath, index, checked).catch(() =>
+        console.warn('Checkbox toggle failed for index', index),
+      );
+    }
 
-      input.disabled = true;
-      toggleCheckbox(reqPathRef.current, index, desired, mtimeRef.current)
-        .then((result) => {
-          if (result.conflict) {
-            onRefetchRef.current();
-          } else if (result.ok) {
-            input.checked = desired;
-            mtimeRef.current = result.mtime;
-          }
-        })
-        .catch(() => {
-          // Server error — leave checkbox unchanged
-        })
-        .finally(() => {
-          input.disabled = false;
-        });
+    checkboxes.forEach((cb) => cb.addEventListener('change', handleChange));
+    return () => {
+      checkboxes.forEach((cb) => cb.removeEventListener('change', handleChange));
     };
-  }
+  }, [fileRendered.html, isInsider, reqPath]);
 
   return (
     <>
@@ -193,16 +161,8 @@ export function MarkdownView({
         {/* Markdown article */}
         <article
           ref={(el) => {
-            // Remove handler from previous element if it changed
-            if (articleRef.current && articleRef.current !== el && checkboxHandlerRef.current) {
-              articleRef.current.removeEventListener('click', checkboxHandlerRef.current, true);
-            }
             articleRef.current = el;
             if (el) {
-              // Attach checkbox handler in capture phase
-              if (checkboxHandlerRef.current) {
-                el.addEventListener('click', checkboxHandlerRef.current, true);
-              }
               if (!plainCode) initCodeBlockCm6(el, theme);
               injectCopyButtons(el);
               initInlineSvgPanzoom(el);

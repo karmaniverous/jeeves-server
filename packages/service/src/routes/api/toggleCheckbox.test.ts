@@ -160,7 +160,6 @@ describe('toggleCheckboxRoutes', () => {
 
   it('flips an unchecked checkbox to checked (happy path)', async () => {
     fs.writeFileSync(testFile, '- [ ] todo\n- [x] done\n- [ ] later\n');
-    const mtime = fs.statSync(testFile).mtimeMs;
     const handler = await setupRoute();
     const reply = createReply();
 
@@ -168,20 +167,18 @@ describe('toggleCheckboxRoutes', () => {
       {
         accessMode: 'insider',
         params: { '*': 'any/test.md' },
-        body: { index: 0, checked: true, mtime },
+        body: { index: 0, checked: true },
       },
       reply,
     );
 
     expect(reply.sentData).toHaveProperty('ok', true);
-    expect(reply.sentData).toHaveProperty('mtime');
     const updated = fs.readFileSync(testFile, 'utf8');
     expect(updated).toContain('[x] todo');
   });
 
   it('flips a checked checkbox to unchecked', async () => {
     fs.writeFileSync(testFile, '- [ ] todo\n- [x] done\n- [ ] later\n');
-    const mtime = fs.statSync(testFile).mtimeMs;
     const handler = await setupRoute();
     const reply = createReply();
 
@@ -189,7 +186,7 @@ describe('toggleCheckboxRoutes', () => {
       {
         accessMode: 'insider',
         params: { '*': 'any/test.md' },
-        body: { index: 1, checked: false, mtime },
+        body: { index: 1, checked: false },
       },
       reply,
     );
@@ -197,26 +194,6 @@ describe('toggleCheckboxRoutes', () => {
     expect(reply.sentData).toHaveProperty('ok', true);
     const updated = fs.readFileSync(testFile, 'utf8');
     expect(updated).toContain('[ ] done');
-  });
-
-  it('returns 409 on stale mtime', async () => {
-    fs.writeFileSync(testFile, '- [ ] todo\n');
-    const staleMtime = fs.statSync(testFile).mtimeMs - 10000;
-    const handler = await setupRoute();
-    const reply = createReply();
-
-    await handler(
-      {
-        accessMode: 'insider',
-        params: { '*': 'any/test.md' },
-        body: { index: 0, checked: true, mtime: staleMtime },
-      },
-      reply,
-    );
-
-    expect(reply.statusCode).toBe(409);
-    expect(reply.sentData).toHaveProperty('conflict', true);
-    expect(reply.sentData).toHaveProperty('mtime');
   });
 
   it('rejects outsiders with 403', async () => {
@@ -228,7 +205,7 @@ describe('toggleCheckboxRoutes', () => {
       {
         accessMode: 'outsider',
         params: { '*': 'any/test.md' },
-        body: { index: 0, checked: true, mtime: Date.now() },
+        body: { index: 0, checked: true },
       },
       reply,
     );
@@ -238,7 +215,6 @@ describe('toggleCheckboxRoutes', () => {
 
   it('returns 400 for out-of-range index', async () => {
     fs.writeFileSync(testFile, '- [ ] only one\n');
-    const mtime = fs.statSync(testFile).mtimeMs;
     const handler = await setupRoute();
     const reply = createReply();
 
@@ -246,7 +222,7 @@ describe('toggleCheckboxRoutes', () => {
       {
         accessMode: 'insider',
         params: { '*': 'any/test.md' },
-        body: { index: 5, checked: true, mtime },
+        body: { index: 5, checked: true },
       },
       reply,
     );
