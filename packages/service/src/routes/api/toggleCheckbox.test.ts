@@ -32,7 +32,9 @@ describe('toggleCheckbox (pure function)', () => {
     const content = '# Title\n\nSome text\n\n- [ ] task\n\nMore text\n';
     const result = toggleCheckbox(content, 0, true);
     expect(result).not.toBeNull();
-    expect(result!.result).toBe('# Title\n\nSome text\n\n- [x] task\n\nMore text\n');
+    expect(result!.result).toBe(
+      '# Title\n\nSome text\n\n- [x] task\n\nMore text\n',
+    );
   });
 
   it('flips only the targeted checkbox among many', () => {

@@ -114,6 +114,13 @@ export async function generateServerMenu(apiUrl: string): Promise<string> {
     lines.push('');
   }
 
+  // Checkbox toggling
+  lines.push('### Editing');
+  lines.push(
+    'Insiders can toggle GFM task-list checkboxes in rendered Markdown pages. The server exposes `POST /api/file/*/toggle-checkbox` with stale-write protection (mtime). This is used by the web UI — no agent tool is needed.',
+  );
+  lines.push('');
+
   // Sharing guidance
   lines.push('### Sharing');
   lines.push(
