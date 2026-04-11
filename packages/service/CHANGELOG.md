@@ -2,7 +2,15 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.8.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.5...3.8.0)
+#### [3.8.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.0...3.8.1)
+
+- fix: post-merge checkbox toggle, Gemini review, CI wildcard [`#158`](https://github.com/karmaniverous/jeeves-server/pull/158)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.9.0 [`44c2a72`](https://github.com/karmaniverous/jeeves-server/commit/44c2a72c3483aac0ab1ea810438da504e2aeab92)
+- [V3-7] fix: checkbox toggle click handling for dangerouslySetInnerHTML [`49a49d8`](https://github.com/karmaniverous/jeeves-server/commit/49a49d85d8e8b6a40890da3e9d67d8ebbe3094aa)
+
+#### [service/3.8.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.5...service/3.8.0)
+
+> 11 April 2026
 
 - feat: v3.7.0 / v0.8.0 — shareable URLs, insider checkbox toggles, events route fix [`#157`](https://github.com/karmaniverous/jeeves-server/pull/157)
 - [V3-7] feat: wire MarkdownView checkbox toggling [`#154`](https://github.com/karmaniverous/jeeves-server/pull/154)
@@ -15,6 +23,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - [V3-7] refactor: SOLID/DRY pass across v3.7.0 changes [`8747489`](https://github.com/karmaniverous/jeeves-server/commit/8747489b58c007129b0fde0552260528417f14fb)
 - [V3-7] test: improve coverage and remove trivial tests [`5a9086a`](https://github.com/karmaniverous/jeeves-server/commit/5a9086a4b93f8d24076b3c7830b1d04a53851be1)
 - [V3-7] docs: sync documentation with v3.7.0 implementation [`11b400e`](https://github.com/karmaniverous/jeeves-server/commit/11b400e8df88f99c7d0e7ea2c829319a75f80760)
+- chore: release @karmaniverous/jeeves-server v3.8.0 [`9409a4b`](https://github.com/karmaniverous/jeeves-server/commit/9409a4b3604c814f2052ce592d67a4b6db4e6553)
 - npm audit fix [`d43be1b`](https://github.com/karmaniverous/jeeves-server/commit/d43be1b1cd81600fc22f59dc0850e96bab62d912)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.7.5 [`3708480`](https://github.com/karmaniverous/jeeves-server/commit/3708480d98a5bf4d63dc146d2d68214276f57296)
 - [V3-7] fix: toggle-checkbox route wildcard position (CI fix) [`34a0cbd`](https://github.com/karmaniverous/jeeves-server/commit/34a0cbdab73fe1bfb081690a11ee90816df38a27)
