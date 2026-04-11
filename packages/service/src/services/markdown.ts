@@ -195,6 +195,16 @@ export function parseMarkdown(
   marked.setOptions({ renderer });
   let html = marked(processedMarkdown) as string;
 
+  // Assign sequential data-checkbox-index to GFM task-list checkboxes
+  {
+    const $ = cheerio.load(html);
+    let checkboxIndex = 0;
+    $('li > input[type="checkbox"]').each(function () {
+      $(this).attr('data-checkbox-index', String(checkboxIndex++));
+    });
+    html = $('body').html() ?? html;
+  }
+
   // Prepend frontmatter as a rendered YAML code block
   if (frontmatter) {
     const FRONTMATTER_COLLAPSE_THRESHOLD = 10;

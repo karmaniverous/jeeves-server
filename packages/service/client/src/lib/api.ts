@@ -69,6 +69,7 @@ export interface FileContent {
   fileName: string;
   breadcrumbs: BreadcrumbItem[];
   isInsider: boolean;
+  mtime?: number;
 }
 
 export interface ShareResponse {
@@ -235,6 +236,39 @@ export interface FacetsResponse {
 
 export async function fetchFacets(): Promise<FacetsResponse> {
   return fetchJson<FacetsResponse>(`${API_BASE}/search/facets`);
+}
+
+export interface ToggleCheckboxResult {
+  ok: boolean;
+  mtime: number;
+  conflict?: boolean;
+}
+
+export async function toggleCheckbox(
+  filePath: string,
+  index: number,
+  checked: boolean,
+  mtime: number,
+): Promise<ToggleCheckboxResult> {
+  const url = withKey(`${API_BASE}/toggle-checkbox/${encodeBrowsePath(filePath)}`);
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ index, checked, mtime }),
+    credentials: 'same-origin',
+  });
+
+  if (res.status === 409) {
+    const body = await res.json() as { conflict: boolean; mtime: number };
+    return { ok: false, conflict: true, mtime: body.mtime };
+  }
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Toggle failed: ${body}`);
+  }
+
+  return res.json() as Promise<ToggleCheckboxResult>;
 }
 
 export async function clearCache(path: string): Promise<{ cleared: { exports: number; diagrams: number } }> {

@@ -25,6 +25,39 @@ describe('parseMarkdown', () => {
   });
 });
 
+describe('GFM task-list checkbox indexing', () => {
+  it('assigns sequential data-checkbox-index to checkboxes', () => {
+    const md = '- [ ] first\n- [x] second\n- [ ] third';
+    const { html } = parseMarkdown(md);
+    expect(html).toContain('data-checkbox-index="0"');
+    expect(html).toContain('data-checkbox-index="1"');
+    expect(html).toContain('data-checkbox-index="2"');
+  });
+
+  it('indexes both checked and unchecked checkboxes', () => {
+    const md = '- [x] done\n- [ ] todo';
+    const { html } = parseMarkdown(md);
+    expect(html).toContain(
+      'checked="" disabled="" type="checkbox" data-checkbox-index="0"',
+    );
+    expect(html).toContain(
+      'disabled="" type="checkbox" data-checkbox-index="1"',
+    );
+  });
+
+  it('does not add index to non-checkbox inputs', () => {
+    const md = '# Heading\n\nSome text\n\n- regular list item';
+    const { html } = parseMarkdown(md);
+    expect(html).not.toContain('data-checkbox-index');
+  });
+
+  it('handles empty task list', () => {
+    const md = '# No tasks here';
+    const { html } = parseMarkdown(md);
+    expect(html).not.toContain('data-checkbox-index');
+  });
+});
+
 describe('collapsible frontmatter', () => {
   function makeFrontmatter(lineCount: number): string {
     const lines = Array.from(

@@ -78,6 +78,17 @@ describe('generateServerMenu', () => {
     expect(menu).toContain('3 insider(s)');
   });
 
+  it('mentions automatic URL rewriting in sharing guidance', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: () => ({ version: '3.0.0', health: {} }),
+    } as unknown as Response);
+    const menu = await generateServerMenu('http://localhost:1934');
+    expect(menu).toContain('automatically rewritten');
+    expect(menu).toContain('publicUrl');
+    expect(menu).not.toContain('always rewrite');
+  });
+
   it('does not render connected services (plugin isolation #128)', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,

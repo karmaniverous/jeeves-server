@@ -49,7 +49,8 @@ In `openclaw.json`, configure the plugin entry:
         "config": {
           "apiUrl": "http://127.0.0.1:1934",
           "pluginKey": "same-hex-seed-as-server-_plugin-key",
-          "configRoot": "j:/config"
+          "configRoot": "j:/config",
+          "publicUrl": "https://jeeves.example.com"
         }
       }
     }
@@ -62,6 +63,7 @@ In `openclaw.json`, configure the plugin entry:
 | `apiUrl` | No | `http://127.0.0.1:1934` | jeeves-server API base URL |
 | `pluginKey` | No | — | Server `_plugin` key seed (for authenticated API calls) |
 | `configRoot` | No | `j:/config` | Platform config root directory. Core derives component config dirs from this path. |
+| `publicUrl` | No | — | Public base URL (e.g. `https://jeeves.example.com`). When set, all URLs returned by tools are rewritten to use this host instead of `apiUrl`. |
 
 ## Tools
 

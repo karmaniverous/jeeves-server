@@ -24,6 +24,14 @@ To convert a Windows file path to a browse path:
 - `J:\domains\projects\readme.md` → `j/domains/projects/readme.md`
 - Strip the colon, lowercase the drive letter, use forward slashes
 
+## Public URL Rewriting
+
+When the `publicUrl` plugin config is set (e.g. `https://jeeves.example.com`), all URLs returned by server tools are automatically rewritten to use the public domain instead of the internal `apiUrl`. No manual URL rewriting is needed.
+
+## Checkbox Toggling
+
+Insiders can toggle GFM task-list checkboxes in rendered Markdown pages via the web UI. The server exposes `POST /api/toggle-checkbox/*` with stale-write protection (mtime-based conflict detection). This is a web-UI feature — no agent tool is required.
+
 ## Browse Features
 
 - **Directory item counts:** Subdirectory rows display a nonrecursive item count in the Size column.

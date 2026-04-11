@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [v0.8.0](https://github.com/karmaniverous/jeeves-server/compare/v0.7.5...v0.8.0)
+
+> 11 April 2026
+
+- feat: add `publicUrl` plugin config for automatic URL rewriting in tool responses [`#145`](https://github.com/karmaniverous/jeeves-server/pull/145)
+- feat: add `rewriteUrl` and `rewriteUrlsInData` helpers for origin-based URL rewriting [`#145`](https://github.com/karmaniverous/jeeves-server/pull/145)
+- feat: update TOOLS.md guidance to describe automatic URL rewriting and checkbox toggling [`#152`](https://github.com/karmaniverous/jeeves-server/pull/152)
+- feat: add `server_event_status` tool querying `/api/events` endpoint [`#156`](https://github.com/karmaniverous/jeeves-server/pull/156)
+- docs: sync all documentation surfaces with v3.7.0 implementation
+
 #### [v0.7.5](https://github.com/karmaniverous/jeeves-server/compare/v2.9.3...v0.7.5)
 
 - fix: consume core importMetaUrl for plugin install (#150, #147) [`#151`](https://github.com/karmaniverous/jeeves-server/pull/151)

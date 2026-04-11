@@ -114,6 +114,13 @@ export async function generateServerMenu(apiUrl: string): Promise<string> {
     lines.push('');
   }
 
+  // Checkbox toggling
+  lines.push('### Editing');
+  lines.push(
+    'Insiders can toggle GFM task-list checkboxes in rendered Markdown pages. The server exposes `POST /api/toggle-checkbox/*` with stale-write protection (mtime). This is used by the web UI — no agent tool is needed.',
+  );
+  lines.push('');
+
   // Sharing guidance
   lines.push('### Sharing');
   lines.push(
@@ -121,6 +128,9 @@ export async function generateServerMenu(apiUrl: string): Promise<string> {
   );
   lines.push(
     'Use `server_link_info` to check available export formats for a path before exporting.',
+  );
+  lines.push(
+    'URLs returned by server tools are automatically rewritten to use the public domain when `publicUrl` is configured. No manual URL rewriting is needed.',
   );
 
   return lines.join('\n');

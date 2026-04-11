@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [3.7.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.5...3.7.0)
+
+> 11 April 2026
+
+- feat: add checkbox indexing to markdown pipeline with sequential `data-checkbox-index` attributes [`#154`](https://github.com/karmaniverous/jeeves-server/pull/154)
+- feat: add `POST /api/toggle-checkbox/*` endpoint with insider-only access and mtime stale-write protection [`#154`](https://github.com/karmaniverous/jeeves-server/pull/154)
+- feat: wire MarkdownView checkbox toggling with optimistic UI and conflict refetch [`#154`](https://github.com/karmaniverous/jeeves-server/pull/154)
+- fix: correct event log route path from `/events` to `/api/events` [`#156`](https://github.com/karmaniverous/jeeves-server/pull/156)
+
 #### [3.6.5](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.4...3.6.5)
 
 - npm audit fix [`9390169`](https://github.com/karmaniverous/jeeves-server/commit/9390169fd9763e5e81a96ff42b9d25eb0f32c38a)

@@ -16,6 +16,9 @@ import {
 import { PLUGIN_ID } from './constants.js';
 import { getPluginKey, withAuth } from './helpers.js';
 
+/** Milliseconds in one day. */
+const MS_PER_DAY = 86_400_000;
+
 /** Normalize a browse path param: strip leading slash. */
 function normalizePath(params: Record<string, unknown>): string {
   return String(params.path).replace(/^\//, '');
@@ -24,6 +27,73 @@ function normalizePath(params: Record<string, unknown>): string {
 /** Resolve a possibly-relative API URL against the configured base URL. */
 function toAbsoluteUrl(baseUrl: string, url: string): string {
   return new URL(url, baseUrl).toString();
+}
+
+/** Check that the character after a prefix match is a valid URL boundary. */
+function isOriginBoundary(url: string, originLength: number): boolean {
+  if (url.length <= originLength) return true;
+  const next = url[originLength];
+  return next === '/' || next === '?' || next === '#';
+}
+
+/**
+ * Rewrite a single URL string: replace the baseUrl origin with publicUrl origin.
+ * Only rewrites URLs that start with the baseUrl origin.
+ */
+export function rewriteUrl(
+  url: string,
+  baseUrl: string,
+  publicUrl: string,
+): string {
+  const base = new URL(baseUrl);
+  const pub = new URL(publicUrl);
+  if (
+    url.startsWith(base.origin) &&
+    isOriginBoundary(url, base.origin.length)
+  ) {
+    return pub.origin + url.slice(base.origin.length);
+  }
+  return url;
+}
+
+/**
+ * Deep-walk a JSON-serializable value and rewrite any string that starts
+ * with the baseUrl origin to use the publicUrl origin instead.
+ */
+export function rewriteUrlsInData(
+  data: unknown,
+  baseUrl: string,
+  publicUrl: string | undefined,
+): unknown {
+  if (!publicUrl) return data;
+
+  const baseOrigin = new URL(baseUrl).origin;
+  const pubOrigin = new URL(publicUrl).origin;
+
+  function walk(value: unknown): unknown {
+    if (typeof value === 'string') {
+      if (
+        value.startsWith(baseOrigin) &&
+        isOriginBoundary(value, baseOrigin.length)
+      ) {
+        return pubOrigin + value.slice(baseOrigin.length);
+      }
+      return value;
+    }
+    if (Array.isArray(value)) {
+      return value.map(walk);
+    }
+    if (value !== null && typeof value === 'object') {
+      const result: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        result[k] = walk(v);
+      }
+      return result;
+    }
+    return value;
+  }
+
+  return walk(data);
 }
 
 /** Config for a server API tool. */
@@ -48,6 +118,7 @@ function registerApiTool(
   api: PluginApi,
   baseUrl: string,
   keySeed: string | undefined,
+  publicUrl: string | undefined,
   config: ApiToolConfig,
 ): void {
   api.registerTool(
@@ -73,9 +144,10 @@ function registerApiTool(
             url,
             Object.keys(init).length > 0 ? init : undefined,
           );
-          const data = config.transformResponse
+          const transformed = config.transformResponse
             ? config.transformResponse(rawData, baseUrl, params)
             : rawData;
+          const data = rewriteUrlsInData(transformed, baseUrl, publicUrl);
           return ok(data);
         } catch (error) {
           return connectionFail(error, baseUrl, PLUGIN_ID);
@@ -87,7 +159,11 @@ function registerApiTool(
 }
 
 /** Register all domain-specific server_* tools with the OpenClaw plugin API. */
-export function registerServerTools(api: PluginApi, baseUrl: string): void {
+export function registerServerTools(
+  api: PluginApi,
+  baseUrl: string,
+  publicUrl?: string,
+): void {
   const keySeed = getPluginKey(api);
 
   const tools: ApiToolConfig[] = [
@@ -160,7 +236,7 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
         const p = normalizePath(params);
         const body: Record<string, unknown> = { path: '/' + p };
         if (params.expiryDays !== undefined) {
-          const ms = Date.now() + (params.expiryDays as number) * 86400000;
+          const ms = Date.now() + (params.expiryDays as number) * MS_PER_DAY;
           body.expiry = String(ms);
         }
         if (params.depth !== undefined) body.depth = params.depth;
@@ -217,7 +293,7 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
   ];
 
   for (const tool of tools) {
-    registerApiTool(api, baseUrl, keySeed, tool);
+    registerApiTool(api, baseUrl, keySeed, publicUrl, tool);
   }
 
   api.registerTool(
@@ -256,12 +332,13 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
             : [];
           const recent = Array.isArray(recentEvents) ? recentEvents : [];
 
-          return ok({
+          const result = {
             activeSchemas,
             schemaCount: activeSchemas.length,
             recentEvents: recent,
             recentCount: recent.length,
-          });
+          };
+          return ok(rewriteUrlsInData(result, baseUrl, publicUrl));
         } catch (error) {
           return connectionFail(error, baseUrl, PLUGIN_ID);
         }

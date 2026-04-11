@@ -32,8 +32,7 @@ const IMAGE_EXTS = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.ico'];
 /** PlantUML file extensions. */
 const PLANTUML_EXTS = ['.puml', '.plantuml', '.pu'];
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const fileContentRoutes: FastifyPluginAsync = async (fastify) => {
+export const fileContentRoutes: FastifyPluginAsync = (fastify) => {
   const roots = getRoots(getConfig().roots);
 
   // GET /api/file/*
@@ -79,6 +78,7 @@ export const fileContentRoutes: FastifyPluginAsync = async (fastify) => {
           fileName,
           breadcrumbs,
           isInsider,
+          stats.mtimeMs,
         );
       }
 
@@ -190,21 +190,14 @@ export const fileContentRoutes: FastifyPluginAsync = async (fastify) => {
               fileName,
               breadcrumbs,
               isInsider,
+              mtime: stats.mtimeMs,
               renderAs: renderResult.renderAs,
               matchedRules: renderResult.rules,
             });
           }
         }
 
-        return handleText(
-          reply,
-          buffer,
-          ext,
-          rawOnly,
-          fileName,
-          breadcrumbs,
-          isInsider,
-        );
+        return handleText(reply, buffer, fileName, breadcrumbs, isInsider);
       }
 
       // Images
@@ -267,6 +260,8 @@ export const fileContentRoutes: FastifyPluginAsync = async (fastify) => {
       }
     },
   );
+
+  return Promise.resolve();
 };
 
 /** Watcher render response shape. */
@@ -385,6 +380,7 @@ async function handleMarkdown(
   fileName: string,
   breadcrumbs: { label: string; path: string }[],
   isInsider: boolean,
+  mtime: number,
 ) {
   const markdown = fs.readFileSync(resolved, 'utf8');
   if (rawOnly)
@@ -412,32 +408,21 @@ async function handleMarkdown(
     fileName,
     breadcrumbs,
     isInsider,
+    mtime,
   });
 }
 
-/** Handle text file content with optional syntax highlighting. */
+/** Handle text file content. */
 function handleText(
   reply: FastifyReply,
   buffer: Buffer,
-  ext: string,
-  rawOnly: boolean,
   fileName: string,
   breadcrumbs: { label: string; path: string }[],
   isInsider: boolean,
 ) {
-  const textContent = buffer.toString('utf8');
-  if (rawOnly)
-    return reply.send({
-      type: 'text',
-      content: textContent,
-      fileName,
-      breadcrumbs,
-      isInsider,
-    });
-
   return reply.send({
     type: 'text',
-    content: textContent,
+    content: buffer.toString('utf8'),
     fileName,
     breadcrumbs,
     isInsider,

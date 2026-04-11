@@ -38,7 +38,8 @@ Add an unscoped `_plugin` key to your Jeeves Server config:
         "config": {
           "apiUrl": "http://127.0.0.1:1934",
           "pluginKey": "<same-seed-as-server-_plugin>",
-          "configRoot": "j:/config"
+          "configRoot": "j:/config",
+          "publicUrl": "https://jeeves.example.com"
         }
       }
     }
@@ -51,6 +52,7 @@ Add an unscoped `_plugin` key to your Jeeves Server config:
 | `apiUrl` | `http://127.0.0.1:1934` | Server API base URL |
 | `pluginKey` | — | Server `_plugin` key seed |
 | `configRoot` | `j:/config` | Platform config root (core derives component config dirs) |
+| `publicUrl` | — | Public base URL for shareable links. When set, URLs returned by tools are rewritten to this host. |
 
 ## Docs
 
