@@ -1,7 +1,7 @@
 /**
  * Markdown rendered view with collapsible TOC sidebar.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { initEmbeddedDiagramPanzoom } from '@/components/EmbeddedDiagramPanzoom';
 import { initLazyDiagrams } from '@/components/LazyDiagram';
@@ -9,6 +9,7 @@ import { initInlineSvgPanzoom } from '@/components/InlineSvgPanzoom';
 import { TocSection } from '@/components/TocSection';
 import { buildTocTree, findAncestorSlugs } from '@/components/tocUtils';
 import type { FileContent } from '@/lib/api';
+import { toggleCheckbox } from '@/lib/api';
 import { initCodeBlockCm6 } from '@/lib/codeBlockCm6';
 import { injectCopyButtons } from '@/lib/codeBlockCopy';
 import { useTheme } from '@/lib/theme';
@@ -16,6 +17,8 @@ import { scrollToIdInContainer } from './scrollUtils';
 
 interface MarkdownViewProps {
   fileRendered: FileContent;
+  reqPath: string;
+  onRefetch: () => void;
   proseWidth: 'narrow' | 'medium' | 'wide';
   topBarHeight: number;
   mainRef: React.RefObject<HTMLElement | null>;
@@ -24,12 +27,24 @@ interface MarkdownViewProps {
 }
 
 export function MarkdownView({
-  fileRendered, proseWidth, topBarHeight, mainRef,
+  fileRendered, reqPath, onRefetch, proseWidth, topBarHeight, mainRef,
   mobileTocOpen, setMobileTocOpen,
 }: MarkdownViewProps) {
   const [theme] = useTheme();
   const plainCode = new URLSearchParams(window.location.search).has('plain_code');
   const hasHeadings = fileRendered.headings && fileRendered.headings.length > 2;
+  const articleRef = useRef<HTMLElement | null>(null);
+  const [toggling, setToggling] = useState(false);
+  const mtimeRef = useRef<number>(fileRendered.mtime ?? 0);
+
+  // Update mtime when fileRendered changes (e.g. after refetch)
+  useEffect(() => {
+    if (fileRendered.mtime !== undefined) {
+      mtimeRef.current = fileRendered.mtime;
+    }
+  }, [fileRendered.mtime]);
+
+  const isInsider = fileRendered.isInsider;
 
   // Build TOC tree and collapse state
   const tocTree = useMemo(
@@ -71,6 +86,58 @@ export function MarkdownView({
     },
     [scrollToHeading, setMobileTocOpen],
   );
+
+  // Setup checkbox interactivity after render
+  useEffect(() => {
+    const el = articleRef.current;
+    if (!el) return;
+
+    const checkboxes = el.querySelectorAll<HTMLInputElement>('input[type="checkbox"][data-checkbox-index]');
+    checkboxes.forEach((cb) => {
+      if (isInsider && !toggling) {
+        cb.disabled = false;
+        cb.style.cursor = 'pointer';
+      } else {
+        cb.disabled = true;
+        cb.style.cursor = '';
+      }
+    });
+  }, [fileRendered.html, isInsider, toggling]);
+
+  const handleCheckboxClick = useCallback(async (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName !== 'INPUT' || (target as HTMLInputElement).type !== 'checkbox') return;
+
+    const input = target as HTMLInputElement;
+    const indexAttr = input.getAttribute('data-checkbox-index');
+    if (indexAttr === null) return;
+    if (!isInsider) return;
+
+    e.preventDefault();
+    const index = parseInt(indexAttr, 10);
+    const checked = !input.checked; // Toggle the current state
+
+    setToggling(true);
+    // Visually toggle immediately for responsiveness
+    input.checked = checked;
+    input.disabled = true;
+
+    try {
+      const result = await toggleCheckbox(reqPath, index, checked, mtimeRef.current);
+
+      if (result.conflict) {
+        // Stale write - refetch
+        onRefetch();
+      } else if (result.ok) {
+        mtimeRef.current = result.mtime;
+      }
+    } catch {
+      // Revert the visual toggle on error
+      input.checked = !checked;
+    } finally {
+      setToggling(false);
+    }
+  }, [isInsider, reqPath, onRefetch]);
 
   return (
     <>
@@ -121,7 +188,16 @@ export function MarkdownView({
 
         {/* Markdown article */}
         <article
-          ref={(el) => { if (el) { if (!plainCode) initCodeBlockCm6(el, theme); injectCopyButtons(el); initInlineSvgPanzoom(el); initEmbeddedDiagramPanzoom(el); initLazyDiagrams(el); } }}
+          ref={(el) => {
+            articleRef.current = el;
+            if (el) {
+              if (!plainCode) initCodeBlockCm6(el, theme);
+              injectCopyButtons(el);
+              initInlineSvgPanzoom(el);
+              initEmbeddedDiagramPanzoom(el);
+              initLazyDiagrams(el);
+            }
+          }}
           className={`prose bg-background p-6 rounded-lg border border-border min-w-0 flex-1 ${
             proseWidth === 'narrow' ? 'max-w-prose' : proseWidth === 'medium' ? 'max-w-5xl' : 'max-w-none'
           }`}
@@ -142,6 +218,14 @@ export function MarkdownView({
           dangerouslySetInnerHTML={{ __html: fileRendered.html! }}
           onClick={(e) => {
             const target = e.target as HTMLElement;
+
+            // Handle checkbox clicks
+            if (target.tagName === 'INPUT' && (target as HTMLInputElement).type === 'checkbox') {
+              void handleCheckboxClick(e);
+              return;
+            }
+
+            // Handle anchor clicks
             const anchor = target.closest('a');
             const href = anchor?.getAttribute('href');
             if (href?.startsWith('#')) {
