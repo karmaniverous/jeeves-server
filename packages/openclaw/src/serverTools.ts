@@ -16,6 +16,9 @@ import {
 import { PLUGIN_ID } from './constants.js';
 import { getPluginKey, withAuth } from './helpers.js';
 
+/** Milliseconds in one day. */
+const MS_PER_DAY = 86_400_000;
+
 /** Normalize a browse path param: strip leading slash. */
 function normalizePath(params: Record<string, unknown>): string {
   return String(params.path).replace(/^\//, '');
@@ -54,13 +57,13 @@ export function rewriteUrlsInData(
 ): unknown {
   if (!publicUrl) return data;
 
-  const pub = publicUrl;
   const baseOrigin = new URL(baseUrl).origin;
+  const pubOrigin = new URL(publicUrl).origin;
 
   function walk(value: unknown): unknown {
     if (typeof value === 'string') {
       if (value.startsWith(baseOrigin)) {
-        return rewriteUrl(value, baseUrl, pub);
+        return pubOrigin + value.slice(baseOrigin.length);
       }
       return value;
     }
@@ -220,7 +223,7 @@ export function registerServerTools(
         const p = normalizePath(params);
         const body: Record<string, unknown> = { path: '/' + p };
         if (params.expiryDays !== undefined) {
-          const ms = Date.now() + (params.expiryDays as number) * 86400000;
+          const ms = Date.now() + (params.expiryDays as number) * MS_PER_DAY;
           body.expiry = String(ms);
         }
         if (params.depth !== undefined) body.depth = params.depth;
