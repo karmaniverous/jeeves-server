@@ -33,6 +33,23 @@ describe('rewriteUrl', () => {
       'https://jeeves.johngalt.id/',
     );
   });
+
+  it('handles HTTPS base URL with port', () => {
+    const httpsBase = 'https://localhost:8443';
+    const pub = 'https://public.example.com';
+    expect(rewriteUrl(`${httpsBase}/browse/file.md`, httpsBase, pub)).toBe(
+      'https://public.example.com/browse/file.md',
+    );
+  });
+
+  it('does not rewrite URL when origins differ only by port', () => {
+    const base = 'http://127.0.0.1:1934';
+    const pub = 'https://jeeves.johngalt.id';
+    // URL on port 3000 should NOT be rewritten
+    expect(rewriteUrl('http://127.0.0.1:3000/other', base, pub)).toBe(
+      'http://127.0.0.1:3000/other',
+    );
+  });
 });
 
 describe('rewriteUrlsInData', () => {

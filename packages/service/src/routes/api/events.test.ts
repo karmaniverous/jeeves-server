@@ -70,4 +70,34 @@ describe('eventsRoutes', () => {
 
     expect(mockedGetRecentEvents).toHaveBeenCalledWith(100);
   });
+
+  it('treats zero as falsy and falls back to default 20', async () => {
+    mockedGetRecentEvents.mockReturnValue([] as never);
+
+    await registeredRoutes['/api/events'].handler({
+      query: { limit: '0' },
+    });
+
+    expect(mockedGetRecentEvents).toHaveBeenCalledWith(20);
+  });
+
+  it('falls back to default 20 for non-numeric limit', async () => {
+    mockedGetRecentEvents.mockReturnValue([] as never);
+
+    await registeredRoutes['/api/events'].handler({
+      query: { limit: 'abc' },
+    });
+
+    expect(mockedGetRecentEvents).toHaveBeenCalledWith(20);
+  });
+
+  it('clamps negative limit to 1', async () => {
+    mockedGetRecentEvents.mockReturnValue([] as never);
+
+    await registeredRoutes['/api/events'].handler({
+      query: { limit: '-5' },
+    });
+
+    expect(mockedGetRecentEvents).toHaveBeenCalledWith(1);
+  });
 });

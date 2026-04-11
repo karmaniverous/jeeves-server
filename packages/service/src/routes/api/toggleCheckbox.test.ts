@@ -28,6 +28,21 @@ describe('toggleCheckbox (pure function)', () => {
     expect(toggleCheckbox('- [ ] only', -1, true)).toBeNull();
   });
 
+  it('preserves surrounding content unchanged', () => {
+    const content = '# Title\n\nSome text\n\n- [ ] task\n\nMore text\n';
+    const result = toggleCheckbox(content, 0, true);
+    expect(result).not.toBeNull();
+    expect(result!.result).toBe('# Title\n\nSome text\n\n- [x] task\n\nMore text\n');
+  });
+
+  it('flips only the targeted checkbox among many', () => {
+    const content = '- [ ] a\n- [ ] b\n- [x] c\n- [ ] d\n';
+    const result = toggleCheckbox(content, 2, false);
+    expect(result).not.toBeNull();
+    expect(result!.result).toBe('- [ ] a\n- [ ] b\n- [ ] c\n- [ ] d\n');
+    expect(result!.total).toBe(4);
+  });
+
   it('handles uppercase [X]', () => {
     const result = toggleCheckbox('- [X] done', 0, false);
     expect(result).not.toBeNull();
