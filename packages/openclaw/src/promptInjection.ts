@@ -122,6 +122,9 @@ export async function generateServerMenu(apiUrl: string): Promise<string> {
   lines.push(
     'Use `server_link_info` to check available export formats for a path before exporting.',
   );
+  lines.push(
+    'URLs returned by server tools are automatically rewritten to use the public domain when `publicUrl` is configured. No manual URL rewriting is needed.',
+  );
 
   return lines.join('\n');
 }
