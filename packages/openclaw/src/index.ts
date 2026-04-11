@@ -18,6 +18,7 @@ import {
   jeevesComponentDescriptorSchema,
   loadWorkspaceConfig,
   type PluginApi,
+  resolveOptionalPluginSetting,
   resolvePluginSetting,
   resolveWorkspacePath,
   SERVER_PORT,
@@ -49,6 +50,16 @@ function getServiceUrl(api: PluginApi): string {
     'apiUrl',
     'JEEVES_SERVER_URL',
     'http://127.0.0.1:1934',
+  );
+}
+
+/** Resolve the optional public URL for shareable links. */
+function getPublicUrl(api: PluginApi): string | undefined {
+  return resolveOptionalPluginSetting(
+    api,
+    PLUGIN_ID,
+    'publicUrl',
+    'JEEVES_SERVER_PUBLIC_URL',
   );
 }
 
@@ -153,7 +164,8 @@ export default function register(api: PluginApi): void {
     api.registerTool(tool, { optional: true });
   }
 
-  registerServerTools(api, baseUrl);
+  const publicUrl = getPublicUrl(api);
+  registerServerTools(api, baseUrl, publicUrl);
 
   // Resolve gatewayUrl for cleanup escalation
   const wsConfig = loadWorkspaceConfig(workspacePath);

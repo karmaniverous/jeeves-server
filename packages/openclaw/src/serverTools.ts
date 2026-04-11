@@ -26,6 +26,60 @@ function toAbsoluteUrl(baseUrl: string, url: string): string {
   return new URL(url, baseUrl).toString();
 }
 
+/**
+ * Rewrite a single URL string: replace the baseUrl origin with publicUrl origin.
+ * Only rewrites URLs that start with the baseUrl origin.
+ */
+export function rewriteUrl(
+  url: string,
+  baseUrl: string,
+  publicUrl: string,
+): string {
+  const base = new URL(baseUrl);
+  const pub = new URL(publicUrl);
+  if (url.startsWith(base.origin)) {
+    return pub.origin + url.slice(base.origin.length);
+  }
+  return url;
+}
+
+/**
+ * Deep-walk a JSON-serializable value and rewrite any string that starts
+ * with the baseUrl origin to use the publicUrl origin instead.
+ */
+export function rewriteUrlsInData(
+  data: unknown,
+  baseUrl: string,
+  publicUrl: string | undefined,
+): unknown {
+  if (!publicUrl) return data;
+
+  const pub = publicUrl;
+  const baseOrigin = new URL(baseUrl).origin;
+
+  function walk(value: unknown): unknown {
+    if (typeof value === 'string') {
+      if (value.startsWith(baseOrigin)) {
+        return rewriteUrl(value, baseUrl, pub);
+      }
+      return value;
+    }
+    if (Array.isArray(value)) {
+      return value.map(walk);
+    }
+    if (value !== null && typeof value === 'object') {
+      const result: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        result[k] = walk(v);
+      }
+      return result;
+    }
+    return value;
+  }
+
+  return walk(data);
+}
+
 /** Config for a server API tool. */
 interface ApiToolConfig {
   name: string;
@@ -48,6 +102,7 @@ function registerApiTool(
   api: PluginApi,
   baseUrl: string,
   keySeed: string | undefined,
+  publicUrl: string | undefined,
   config: ApiToolConfig,
 ): void {
   api.registerTool(
@@ -73,9 +128,10 @@ function registerApiTool(
             url,
             Object.keys(init).length > 0 ? init : undefined,
           );
-          const data = config.transformResponse
+          const transformed = config.transformResponse
             ? config.transformResponse(rawData, baseUrl, params)
             : rawData;
+          const data = rewriteUrlsInData(transformed, baseUrl, publicUrl);
           return ok(data);
         } catch (error) {
           return connectionFail(error, baseUrl, PLUGIN_ID);
@@ -87,7 +143,11 @@ function registerApiTool(
 }
 
 /** Register all domain-specific server_* tools with the OpenClaw plugin API. */
-export function registerServerTools(api: PluginApi, baseUrl: string): void {
+export function registerServerTools(
+  api: PluginApi,
+  baseUrl: string,
+  publicUrl?: string,
+): void {
   const keySeed = getPluginKey(api);
 
   const tools: ApiToolConfig[] = [
@@ -217,7 +277,7 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
   ];
 
   for (const tool of tools) {
-    registerApiTool(api, baseUrl, keySeed, tool);
+    registerApiTool(api, baseUrl, keySeed, publicUrl, tool);
   }
 
   api.registerTool(
@@ -256,12 +316,13 @@ export function registerServerTools(api: PluginApi, baseUrl: string): void {
             : [];
           const recent = Array.isArray(recentEvents) ? recentEvents : [];
 
-          return ok({
+          const result = {
             activeSchemas,
             schemaCount: activeSchemas.length,
             recentEvents: recent,
             recentCount: recent.length,
-          });
+          };
+          return ok(rewriteUrlsInData(result, baseUrl, publicUrl));
         } catch (error) {
           return connectionFail(error, baseUrl, PLUGIN_ID);
         }
