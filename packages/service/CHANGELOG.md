@@ -2,10 +2,18 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.8.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.0...3.8.1)
+#### [3.8.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.1...3.8.2)
+
+- fix: checkbox indexing for loose list items [`#159`](https://github.com/karmaniverous/jeeves-server/pull/159)
+- [V3-7] fix: use descendant selector for checkbox indexing (li &gt; input -&gt; li input) [`61db2b0`](https://github.com/karmaniverous/jeeves-server/commit/61db2b0cc0a384ffb58c55dbf5afd9bdfc17cdb4)
+
+#### [service/3.8.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.0...service/3.8.1)
+
+> 11 April 2026
 
 - fix: post-merge checkbox toggle, Gemini review, CI wildcard [`#158`](https://github.com/karmaniverous/jeeves-server/pull/158)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.9.0 [`44c2a72`](https://github.com/karmaniverous/jeeves-server/commit/44c2a72c3483aac0ab1ea810438da504e2aeab92)
+- chore: release @karmaniverous/jeeves-server v3.8.1 [`20acfaa`](https://github.com/karmaniverous/jeeves-server/commit/20acfaa228779c4af942e6a7c635d2331cc2cd66)
 - [V3-7] fix: checkbox toggle click handling for dangerouslySetInnerHTML [`49a49d8`](https://github.com/karmaniverous/jeeves-server/commit/49a49d85d8e8b6a40890da3e9d67d8ebbe3094aa)
 
 #### [service/3.8.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.5...service/3.8.0)
