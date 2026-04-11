@@ -113,13 +113,16 @@ export function MarkdownView({
     if (indexAttr === null) return;
     if (!isInsider) return;
 
-    e.preventDefault();
+    // Don't call e.preventDefault() — with dangerouslySetInnerHTML the browser
+    // has already toggled the native checkbox before this handler fires.
+    // Stop propagation to prevent any parent anchor/form from navigating.
+    e.stopPropagation();
+
     const index = parseInt(indexAttr, 10);
-    const checked = !input.checked; // Toggle the current state
+    // The browser already toggled input.checked to the desired new state.
+    const checked = input.checked;
 
     setToggling(true);
-    // Visually toggle immediately for responsiveness
-    input.checked = checked;
     input.disabled = true;
 
     try {
