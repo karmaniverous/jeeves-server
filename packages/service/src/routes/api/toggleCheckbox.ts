@@ -11,8 +11,33 @@ import type { FastifyPluginAsync } from 'fastify';
 import { getConfig } from '../../config/index.js';
 import { getRoots, urlPathToFs } from '../../util/platform.js';
 
-/** Regex matching a GFM task-list checkbox token: `[ ]` or `[x]` / `[X]`. */
-const CHECKBOX_PATTERN = /\[([ xX])\]/g;
+/**
+ * In-memory per-file mutex to prevent concurrent toggle-checkbox writes.
+ * Each entry holds a promise chain; new operations append to the chain.
+ */
+const fileLocks = new Map<string, Promise<void>>();
+
+/** Serialize async work per file path to prevent lost-update races. */
+function withFileLock<T>(filePath: string, fn: () => Promise<T>): Promise<T> {
+  const prev = fileLocks.get(filePath) ?? Promise.resolve();
+  const next = prev.then(fn, fn);
+  // Store the void chain (swallow the result so the map stays Promise<void>)
+  fileLocks.set(
+    filePath,
+    next.then(
+      () => {},
+      () => {},
+    ),
+  );
+  return next;
+}
+
+/**
+ * Regex matching a GFM task-list checkbox: a list marker followed by `[ ]`, `[x]`, or `[X]`.
+ * Only matches checkboxes at the start of list items (with optional leading whitespace),
+ * preventing false positives from `[ ]` inside links, code, or plain text.
+ */
+const CHECKBOX_PATTERN = /^(\s*([-*+]|\d+\.)\s+)\[([ xX])\]/gm;
 
 /**
  * Toggle a single checkbox in markdown source by sequential index.
@@ -27,15 +52,18 @@ export function toggleCheckbox(
   const matches = [...content.matchAll(CHECKBOX_PATTERN)];
   if (index < 0 || index >= matches.length) return null;
 
-  // Replace the Nth match
+  // Replace the Nth match, preserving the list prefix
   let matchIndex = 0;
-  const result = content.replace(CHECKBOX_PATTERN, (match: string) => {
-    const current = matchIndex++;
-    if (current === index) {
-      return checked ? '[x]' : '[ ]';
-    }
-    return match;
-  });
+  const result = content.replace(
+    CHECKBOX_PATTERN,
+    (match: string, prefix: string) => {
+      const current = matchIndex++;
+      if (current === index) {
+        return prefix + (checked ? '[x]' : '[ ]');
+      }
+      return match;
+    },
+  );
 
   return { result, total: matches.length };
 }
@@ -82,30 +110,33 @@ export const toggleCheckboxRoutes: FastifyPluginAsync = (fastify) => {
       });
     }
 
-    // Stale-write check
-    const stats = await fs.stat(resolved);
-    if (Math.abs(stats.mtimeMs - mtime) > 1) {
-      return reply.code(409).send({
-        conflict: true,
-        mtime: stats.mtimeMs,
-      });
-    }
+    // Serialize concurrent writes to the same file
+    return withFileLock(resolved, async () => {
+      // Stale-write check
+      const stats = await fs.stat(resolved);
+      if (Math.abs(stats.mtimeMs - mtime) > 1) {
+        return reply.code(409).send({
+          conflict: true,
+          mtime: stats.mtimeMs,
+        });
+      }
 
-    // Read file and toggle the Nth checkbox
-    const content = await fs.readFile(resolved, 'utf8');
-    const toggled = toggleCheckbox(content, index, checked);
+      // Read file and toggle the Nth checkbox
+      const content = await fs.readFile(resolved, 'utf8');
+      const toggled = toggleCheckbox(content, index, checked);
 
-    if (!toggled) {
-      return reply.code(400).send({
-        error: `Checkbox index ${String(index)} out of range`,
-      });
-    }
+      if (!toggled) {
+        return reply.code(400).send({
+          error: `Checkbox index ${String(index)} out of range`,
+        });
+      }
 
-    // Write the updated content
-    await fs.writeFile(resolved, toggled.result, 'utf8');
+      // Write the updated content
+      await fs.writeFile(resolved, toggled.result, 'utf8');
 
-    const newStats = await fs.stat(resolved);
-    return reply.send({ ok: true, mtime: newStats.mtimeMs });
+      const newStats = await fs.stat(resolved);
+      return reply.send({ ok: true, mtime: newStats.mtimeMs });
+    });
   });
 
   return Promise.resolve();

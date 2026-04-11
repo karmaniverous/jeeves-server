@@ -50,6 +50,47 @@ describe('toggleCheckbox (pure function)', () => {
     expect(result).not.toBeNull();
     expect(result!.result).toBe('- [ ] done');
   });
+
+  it('does not count [ ] inside a link as a checkbox', () => {
+    const content = 'See [this link][ ] for info\n- [ ] real task\n';
+    const result = toggleCheckbox(content, 0, true);
+    expect(result).not.toBeNull();
+    expect(result!.total).toBe(1);
+    expect(result!.result).toBe(
+      'See [this link][ ] for info\n- [x] real task\n',
+    );
+  });
+
+  it('does not count [ ] in plain text as a checkbox', () => {
+    const content = 'The array[x] syntax\n- [ ] actual task\n';
+    const result = toggleCheckbox(content, 0, true);
+    expect(result).not.toBeNull();
+    expect(result!.total).toBe(1);
+    expect(result!.result).toContain('- [x] actual task');
+  });
+
+  it('matches checkboxes with * and + list markers', () => {
+    const content = '* [ ] star item\n+ [ ] plus item\n';
+    const result = toggleCheckbox(content, 0, true);
+    expect(result).not.toBeNull();
+    expect(result!.total).toBe(2);
+    expect(result!.result).toBe('* [x] star item\n+ [ ] plus item\n');
+  });
+
+  it('matches checkboxes with ordered list markers', () => {
+    const content = '1. [ ] first\n2. [x] second\n';
+    const result = toggleCheckbox(content, 1, false);
+    expect(result).not.toBeNull();
+    expect(result!.total).toBe(2);
+    expect(result!.result).toBe('1. [ ] first\n2. [ ] second\n');
+  });
+
+  it('matches indented checkboxes', () => {
+    const content = '  - [ ] indented task\n';
+    const result = toggleCheckbox(content, 0, true);
+    expect(result).not.toBeNull();
+    expect(result!.result).toBe('  - [x] indented task\n');
+  });
 });
 
 // Route-level tests using mocked platform utilities

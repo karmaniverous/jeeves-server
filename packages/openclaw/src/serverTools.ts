@@ -29,6 +29,13 @@ function toAbsoluteUrl(baseUrl: string, url: string): string {
   return new URL(url, baseUrl).toString();
 }
 
+/** Check that the character after a prefix match is a valid URL boundary. */
+function isOriginBoundary(url: string, originLength: number): boolean {
+  if (url.length <= originLength) return true;
+  const next = url[originLength];
+  return next === '/' || next === '?' || next === '#';
+}
+
 /**
  * Rewrite a single URL string: replace the baseUrl origin with publicUrl origin.
  * Only rewrites URLs that start with the baseUrl origin.
@@ -40,7 +47,10 @@ export function rewriteUrl(
 ): string {
   const base = new URL(baseUrl);
   const pub = new URL(publicUrl);
-  if (url.startsWith(base.origin)) {
+  if (
+    url.startsWith(base.origin) &&
+    isOriginBoundary(url, base.origin.length)
+  ) {
     return pub.origin + url.slice(base.origin.length);
   }
   return url;
@@ -62,7 +72,10 @@ export function rewriteUrlsInData(
 
   function walk(value: unknown): unknown {
     if (typeof value === 'string') {
-      if (value.startsWith(baseOrigin)) {
+      if (
+        value.startsWith(baseOrigin) &&
+        isOriginBoundary(value, baseOrigin.length)
+      ) {
         return pubOrigin + value.slice(baseOrigin.length);
       }
       return value;

@@ -50,6 +50,39 @@ describe('rewriteUrl', () => {
       'http://127.0.0.1:3000/other',
     );
   });
+
+  it('does not false-positive on port prefix match (e.g. :1934 vs :19345)', () => {
+    const base = 'http://localhost:1934';
+    const pub = 'https://public.example.com';
+    // Port 19345 starts with "1934" but is a different origin
+    expect(rewriteUrl('http://localhost:19345/path', base, pub)).toBe(
+      'http://localhost:19345/path',
+    );
+  });
+
+  it('rewrites exact origin with no trailing path', () => {
+    const base = 'http://localhost:1934';
+    const pub = 'https://public.example.com';
+    expect(rewriteUrl('http://localhost:1934', base, pub)).toBe(
+      'https://public.example.com',
+    );
+  });
+
+  it('rewrites origin followed by query string', () => {
+    const base = 'http://localhost:1934';
+    const pub = 'https://public.example.com';
+    expect(rewriteUrl('http://localhost:1934?foo=bar', base, pub)).toBe(
+      'https://public.example.com?foo=bar',
+    );
+  });
+
+  it('rewrites origin followed by fragment', () => {
+    const base = 'http://localhost:1934';
+    const pub = 'https://public.example.com';
+    expect(rewriteUrl('http://localhost:1934#section', base, pub)).toBe(
+      'https://public.example.com#section',
+    );
+  });
 });
 
 describe('rewriteUrlsInData', () => {
@@ -114,6 +147,12 @@ describe('rewriteUrlsInData', () => {
     expect(rewriteUrlsInData(null, baseUrl, publicUrl)).toBeNull();
     expect(rewriteUrlsInData(42, baseUrl, publicUrl)).toBe(42);
     expect(rewriteUrlsInData(true, baseUrl, publicUrl)).toBe(true);
+  });
+
+  it('does not false-positive on port prefix match in data', () => {
+    const data = { url: 'http://127.0.0.1:19345/path' };
+    const result = rewriteUrlsInData(data, baseUrl, publicUrl) as typeof data;
+    expect(result.url).toBe('http://127.0.0.1:19345/path');
   });
 
   it('rewrites the server_share response shape', () => {
