@@ -2,19 +2,32 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.7.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.5...3.7.0)
+#### [3.8.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.5...3.8.0)
 
-> 11 April 2026
+- feat: v3.7.0 / v0.8.0 — shareable URLs, insider checkbox toggles, events route fix [`#157`](https://github.com/karmaniverous/jeeves-server/pull/157)
+- [V3-7] feat: wire MarkdownView checkbox toggling [`#154`](https://github.com/karmaniverous/jeeves-server/pull/154)
+- [V3-7] feat: add POST /api/file/*/toggle-checkbox endpoint [`#154`](https://github.com/karmaniverous/jeeves-server/pull/154)
+- [V3-7] feat: add checkbox indexing and mtime to markdown pipeline [`#154`](https://github.com/karmaniverous/jeeves-server/pull/154)
+- [V3-7] feat: update TOOLS guidance to note automatic URL rewriting [`#152`](https://github.com/karmaniverous/jeeves-server/pull/152)
+- [V3-7] feat: add publicUrl config for shareable URL rewriting [`#145`](https://github.com/karmaniverous/jeeves-server/pull/145)
+- [V3-7] fix: correct /events route path to /api/events [`#156`](https://github.com/karmaniverous/jeeves-server/pull/156)
+- [V3-7] fix: address Gemini review — URL boundary, checkbox regex, Cheerio, race condition [`718b60a`](https://github.com/karmaniverous/jeeves-server/commit/718b60a41793ea5f92bc13be46d70b9d8a320ea0)
+- [V3-7] refactor: SOLID/DRY pass across v3.7.0 changes [`8747489`](https://github.com/karmaniverous/jeeves-server/commit/8747489b58c007129b0fde0552260528417f14fb)
+- [V3-7] test: improve coverage and remove trivial tests [`5a9086a`](https://github.com/karmaniverous/jeeves-server/commit/5a9086a4b93f8d24076b3c7830b1d04a53851be1)
+- [V3-7] docs: sync documentation with v3.7.0 implementation [`11b400e`](https://github.com/karmaniverous/jeeves-server/commit/11b400e8df88f99c7d0e7ea2c829319a75f80760)
+- npm audit fix [`d43be1b`](https://github.com/karmaniverous/jeeves-server/commit/d43be1b1cd81600fc22f59dc0850e96bab62d912)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.7.5 [`3708480`](https://github.com/karmaniverous/jeeves-server/commit/3708480d98a5bf4d63dc146d2d68214276f57296)
+- [V3-7] fix: toggle-checkbox route wildcard position (CI fix) [`34a0cbd`](https://github.com/karmaniverous/jeeves-server/commit/34a0cbdab73fe1bfb081690a11ee90816df38a27)
+- [V3-7] style: fix prettier formatting in markdown tests [`e0177c8`](https://github.com/karmaniverous/jeeves-server/commit/e0177c819a5650a3e24c3433dad27003e591b6ba)
+- [V3-7] chore: bump versions (service 3.7.0, openclaw 0.8.0) [`312ab26`](https://github.com/karmaniverous/jeeves-server/commit/312ab269602d220dc1d3dff964dd9c8c1370e011)
 
-- feat: add checkbox indexing to markdown pipeline with sequential `data-checkbox-index` attributes [`#154`](https://github.com/karmaniverous/jeeves-server/pull/154)
-- feat: add `POST /api/toggle-checkbox/*` endpoint with insider-only access and mtime stale-write protection [`#154`](https://github.com/karmaniverous/jeeves-server/pull/154)
-- feat: wire MarkdownView checkbox toggling with optimistic UI and conflict refetch [`#154`](https://github.com/karmaniverous/jeeves-server/pull/154)
-- fix: correct event log route path from `/events` to `/api/events` [`#156`](https://github.com/karmaniverous/jeeves-server/pull/156)
+#### [service/3.6.5](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.4...service/3.6.5)
 
-#### [3.6.5](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.4...3.6.5)
+> 8 April 2026
 
 - npm audit fix [`9390169`](https://github.com/karmaniverous/jeeves-server/commit/9390169fd9763e5e81a96ff42b9d25eb0f32c38a)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.7.4 [`8e79660`](https://github.com/karmaniverous/jeeves-server/commit/8e79660b908f26ab90427023c0d18764a2829c29)
+- chore: release @karmaniverous/jeeves-server v3.6.5 [`86abc4b`](https://github.com/karmaniverous/jeeves-server/commit/86abc4bf0e771b3278ef52c7ad7e863b0b54d825)
 
 #### [service/3.6.4](https://github.com/karmaniverous/jeeves-server/compare/service/3.6.3...service/3.6.4)
 
