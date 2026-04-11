@@ -199,7 +199,7 @@ export function parseMarkdown(
   {
     const $ = cheerio.load(html);
     let checkboxIndex = 0;
-    $('li > input[type="checkbox"]').each(function () {
+    $('li input[type="checkbox"]').each(function () {
       $(this).attr('data-checkbox-index', String(checkboxIndex++));
     });
     html = $('body').html() ?? html;
