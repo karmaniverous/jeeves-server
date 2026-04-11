@@ -2,9 +2,19 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.8.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.1...3.8.2)
+#### [3.8.3](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.2...3.8.3)
+
+- refactor: simplify checkbox toggle to fire-and-forget [`#160`](https://github.com/karmaniverous/jeeves-server/pull/160)
+- [V3-7] refactor: simplify checkbox toggle to fire-and-forget (no mtime, no conflict) [`013f19e`](https://github.com/karmaniverous/jeeves-server/commit/013f19ebca0d1d5ac230edb2485969dfd5582812)
+- [V3-7] fix: checkbox click handler — use native capture-phase delegation via ref callback, fix mtime stale-write flow [`56ef58f`](https://github.com/karmaniverous/jeeves-server/commit/56ef58f2dbe639ed707854a8dc83aaa8c5855050)
+- lint:fix [`538b87d`](https://github.com/karmaniverous/jeeves-server/commit/538b87d4b269a57e4fc825acdf1a51cf83a93f7a)
+
+#### [service/3.8.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.1...service/3.8.2)
+
+> 11 April 2026
 
 - fix: checkbox indexing for loose list items [`#159`](https://github.com/karmaniverous/jeeves-server/pull/159)
+- chore: release @karmaniverous/jeeves-server v3.8.2 [`d77489e`](https://github.com/karmaniverous/jeeves-server/commit/d77489ecabe112b4b97693867fdd6a09c8439852)
 - [V3-7] fix: use descendant selector for checkbox indexing (li &gt; input -&gt; li input) [`61db2b0`](https://github.com/karmaniverous/jeeves-server/commit/61db2b0cc0a384ffb58c55dbf5afd9bdfc17cdb4)
 
 #### [service/3.8.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.0...service/3.8.1)
