@@ -161,7 +161,6 @@ export const exportRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete<{ Params: { '*': string } }>(
     '/api/export-cache/*',
     async (request, reply) => {
-
       const reqPath = request.params['*'];
       if (!reqPath) return reply.code(400).send({ error: 'Path required' });
 
