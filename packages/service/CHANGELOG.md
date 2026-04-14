@@ -2,11 +2,21 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.8.3](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.2...3.8.3)
+#### [3.8.4](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.3...3.8.4)
+
+- fix: make clear-cache visible to outsiders in download menu [`#161`](https://github.com/karmaniverous/jeeves-server/pull/161)
+- fix: move DownloadDropdown outside isInsider gate in DirectoryRow [`94dac57`](https://github.com/karmaniverous/jeeves-server/commit/94dac57252bc78859d4c8ad883bc7db77514aa8a)
+- [V3-7] fix: prettier formatting in toggleCheckbox route [`71ab635`](https://github.com/karmaniverous/jeeves-server/commit/71ab635e5e279e37693068e38f6626fb27528564)
+- lintfix [`bacf460`](https://github.com/karmaniverous/jeeves-server/commit/bacf460778ed534ef7aeb29c318527c079e79f71)
+
+#### [service/3.8.3](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.2...service/3.8.3)
+
+> 11 April 2026
 
 - refactor: simplify checkbox toggle to fire-and-forget [`#160`](https://github.com/karmaniverous/jeeves-server/pull/160)
 - [V3-7] refactor: simplify checkbox toggle to fire-and-forget (no mtime, no conflict) [`013f19e`](https://github.com/karmaniverous/jeeves-server/commit/013f19ebca0d1d5ac230edb2485969dfd5582812)
 - [V3-7] fix: checkbox click handler — use native capture-phase delegation via ref callback, fix mtime stale-write flow [`56ef58f`](https://github.com/karmaniverous/jeeves-server/commit/56ef58f2dbe639ed707854a8dc83aaa8c5855050)
+- chore: release @karmaniverous/jeeves-server v3.8.3 [`a38d69f`](https://github.com/karmaniverous/jeeves-server/commit/a38d69f3caec45fff36bcc9c3b24f1499d476b3e)
 - lint:fix [`538b87d`](https://github.com/karmaniverous/jeeves-server/commit/538b87d4b269a57e4fc825acdf1a51cf83a93f7a)
 
 #### [service/3.8.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.1...service/3.8.2)
