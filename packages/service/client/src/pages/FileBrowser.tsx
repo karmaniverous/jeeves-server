@@ -43,16 +43,16 @@ export function FileBrowser() {
           onRotateKey={editing ? undefined : handleRotateKey}
           downloadDropdown={editing ? undefined :
             file ? (
-              <DownloadDropdown reqPath={reqPath} file={file} isInsider={isInsider} variant="header" />
+              <DownloadDropdown reqPath={reqPath} file={file} variant="header" />
             ) : directory ? (
-              <DownloadDropdown reqPath={reqPath} file={null} isDirectory isInsider={isInsider} variant="header" />
+              <DownloadDropdown reqPath={reqPath} file={null} isDirectory variant="header" />
             ) : undefined
           }
           downloadMenuItem={editing ? undefined :
             file ? (
-              (onDismiss) => <DownloadDropdown reqPath={reqPath} file={file} isInsider={isInsider} variant="menuItem" onStateChange={(s) => { if (s === 'done') setTimeout(onDismiss, 800); }} />
+              (onDismiss) => <DownloadDropdown reqPath={reqPath} file={file} variant="menuItem" onStateChange={(s) => { if (s === 'done') setTimeout(onDismiss, 800); }} />
             ) : directory ? (
-              (onDismiss) => <DownloadDropdown reqPath={reqPath} file={null} isDirectory isInsider={isInsider} variant="menuItem" onStateChange={(s) => { if (s === 'done') setTimeout(onDismiss, 800); }} />
+              (onDismiss) => <DownloadDropdown reqPath={reqPath} file={null} isDirectory variant="menuItem" onStateChange={(s) => { if (s === 'done') setTimeout(onDismiss, 800); }} />
             ) : undefined
           }
           linkControls={editing ? undefined : isInsider ? (

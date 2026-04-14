@@ -40,18 +40,17 @@ export function DirectoryRow({ entry, basePath, isInsider, shareSettings, onShar
             {isDir ? <FolderOpen className="h-4 w-4 text-yellow-500 shrink-0" /> : <FileText className="h-4 w-4 text-zinc-400 shrink-0" />}
             <span className="truncate">{entry.name}</span>
           </Link>
-          {isInsider && (
-            <div className="ml-auto flex items-center gap-0.5 shrink-0">
+          <div className="ml-auto flex items-center gap-0.5 shrink-0">
+            {isInsider && (
               <LinkDropdown path={urlPath} shareSettings={shareSettings} onShareSettingsChange={onShareSettingsChange} showRaw={hasRaw} compact isDirectory={isDir} />
-              <DownloadDropdown
-                reqPath={entryPath}
-                file={isDir ? null : { fileName: entry.name, type: entry.ext }}
-                isDirectory={isDir}
-                isInsider={isInsider}
-                compact
-              />
-            </div>
-          )}
+            )}
+            <DownloadDropdown
+              reqPath={entryPath}
+              file={isDir ? null : { fileName: entry.name, type: entry.ext }}
+              isDirectory={isDir}
+              compact
+            />
+          </div>
         </div>
       </td>
       <td className="px-4 py-2.5 text-muted-foreground text-sm">{typeLabel}</td>
