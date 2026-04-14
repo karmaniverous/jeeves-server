@@ -47,7 +47,6 @@ export function DirectoryRow({ entry, basePath, isInsider, shareSettings, onShar
                 reqPath={entryPath}
                 file={isDir ? null : { fileName: entry.name, type: entry.ext }}
                 isDirectory={isDir}
-                isInsider={isInsider}
                 compact
               />
             </div>

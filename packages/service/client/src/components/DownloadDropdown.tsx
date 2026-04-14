@@ -9,7 +9,6 @@ interface DownloadDropdownProps {
   reqPath: string;
   file: { fileName: string; type: string } | null;
   isDirectory?: boolean;
-  isInsider?: boolean;
   compact?: boolean;
   variant?: 'header' | 'default' | 'menuItem';
   onError?: (error: string) => void;
@@ -71,7 +70,7 @@ async function downloadBlob(href: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function DownloadDropdown({ reqPath, file, isDirectory, isInsider, compact, variant = 'default', onError, onStateChange }: DownloadDropdownProps) {
+export function DownloadDropdown({ reqPath, file, isDirectory, compact, variant = 'default', onError, onStateChange }: DownloadDropdownProps) {
   const { state, errorMsg, handleAction, resetOnClose } = useActionState(
     (msg) => { onError?.(msg); alert(`Download failed: ${msg}`); },
     onStateChange,
@@ -100,7 +99,7 @@ export function DownloadDropdown({ reqPath, file, isDirectory, isInsider, compac
           {item.label}
         </DropdownMenuItem>
       ))}
-      {isInsider && !isDirectory && (
+      {!isDirectory && (
         <>
           <DropdownMenuSeparator />
           <DropdownMenuItem

@@ -157,13 +157,10 @@ export const exportRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // DELETE /api/export-cache/* — clear all caches for a file (insider-only)
+  // DELETE /api/export-cache/* — clear all caches for a file
   fastify.delete<{ Params: { '*': string } }>(
     '/api/export-cache/*',
     async (request, reply) => {
-      if (request.accessMode !== 'insider') {
-        return reply.code(403).send({ error: 'Insider access required' });
-      }
 
       const reqPath = request.params['*'];
       if (!reqPath) return reply.code(400).send({ error: 'Path required' });
