@@ -2,10 +2,17 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.8.4](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.3...3.8.4)
+#### [3.8.5](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.4...3.8.5)
+
+- updated jeeves-core [`d21bd1f`](https://github.com/karmaniverous/jeeves-server/commit/d21bd1f74363522900200ad3a7ad53f481daf51e)
+
+#### [service/3.8.4](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.3...service/3.8.4)
+
+> 14 April 2026
 
 - fix: make clear-cache visible to outsiders in download menu [`#161`](https://github.com/karmaniverous/jeeves-server/pull/161)
 - fix: move DownloadDropdown outside isInsider gate in DirectoryRow [`94dac57`](https://github.com/karmaniverous/jeeves-server/commit/94dac57252bc78859d4c8ad883bc7db77514aa8a)
+- chore: release @karmaniverous/jeeves-server v3.8.4 [`93ca2af`](https://github.com/karmaniverous/jeeves-server/commit/93ca2afd0eed58b8a2879b1ba16fceae8e6bc2ef)
 - [V3-7] fix: prettier formatting in toggleCheckbox route [`71ab635`](https://github.com/karmaniverous/jeeves-server/commit/71ab635e5e279e37693068e38f6626fb27528564)
 - lintfix [`bacf460`](https://github.com/karmaniverous/jeeves-server/commit/bacf460778ed534ef7aeb29c318527c079e79f71)
 
