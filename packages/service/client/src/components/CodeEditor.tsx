@@ -11,10 +11,21 @@ interface CodeEditorProps {
   content: string;
   fileName: string;
   onSave: (content: string) => Promise<void>;
-  onCancel: () => void;
+  onCancel?: () => void;
+  /** Keyboard shortcut for save. Default: 'ctrl-s'. */
+  saveShortcut?: 'ctrl-s' | 'ctrl-enter';
+  /** Whether to show the toolbar. Default: true. */
+  showToolbar?: boolean;
+  /** Whether to focus the editor on mount. Default: false. */
+  autoFocus?: boolean;
 }
 
-export function CodeEditor({ content, fileName, onSave, onCancel }: CodeEditorProps) {
+export function CodeEditor({
+  content, fileName, onSave, onCancel,
+  saveShortcut = 'ctrl-s',
+  showToolbar = true,
+  autoFocus = false,
+}: CodeEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<import('@codemirror/view').EditorView | null>(null);
   const [dirty, setDirty] = useState(false);
@@ -48,15 +59,20 @@ export function CodeEditor({ content, fileName, onSave, onCancel }: CodeEditorPr
       const langExt = await getLanguageExtension(ext);
       if (destroyed) return;
 
+      const keybindings: { key: string; run: () => boolean }[] = [{
+        key: saveShortcut === 'ctrl-enter' ? 'Mod-Enter' : 'Mod-s',
+        run: () => { handleSave(); return true; },
+      }];
+      if (onCancel) {
+        keybindings.push({
+          key: 'Escape',
+          run: () => { onCancel(); return true; },
+        });
+      }
+
       const extensions = [
         basicSetup,
-        keymap.of([{
-          key: 'Mod-s',
-          run: () => {
-            handleSave();
-            return true;
-          },
-        }]),
+        keymap.of(keybindings),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             const current = update.state.doc.toString();
@@ -90,6 +106,7 @@ export function CodeEditor({ content, fileName, onSave, onCancel }: CodeEditorPr
       });
 
       viewRef.current = view;
+      if (autoFocus) view.focus();
       setLoading(false);
     })();
 
@@ -106,29 +123,35 @@ export function CodeEditor({ content, fileName, onSave, onCancel }: CodeEditorPr
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/50">
-        <span className="text-sm font-medium text-foreground">Editing</span>
-        {dirty && (
-          <span className="text-xs px-1.5 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded">
-            unsaved
+      {showToolbar && (
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/50">
+          <span className="text-sm font-medium text-foreground">Editing</span>
+          {dirty && (
+            <span className="text-xs px-1.5 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded">
+              unsaved
+            </span>
+          )}
+          <div className="flex-1" />
+          {onCancel && (
+            <button
+              onClick={onCancel}
+              className="px-3 py-1 text-sm rounded border border-border text-muted-foreground hover:bg-accent transition-colors"
+            >
+              Cancel
+            </button>
+          )}
+          <button
+            onClick={handleSave}
+            disabled={saving || !dirty}
+            className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          <span className="text-xs text-muted-foreground hidden sm:inline">
+            {saveShortcut === 'ctrl-enter' ? 'Ctrl+Enter' : 'Ctrl+S'}
           </span>
-        )}
-        <div className="flex-1" />
-        <button
-          onClick={onCancel}
-          className="px-3 py-1 text-sm rounded border border-border text-muted-foreground hover:bg-accent transition-colors"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleSave}
-          disabled={saving || !dirty}
-          className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {saving ? 'Saving…' : 'Save'}
-        </button>
-        <span className="text-xs text-muted-foreground hidden sm:inline">Ctrl+S</span>
-      </div>
+        </div>
+      )}
 
       {/* Editor */}
       <div ref={containerRef} className="flex-1 overflow-hidden">

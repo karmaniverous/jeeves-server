@@ -70,6 +70,8 @@ export interface FileContent {
   breadcrumbs: BreadcrumbItem[];
   isInsider: boolean;
   mtime?: number;
+  renderAs?: string;
+  matchedRules?: string[];
 }
 
 export interface ShareResponse {
@@ -238,16 +240,24 @@ export async function fetchFacets(): Promise<FacetsResponse> {
   return fetchJson<FacetsResponse>(`${API_BASE}/search/facets`);
 }
 
+/** Unified file mutation endpoint — dispatches by action. */
+export async function fileMutate(
+  filePath: string,
+  body: Record<string, unknown>,
+): Promise<{ ok: boolean }> {
+  return fetchJson<{ ok: boolean }>(`${API_BASE}/file/${encodeBrowsePath(filePath)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
 export async function toggleCheckbox(
   filePath: string,
   index: number,
   checked: boolean,
 ): Promise<{ ok: boolean }> {
-  return fetchJson<{ ok: boolean }>(`${API_BASE}/toggle-checkbox/${encodeBrowsePath(filePath)}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ index, checked }),
-  });
+  return fileMutate(filePath, { action: 'toggle-checkbox', index, checked });
 }
 
 export async function clearCache(path: string): Promise<{ cleared: { exports: number; diagrams: number } }> {

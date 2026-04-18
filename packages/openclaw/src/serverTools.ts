@@ -15,6 +15,7 @@ import {
 
 import { PLUGIN_ID } from './constants.js';
 import { getPluginKey, withAuth } from './helpers.js';
+import { registerOAuthTools } from './oauthTools.js';
 
 /** Milliseconds in one day. */
 const MS_PER_DAY = 86_400_000;
@@ -346,4 +347,6 @@ export function registerServerTools(
     },
     { optional: true },
   );
+
+  registerOAuthTools(api, baseUrl, keySeed, publicUrl);
 }

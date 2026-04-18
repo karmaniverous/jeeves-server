@@ -62,6 +62,19 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadData, reqPath]);
 
+  /** Imperatively re-fetch file data without resetting editing/view state. */
+  const refetch = useCallback(async () => {
+    if (!reqPath) return;
+    try {
+      const raw = await getFileRaw(reqPath);
+      setFileRaw(raw);
+    } catch { /* ignore */ }
+    try {
+      const rendered = await getFile(reqPath);
+      setFileRendered(rendered);
+    } catch { /* ignore */ }
+  }, [reqPath]);
+
   const handleSave = async (content: string) => {
     await saveFile(reqPath, content);
     const refreshed = await getFileRaw(reqPath);
@@ -76,5 +89,6 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
     editing, setEditing,
     viewTab, setViewTab: setViewTabInternal,
     handleSave,
+    refetch,
   };
 }

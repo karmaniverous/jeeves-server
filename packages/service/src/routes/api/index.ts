@@ -12,13 +12,14 @@ import { drivesRoutes } from './drives.js';
 import { eventsRoutes } from './events.js';
 import { exportRoutes } from './export.js';
 import { fileContentRoutes } from './fileContent.js';
+import { fileMutationRoutes } from './fileMutations.js';
 import { linkInfoRoutes } from './linkInfo.js';
 import { addAuthMiddleware } from './middleware.js';
+import { oauthApiRoutes } from './oauth.js';
 import { rawRoutes } from './raw.js';
 import { runnerRoutes } from './runner.js';
 import { searchRoutes } from './search.js';
 import { sharingRoutes } from './sharing.js';
-import { toggleCheckboxRoutes } from './toggleCheckbox.js';
 
 export const apiRoute: FastifyPluginAsync = async (fastify) => {
   // Add auth hook directly to this context (not as a child plugin)
@@ -37,5 +38,6 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
   await fastify.register(sharingRoutes);
   await fastify.register(authStatusRoutes);
   await fastify.register(eventsRoutes);
-  await fastify.register(toggleCheckboxRoutes);
+  await fastify.register(fileMutationRoutes);
+  await fastify.register(oauthApiRoutes);
 };

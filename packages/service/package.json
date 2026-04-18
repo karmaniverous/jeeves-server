@@ -57,7 +57,9 @@
     "cheerio": "^1.2.0",
     "fastify": "^5.8.4",
     "lz-string": "^1.5.0",
-    "marked": "^17.0.5",
+    "markdown-it": "^14.1.1",
+    "markdown-it-anchor": "^9.2.0",
+    "markdown-it-task-lists": "^2.1.1",
     "mime-types": "^3.0.2",
     "picomatch": "^4.0.4",
     "plantuml-encoder": "^1.4.0",
@@ -69,6 +71,7 @@
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.59.1",
     "@types/archiver": "^7.0.0",
+    "@types/markdown-it": "^14.1.2",
     "@types/mime-types": "^3.0.1",
     "@types/node": "^25.5.2",
     "@types/picomatch": "^4.0.3",

@@ -24,7 +24,7 @@ export function FileBrowser() {
     rotateKeyDialogOpen, setRotateKeyDialogOpen,
     handleRotateKey, confirmRotateKey,
     topBarRef, mainRef, topBarHeight,
-    handleSave,
+    handleSave, refetch,
   } = useFileBrowser();
 
   const showFileView = file || (loading && !!reqPath);
@@ -117,6 +117,7 @@ export function FileBrowser() {
             mobileTocOpen={mobileTocOpen}
             setMobileTocOpen={setMobileTocOpen}
             onSave={handleSave}
+            refetch={refetch}
             loading={loading}
           />
         )}
