@@ -6,11 +6,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowDownToLine, ArrowUpToLine, Copy, Pencil, Trash2 } from 'lucide-react';
 
 import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { BlockEditPopup, blockLanguage } from '@/components/BlockEditPopup';
+import { BlockEditPopup } from '@/components/BlockEditPopup';
 import type { BlockEditMode } from '@/components/BlockEditPopup';
+import { blockLabel, blockLanguage } from '@/components/blockUtils';
 import { fileMutate } from '@/lib/api';
 import type { FileContent } from '@/lib/api';
-import { useUndo } from '@/lib/UndoContext';
+import { useUndo } from '@/lib/useUndo';
 
 /** Padding (px) inside the hover border highlight. */
 const BORDER_PADDING = 6;
@@ -35,34 +36,6 @@ interface OverlayRect {
   left: number;
   width: number;
   height: number;
-}
-
-/** Block type label for the hover indicator. */
-export function blockLabel(el: Element): string {
-  const tag = el.tagName.toLowerCase();
-  switch (tag) {
-    case 'p': return 'paragraph';
-    case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6': return 'heading';
-    case 'li': return 'list item';
-    case 'blockquote': return 'blockquote';
-    case 'table': return 'table';
-    case 'tr': return 'row';
-    case 'td': case 'th': return 'cell';
-    case 'pre': {
-      const code = el.querySelector('code[class*="language-"]');
-      if (code) {
-        const cls = Array.from(code.classList).find((c) => c.startsWith('language-'));
-        if (cls) return `code block (${cls.replace('language-', '')})`;
-      }
-      return 'code block';
-    }
-    case 'hr': return 'hr';
-    case 'ul': case 'ol': return 'list';
-    default:
-      if (el.classList.contains('embedded-diagram-lazy')) return 'diagram';
-      if (el.classList.contains('embedded-diagram-panzoom')) return 'diagram';
-      return tag;
-  }
 }
 
 /** Check if a <tr> is the header row (first <tr> inside <thead>). */

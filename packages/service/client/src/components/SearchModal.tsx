@@ -453,7 +453,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 50);
-      void loadFacets();
+      queueMicrotask(() => { void loadFacets(); });
     }
   }, [open, loadFacets]);
 
@@ -556,7 +556,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
 
   // Re-search when selections change
   useEffect(() => {
-    if (query.trim()) void doSearch(query);
+    if (query.trim()) queueMicrotask(() => { void doSearch(query); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [facetSelections, facetTextInputs]);
 

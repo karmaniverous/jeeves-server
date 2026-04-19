@@ -12,7 +12,7 @@ import { TocSection } from '@/components/TocSection';
 import { buildTocTree, findAncestorSlugs } from '@/components/tocUtils';
 import type { FileContent } from '@/lib/api';
 import { fileMutate, saveFile } from '@/lib/api';
-import { useUndo } from '@/lib/UndoContext';
+import { useUndo } from '@/lib/useUndo';
 import { initCodeBlockCm6 } from '@/lib/codeBlockCm6';
 import { injectCopyButtons } from '@/lib/codeBlockCopy';
 import { useTheme } from '@/lib/theme';

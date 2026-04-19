@@ -21,6 +21,12 @@ import {
 } from '@/lib/runner-api';
 import { useTheme } from '@/lib/theme';
 
+/** Compute key age in days from a creation timestamp. */
+function computeKeyAge(keyCreatedAt: string | null | undefined): string | null {
+  if (!keyCreatedAt) return null;
+  return `${Math.floor((Date.now() - new Date(keyCreatedAt).getTime()) / 86_400_000)}d`;
+}
+
 export function RunnerJob() {
   const { jobId } = useParams<{ jobId: string }>();
   const [job, setJob] = useState<RunnerJobType | null>(null);
@@ -30,9 +36,11 @@ export function RunnerJob() {
   const [theme, toggleTheme] = useTheme();
   const { isInsider, searchEnabled, keyCreatedAt, rotateKey } = useAuth();
 
-  const keyAge = keyCreatedAt
-    ? `${Math.floor((Date.now() - new Date(keyCreatedAt).getTime()) / 86_400_000)}d`
-    : null;
+  // Compute key age string (in effect to avoid impure Date.now during render)
+  const [keyAge, setKeyAge] = useState<string | null>(null);
+  useEffect(() => {
+    queueMicrotask(() => { setKeyAge(computeKeyAge(keyCreatedAt)); });
+  }, [keyCreatedAt]);
 
   const fetchData = useCallback(async () => {
     if (!jobId) return;
@@ -52,7 +60,7 @@ export function RunnerJob() {
   }, [jobId]);
 
   useEffect(() => {
-    void fetchData();
+    queueMicrotask(() => { void fetchData(); });
   }, [fetchData]);
 
   const handleToggleEnabled = useCallback(async () => {

@@ -5,7 +5,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react';
 
 import { fileMutate } from '@/lib/api';
-import { useUndo } from '@/lib/UndoContext';
+import { useUndo } from '@/lib/useUndo';
 
 const CodeEditor = lazy(() =>
   import('@/components/CodeEditor').then((m) => ({ default: m.CodeEditor })),
@@ -24,29 +24,6 @@ interface BlockEditPopupProps {
   onClose: () => void;
   onSaved: () => void;
   onError: (msg: string) => void;
-}
-
-/** Map block element tag to a file extension for CodeMirror language detection. */
-export function blockLanguage(el: Element): string {
-  const tag = el.tagName.toLowerCase();
-
-  // Code blocks: <pre><code class="language-X">
-  if (tag === 'pre') {
-    const code = el.querySelector('code[class*="language-"]');
-    if (code) {
-      const cls = Array.from(code.classList).find((c) => c.startsWith('language-'));
-      if (cls) return cls.replace('language-', '');
-    }
-    return 'md';
-  }
-
-  // Diagrams
-  if (el.classList.contains('embedded-diagram-lazy')) {
-    return 'txt';
-  }
-
-  // Everything else (p, h1-h6, li, blockquote, table, tr, hr, ul, ol) → markdown
-  return 'md';
 }
 
 /** Capitalize the first letter of each word. */

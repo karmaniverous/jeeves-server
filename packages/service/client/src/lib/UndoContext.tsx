@@ -1,16 +1,8 @@
-import { createContext, useCallback, useContext, useRef, type ReactNode } from 'react';
+import { useCallback, useRef, type ReactNode } from 'react';
+
+import { UndoContext } from '@/lib/undoState';
 
 const MAX_DEPTH = 20;
-
-interface UndoState {
-  pushUndo: (filePath: string, content: string) => void;
-  undo: (filePath: string, currentContent: string) => string | undefined;
-  redo: (filePath: string, currentContent: string) => string | undefined;
-  canUndo: (filePath: string) => boolean;
-  canRedo: (filePath: string) => boolean;
-}
-
-const UndoContext = createContext<UndoState | null>(null);
 
 export function UndoProvider({ children }: { children: ReactNode }) {
   const undoStackRef = useRef(new Map<string, string[]>());
@@ -59,10 +51,4 @@ export function UndoProvider({ children }: { children: ReactNode }) {
       {children}
     </UndoContext.Provider>
   );
-}
-
-export function useUndo(): UndoState {
-  const ctx = useContext(UndoContext);
-  if (!ctx) throw new Error('useUndo must be used within UndoProvider');
-  return ctx;
 }
