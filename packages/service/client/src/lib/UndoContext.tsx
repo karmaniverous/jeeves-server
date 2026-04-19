@@ -1,4 +1,4 @@
-import { useCallback, useRef, type ReactNode } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 
 import { UndoContext } from '@/lib/undoState';
 
@@ -7,6 +7,7 @@ const MAX_DEPTH = 20;
 export function UndoProvider({ children }: { children: ReactNode }) {
   const undoStackRef = useRef(new Map<string, string[]>());
   const redoStackRef = useRef(new Map<string, string[]>());
+  const [version, setVersion] = useState(0);
 
   const pushUndo = useCallback((filePath: string, content: string) => {
     const stack = undoStackRef.current.get(filePath) ?? [];
@@ -14,26 +15,39 @@ export function UndoProvider({ children }: { children: ReactNode }) {
     if (stack.length > MAX_DEPTH) stack.shift();
     undoStackRef.current.set(filePath, stack);
     redoStackRef.current.delete(filePath);
+    setVersion((v) => v + 1);
   }, []);
 
-  const undo = useCallback((filePath: string, currentContent: string): string | undefined => {
+  const peekUndo = useCallback((filePath: string): string | undefined => {
     const stack = undoStackRef.current.get(filePath);
     if (!stack || stack.length === 0) return undefined;
-    const prev = stack.pop()!;
+    return stack[stack.length - 1];
+  }, []);
+
+  const peekRedo = useCallback((filePath: string): string | undefined => {
+    const stack = redoStackRef.current.get(filePath);
+    if (!stack || stack.length === 0) return undefined;
+    return stack[stack.length - 1];
+  }, []);
+
+  const confirmUndo = useCallback((filePath: string, currentContent: string) => {
+    const stack = undoStackRef.current.get(filePath);
+    if (!stack || stack.length === 0) return;
+    stack.pop();
     const redoStack = redoStackRef.current.get(filePath) ?? [];
     redoStack.push(currentContent);
     redoStackRef.current.set(filePath, redoStack);
-    return prev;
+    setVersion((v) => v + 1);
   }, []);
 
-  const redo = useCallback((filePath: string, currentContent: string): string | undefined => {
+  const confirmRedo = useCallback((filePath: string, currentContent: string) => {
     const stack = redoStackRef.current.get(filePath);
-    if (!stack || stack.length === 0) return undefined;
-    const next = stack.pop()!;
+    if (!stack || stack.length === 0) return;
+    stack.pop();
     const undoStack = undoStackRef.current.get(filePath) ?? [];
     undoStack.push(currentContent);
     undoStackRef.current.set(filePath, undoStack);
-    return next;
+    setVersion((v) => v + 1);
   }, []);
 
   const canUndo = useCallback((filePath: string): boolean => {
@@ -47,7 +61,7 @@ export function UndoProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <UndoContext.Provider value={{ pushUndo, undo, redo, canUndo, canRedo }}>
+    <UndoContext.Provider value={{ pushUndo, peekUndo, peekRedo, confirmUndo, confirmRedo, canUndo, canRedo, version }}>
       {children}
     </UndoContext.Provider>
   );

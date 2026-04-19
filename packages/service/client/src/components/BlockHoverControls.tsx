@@ -28,6 +28,7 @@ interface BlockHoverControlsProps {
   fileRaw: FileContent | null;
   reqPath: string;
   refetch: () => Promise<void>;
+  popupOpenRef: React.MutableRefObject<boolean>;
 }
 
 /** Pre-computed overlay position (avoids ref reads during render). */
@@ -111,6 +112,7 @@ export function BlockHoverControls({
   fileRaw,
   reqPath,
   refetch,
+  popupOpenRef,
 }: BlockHoverControlsProps) {
   const { pushUndo } = useUndo();
   const [hoveredEl, setHoveredEl] = useState<Element | null>(null);
@@ -131,6 +133,13 @@ export function BlockHoverControls({
 
   // Source content for COPY and EDIT
   const rawContent = fileRaw?.content ?? fileRendered.content ?? '';
+
+  // Sync popup-open ref so parent can suppress keyboard shortcuts without DOM queries
+  const isPopupOpen = editMode !== null || deleteTarget !== null;
+  useEffect(() => {
+    popupOpenRef.current = isPopupOpen;
+    return () => { popupOpenRef.current = false; };
+  }, [isPopupOpen, popupOpenRef]);
 
   // Clear hover when content re-renders (adjusting state during render pattern)
   const [prevHtml, setPrevHtml] = useState(fileRendered.html);
@@ -235,7 +244,7 @@ export function BlockHoverControls({
         const row = el.closest('tr');
         const table = el.closest('table');
         if (!row || !table) return;
-        const tableStart = parseInt(table.closest('[data-source-start]')?.getAttribute('data-source-start') ?? table.getAttribute('data-source-start') ?? '0', 10);
+        const { startLine: tableStart } = getSourceRange(el);
         if (!tableStart) return;
 
         const isHeader = row.closest('thead') !== null;
@@ -317,12 +326,12 @@ export function BlockHoverControls({
     if (!deleteTarget) return;
     setDeleteTarget(null);
     try {
-      pushUndo(reqPath, rawContent);
       await fileMutate(reqPath, {
         action: 'delete-block',
         startLine: deleteTarget.startLine,
         endLine: deleteTarget.endLine,
       });
+      pushUndo(reqPath, rawContent);
       setHoveredEl(null);
       setHoverRect(null);
       await refetch();

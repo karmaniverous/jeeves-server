@@ -38,39 +38,39 @@ export function MarkdownView({
   const plainCode = new URLSearchParams(window.location.search).has('plain_code');
   const hasHeadings = fileRendered.headings && fileRendered.headings.length > 2;
   const articleRef = useRef<HTMLElement | null>(null);
+  const popupOpenRef = useRef(false);
 
   const isInsider = fileRendered.isInsider;
-  const { undo, redo, canUndo, canRedo } = useUndo();
+  const { peekUndo, peekRedo, confirmUndo, confirmRedo, canUndo, canRedo } = useUndo();
   const [undoSaving, setUndoSaving] = useState(false);
-  const [, forceRender] = useState(0);
 
   const currentContent = (fileRaw ?? fileRendered).content ?? '';
 
   const handleUndo = useCallback(async () => {
-    const restored = undo(reqPath, currentContent);
+    const restored = peekUndo(reqPath);
     if (!restored) return;
     setUndoSaving(true);
     try {
       await saveFile(reqPath, restored);
+      confirmUndo(reqPath, currentContent);
       await refetch();
     } finally {
       setUndoSaving(false);
-      forceRender((n) => n + 1);
     }
-  }, [reqPath, currentContent, undo, refetch]);
+  }, [reqPath, currentContent, peekUndo, confirmUndo, refetch]);
 
   const handleRedo = useCallback(async () => {
-    const restored = redo(reqPath, currentContent);
+    const restored = peekRedo(reqPath);
     if (!restored) return;
     setUndoSaving(true);
     try {
       await saveFile(reqPath, restored);
+      confirmRedo(reqPath, currentContent);
       await refetch();
     } finally {
       setUndoSaving(false);
-      forceRender((n) => n + 1);
     }
-  }, [reqPath, currentContent, redo, refetch]);
+  }, [reqPath, currentContent, peekRedo, confirmRedo, refetch]);
 
   // Build TOC tree and collapse state
   const tocTree = useMemo(
@@ -117,8 +117,8 @@ export function MarkdownView({
   useEffect(() => {
     if (!isInsider) return;
     function handleKeyDown(e: KeyboardEvent) {
-      // Suppress when a modal popup is open
-      if (document.querySelector('.fixed.z-\\[100\\]')) return;
+      // Suppress when an edit popup or confirm dialog is open
+      if (popupOpenRef.current) return;
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
         handleUndo();
@@ -286,6 +286,7 @@ export function MarkdownView({
             fileRaw={fileRaw}
             reqPath={reqPath}
             refetch={refetch}
+            popupOpenRef={popupOpenRef}
           />
         </div>
       </div>

@@ -15,14 +15,9 @@ import { useAuth } from '@/lib/AuthContext';
 import type { RunnerJob, RunnerStats } from '@/lib/runner-api';
 import { getRunnerJobs, getRunnerStats, triggerJobRun } from '@/lib/runner-api';
 import { useTheme } from '@/lib/theme';
+import { computeKeyAge } from '@/lib/utils';
 
 const REFRESH_INTERVAL = 10_000;
-
-/** Compute key age in days from a creation timestamp. */
-function computeKeyAge(keyCreatedAt: string | null | undefined): string | null {
-  if (!keyCreatedAt) return null;
-  return `${Math.floor((Date.now() - new Date(keyCreatedAt).getTime()) / 86_400_000)}d`;
-}
 
 export function Runner() {
   const [jobs, setJobs] = useState<RunnerJob[]>([]);
@@ -35,11 +30,7 @@ export function Runner() {
   const [theme, toggleTheme] = useTheme();
   const { isInsider, searchEnabled, keyCreatedAt, rotateKey } = useAuth();
 
-  // Compute key age string (in effect to avoid impure Date.now during render)
-  const [keyAge, setKeyAge] = useState<string | null>(null);
-  useEffect(() => {
-    queueMicrotask(() => { setKeyAge(computeKeyAge(keyCreatedAt)); });
-  }, [keyCreatedAt]);
+  const keyAge = useMemo(() => computeKeyAge(keyCreatedAt), [keyCreatedAt]);
 
   const fetchData = useCallback(async () => {
     try {

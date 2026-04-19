@@ -3,7 +3,7 @@
  */
 
 import { ArrowLeft, Play, Power, PowerOff } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { Header } from '@/components/layout/Header';
@@ -20,12 +20,7 @@ import {
   triggerJobRun,
 } from '@/lib/runner-api';
 import { useTheme } from '@/lib/theme';
-
-/** Compute key age in days from a creation timestamp. */
-function computeKeyAge(keyCreatedAt: string | null | undefined): string | null {
-  if (!keyCreatedAt) return null;
-  return `${Math.floor((Date.now() - new Date(keyCreatedAt).getTime()) / 86_400_000)}d`;
-}
+import { computeKeyAge } from '@/lib/utils';
 
 export function RunnerJob() {
   const { jobId } = useParams<{ jobId: string }>();
@@ -36,11 +31,7 @@ export function RunnerJob() {
   const [theme, toggleTheme] = useTheme();
   const { isInsider, searchEnabled, keyCreatedAt, rotateKey } = useAuth();
 
-  // Compute key age string (in effect to avoid impure Date.now during render)
-  const [keyAge, setKeyAge] = useState<string | null>(null);
-  useEffect(() => {
-    queueMicrotask(() => { setKeyAge(computeKeyAge(keyCreatedAt)); });
-  }, [keyCreatedAt]);
+  const keyAge = useMemo(() => computeKeyAge(keyCreatedAt), [keyCreatedAt]);
 
   const fetchData = useCallback(async () => {
     if (!jobId) return;

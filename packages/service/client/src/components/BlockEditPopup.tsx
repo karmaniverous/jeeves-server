@@ -48,13 +48,13 @@ export function BlockEditPopup({ mode, reqPath, blockLabel, fileContent, onClose
     if (mode.kind !== 'edit-cell') return;
     setCellSaving(true);
     try {
-      pushUndo(reqPath, fileContent);
       await fileMutate(reqPath, {
         action: 'edit-cell',
         line: mode.line,
         col: mode.col,
         content: cellValue,
       });
+      pushUndo(reqPath, fileContent);
       onSaved();
     } catch (e: unknown) {
       onError((e as Error).message);
@@ -65,7 +65,6 @@ export function BlockEditPopup({ mode, reqPath, blockLabel, fileContent, onClose
 
   const handleBlockSave = useCallback(
     async (content: string) => {
-      pushUndo(reqPath, fileContent);
       if (mode.kind === 'edit-block') {
         await fileMutate(reqPath, {
           action: 'edit-block',
@@ -82,6 +81,7 @@ export function BlockEditPopup({ mode, reqPath, blockLabel, fileContent, onClose
           ...(mode.context ? { context: mode.context } : {}),
         });
       }
+      pushUndo(reqPath, fileContent);
       onSaved();
     },
     [mode, reqPath, fileContent, pushUndo, onSaved],
