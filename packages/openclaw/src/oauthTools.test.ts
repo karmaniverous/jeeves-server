@@ -14,7 +14,7 @@ interface ToolDef {
 function collectTools(): ToolDef[] {
   const tools: ToolDef[] = [];
   const mockApi = {
-    registerTool: (def: ToolDef, _opts: unknown) => {
+    registerTool: (def: ToolDef) => {
       tools.push(def);
     },
   } as unknown as PluginApi;

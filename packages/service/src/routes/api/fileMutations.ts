@@ -240,12 +240,6 @@ async function handleInsertBlock(
       .code(400)
       .send({ error: 'insert-block requires atLine, position, and content' });
   }
-  if (position !== 'before' && position !== 'after') {
-    return reply
-      .code(400)
-      .send({ error: "position must be 'before' or 'after'" });
-  }
-
   let fileContent: string;
   try {
     fileContent = await fs.readFile(filePath, 'utf8');
@@ -325,9 +319,7 @@ async function handleEditCell(
 
   // Reject edits to separator rows (e.g. |---|:---:|---:|)
   if (/^\|?[\s:|-]+\|?$/.test(rawLine)) {
-    return reply
-      .code(400)
-      .send({ error: 'Cannot edit a separator row' });
+    return reply.code(400).send({ error: 'Cannot edit a separator row' });
   }
 
   const PIPE_PLACEHOLDER = '%%PIPE%%';

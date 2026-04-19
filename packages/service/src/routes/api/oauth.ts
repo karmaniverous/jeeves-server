@@ -123,9 +123,7 @@ export const oauthApiRoutes: FastifyPluginAsync = (fastify) => {
       try {
         originUrl = new URL(request.body.origin);
       } catch {
-        return reply
-          .code(400)
-          .send({ error: 'origin must be a valid URL' });
+        return reply.code(400).send({ error: 'origin must be a valid URL' });
       }
 
       const scheme = originUrl.protocol.replace(/:$/, '');
@@ -133,9 +131,9 @@ export const oauthApiRoutes: FastifyPluginAsync = (fastify) => {
         scheme !== 'https' &&
         !(scheme === 'http' && originUrl.hostname === 'localhost')
       ) {
-        return reply
-          .code(400)
-          .send({ error: 'origin scheme must be https (or http for localhost)' });
+        return reply.code(400).send({
+          error: 'origin scheme must be https (or http for localhost)',
+        });
       }
       if (originUrl.pathname !== '/') {
         return reply
@@ -323,10 +321,7 @@ export const oauthApiRoutes: FastifyPluginAsync = (fastify) => {
             });
           }
 
-          const tokenData = (await response.json()) as Record<
-            string,
-            unknown
-          >;
+          const tokenData = (await response.json()) as Record<string, unknown>;
 
           // Update credential file (atomic write)
           const updated: CredentialFile = {

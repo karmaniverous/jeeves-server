@@ -97,7 +97,6 @@ export function isScopeName(v: string): boolean {
  * (e.g. "restricted", "no-vc") rather than path globs.
  */
 function getScopeRefs(scopes: unknown): string[] {
-
   if (typeof scopes === 'string') return isScopeName(scopes) ? [scopes] : [];
 
   if (Array.isArray(scopes) && scopes.length > 0) {

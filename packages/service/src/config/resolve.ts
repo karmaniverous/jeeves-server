@@ -9,8 +9,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { computeInsiderKey } from '../util/crypto.js';
-import { isScopeName } from './schema.js';
 import type { JeevesConfig } from './schema.js';
+import { isScopeName } from './schema.js';
 import type {
   NormalizedScopes,
   ResolvedInsider,

@@ -851,10 +851,7 @@ describe('fileMutationRoutes', () => {
     });
 
     it('escapes unescaped pipes in user content', async () => {
-      fs.writeFileSync(
-        testFile,
-        '| A | B |\n|---|---|\n| 1 | 2 |\n',
-      );
+      fs.writeFileSync(testFile, '| A | B |\n|---|---|\n| 1 | 2 |\n');
       const handler = await setupRoute();
       const reply = createReply();
 
@@ -877,10 +874,7 @@ describe('fileMutationRoutes', () => {
     });
 
     it('rejects editing a separator row', async () => {
-      fs.writeFileSync(
-        testFile,
-        '| A | B |\n|---|---|\n| 1 | 2 |\n',
-      );
+      fs.writeFileSync(testFile, '| A | B |\n|---|---|\n| 1 | 2 |\n');
       const handler = await setupRoute();
       const reply = createReply();
 
@@ -900,10 +894,7 @@ describe('fileMutationRoutes', () => {
     });
 
     it('rejects editing a separator row with alignment colons', async () => {
-      fs.writeFileSync(
-        testFile,
-        '| A | B |\n| :---: | ---: |\n| 1 | 2 |\n',
-      );
+      fs.writeFileSync(testFile, '| A | B |\n| :---: | ---: |\n| 1 | 2 |\n');
       const handler = await setupRoute();
       const reply = createReply();
 
@@ -923,10 +914,7 @@ describe('fileMutationRoutes', () => {
     });
 
     it('handles GFM table without leading/trailing pipes', async () => {
-      fs.writeFileSync(
-        testFile,
-        'A | B | C\n---|---|---\n1 | 2 | 3\n',
-      );
+      fs.writeFileSync(testFile, 'A | B | C\n---|---|---\n1 | 2 | 3\n');
       const handler = await setupRoute();
       const reply = createReply();
 
