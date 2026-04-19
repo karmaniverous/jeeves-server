@@ -41,7 +41,7 @@ export function useFileBrowser() {
     drives, directory, fileRaw, fileRendered, file,
     loading, error, editing, setEditing,
     viewTab, setViewTab: setViewTabInternal,
-    handleSave,
+    handleSave, refetch,
   } = useFileData(reqPath, searchParams);
 
   // Sync tab to URL
@@ -97,6 +97,6 @@ export function useFileBrowser() {
     rotateKeyDialogOpen, setRotateKeyDialogOpen,
     handleRotateKey, confirmRotateKey,
     topBarRef, mainRef, topBarHeight,
-    handleSave,
+    handleSave, refetch,
   };
 }

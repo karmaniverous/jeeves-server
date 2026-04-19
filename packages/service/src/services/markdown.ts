@@ -5,8 +5,9 @@
 import fs from 'node:fs';
 
 import * as cheerio from 'cheerio';
-import type { Token } from 'marked';
-import { marked } from 'marked';
+import MarkdownIt from 'markdown-it';
+import anchor from 'markdown-it-anchor';
+import taskLists from 'markdown-it-task-lists';
 
 import { registerDiagram } from './embeddedDiagrams.js';
 
@@ -86,6 +87,20 @@ function extractFrontmatter(markdown: string): {
 }
 
 /**
+ * Custom slugify matching the current algorithm:
+ * lowercase → strip HTML tags → remove non-word/non-space/non-dash → whitespace to dash → collapse dashes → trim dashes
+ */
+function slugify(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/<[^>]+>/g, '')
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+/**
  * Parse markdown to HTML with heading extraction
  */
 export function parseMarkdown(
@@ -96,104 +111,135 @@ export function parseMarkdown(
   const { frontmatter, body } = extractFrontmatter(markdown);
   let processedMarkdown = body;
 
+  // Compute frontmatter line count for source mapping offset
+  const frontmatterMatch = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
+  const frontmatterLineCount = frontmatterMatch
+    ? frontmatterMatch[0].split('\n').length - 1
+    : 0;
+
   // Optionally linkify Windows paths
   if (options.linkWindowsPaths) {
     processedMarkdown = linkifyFilesystemPaths(processedMarkdown);
   }
 
-  const headings: Heading[] = [];
+  const md = new MarkdownIt({ html: true });
 
-  // Custom renderer to extract headings and add anchors
-  const renderer = new marked.Renderer();
+  // Plugin: markdown-it-anchor for heading slugs and permalink anchors
+  md.use(anchor, {
+    slugify,
+    permalink: anchor.permalink.linkInsideHeader({
+      symbol: '#',
+      class: 'anchor',
+      placement: 'after',
+      space: true,
+    }),
+  });
 
-  renderer.heading = function (
-    args:
-      | string
-      | {
-          text: string;
-          raw?: string;
-          depth: number;
-          tokens?: Token[];
-        },
-  ) {
-    const text = typeof args === 'object' ? args.text : args;
-    const raw = typeof args === 'object' && args.raw ? args.raw : text;
-    const level = typeof args === 'object' ? args.depth : 1;
+  // Plugin: GFM task-list checkboxes
+  md.use(taskLists as (md: MarkdownIt) => void);
 
-    // Parse inline tokens to render code spans, bold, italic, links, etc.
-    const renderedText =
-      typeof args === 'object' && args.tokens
-        ? this.parser.parseInline(args.tokens)
-        : text;
-
-    const slug = raw
-      .toLowerCase()
-      .replace(/<[^>]+>/g, '')
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
-
-    headings.push({
-      level,
-      text: cheerio.load(renderedText).text(),
-      slug,
-    });
-
-    return `<h${String(level)} id="${slug}">${renderedText} <a href="#${slug}" class="anchor">#</a></h${String(level)}>\n`;
-  };
-
-  // Rewrite relative image src to /path/ URLs
-  if (options.basePath) {
-    const base = options.basePath;
-    renderer.image = function (
-      args: string | { href: string; title: string | null; text: string },
-    ) {
-      const href = typeof args === 'object' ? args.href : args;
-      const title = typeof args === 'object' ? args.title : '';
-      const text = typeof args === 'object' ? args.text : '';
-      let src = href;
-      if (src && !src.startsWith('http') && !src.startsWith('data:')) {
-        // Rewrite relative paths to /api/raw/ for file serving
-        if (!src.startsWith('/')) {
-          src = `/api/raw/${base}/${src}`;
-        } else if (src.startsWith('/path/')) {
-          // Legacy /path/ references → /api/raw/
-          src = src.replace('/path/', '/api/raw/');
-        }
+  // Core rule: add source mapping attributes to all block tokens
+  md.core.ruler.push('source_map', (state) => {
+    for (const token of state.tokens) {
+      if (token.map && token.nesting >= 0 && token.type !== 'inline') {
+        const start = token.map[0] + 1 + frontmatterLineCount;
+        const end = token.map[1] + frontmatterLineCount;
+        token.attrSet('data-source-start', String(start));
+        token.attrSet('data-source-end', String(end));
       }
-      const titleAttr = title ? ` title="${title}"` : '';
-      return `<img src="${src}" alt="${text}"${titleAttr} />`;
-    };
-  }
+    }
+  });
 
-  // Syntax-highlight fenced code blocks; render mermaid/plantuml as diagrams
-  renderer.code = function (
-    args: string | { text: string; lang?: string; escaped?: boolean },
-  ) {
-    const text = typeof args === 'object' ? args.text : args;
-    const lang = (
-      typeof args === 'object' ? args.lang : undefined
-    )?.toLowerCase();
+  // Custom fence renderer for diagrams and code blocks
+  md.renderer.rules.fence = (tokens, idx) => {
+    const token = tokens[idx];
+    const lang = token.info.trim().split(/\s+/)[0]?.toLowerCase() ?? '';
+    const content = token.content;
 
-    // Diagram code blocks → register for async rendering (GitHub convention)
+    // Source mapping attributes (set by core rule)
+    const sourceStart = token.attrGet('data-source-start');
+    const sourceEnd = token.attrGet('data-source-end');
+    const sourceAttrs = sourceStart
+      ? ` data-source-start="${sourceStart}" data-source-end="${sourceEnd ?? ''}"`
+      : '';
+
+    // Diagram code blocks → register for async rendering
     if (lang === 'mermaid') {
-      return registerDiagram('mermaid', text);
+      const placeholder = registerDiagram('mermaid', content);
+      return placeholder.replace('<div ', `<div${sourceAttrs} `);
     }
     if (lang === 'plantuml' || lang === 'puml') {
-      return registerDiagram('plantuml', text);
+      const placeholder = registerDiagram('plantuml', content);
+      return placeholder.replace('<div ', `<div${sourceAttrs} `);
     }
 
-    const escaped = text
+    // Regular code blocks
+    const escaped = content
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
     const langClass = lang ? ` class="language-${lang}"` : '';
-    return `<pre><code${langClass}>${escaped}</code></pre>\n`;
+    return `<pre${sourceAttrs}><code${langClass}>${escaped}</code></pre>\n`;
   };
 
-  marked.setOptions({ renderer });
-  let html = marked(processedMarkdown) as string;
+  // Custom image renderer for src rewriting
+  if (options.basePath) {
+    const base = options.basePath;
+    md.renderer.rules.image = (tokens, idx) => {
+      const token = tokens[idx];
+      let src = token.attrGet('src') ?? '';
+      const title = token.attrGet('title') ?? '';
+      const alt = token.children
+        ? token.children
+            .filter((t) => t.type === 'text' || t.type === 'code_inline')
+            .map((t) => t.content)
+            .join('')
+        : '';
+
+      if (src && !src.startsWith('http') && !src.startsWith('data:')) {
+        if (!src.startsWith('/')) {
+          src = `/api/raw/${base}/${src}`;
+        } else if (src.startsWith('/path/')) {
+          src = src.replace('/path/', '/api/raw/');
+        }
+      }
+      const titleAttr = title ? ` title="${title}"` : '';
+      return `<img src="${src}" alt="${alt}"${titleAttr} />`;
+    };
+  }
+
+  // Parse tokens
+  const env = {};
+  const tokens = md.parse(processedMarkdown, env);
+
+  // Extract headings from token stream
+  const headings: Heading[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    if (tokens[i].type === 'heading_open') {
+      const level = parseInt(tokens[i].tag.slice(1), 10);
+      const slug = tokens[i].attrGet('id') ?? '';
+
+      // Next token is inline with heading content
+      const inlineToken = tokens[i + 1];
+      let text = '';
+      if (inlineToken.type === 'inline') {
+        // Render inline to get HTML, then strip the permalink anchor and extract plain text
+        const rendered = md.renderer.renderInline(
+          inlineToken.children ?? [],
+          md.options,
+          env,
+        );
+        const $h = cheerio.load(rendered);
+        $h('a.anchor').remove();
+        text = $h.text().trim();
+      }
+
+      headings.push({ level, text, slug });
+    }
+  }
+
+  // Render HTML from tokens
+  let html = md.renderer.render(tokens, md.options, env);
 
   // Assign sequential data-checkbox-index to GFM task-list checkboxes
   {

@@ -70,6 +70,18 @@ export interface RuntimeConfig {
   googleAuth: { clientId: string; clientSecret: string } | null;
   sessionSecret: string | null;
   internalInsiderKey: string | null;
+  oauth: {
+    credentialDir: string;
+    providers: Record<
+      string,
+      {
+        authUrl: string;
+        tokenUrl: string;
+        pkce: boolean;
+        defaultScopes: string[];
+      }
+    >;
+  } | null;
   configPath: string;
   eventsLog: string;
   stateFile: string;

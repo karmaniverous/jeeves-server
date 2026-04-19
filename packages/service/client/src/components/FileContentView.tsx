@@ -2,8 +2,7 @@
  * Dispatches to the correct viewer based on file type.
  */
 import { Loader2 } from 'lucide-react';
-import { useRef } from 'react';
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 
 const CodeEditor = lazy(() => import('@/components/CodeEditor').then(m => ({ default: m.CodeEditor })));
 const CodeViewer = lazy(() => import('@/components/CodeViewer').then(m => ({ default: m.CodeViewer })));
@@ -30,6 +29,7 @@ interface FileContentViewProps {
   mobileTocOpen: boolean;
   setMobileTocOpen: (open: boolean) => void;
   onSave: (content: string) => Promise<void>;
+  refetch: () => Promise<void>;
   loading: boolean;
 }
 
@@ -38,7 +38,7 @@ export function FileContentView({
   editing, setEditing,
   proseWidth, topBarHeight, mainRef,
   mobileTocOpen, setMobileTocOpen,
-  onSave,
+  onSave, refetch,
 }: FileContentViewProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   useScrollAnchor(mainRef, contentRef);
@@ -107,12 +107,14 @@ export function FileContentView({
       {fileRendered?.type === 'markdown' && fileRendered.html && activeTab === 'rendered' && (
         <MarkdownView
           fileRendered={fileRendered}
+          fileRaw={fileRaw}
           reqPath={reqPath}
           proseWidth={proseWidth}
           topBarHeight={topBarHeight}
           mainRef={mainRef}
           mobileTocOpen={mobileTocOpen}
           setMobileTocOpen={setMobileTocOpen}
+          refetch={refetch}
         />
       )}
 

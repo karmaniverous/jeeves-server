@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { computeInsiderKey } from '../util/crypto.js';
+import { isScopeName } from './schema.js';
 import type { JeevesConfig } from './schema.js';
 import type {
   NormalizedScopes,
@@ -73,16 +74,14 @@ export function resolveNamedScopes(
   }
 
   // Determine whether rawScopes is a named reference (identifier(s))
-  const isName = (v: string): boolean => /^[A-Za-z0-9_-]+$/.test(v);
-
   const refs =
     typeof rawScopes === 'string'
-      ? isName(rawScopes)
+      ? isScopeName(rawScopes)
         ? [rawScopes]
         : null
       : Array.isArray(rawScopes) &&
           rawScopes.every((v) => typeof v === 'string')
-        ? rawScopes.filter((v) => isName(v))
+        ? rawScopes.filter((v) => isScopeName(v))
         : null;
 
   if (refs && refs.length > 0) {
@@ -284,6 +283,20 @@ export function buildRuntimeConfig(
     sessionSecret: config.auth.sessionSecret ?? null,
     internalInsiderKey: deriveInternalKey(resolvedKeys),
     diagramCachePath: config.diagramCachePath,
+    oauth: config.oauth
+      ? {
+          credentialDir: config.oauth.credentialDir,
+          providers: config.oauth.providers as Record<
+            string,
+            {
+              authUrl: string;
+              tokenUrl: string;
+              pkce: boolean;
+              defaultScopes: string[];
+            }
+          >,
+        }
+      : null,
     configPath,
     eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),
     stateFile,

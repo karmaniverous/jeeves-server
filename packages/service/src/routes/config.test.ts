@@ -40,6 +40,7 @@ function makeConfig(overrides: Partial<RuntimeConfig> = {}): RuntimeConfig {
     },
     sessionSecret: 'session-hmac-secret',
     internalInsiderKey: 'internal-key-seed',
+    oauth: null,
     configPath: '/etc/jeeves-server.config.json',
     eventsLog: '/var/log/events.log',
     stateFile: '/var/state.json',

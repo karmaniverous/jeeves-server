@@ -85,6 +85,11 @@ export const keyEntrySchema = z.union([
   }),
 ]);
 
+/** Check if a string is a named scope identifier (not a path glob). */
+export function isScopeName(v: string): boolean {
+  return /^[A-Za-z0-9_-]+$/.test(v);
+}
+
 /** Helper: collect named scope references from a scopes field value.
  *
  * Backward-compat note: `scopes` has historically accepted path globs like "/**" or ["/a","/b"].
@@ -92,18 +97,31 @@ export const keyEntrySchema = z.union([
  * (e.g. "restricted", "no-vc") rather than path globs.
  */
 function getScopeRefs(scopes: unknown): string[] {
-  const isName = (v: string): boolean => /^[A-Za-z0-9_-]+$/.test(v);
 
-  if (typeof scopes === 'string') return isName(scopes) ? [scopes] : [];
+  if (typeof scopes === 'string') return isScopeName(scopes) ? [scopes] : [];
 
   if (Array.isArray(scopes) && scopes.length > 0) {
     const strs = scopes.filter((v) => typeof v === 'string');
     if (strs.length !== scopes.length) return [];
-    return strs.filter((v) => isName(v));
+    return strs.filter((v) => isScopeName(v));
   }
 
   return [];
 }
+
+/** OAuth provider configuration */
+export const oauthProviderSchema = z.object({
+  authUrl: z.string().pipe(z.url()),
+  tokenUrl: z.string().pipe(z.url()),
+  pkce: z.boolean().default(false),
+  defaultScopes: z.array(z.string()).default([]),
+});
+
+/** OAuth configuration */
+export const oauthSchema = z.object({
+  credentialDir: z.string(),
+  providers: z.record(z.string(), oauthProviderSchema).default({}),
+});
 
 /** Top-level Jeeves Server configuration */
 export const jeevesConfigSchema = z
@@ -155,6 +173,8 @@ export const jeevesConfigSchema = z
      * If omitted, all paths are shareable with outsiders.
      */
     outsiderPolicy: scopesSchema.optional(),
+    /** OAuth2 credential management configuration */
+    oauth: oauthSchema.optional(),
   })
   .superRefine((config, ctx) => {
     // Google auth mode requires google config + sessionSecret
