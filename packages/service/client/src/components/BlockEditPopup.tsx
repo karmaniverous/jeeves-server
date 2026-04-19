@@ -18,6 +18,7 @@ export type BlockEditMode =
 interface BlockEditPopupProps {
   mode: BlockEditMode;
   reqPath: string;
+  blockLabel: string;
   onClose: () => void;
   onSaved: () => void;
   onError: (msg: string) => void;
@@ -46,7 +47,12 @@ export function blockLanguage(el: Element): string {
   return 'md';
 }
 
-export function BlockEditPopup({ mode, reqPath, onClose, onSaved, onError }: BlockEditPopupProps) {
+/** Capitalize the first letter of each word. */
+function capitalize(s: string): string {
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export function BlockEditPopup({ mode, reqPath, blockLabel, onClose, onSaved, onError }: BlockEditPopupProps) {
   const [cellValue, setCellValue] = useState(mode.kind === 'edit-cell' ? mode.content : '');
   const [cellSaving, setCellSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -155,7 +161,9 @@ export function BlockEditPopup({ mode, reqPath, onClose, onSaved, onError }: Blo
       <div className="bg-popover border border-border rounded-lg shadow-lg w-full max-w-3xl max-h-[80vh] flex flex-col overflow-hidden">
         <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/50">
           <span className="text-sm font-medium text-foreground">
-            {mode.kind === 'edit-block' ? 'Edit Block' : 'Insert Block'}
+            {mode.kind === 'edit-block'
+              ? `Edit ${capitalize(blockLabel)}`
+              : `Insert ${capitalize(mode.position)} ${capitalize(blockLabel)}`}
           </span>
           <div className="flex-1" />
           <button
