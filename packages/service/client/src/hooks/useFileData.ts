@@ -58,7 +58,7 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
 
   // Only reload data when the path changes, not when tab params change
   useEffect(() => {
-    void loadData(reqPath, searchParams);
+    queueMicrotask(() => { void loadData(reqPath, searchParams); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadData, reqPath]);
 

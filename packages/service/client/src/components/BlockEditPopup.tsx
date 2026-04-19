@@ -5,6 +5,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react';
 
 import { fileMutate } from '@/lib/api';
+import { useUndo } from '@/lib/useUndo';
 
 const CodeEditor = lazy(() =>
   import('@/components/CodeEditor').then((m) => ({ default: m.CodeEditor })),
@@ -18,43 +19,28 @@ export type BlockEditMode =
 interface BlockEditPopupProps {
   mode: BlockEditMode;
   reqPath: string;
+  blockLabel: string;
+  fileContent: string;
   onClose: () => void;
   onSaved: () => void;
   onError: (msg: string) => void;
 }
 
-/** Map block element tag to a file extension for CodeMirror language detection. */
-export function blockLanguage(el: Element): string {
-  const tag = el.tagName.toLowerCase();
-
-  // Code blocks: <pre><code class="language-X">
-  if (tag === 'pre') {
-    const code = el.querySelector('code[class*="language-"]');
-    if (code) {
-      const cls = Array.from(code.classList).find((c) => c.startsWith('language-'));
-      if (cls) return cls.replace('language-', '');
-    }
-    return 'md';
-  }
-
-  // Diagrams
-  if (el.classList.contains('embedded-diagram-lazy')) {
-    return 'txt';
-  }
-
-  // Everything else (p, h1-h6, li, blockquote, table, tr, hr, ul, ol) → markdown
-  return 'md';
+/** Capitalize the first letter of each word. */
+function capitalize(s: string): string {
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export function BlockEditPopup({ mode, reqPath, onClose, onSaved, onError }: BlockEditPopupProps) {
+export function BlockEditPopup({ mode, reqPath, blockLabel, fileContent, onClose, onSaved, onError }: BlockEditPopupProps) {
+  const { pushUndo } = useUndo();
   const [cellValue, setCellValue] = useState(mode.kind === 'edit-cell' ? mode.content : '');
   const [cellSaving, setCellSaving] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (mode.kind === 'edit-cell' && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
+    if (mode.kind === 'edit-cell' && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.select();
     }
   }, [mode.kind]);
 
@@ -68,13 +54,14 @@ export function BlockEditPopup({ mode, reqPath, onClose, onSaved, onError }: Blo
         col: mode.col,
         content: cellValue,
       });
+      pushUndo(reqPath, fileContent);
       onSaved();
     } catch (e: unknown) {
       onError((e as Error).message);
     } finally {
       setCellSaving(false);
     }
-  }, [mode, reqPath, cellValue, onSaved, onError]);
+  }, [mode, reqPath, cellValue, fileContent, pushUndo, onSaved, onError]);
 
   const handleBlockSave = useCallback(
     async (content: string) => {
@@ -94,9 +81,10 @@ export function BlockEditPopup({ mode, reqPath, onClose, onSaved, onError }: Blo
           ...(mode.context ? { context: mode.context } : {}),
         });
       }
+      pushUndo(reqPath, fileContent);
       onSaved();
     },
-    [mode, reqPath, onSaved],
+    [mode, reqPath, fileContent, pushUndo, onSaved],
   );
 
   // Cell editing: simple input
@@ -109,16 +97,16 @@ export function BlockEditPopup({ mode, reqPath, onClose, onSaved, onError }: Blo
       >
         <div className="bg-popover border border-border rounded-lg shadow-lg p-4 w-full max-w-md">
           <div className="text-sm font-medium text-foreground mb-2">Edit Cell</div>
-          <input
-            ref={inputRef}
-            type="text"
+          <textarea
+            ref={textareaRef}
             value={cellValue}
             onChange={(e) => setCellValue(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') { e.preventDefault(); handleCellSave(); }
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleCellSave(); }
               if (e.key === 'Escape') onClose();
             }}
-            className="w-full px-3 py-2 border border-border rounded bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            rows={Math.max(2, Math.min(10, cellValue.split('\n').length))}
+            className="w-full px-3 py-2 border border-border rounded bg-background text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
             disabled={cellSaving}
           />
           <div className="flex justify-end gap-2 mt-3">
@@ -135,7 +123,7 @@ export function BlockEditPopup({ mode, reqPath, onClose, onSaved, onError }: Blo
             >
               {cellSaving ? 'Saving…' : 'Save'}
             </button>
-            <span className="text-xs text-muted-foreground self-center">Enter to save</span>
+            <span className="text-xs text-muted-foreground self-center">Ctrl+Enter to save</span>
           </div>
         </div>
       </div>
@@ -155,7 +143,9 @@ export function BlockEditPopup({ mode, reqPath, onClose, onSaved, onError }: Blo
       <div className="bg-popover border border-border rounded-lg shadow-lg w-full max-w-3xl max-h-[80vh] flex flex-col overflow-hidden">
         <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/50">
           <span className="text-sm font-medium text-foreground">
-            {mode.kind === 'edit-block' ? 'Edit Block' : 'Insert Block'}
+            {mode.kind === 'edit-block'
+              ? `Edit ${capitalize(blockLabel)}`
+              : `Insert ${capitalize(mode.position)} ${capitalize(blockLabel)}`}
           </span>
           <div className="flex-1" />
           <button
