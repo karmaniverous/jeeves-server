@@ -10,6 +10,7 @@ import { BlockEditPopup, blockLanguage } from '@/components/BlockEditPopup';
 import type { BlockEditMode } from '@/components/BlockEditPopup';
 import { fileMutate } from '@/lib/api';
 import type { FileContent } from '@/lib/api';
+import { useUndo } from '@/lib/UndoContext';
 
 /** Padding (px) inside the hover border highlight. */
 const BORDER_PADDING = 6;
@@ -138,6 +139,7 @@ export function BlockHoverControls({
   reqPath,
   refetch,
 }: BlockHoverControlsProps) {
+  const { pushUndo } = useUndo();
   const [hoveredEl, setHoveredEl] = useState<Element | null>(null);
   const [hoverRect, setHoverRect] = useState<OverlayRect | null>(null);
   const [editMode, setEditMode] = useState<BlockEditMode | null>(null);
@@ -342,6 +344,7 @@ export function BlockHoverControls({
     if (!deleteTarget) return;
     setDeleteTarget(null);
     try {
+      pushUndo(reqPath, rawContent);
       await fileMutate(reqPath, {
         action: 'delete-block',
         startLine: deleteTarget.startLine,
@@ -353,7 +356,7 @@ export function BlockHoverControls({
     } catch (e: unknown) {
       setErrorMsg((e as Error).message);
     }
-  }, [deleteTarget, reqPath, refetch]);
+  }, [deleteTarget, reqPath, rawContent, pushUndo, refetch]);
 
   const handleSaved = useCallback(async () => {
     setEditMode(null);
@@ -518,6 +521,7 @@ export function BlockHoverControls({
           mode={editMode}
           reqPath={reqPath}
           blockLabel={editBlockLabel}
+          fileContent={rawContent}
           onClose={() => setEditMode(null)}
           onSaved={handleSaved}
           onError={handleSaveError}

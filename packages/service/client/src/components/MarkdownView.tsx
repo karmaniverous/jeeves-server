@@ -2,6 +2,7 @@
  * Markdown rendered view with collapsible TOC sidebar.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Loader2, Undo2, Redo2 } from 'lucide-react';
 
 import { BlockHoverControls } from '@/components/BlockHoverControls';
 import { initEmbeddedDiagramPanzoom } from '@/components/EmbeddedDiagramPanzoom';
@@ -10,7 +11,8 @@ import { initInlineSvgPanzoom } from '@/components/InlineSvgPanzoom';
 import { TocSection } from '@/components/TocSection';
 import { buildTocTree, findAncestorSlugs } from '@/components/tocUtils';
 import type { FileContent } from '@/lib/api';
-import { fileMutate } from '@/lib/api';
+import { fileMutate, saveFile } from '@/lib/api';
+import { useUndo } from '@/lib/UndoContext';
 import { initCodeBlockCm6 } from '@/lib/codeBlockCm6';
 import { injectCopyButtons } from '@/lib/codeBlockCopy';
 import { useTheme } from '@/lib/theme';
@@ -38,6 +40,37 @@ export function MarkdownView({
   const articleRef = useRef<HTMLElement | null>(null);
 
   const isInsider = fileRendered.isInsider;
+  const { undo, redo, canUndo, canRedo } = useUndo();
+  const [undoSaving, setUndoSaving] = useState(false);
+  const [, forceRender] = useState(0);
+
+  const currentContent = (fileRaw ?? fileRendered).content ?? '';
+
+  const handleUndo = useCallback(async () => {
+    const restored = undo(reqPath, currentContent);
+    if (!restored) return;
+    setUndoSaving(true);
+    try {
+      await saveFile(reqPath, restored);
+      await refetch();
+    } finally {
+      setUndoSaving(false);
+      forceRender((n) => n + 1);
+    }
+  }, [reqPath, currentContent, undo, refetch]);
+
+  const handleRedo = useCallback(async () => {
+    const restored = redo(reqPath, currentContent);
+    if (!restored) return;
+    setUndoSaving(true);
+    try {
+      await saveFile(reqPath, restored);
+      await refetch();
+    } finally {
+      setUndoSaving(false);
+      forceRender((n) => n + 1);
+    }
+  }, [reqPath, currentContent, redo, refetch]);
 
   // Build TOC tree and collapse state
   const tocTree = useMemo(
@@ -79,6 +112,25 @@ export function MarkdownView({
     },
     [scrollToHeading, setMobileTocOpen],
   );
+
+  // Ctrl+Z / Ctrl+Shift+Z keyboard shortcuts for undo/redo
+  useEffect(() => {
+    if (!isInsider) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      // Suppress when a modal popup is open
+      if (document.querySelector('.fixed.z-\\[100\\]')) return;
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
+        e.preventDefault();
+        handleRedo();
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isInsider, handleUndo, handleRedo]);
 
   // Enable/disable checkboxes when insider status or HTML changes
   useEffect(() => {
@@ -204,6 +256,30 @@ export function MarkdownView({
               }
             }}
           />
+          {isInsider && (canUndo(reqPath) || canRedo(reqPath)) && (
+            <div className="absolute top-2 right-2 flex gap-1 z-10">
+              {canUndo(reqPath) && (
+                <button
+                  onClick={handleUndo}
+                  disabled={undoSaving}
+                  title="Undo (Ctrl+Z)"
+                  className="p-1.5 bg-popover border border-border rounded hover:bg-accent transition-colors disabled:opacity-50"
+                >
+                  {undoSaving ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : <Undo2 className="h-4 w-4 text-muted-foreground" />}
+                </button>
+              )}
+              {canRedo(reqPath) && (
+                <button
+                  onClick={handleRedo}
+                  disabled={undoSaving}
+                  title="Redo (Ctrl+Shift+Z)"
+                  className="p-1.5 bg-popover border border-border rounded hover:bg-accent transition-colors disabled:opacity-50"
+                >
+                  {undoSaving ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : <Redo2 className="h-4 w-4 text-muted-foreground" />}
+                </button>
+              )}
+            </div>
+          )}
           <BlockHoverControls
             containerRef={articleRef}
             fileRendered={fileRendered}

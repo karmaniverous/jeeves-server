@@ -5,6 +5,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react';
 
 import { fileMutate } from '@/lib/api';
+import { useUndo } from '@/lib/UndoContext';
 
 const CodeEditor = lazy(() =>
   import('@/components/CodeEditor').then((m) => ({ default: m.CodeEditor })),
@@ -19,6 +20,7 @@ interface BlockEditPopupProps {
   mode: BlockEditMode;
   reqPath: string;
   blockLabel: string;
+  fileContent: string;
   onClose: () => void;
   onSaved: () => void;
   onError: (msg: string) => void;
@@ -52,7 +54,8 @@ function capitalize(s: string): string {
   return s.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export function BlockEditPopup({ mode, reqPath, blockLabel, onClose, onSaved, onError }: BlockEditPopupProps) {
+export function BlockEditPopup({ mode, reqPath, blockLabel, fileContent, onClose, onSaved, onError }: BlockEditPopupProps) {
+  const { pushUndo } = useUndo();
   const [cellValue, setCellValue] = useState(mode.kind === 'edit-cell' ? mode.content : '');
   const [cellSaving, setCellSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -68,6 +71,7 @@ export function BlockEditPopup({ mode, reqPath, blockLabel, onClose, onSaved, on
     if (mode.kind !== 'edit-cell') return;
     setCellSaving(true);
     try {
+      pushUndo(reqPath, fileContent);
       await fileMutate(reqPath, {
         action: 'edit-cell',
         line: mode.line,
@@ -80,10 +84,11 @@ export function BlockEditPopup({ mode, reqPath, blockLabel, onClose, onSaved, on
     } finally {
       setCellSaving(false);
     }
-  }, [mode, reqPath, cellValue, onSaved, onError]);
+  }, [mode, reqPath, cellValue, fileContent, pushUndo, onSaved, onError]);
 
   const handleBlockSave = useCallback(
     async (content: string) => {
+      pushUndo(reqPath, fileContent);
       if (mode.kind === 'edit-block') {
         await fileMutate(reqPath, {
           action: 'edit-block',
@@ -102,7 +107,7 @@ export function BlockEditPopup({ mode, reqPath, blockLabel, onClose, onSaved, on
       }
       onSaved();
     },
-    [mode, reqPath, onSaved],
+    [mode, reqPath, fileContent, pushUndo, onSaved],
   );
 
   // Cell editing: simple input
