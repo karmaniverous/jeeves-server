@@ -49,12 +49,12 @@ export function blockLanguage(el: Element): string {
 export function BlockEditPopup({ mode, reqPath, onClose, onSaved, onError }: BlockEditPopupProps) {
   const [cellValue, setCellValue] = useState(mode.kind === 'edit-cell' ? mode.content : '');
   const [cellSaving, setCellSaving] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (mode.kind === 'edit-cell' && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
+    if (mode.kind === 'edit-cell' && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.select();
     }
   }, [mode.kind]);
 
@@ -109,16 +109,16 @@ export function BlockEditPopup({ mode, reqPath, onClose, onSaved, onError }: Blo
       >
         <div className="bg-popover border border-border rounded-lg shadow-lg p-4 w-full max-w-md">
           <div className="text-sm font-medium text-foreground mb-2">Edit Cell</div>
-          <input
-            ref={inputRef}
-            type="text"
+          <textarea
+            ref={textareaRef}
             value={cellValue}
             onChange={(e) => setCellValue(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') { e.preventDefault(); handleCellSave(); }
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleCellSave(); }
               if (e.key === 'Escape') onClose();
             }}
-            className="w-full px-3 py-2 border border-border rounded bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            rows={Math.max(2, Math.min(10, cellValue.split('\n').length))}
+            className="w-full px-3 py-2 border border-border rounded bg-background text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
             disabled={cellSaving}
           />
           <div className="flex justify-end gap-2 mt-3">
@@ -135,7 +135,7 @@ export function BlockEditPopup({ mode, reqPath, onClose, onSaved, onError }: Blo
             >
               {cellSaving ? 'Saving…' : 'Save'}
             </button>
-            <span className="text-xs text-muted-foreground self-center">Enter to save</span>
+            <span className="text-xs text-muted-foreground self-center">Ctrl+Enter to save</span>
           </div>
         </div>
       </div>
