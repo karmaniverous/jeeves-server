@@ -1,8 +1,7 @@
 /**
  * Markdown rendered view with collapsible TOC sidebar.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, Undo2, Redo2 } from 'lucide-react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { BlockHoverControls } from '@/components/BlockHoverControls';
 import { initEmbeddedDiagramPanzoom } from '@/components/EmbeddedDiagramPanzoom';
@@ -40,36 +39,41 @@ export function MarkdownView({
   const articleRef = useRef<HTMLElement | null>(null);
   const popupOpenRef = useRef(false);
 
+  // Preserve scroll position when content re-renders after a save
+  const [prevHtml, setPrevHtml] = useState(fileRendered.html);
+  const savedScrollRef = useRef<number | null>(null);
+  if (fileRendered.html !== prevHtml) {
+    setPrevHtml(fileRendered.html);
+    if (mainRef.current) {
+      savedScrollRef.current = mainRef.current.scrollTop;
+    }
+  }
+  useLayoutEffect(() => {
+    if (savedScrollRef.current !== null && mainRef.current) {
+      mainRef.current.scrollTop = savedScrollRef.current;
+      savedScrollRef.current = null;
+    }
+  }, [fileRendered.html, mainRef]);
+
   const isInsider = fileRendered.isInsider;
-  const { peekUndo, peekRedo, confirmUndo, confirmRedo, canUndo, canRedo } = useUndo();
-  const [undoSaving, setUndoSaving] = useState(false);
+  const { peekUndo, peekRedo, confirmUndo, confirmRedo } = useUndo();
 
   const currentContent = (fileRaw ?? fileRendered).content ?? '';
 
   const handleUndo = useCallback(async () => {
     const restored = peekUndo(reqPath);
     if (!restored) return;
-    setUndoSaving(true);
-    try {
-      await saveFile(reqPath, restored);
-      confirmUndo(reqPath, currentContent);
-      await refetch();
-    } finally {
-      setUndoSaving(false);
-    }
+    await saveFile(reqPath, restored);
+    confirmUndo(reqPath, currentContent);
+    await refetch();
   }, [reqPath, currentContent, peekUndo, confirmUndo, refetch]);
 
   const handleRedo = useCallback(async () => {
     const restored = peekRedo(reqPath);
     if (!restored) return;
-    setUndoSaving(true);
-    try {
-      await saveFile(reqPath, restored);
-      confirmRedo(reqPath, currentContent);
-      await refetch();
-    } finally {
-      setUndoSaving(false);
-    }
+    await saveFile(reqPath, restored);
+    confirmRedo(reqPath, currentContent);
+    await refetch();
   }, [reqPath, currentContent, peekRedo, confirmRedo, refetch]);
 
   // Build TOC tree and collapse state
@@ -256,30 +260,6 @@ export function MarkdownView({
               }
             }}
           />
-          {isInsider && (canUndo(reqPath) || canRedo(reqPath)) && (
-            <div className="absolute top-2 right-2 flex gap-1 z-10">
-              {canUndo(reqPath) && (
-                <button
-                  onClick={handleUndo}
-                  disabled={undoSaving}
-                  title="Undo (Ctrl+Z)"
-                  className="p-1.5 bg-popover border border-border rounded hover:bg-accent transition-colors disabled:opacity-50"
-                >
-                  {undoSaving ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : <Undo2 className="h-4 w-4 text-muted-foreground" />}
-                </button>
-              )}
-              {canRedo(reqPath) && (
-                <button
-                  onClick={handleRedo}
-                  disabled={undoSaving}
-                  title="Redo (Ctrl+Shift+Z)"
-                  className="p-1.5 bg-popover border border-border rounded hover:bg-accent transition-colors disabled:opacity-50"
-                >
-                  {undoSaving ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : <Redo2 className="h-4 w-4 text-muted-foreground" />}
-                </button>
-              )}
-            </div>
-          )}
           <BlockHoverControls
             containerRef={articleRef}
             fileRendered={fileRendered}

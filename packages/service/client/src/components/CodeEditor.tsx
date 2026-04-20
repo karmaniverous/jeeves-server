@@ -18,6 +18,10 @@ interface CodeEditorProps {
   showToolbar?: boolean;
   /** Whether to focus the editor on mount. Default: false. */
   autoFocus?: boolean;
+  /** Whether to enable soft line wrapping. Default: false. */
+  lineWrapping?: boolean;
+  /** Whether to constrain the editor to its container via absolute positioning. Default: false. */
+  contained?: boolean;
 }
 
 export function CodeEditor({
@@ -25,6 +29,8 @@ export function CodeEditor({
   saveShortcut = 'ctrl-s',
   showToolbar = true,
   autoFocus = false,
+  lineWrapping = false,
+  contained = false,
 }: CodeEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<import('@codemirror/view').EditorView | null>(null);
@@ -52,7 +58,7 @@ export function CodeEditor({
     let destroyed = false;
 
     (async () => {
-      const { EditorView, EditorState, basicSetup, keymap, oneDark } = await loadCodeMirror();
+      const { EditorView, EditorState, Prec, basicSetup, keymap, oneDark } = await loadCodeMirror();
       if (destroyed) return;
 
       const ext = fileName.split('.').pop() ?? '';
@@ -72,7 +78,7 @@ export function CodeEditor({
 
       const extensions = [
         basicSetup,
-        keymap.of(keybindings),
+        Prec.highest(keymap.of(keybindings)),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             const current = update.state.doc.toString();
@@ -80,12 +86,16 @@ export function CodeEditor({
           }
         }),
         EditorView.theme({
-          '&': { fontSize: '14px', height: '100%' },
+          '&': { fontSize: '14px', flex: '1 1 0%', minHeight: '0' },
           '.cm-scroller': { overflow: 'auto' },
           '.cm-content': { fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace" },
           '.cm-gutters': { fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace" },
         }),
       ];
+
+      if (lineWrapping) {
+        extensions.push(EditorView.lineWrapping);
+      }
 
       if (theme === 'dark') {
         extensions.push(oneDark);
@@ -121,7 +131,7 @@ export function CodeEditor({
   }, []);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className={`flex flex-col overflow-hidden ${contained ? 'flex-1 min-h-0' : 'h-full'}`}>
       {/* Toolbar */}
       {showToolbar && (
         <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/50">
@@ -154,7 +164,7 @@ export function CodeEditor({
       )}
 
       {/* Editor */}
-      <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden">
+      <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden flex flex-col">
         {loading && (
           <div className="flex items-center justify-center h-32 text-muted-foreground">
             Loading editor…

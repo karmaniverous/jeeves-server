@@ -1,6 +1,9 @@
 /**
  * FileBrowser — thin composition root that wires hooks and components together.
  */
+import { useCallback, useState } from 'react';
+import { Loader2, Undo2, Redo2 } from 'lucide-react';
+
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { DirectoryTable } from '@/components/DirectoryTable';
 import { DownloadDropdown } from '@/components/DownloadDropdown';
@@ -10,6 +13,8 @@ import { Header } from '@/components/layout/Header';
 import { LinkDropdown } from '@/components/LinkDropdown';
 import { TabBar } from '@/components/TabBar';
 import { useFileBrowser } from '@/hooks/useFileBrowser';
+import { saveFile } from '@/lib/api';
+import { useUndo } from '@/lib/useUndo';
 
 export function FileBrowser() {
   const {
@@ -27,6 +32,37 @@ export function FileBrowser() {
     handleSave, refetch,
   } = useFileBrowser();
 
+  // Undo/redo controls for header
+  const { peekUndo, peekRedo, confirmUndo, confirmRedo, canUndo, canRedo } = useUndo();
+  const [undoSaving, setUndoSaving] = useState(false);
+  const currentContent = (fileRaw ?? fileRendered)?.content ?? '';
+
+  const handleUndo = useCallback(async () => {
+    const restored = peekUndo(reqPath);
+    if (!restored) return;
+    setUndoSaving(true);
+    try {
+      await saveFile(reqPath, restored);
+      confirmUndo(reqPath, currentContent);
+      await refetch();
+    } finally {
+      setUndoSaving(false);
+    }
+  }, [reqPath, currentContent, peekUndo, confirmUndo, refetch]);
+
+  const handleRedo = useCallback(async () => {
+    const restored = peekRedo(reqPath);
+    if (!restored) return;
+    setUndoSaving(true);
+    try {
+      await saveFile(reqPath, restored);
+      confirmRedo(reqPath, currentContent);
+      await refetch();
+    } finally {
+      setUndoSaving(false);
+    }
+  }, [reqPath, currentContent, peekRedo, confirmRedo, refetch]);
+
   const showFileView = file || (loading && !!reqPath);
 
   return (
@@ -39,6 +75,7 @@ export function FileBrowser() {
           searchEnabled={searchEnabled}
           theme={theme}
           onToggleTheme={toggleTheme}
+
           keyAge={editing ? undefined : keyAge}
           onRotateKey={editing ? undefined : handleRotateKey}
           downloadDropdown={editing ? undefined :
@@ -79,6 +116,30 @@ export function FileBrowser() {
             mobileTocOpen={mobileTocOpen}
             setMobileTocOpen={setMobileTocOpen}
             loading={loading}
+            undoRedoControls={!editing && isInsider && (canUndo(reqPath) || canRedo(reqPath)) ? (
+              <div className="flex items-center gap-0.5 ml-2">
+                {canUndo(reqPath) && (
+                  <button
+                    onClick={handleUndo}
+                    disabled={undoSaving}
+                    title="Undo (Ctrl+Z)"
+                    className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                  >
+                    {undoSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Undo2 className="h-4 w-4" />}
+                  </button>
+                )}
+                {canRedo(reqPath) && (
+                  <button
+                    onClick={handleRedo}
+                    disabled={undoSaving}
+                    title="Redo (Ctrl+Shift+Z)"
+                    className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                  >
+                    {undoSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Redo2 className="h-4 w-4" />}
+                  </button>
+                )}
+              </div>
+            ) : undefined}
           />
         )}
       </div>

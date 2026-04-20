@@ -61,8 +61,9 @@ async function start() {
     // __dirname is .../dist/src — the sibling ../client is the built output.
     // Detect source mode: __dirname ends with /src but does NOT contain /dist/.
     const normalDir = __dirname.replace(/\\/g, '/');
-    const isSourceDir = normalDir.endsWith('/src') && !normalDir.includes('/dist/');
-    let clientDir = isSourceDir
+    const isSourceDir =
+      normalDir.endsWith('/src') && !normalDir.includes('/dist/');
+    const clientDir = isSourceDir
       ? path.join(__dirname, '..', 'dist', 'client')
       : path.join(__dirname, '..', 'client');
     if (fs.existsSync(clientDir)) {
