@@ -56,10 +56,12 @@ async function start() {
     await fastify.register(pathRoute);
 
     // Serve React SPA (if built)
-    // When running from source (tsx), __dirname ends with /src so ../client
-    // resolves to the source client dir (unbuilt). Detect this and use the
-    // Vite-built dist/client/ instead.
-    const isSourceDir = __dirname.replace(/\\/g, '/').endsWith('/src');
+    // When running from source (tsx), __dirname is packages/service/src — the
+    // sibling client/ dir has unbuilt source. When running from the tsc build,
+    // __dirname is .../dist/src — the sibling ../client is the built output.
+    // Detect source mode: __dirname ends with /src but does NOT contain /dist/.
+    const normalDir = __dirname.replace(/\\/g, '/');
+    const isSourceDir = normalDir.endsWith('/src') && !normalDir.includes('/dist/');
     let clientDir = isSourceDir
       ? path.join(__dirname, '..', 'dist', 'client')
       : path.join(__dirname, '..', 'client');
