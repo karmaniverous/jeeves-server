@@ -229,16 +229,21 @@ async function handleInsertBlock(
   body: InsertBlockBody,
   reply: MutationReply,
 ) {
-  const { atLine, position, content, context } = body;
+  // Validate at runtime — body comes from user input and may not match the type.
+  const { atLine, position, content, context } = body as unknown as Record<
+    string,
+    unknown
+  >;
 
   if (
     typeof atLine !== 'number' ||
-    typeof position !== 'string' ||
-    typeof content !== 'string'
+    typeof content !== 'string' ||
+    (position !== 'before' && position !== 'after')
   ) {
-    return reply
-      .code(400)
-      .send({ error: 'insert-block requires atLine, position, and content' });
+    return reply.code(400).send({
+      error:
+        'insert-block requires atLine, content, and position (before|after)',
+    });
   }
   let fileContent: string;
   try {

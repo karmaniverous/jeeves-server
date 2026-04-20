@@ -53,8 +53,17 @@ async function loadDiagram(
     container.dataset.type = type;
     container.innerHTML = normalizedSvg;
 
+    // Preserve source mapping for block editing hover controls
+    const copySourceAttrs = (target: HTMLElement) => {
+      if (placeholder.dataset.sourceStart)
+        target.setAttribute('data-source-start', placeholder.dataset.sourceStart);
+      if (placeholder.dataset.sourceEnd)
+        target.setAttribute('data-source-end', placeholder.dataset.sourceEnd);
+    };
+
     const svg = container.querySelector('svg');
     if (!svg) {
+      copySourceAttrs(container);
       placeholder.replaceWith(container);
       return;
     }
@@ -64,6 +73,7 @@ async function loadDiagram(
       wrapperExtraClass: 'embedded-diagram-panzoom',
     });
 
+    copySourceAttrs(wrapper);
     placeholder.replaceWith(wrapper);
     initPanzoom();
     cleanups.push(cleanup);

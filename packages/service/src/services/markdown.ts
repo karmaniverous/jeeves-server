@@ -182,6 +182,27 @@ export function parseMarkdown(
     return `<pre${sourceAttrs}><code${langClass}>${escaped}</code></pre>\n`;
   };
 
+  // Custom html_block renderer to preserve source mapping.
+  // markdown-it's default html_block renderer emits token.content verbatim,
+  // ignoring attrs set by the source_map core rule. Inject attributes into the
+  // first HTML tag to avoid an extra wrapper <div> that could break CSS selectors.
+  md.renderer.rules.html_block = (tokens, idx) => {
+    const token = tokens[idx];
+    const sourceStart = token.attrGet('data-source-start');
+    const sourceEnd = token.attrGet('data-source-end') || sourceStart;
+    if (!sourceStart) return token.content;
+
+    const attrs = ` data-source-start="${sourceStart}" data-source-end="${sourceEnd}"`;
+    // Inject into the first opening HTML tag (allow leading whitespace)
+    const injected = token.content.replace(
+      /^(\s*<[a-zA-Z][^\s/>]*)/,
+      `$1${attrs}`,
+    );
+    // If injection succeeded (content changed), use it; otherwise wrap as fallback
+    if (injected !== token.content) return injected;
+    return `<div${attrs}>${token.content}</div>\n`;
+  };
+
   // Custom image renderer for src rewriting
   if (options.basePath) {
     const base = options.basePath;

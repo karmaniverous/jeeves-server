@@ -154,7 +154,7 @@ export function CodeEditor({
       )}
 
       {/* Editor */}
-      <div ref={containerRef} className="flex-1 overflow-hidden">
+      <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden">
         {loading && (
           <div className="flex items-center justify-center h-32 text-muted-foreground">
             Loading editor…

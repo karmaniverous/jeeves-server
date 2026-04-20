@@ -106,7 +106,7 @@ export function BlockEditPopup({ mode, reqPath, blockLabel, fileContent, onClose
               if (e.key === 'Escape') onClose();
             }}
             rows={Math.max(2, Math.min(10, cellValue.split('\n').length))}
-            className="w-full px-3 py-2 border border-border rounded bg-background text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full px-3 py-2 border border-border rounded bg-background text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring max-h-[60vh] overflow-y-auto"
             disabled={cellSaving}
           />
           <div className="flex justify-end gap-2 mt-3">
@@ -156,7 +156,7 @@ export function BlockEditPopup({ mode, reqPath, blockLabel, fileContent, onClose
           </button>
           <span className="text-xs text-muted-foreground">Esc</span>
         </div>
-        <div className="flex-1 min-h-[200px] overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden">
           <Suspense
             fallback={
               <div className="flex items-center gap-2 text-muted-foreground text-sm py-8 justify-center">
