@@ -172,6 +172,8 @@ export function BlockEditPopup({ mode, reqPath, blockLabel, fileContent, onClose
               saveShortcut="ctrl-enter"
               showToolbar={false}
               autoFocus
+              lineWrapping
+              contained
             />
           </Suspense>
         </div>

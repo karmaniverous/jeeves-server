@@ -18,6 +18,10 @@ interface CodeEditorProps {
   showToolbar?: boolean;
   /** Whether to focus the editor on mount. Default: false. */
   autoFocus?: boolean;
+  /** Whether to enable soft line wrapping. Default: false. */
+  lineWrapping?: boolean;
+  /** Whether to constrain the editor to its container via absolute positioning. Default: false. */
+  contained?: boolean;
 }
 
 export function CodeEditor({
@@ -25,6 +29,8 @@ export function CodeEditor({
   saveShortcut = 'ctrl-s',
   showToolbar = true,
   autoFocus = false,
+  lineWrapping = false,
+  contained = false,
 }: CodeEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<import('@codemirror/view').EditorView | null>(null);
@@ -80,12 +86,16 @@ export function CodeEditor({
           }
         }),
         EditorView.theme({
-          '&': { fontSize: '14px', height: '100%' },
+          '&': { fontSize: '14px', ...(contained ? { position: 'absolute', top: '0', right: '0', bottom: '0', left: '0' } : { height: '100%' }) },
           '.cm-scroller': { overflow: 'auto' },
           '.cm-content': { fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace" },
           '.cm-gutters': { fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace" },
         }),
       ];
+
+      if (lineWrapping) {
+        extensions.push(EditorView.lineWrapping);
+      }
 
       if (theme === 'dark') {
         extensions.push(oneDark);
@@ -154,7 +164,8 @@ export function CodeEditor({
       )}
 
       {/* Editor */}
-      <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden">
+      <div ref={containerRef} className="flex-1 min-h-0 relative">
+        {/* CodeMirror mounts here with absolute positioning to get a definite height */}
         {loading && (
           <div className="flex items-center justify-center h-32 text-muted-foreground">
             Loading editor…
