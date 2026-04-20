@@ -192,11 +192,10 @@ export function parseMarkdown(
     const sourceEnd = token.attrGet('data-source-end') || sourceStart;
     if (!sourceStart) return token.content;
 
-    const end = sourceEnd ?? sourceStart;
-    const attrs = ` data-source-start="${sourceStart}" data-source-end="${end}"`;
-    // Inject into the first opening HTML tag
+    const attrs = ` data-source-start="${sourceStart}" data-source-end="${sourceEnd}"`;
+    // Inject into the first opening HTML tag (allow leading whitespace)
     const injected = token.content.replace(
-      /^(<[a-zA-Z][^\s/>]*)/,
+      /^(\s*<[a-zA-Z][^\s/>]*)/,
       `$1${attrs}`,
     );
     // If injection succeeded (content changed), use it; otherwise wrap as fallback
