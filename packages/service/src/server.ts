@@ -56,18 +56,13 @@ async function start() {
     await fastify.register(pathRoute);
 
     // Serve React SPA (if built)
-    // Under tsx (dev), __dirname is src/ so ../client hits the SOURCE client dir
-    // (with unbuilt index.html referencing /src/main.tsx). Detect this and use
-    // the Vite-built dist/client/ instead.
-    let clientDir = path.join(__dirname, '..', 'client');
-    const builtIndex = path.join(clientDir, 'index.html');
-    if (fs.existsSync(builtIndex) && fs.readFileSync(builtIndex, 'utf8').includes('/src/main.tsx')) {
-      // Source client dir — look for built client in dist/client/
-      const distClient = path.join(__dirname, '..', 'dist', 'client');
-      if (fs.existsSync(path.join(distClient, 'index.html'))) {
-        clientDir = distClient;
-      }
-    }
+    // When running from source (tsx), __dirname ends with /src so ../client
+    // resolves to the source client dir (unbuilt). Detect this and use the
+    // Vite-built dist/client/ instead.
+    const isSourceDir = __dirname.replace(/\\/g, '/').endsWith('/src');
+    let clientDir = isSourceDir
+      ? path.join(__dirname, '..', 'dist', 'client')
+      : path.join(__dirname, '..', 'client');
     if (fs.existsSync(clientDir)) {
       await fastify.register(fastifyStatic, {
         root: clientDir,

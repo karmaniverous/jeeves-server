@@ -5,8 +5,8 @@
 import { init } from '@karmaniverous/jeeves';
 
 init({
-  workspacePath: 'J:\\jeeves',
-  configRoot: 'J:\\config',
+  workspacePath: process.env.JEEVES_WORKSPACE_PATH || 'J:\\jeeves',
+  configRoot: process.env.JEEVES_CONFIG_ROOT || 'J:\\config',
 });
 
 await import('./server.js');

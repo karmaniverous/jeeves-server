@@ -4,7 +4,7 @@
 
 - Node.js v24+
 - npm 10+
-- A `jeeves-core` configuration at `J:\config` (or your configured `configRoot`)
+- A `jeeves-core` configuration directory (set via `JEEVES_CONFIG_ROOT` env var, defaults to `J:\config` on the reference install)
 
 ## Repository Structure
 
@@ -29,6 +29,15 @@ npm install
 
 ## Development
 
+### Environment Variables
+
+| Variable | Description | Default |
+|---|---|---|
+| `JEEVES_WORKSPACE_PATH` | Path to jeeves workspace | `J:\jeeves` |
+| `JEEVES_CONFIG_ROOT` | Path to jeeves-core config | `J:\config` |
+
+Set these before running the dev server if your paths differ from the defaults.
+
 ### Building
 
 From the repo root:
@@ -44,7 +53,7 @@ npm run lint         # ESLint
 The server requires `jeeves-core` to be initialized before startup. Use `dev-server.ts` (not `server.ts` directly):
 
 ```bash
-# 1. Build the client first (tsx serves built assets, not source)
+# 1. Build the client first (the dev server serves built Vite assets, not source)
 npm run build
 
 # 2. Start the dev server
@@ -55,7 +64,7 @@ The dev server runs on port **19340** (prod uses 1934).
 
 > **Why not `npm run dev`?** The workspace `dev` script runs `server.ts` directly, which requires `jeeves-core` to already be initialized. `dev-server.ts` calls `init()` first, then imports `server.ts`.
 
-> **White screen?** If you see a white screen, the server is likely serving the *source* `client/index.html` (which references `/src/main.tsx`) instead of the built `dist/client/index.html`. Make sure you ran `npm run build` first.
+> **White screen?** If you see a white screen, the client assets are probably not built. Run `npm run build` and restart.
 
 ### Client Iteration
 
@@ -69,10 +78,14 @@ There is no standalone Vite dev server. The Fastify server serves the built clie
 
 If port 19340 is already in use from a previous crashed process:
 
-```powershell
-# Find and kill the process (Windows)
+```bash
+# Windows
 netstat -aon | findstr :19340
 taskkill /PID <pid> /F
+
+# macOS / Linux
+lsof -i :19340
+kill -9 <pid>
 ```
 
 ## Dev vs Prod
