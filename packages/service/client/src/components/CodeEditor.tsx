@@ -58,7 +58,7 @@ export function CodeEditor({
     let destroyed = false;
 
     (async () => {
-      const { EditorView, EditorState, basicSetup, keymap, oneDark } = await loadCodeMirror();
+      const { EditorView, EditorState, Prec, basicSetup, keymap, oneDark } = await loadCodeMirror();
       if (destroyed) return;
 
       const ext = fileName.split('.').pop() ?? '';
@@ -78,7 +78,7 @@ export function CodeEditor({
 
       const extensions = [
         basicSetup,
-        keymap.of(keybindings),
+        Prec.highest(keymap.of(keybindings)),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             const current = update.state.doc.toString();
