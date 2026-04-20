@@ -189,8 +189,8 @@ export function parseMarkdown(
   md.renderer.rules.html_block = (tokens, idx) => {
     const token = tokens[idx];
     const sourceStart = token.attrGet('data-source-start');
-    const sourceEnd = token.attrGet('data-source-end') || sourceStart;
-    if (!sourceStart) return token.content;
+    const sourceEnd = token.attrGet('data-source-end') ?? sourceStart;
+    if (!sourceStart || !sourceEnd) return token.content;
 
     const attrs = ` data-source-start="${sourceStart}" data-source-end="${sourceEnd}"`;
     // Inject into the first opening HTML tag (allow leading whitespace)

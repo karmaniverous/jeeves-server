@@ -1,7 +1,7 @@
 /**
  * Modal popup for editing Markdown blocks or table cells inline.
  */
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 
 import { fileMutate } from '@/lib/api';
@@ -33,106 +33,51 @@ function capitalize(s: string): string {
 
 export function BlockEditPopup({ mode, reqPath, blockLabel, fileContent, onClose, onSaved, onError }: BlockEditPopupProps) {
   const { pushUndo } = useUndo();
-  const [cellValue, setCellValue] = useState(mode.kind === 'edit-cell' ? mode.content : '');
-  const [cellSaving, setCellSaving] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    if (mode.kind === 'edit-cell' && textareaRef.current) {
-      textareaRef.current.focus();
-      textareaRef.current.select();
-    }
-  }, [mode.kind]);
-
-  const handleCellSave = useCallback(async () => {
-    if (mode.kind !== 'edit-cell') return;
-    setCellSaving(true);
-    try {
-      await fileMutate(reqPath, {
-        action: 'edit-cell',
-        line: mode.line,
-        col: mode.col,
-        content: cellValue,
-      });
-      pushUndo(reqPath, fileContent);
-      onSaved();
-    } catch (e: unknown) {
-      onError((e as Error).message);
-    } finally {
-      setCellSaving(false);
-    }
-  }, [mode, reqPath, cellValue, fileContent, pushUndo, onSaved, onError]);
-
-  const handleBlockSave = useCallback(
+  /** Unified save handler for all edit modes. */
+  const handleSave = useCallback(
     async (content: string) => {
-      if (mode.kind === 'edit-block') {
-        await fileMutate(reqPath, {
-          action: 'edit-block',
-          startLine: mode.startLine,
-          endLine: mode.endLine,
-          content: content + '\n',
-        });
-      } else if (mode.kind === 'insert-block') {
-        await fileMutate(reqPath, {
-          action: 'insert-block',
-          atLine: mode.atLine,
-          position: mode.position,
-          content: content + '\n',
-          ...(mode.context ? { context: mode.context } : {}),
-        });
+      try {
+        if (mode.kind === 'edit-block') {
+          await fileMutate(reqPath, {
+            action: 'edit-block',
+            startLine: mode.startLine,
+            endLine: mode.endLine,
+            content: content + '\n',
+          });
+        } else if (mode.kind === 'insert-block') {
+          await fileMutate(reqPath, {
+            action: 'insert-block',
+            atLine: mode.atLine,
+            position: mode.position,
+            content: content + '\n',
+            ...(mode.context ? { context: mode.context } : {}),
+          });
+        } else if (mode.kind === 'edit-cell') {
+          await fileMutate(reqPath, {
+            action: 'edit-cell',
+            line: mode.line,
+            col: mode.col,
+            content,
+          });
+        }
+        pushUndo(reqPath, fileContent);
+        onSaved();
+      } catch (e: unknown) {
+        onError((e as Error).message);
       }
-      pushUndo(reqPath, fileContent);
-      onSaved();
     },
-    [mode, reqPath, fileContent, pushUndo, onSaved],
+    [mode, reqPath, fileContent, pushUndo, onSaved, onError],
   );
 
-  // Cell editing: simple input
-  if (mode.kind === 'edit-cell') {
-    return (
-      <div
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50"
-        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-        onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
-      >
-        <div className="bg-popover border border-border rounded-lg shadow-lg p-4 w-full max-w-md">
-          <div className="text-sm font-medium text-foreground mb-2">Edit Cell</div>
-          <textarea
-            ref={textareaRef}
-            value={cellValue}
-            onChange={(e) => setCellValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleCellSave(); }
-              if (e.key === 'Escape') onClose();
-            }}
-            rows={Math.max(2, Math.min(10, cellValue.split('\n').length))}
-            className="w-full px-3 py-2 border border-border rounded bg-background text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring max-h-[60vh] overflow-y-auto"
-            disabled={cellSaving}
-          />
-          <div className="flex justify-end gap-2 mt-3">
-            <button
-              onClick={onClose}
-              className="px-3 py-1 text-sm rounded border border-border text-muted-foreground hover:bg-accent transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleCellSave}
-              disabled={cellSaving}
-              className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            >
-              {cellSaving ? 'Saving…' : 'Save'}
-            </button>
-            <span className="text-xs text-muted-foreground self-center">Ctrl+Enter to save</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const initialContent = mode.content ?? '';
+  const language = mode.kind === 'edit-cell' ? 'md' : mode.language;
+  const title = mode.kind === 'edit-block'
+    ? `Edit ${capitalize(blockLabel)}`
+    : mode.kind === 'edit-cell'
+      ? 'Edit Cell'
+      : `Insert ${capitalize(mode.position)} ${capitalize(blockLabel)}`;
 
-  // Block editing: CodeEditor
-  const initialContent = mode.kind === 'edit-block' ? mode.content : (mode.content ?? '');
-  const language = mode.language;
 
   return (
     <div
@@ -142,21 +87,9 @@ export function BlockEditPopup({ mode, reqPath, blockLabel, fileContent, onClose
     >
       <div className="bg-popover border border-border rounded-lg shadow-lg w-full max-w-3xl max-h-[80vh] flex flex-col overflow-hidden">
         <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/50">
-          <span className="text-sm font-medium text-foreground">
-            {mode.kind === 'edit-block'
-              ? `Edit ${capitalize(blockLabel)}`
-              : `Insert ${capitalize(mode.position)} ${capitalize(blockLabel)}`}
-          </span>
-          <div className="flex-1" />
-          <button
-            onClick={onClose}
-            className="px-3 py-1 text-sm rounded border border-border text-muted-foreground hover:bg-accent transition-colors"
-          >
-            Cancel
-          </button>
-          <span className="text-xs text-muted-foreground">Esc</span>
+          <span className="text-sm font-medium text-foreground">{title}</span>
         </div>
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
           <Suspense
             fallback={
               <div className="flex items-center gap-2 text-muted-foreground text-sm py-8 justify-center">
@@ -167,10 +100,10 @@ export function BlockEditPopup({ mode, reqPath, blockLabel, fileContent, onClose
             <CodeEditor
               content={initialContent}
               fileName={`block.${language}`}
-              onSave={handleBlockSave}
+              onSave={handleSave}
               onCancel={onClose}
               saveShortcut="ctrl-enter"
-              showToolbar={false}
+              showToolbar
               autoFocus
               lineWrapping
               contained

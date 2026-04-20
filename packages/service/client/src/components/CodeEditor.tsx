@@ -86,7 +86,7 @@ export function CodeEditor({
           }
         }),
         EditorView.theme({
-          '&': { fontSize: '14px', ...(contained ? { position: 'absolute', top: '0', right: '0', bottom: '0', left: '0' } : { height: '100%' }) },
+          '&': { fontSize: '14px', flex: '1 1 0%', minHeight: '0' },
           '.cm-scroller': { overflow: 'auto' },
           '.cm-content': { fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace" },
           '.cm-gutters': { fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace" },
@@ -131,7 +131,7 @@ export function CodeEditor({
   }, []);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className={`flex flex-col overflow-hidden ${contained ? 'flex-1 min-h-0' : 'h-full'}`}>
       {/* Toolbar */}
       {showToolbar && (
         <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/50">
@@ -164,8 +164,7 @@ export function CodeEditor({
       )}
 
       {/* Editor */}
-      <div ref={containerRef} className="flex-1 min-h-0 relative">
-        {/* CodeMirror mounts here with absolute positioning to get a definite height */}
+      <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden flex flex-col">
         {loading && (
           <div className="flex items-center justify-center h-32 text-muted-foreground">
             Loading editor…
