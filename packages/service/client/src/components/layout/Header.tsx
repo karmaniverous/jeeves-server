@@ -19,8 +19,6 @@ interface HeaderProps {
   onRotateKey?: () => void;
   /** Download dropdown for header bar (icon button variant) */
   downloadDropdown?: React.ReactNode;
-  /** Undo/redo controls for header bar */
-  undoRedoControls?: React.ReactNode;
   /** Link dropdown for header bar (icon button variant) */
   linkControls?: React.ReactNode;
   /** Download dropdown factory for account menu (receives dismiss callback) */
@@ -37,7 +35,6 @@ export function Header({
   onToggleTheme,
   keyAge,
   onRotateKey,
-  undoRedoControls,
   downloadDropdown,
   linkControls,
   downloadMenuItem,
@@ -194,9 +191,6 @@ export function Header({
               <Search className="h-4 w-4" />
             </Button>
           )}
-
-          {/* Undo/redo: always visible when present */}
-          {undoRedoControls}
 
           {/* Link controls: visible 400px+ */}
           {linkControls && (

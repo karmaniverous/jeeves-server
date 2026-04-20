@@ -12,7 +12,6 @@ import { FileContentView } from '@/components/FileContentView';
 import { Header } from '@/components/layout/Header';
 import { LinkDropdown } from '@/components/LinkDropdown';
 import { TabBar } from '@/components/TabBar';
-import { Button } from '@/components/ui/button';
 import { useFileBrowser } from '@/hooks/useFileBrowser';
 import { saveFile } from '@/lib/api';
 import { useUndo } from '@/lib/useUndo';
@@ -76,34 +75,7 @@ export function FileBrowser() {
           searchEnabled={searchEnabled}
           theme={theme}
           onToggleTheme={toggleTheme}
-          undoRedoControls={!editing && isInsider && (canUndo(reqPath) || canRedo(reqPath)) ? (
-            <div className="flex items-center gap-0.5">
-              {canUndo(reqPath) && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-zinc-300 hover:text-white hover:bg-white/10 h-8 w-8"
-                  onClick={handleUndo}
-                  disabled={undoSaving}
-                  title="Undo (Ctrl+Z)"
-                >
-                  {undoSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Undo2 className="h-4 w-4" />}
-                </Button>
-              )}
-              {canRedo(reqPath) && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-zinc-300 hover:text-white hover:bg-white/10 h-8 w-8"
-                  onClick={handleRedo}
-                  disabled={undoSaving}
-                  title="Redo (Ctrl+Shift+Z)"
-                >
-                  {undoSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Redo2 className="h-4 w-4" />}
-                </Button>
-              )}
-            </div>
-          ) : undefined}
+
           keyAge={editing ? undefined : keyAge}
           onRotateKey={editing ? undefined : handleRotateKey}
           downloadDropdown={editing ? undefined :
@@ -144,6 +116,30 @@ export function FileBrowser() {
             mobileTocOpen={mobileTocOpen}
             setMobileTocOpen={setMobileTocOpen}
             loading={loading}
+            undoRedoControls={!editing && isInsider && (canUndo(reqPath) || canRedo(reqPath)) ? (
+              <div className="flex items-center gap-0.5 ml-2">
+                {canUndo(reqPath) && (
+                  <button
+                    onClick={handleUndo}
+                    disabled={undoSaving}
+                    title="Undo (Ctrl+Z)"
+                    className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                  >
+                    {undoSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Undo2 className="h-4 w-4" />}
+                  </button>
+                )}
+                {canRedo(reqPath) && (
+                  <button
+                    onClick={handleRedo}
+                    disabled={undoSaving}
+                    title="Redo (Ctrl+Shift+Z)"
+                    className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                  >
+                    {undoSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Redo2 className="h-4 w-4" />}
+                  </button>
+                )}
+              </div>
+            ) : undefined}
           />
         )}
       </div>

@@ -20,6 +20,8 @@ interface TabBarProps {
   mobileTocOpen: boolean;
   setMobileTocOpen: (open: boolean) => void;
   loading: boolean;
+  /** Undo/redo controls to render in the tab bar */
+  undoRedoControls?: React.ReactNode;
 }
 
 export function TabBar({
@@ -27,6 +29,7 @@ export function TabBar({
   proseWidth, toggleProseWidth,
   isInsider, editing, setEditing,
   mobileTocOpen, setMobileTocOpen, loading,
+  undoRedoControls,
 }: TabBarProps) {
   if (!file && !loading) return null;
 
@@ -82,6 +85,7 @@ export function TabBar({
           ))}
         </div>
       )}
+      {undoRedoControls}
       {isInsider && activeTab === 'raw' && file?.content != null && !editing && (
         <button
           onClick={() => setEditing(true)}
