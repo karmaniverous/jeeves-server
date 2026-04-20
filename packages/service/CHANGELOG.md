@@ -2,9 +2,40 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.8.5](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.4...3.8.5)
+#### [3.9.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.5...3.9.0)
+
+- fix: edit popup scrollbar and word wrap [`#173`](https://github.com/karmaniverous/jeeves-server/pull/173)
+- fix: dev server white screen — serve built client under tsx [`#171`](https://github.com/karmaniverous/jeeves-server/pull/171)
+- fix: constrain edit popup height to prevent overflow [`#169`](https://github.com/karmaniverous/jeeves-server/pull/169)
+- feat: markdown-it migration, inline block editing, OAuth2 flow (#162, #163) [`#165`](https://github.com/karmaniverous/jeeves-server/pull/165)
+- feat: markdown-it migration, block editing, OAuth2 flow (#162, #163) [`ceebc33`](https://github.com/karmaniverous/jeeves-server/commit/ceebc33fd5a696395571ceb69e7e89096fb39b27)
+- feat: block type label in edit popup [`8178540`](https://github.com/karmaniverous/jeeves-server/commit/8178540e64d4e93aa2bd6e2bf332475fcfda5716)
+- fix: resolve remaining React lint errors [`e7a291c`](https://github.com/karmaniverous/jeeves-server/commit/e7a291c0387c7228531bd3757a3deeb49c68c834)
+- feat: client-side undo/redo stack [`fc7fc1c`](https://github.com/karmaniverous/jeeves-server/commit/fc7fc1c3cdc6e5a76a9cba0fbb3fa0744073107e)
+- fix: unify cell/block editor, pure flex height chain, SOLID/DRY cleanup (#172) [`0318740`](https://github.com/karmaniverous/jeeves-server/commit/0318740c48471a257ae18cf25e0bd0ed61baa0f7)
+- fix: move undo/redo to header, preserve scroll on save (#174, #176) [`cd5de16`](https://github.com/karmaniverous/jeeves-server/commit/cd5de16876c0bb04f069d534205bb6f2e5757fb8)
+- fix: address Gemini review — undo correctness, reactivity, DRY, cleanup [`9ad8661`](https://github.com/karmaniverous/jeeves-server/commit/9ad8661e0c2966c71720e75ebd758130cfe9420b)
+- docs: add CONTRIBUTING.md with dev server setup guide (#170) [`9df7937`](https://github.com/karmaniverous/jeeves-server/commit/9df79371f3aacf70308d2d7546a406db4ff4c691)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.9.1 [`604c72f`](https://github.com/karmaniverous/jeeves-server/commit/604c72f48b284c4ebcd3a3a2929251820d44ddda)
+- fix: move undo/redo to document toolbar next to width buttons (#174) [`0127aa2`](https://github.com/karmaniverous/jeeves-server/commit/0127aa22a7cb422850e6359f09dc2088e10942ab)
+- fix: resolve all pre-existing eslint errors [`ef4e175`](https://github.com/karmaniverous/jeeves-server/commit/ef4e1751c705bf94da3966cba39e733084226fb2)
+- fix: preserve source mapping on diagrams and HTML blocks for block editing [`04be709`](https://github.com/karmaniverous/jeeves-server/commit/04be709b45e8a09a2e70c34e288e6311653607fa)
+- fix: address Gemini review — env vars, path-based detection, cross-platform docs (#170) [`a591a69`](https://github.com/karmaniverous/jeeves-server/commit/a591a69db42c4e0e79542444d22c5031df5b1a4b)
+- fix: resolve built client dir when running under tsx (#170) [`5c7aa9c`](https://github.com/karmaniverous/jeeves-server/commit/5c7aa9c6ff3e6e5f48620619ba61712cd799e9f3)
+- feat: cell edit popup textarea [`448ddd8`](https://github.com/karmaniverous/jeeves-server/commit/448ddd8e9ccbdf35cfbfa2d9249a3a69701d5162)
+- fix: add line wrapping and contained positioning to popup CodeEditor (#172) [`4c217a8`](https://github.com/karmaniverous/jeeves-server/commit/4c217a8376583f60861d68a50265af730f67dad3)
+- fix: exclude dist/src from source-mode detection to fix CI smoke tests (#170) [`d9e663c`](https://github.com/karmaniverous/jeeves-server/commit/d9e663c8640751e400f7e24ab1d4daf658cdda0b)
+- fix: Ctrl+Enter save keybinding — use Prec.highest to override basicSetup (#175) [`34f0731`](https://github.com/karmaniverous/jeeves-server/commit/34f0731bab41846e15a925a0bcfeabe1f6910741)
+- fix: address Gemini review — remove redundant variable, handle indented HTML blocks (#168) [`62cfcf1`](https://github.com/karmaniverous/jeeves-server/commit/62cfcf1934b8e5eca8f51e0e0df269cbee449876)
+- fix: constrain edit popup height to prevent overflow (#168) [`a726119`](https://github.com/karmaniverous/jeeves-server/commit/a726119c24ee0c221f8d75180848dc374f9f6cf7)
+- Merge pull request #166 from karmaniverous/feature/edit-ux-refinements [`c5538f0`](https://github.com/karmaniverous/jeeves-server/commit/c5538f0d3c000f1b91bad770c29fb2be63df8078)
+
+#### [service/3.8.5](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.4...service/3.8.5)
+
+> 15 April 2026
 
 - updated jeeves-core [`d21bd1f`](https://github.com/karmaniverous/jeeves-server/commit/d21bd1f74363522900200ad3a7ad53f481daf51e)
+- chore: release @karmaniverous/jeeves-server v3.8.5 [`cd69a3e`](https://github.com/karmaniverous/jeeves-server/commit/cd69a3ea87281a468793e97679f771091658aef1)
 
 #### [service/3.8.4](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.3...service/3.8.4)
 
