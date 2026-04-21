@@ -297,6 +297,7 @@ export function buildRuntimeConfig(
           >,
         }
       : null,
+    go: config.go,
     configPath,
     eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),
     stateFile,

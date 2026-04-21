@@ -17,6 +17,7 @@ import { apiRoute } from './routes/api/index.js';
 import { authRoute } from './routes/auth.js';
 import { registerConfigRoute } from './routes/config.js';
 import { eventRoute } from './routes/event.js';
+import { goRoute } from './routes/go.js';
 import { keysRoute } from './routes/keys.js';
 import { oauthRoute } from './routes/oauth.js';
 import { pathRoute } from './routes/path/index.js';
@@ -52,6 +53,7 @@ async function start() {
     await fastify.register(oauthRoute);
     await fastify.register(keysRoute);
     await fastify.register(eventRoute);
+    await fastify.register(goRoute);
     await fastify.register(apiRoute);
     await fastify.register(pathRoute);
 

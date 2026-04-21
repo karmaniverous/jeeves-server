@@ -82,6 +82,8 @@ export interface RuntimeConfig {
       }
     >;
   } | null;
+  /** Shortlink slug → redirect target map. */
+  go: Record<string, string>;
   configPath: string;
   eventsLog: string;
   stateFile: string;

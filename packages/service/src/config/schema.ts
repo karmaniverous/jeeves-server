@@ -174,6 +174,25 @@ export const jeevesConfigSchema = z
     outsiderPolicy: scopesSchema.optional(),
     /** OAuth2 credential management configuration */
     oauth: oauthSchema.optional(),
+    /**
+     * Shortlink redirects. Keys are slug identifiers (`[a-zA-Z0-9_-]+`),
+     * values are redirect targets — either relative paths (e.g. `/browse/...`)
+     * or absolute URLs (e.g. `https://example.com`).
+     *
+     * Accessible at `GET /go/:slug` without authentication.
+     */
+    go: z
+      .record(
+        z.string().regex(/^[a-zA-Z0-9_-]+$/),
+        z
+          .string()
+          .min(1)
+          .refine((v) => v.startsWith('/') || /^[a-z]+:\/\//i.test(v), {
+            message:
+              'Target must be a relative path starting with / or an absolute URL',
+          }),
+      )
+      .default({}),
   })
   .superRefine((config, ctx) => {
     // Google auth mode requires google config + sessionSecret
