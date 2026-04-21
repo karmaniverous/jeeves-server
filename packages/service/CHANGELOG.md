@@ -2,11 +2,18 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.10.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.9.0...3.10.0)
+#### [3.10.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.0...3.10.1)
+
+- fix: authenticate embedded images for all outsider shares (#183) [`#184`](https://github.com/karmaniverous/jeeves-server/pull/184)
+
+#### [service/3.10.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.9.0...service/3.10.0)
+
+> 21 April 2026
 
 - feat: /go/:slug shortlink redirects (#180) [`#182`](https://github.com/karmaniverous/jeeves-server/pull/182)
 - fix: resolve serverRoot via package.json discovery (#178) [`#179`](https://github.com/karmaniverous/jeeves-server/pull/179)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.10.0 [`26942bd`](https://github.com/karmaniverous/jeeves-server/commit/26942bd65b1044b8715c60959675ae3280f74eba)
+- chore: release @karmaniverous/jeeves-server v3.10.0 [`767f496`](https://github.com/karmaniverous/jeeves-server/commit/767f49694ad50c9979492519e31c6f195f11168a)
 
 #### [service/3.9.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.5...service/3.9.0)
 
