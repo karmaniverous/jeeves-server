@@ -2,7 +2,15 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.9.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.5...3.9.0)
+#### [3.10.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.9.0...3.10.0)
+
+- feat: /go/:slug shortlink redirects (#180) [`#182`](https://github.com/karmaniverous/jeeves-server/pull/182)
+- fix: resolve serverRoot via package.json discovery (#178) [`#179`](https://github.com/karmaniverous/jeeves-server/pull/179)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.10.0 [`26942bd`](https://github.com/karmaniverous/jeeves-server/commit/26942bd65b1044b8715c60959675ae3280f74eba)
+
+#### [service/3.9.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.8.5...service/3.9.0)
+
+> 21 April 2026
 
 - fix: edit popup scrollbar and word wrap [`#173`](https://github.com/karmaniverous/jeeves-server/pull/173)
 - fix: dev server white screen — serve built client under tsx [`#171`](https://github.com/karmaniverous/jeeves-server/pull/171)
@@ -21,6 +29,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - fix: resolve all pre-existing eslint errors [`ef4e175`](https://github.com/karmaniverous/jeeves-server/commit/ef4e1751c705bf94da3966cba39e733084226fb2)
 - fix: preserve source mapping on diagrams and HTML blocks for block editing [`04be709`](https://github.com/karmaniverous/jeeves-server/commit/04be709b45e8a09a2e70c34e288e6311653607fa)
 - fix: address Gemini review — env vars, path-based detection, cross-platform docs (#170) [`a591a69`](https://github.com/karmaniverous/jeeves-server/commit/a591a69db42c4e0e79542444d22c5031df5b1a4b)
+- chore: release @karmaniverous/jeeves-server v3.9.0 [`de4c069`](https://github.com/karmaniverous/jeeves-server/commit/de4c069307334555f8a0bbaedd471bf922cccf6e)
 - fix: resolve built client dir when running under tsx (#170) [`5c7aa9c`](https://github.com/karmaniverous/jeeves-server/commit/5c7aa9c6ff3e6e5f48620619ba61712cd799e9f3)
 - feat: cell edit popup textarea [`448ddd8`](https://github.com/karmaniverous/jeeves-server/commit/448ddd8e9ccbdf35cfbfa2d9249a3a69701d5162)
 - fix: add line wrapping and contained positioning to popup CodeEditor (#172) [`4c217a8`](https://github.com/karmaniverous/jeeves-server/commit/4c217a8376583f60861d68a50265af730f67dad3)
