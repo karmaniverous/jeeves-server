@@ -12,6 +12,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { FastifyPluginAsync, FastifyReply } from 'fastify';
+import { packageDirectorySync } from 'package-directory';
 
 import { _pathMatchesScopes } from '../../auth/keys.js';
 import { findInsider } from '../../auth/resolve.js';
@@ -27,7 +28,12 @@ import { fsPathToUrl, getRoots } from '../../util/platform.js';
 import { setInsiderKey } from '../../util/state.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const serverRoot = path.resolve(__dirname, '..', '..', '..');
+
+/**
+ * Resolve the package root via `package-directory` rather than fixed `..`
+ * hops, which break when the compiled output adds a `dist/` layer.
+ */
+const serverRoot = packageDirectorySync({ cwd: __dirname }) ?? __dirname;
 
 /** Build a deep-share browse URL from its constituent parts. */
 function buildDeepShareUrl(
