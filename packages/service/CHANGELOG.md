@@ -2,9 +2,17 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.10.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.0...3.10.1)
+#### [3.10.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.1...3.10.2)
+
+- fix: store insider seeds in config.json instead of state.json (#185) [`#187`](https://github.com/karmaniverous/jeeves-server/pull/187)
+- fix: store insider seeds in config.json instead of state.json [`#185`](https://github.com/karmaniverous/jeeves-server/pull/185)
+
+#### [service/3.10.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.0...service/3.10.1)
+
+> 21 April 2026
 
 - fix: authenticate embedded images for all outsider shares (#183) [`#184`](https://github.com/karmaniverous/jeeves-server/pull/184)
+- chore: release @karmaniverous/jeeves-server v3.10.1 [`1e3542e`](https://github.com/karmaniverous/jeeves-server/commit/1e3542ec8ddc458c61f222dffca13cd33392152b)
 
 #### [service/3.10.0](https://github.com/karmaniverous/jeeves-server/compare/service/3.9.0...service/3.10.0)
 
