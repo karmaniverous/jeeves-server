@@ -245,6 +245,7 @@ describe('buildRuntimeConfig', () => {
       auth: { modes: ['keys' as const] },
       keys: { primary: 'a'.repeat(64) },
       insiders: {},
+      go: {},
     } as JeevesConfig;
 
     const result = buildRuntimeConfig(
