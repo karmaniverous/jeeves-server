@@ -4,6 +4,13 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('@karmaniverous/jeeves', () => ({
+  getConfigRoot: () => loadConfigTestConfigRoot,
+  SERVER_PORT: 1934,
+}));
+
+let loadConfigTestConfigRoot = '';
+
 import { clearConfig, getConfig, initConfig, loadConfig } from './index.js';
 
 const VALID_CONFIG = {
@@ -28,6 +35,8 @@ describe('loadConfig', () => {
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jeeves-config-'));
+    loadConfigTestConfigRoot = path.join(tmpDir, 'config');
+    fs.mkdirSync(loadConfigTestConfigRoot, { recursive: true });
     clearConfig();
   });
 
@@ -159,6 +168,8 @@ describe('deprecated config property migration', () => {
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jeeves-config-'));
+    loadConfigTestConfigRoot = path.join(tmpDir, 'config');
+    fs.mkdirSync(loadConfigTestConfigRoot, { recursive: true });
     clearConfig();
   });
 
@@ -235,6 +246,8 @@ describe('config singleton', () => {
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jeeves-config-'));
+    loadConfigTestConfigRoot = path.join(tmpDir, 'config');
+    fs.mkdirSync(loadConfigTestConfigRoot, { recursive: true });
     clearConfig();
   });
 

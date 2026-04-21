@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   buildRuntimeConfig,
@@ -232,7 +232,27 @@ describe('deriveInternalKey', () => {
   });
 });
 
+vi.mock('@karmaniverous/jeeves', () => ({
+  getConfigRoot: () => buildRuntimeConfigTestConfigRoot,
+  SERVER_PORT: 1934,
+}));
+
+let buildRuntimeConfigTestConfigRoot = '';
+
 describe('buildRuntimeConfig', () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jeeves-brc-'));
+    buildRuntimeConfigTestConfigRoot = path.join(tmpDir, 'config');
+    fs.mkdirSync(buildRuntimeConfigTestConfigRoot, { recursive: true });
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+    vi.restoreAllMocks();
+  });
+
   it('constructs correct path fields', () => {
     const config = {
       port: 1934,
@@ -253,12 +273,48 @@ describe('buildRuntimeConfig', () => {
       '/srv/jeeves',
       '/srv/jeeves/config.json',
     );
-    expect(result.stateFile).toBe(path.join('/srv/jeeves', 'state.json'));
+
+    const expectedStateDir = path.join(tmpDir, 'state', 'jeeves-server');
+    expect(result.stateFile).toBe(path.join(expectedStateDir, 'state.json'));
+    expect(fs.existsSync(expectedStateDir)).toBe(true);
     expect(result.eventsLog).toBe(
       path.join('/srv/jeeves', 'logs', 'webhook-events.jsonl'),
     );
     expect(result.configPath).toBe('/srv/jeeves/config.json');
     expect(result.port).toBe(1934);
     expect(result.authModes).toEqual(['keys']);
+  });
+
+  it('migrates state.json from old location', () => {
+    const config = {
+      port: 1934,
+      eventTimeoutMs: 30000,
+      eventLogPurgeMs: 2592000000,
+      maxZipSizeMb: 100,
+      chromePath: '/usr/bin/chrome',
+      scopes: {},
+      events: {},
+      auth: { modes: ['keys' as const] },
+      keys: { primary: 'a'.repeat(64) },
+      insiders: {},
+      go: {},
+    } as JeevesConfig;
+
+    const oldRootDir = path.join(tmpDir, 'pkg');
+    fs.mkdirSync(oldRootDir, { recursive: true });
+    const oldState = {
+      insiderKeys: { 'a@b.com': { seed: 'old', createdAt: '2026-01-01' } },
+    };
+    fs.writeFileSync(
+      path.join(oldRootDir, 'state.json'),
+      JSON.stringify(oldState),
+    );
+
+    const result = buildRuntimeConfig(config, oldRootDir, '/cfg.json');
+
+    const newState = JSON.parse(
+      fs.readFileSync(result.stateFile, 'utf8'),
+    ) as unknown;
+    expect(newState).toEqual(oldState);
   });
 });
