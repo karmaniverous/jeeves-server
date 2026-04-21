@@ -86,7 +86,7 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
         const insiderResult = resolveInsiderKeyAuth(config, provided);
         if (insiderResult.valid && insiderResult.email) {
           // Insider key rotation
-          return rotateInsiderSeed(insiderResult.email, config);
+          return await rotateInsiderSeed(insiderResult.email, config);
         }
 
         // Machine key rotation is not supported with TS config
@@ -105,7 +105,7 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
       // Try session-based auth
       const sessionResult = resolveSessionAuth(config, request);
       if (sessionResult.valid && sessionResult.email) {
-        return rotateInsiderSeed(sessionResult.email, config);
+        return await rotateInsiderSeed(sessionResult.email, config);
       }
 
       return reply.code(401).send({ error: 'Invalid insider key' });
@@ -149,7 +149,7 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
   );
 };
 
-function rotateInsiderSeed(
+async function rotateInsiderSeed(
   email: string,
   config: ReturnType<typeof getConfig>,
 ) {
@@ -159,7 +159,7 @@ function rotateInsiderSeed(
   const rotatedSeed = crypto.randomBytes(32).toString('hex');
   const timestamp = new Date().toISOString();
 
-  setInsiderKey(insider.email, rotatedSeed, timestamp);
+  await setInsiderKey(insider.email, rotatedSeed, timestamp);
   appendEvent({
     kind: 'insider_key_rotated',
     email: insider.email,

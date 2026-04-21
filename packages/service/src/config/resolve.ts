@@ -143,12 +143,19 @@ export function resolveKeys(
 }
 
 /**
- * Resolve insider entries by merging config (identity + scopes) with state (keys).
+ * Resolve insider entries by reading seed from config first, falling back to
+ * state.json for migration from older versions.
  */
 export function resolveInsiders(
   insiders: Record<
     string,
-    { scopes?: unknown; allow?: string[]; deny?: string[] }
+    {
+      scopes?: unknown;
+      allow?: string[];
+      deny?: string[];
+      seed?: string;
+      keyCreatedAt?: string;
+    }
   >,
   namedScopes: Record<string, { allow?: string[]; deny?: string[] }>,
   stateFile: string,
@@ -170,13 +177,11 @@ export function resolveInsiders(
       allow: entry.allow,
       deny: entry.deny,
     });
+    // Prefer seed from config.json; fall back to state.json for migration
     const stateKey = serverState.insiderKeys?.[email];
-    return {
-      email,
-      seed: stateKey?.seed ?? '',
-      scopes,
-      keyCreatedAt: stateKey?.createdAt ?? null,
-    };
+    const seed = entry.seed ?? stateKey?.seed ?? '';
+    const keyCreatedAt = entry.keyCreatedAt ?? stateKey?.createdAt ?? null;
+    return { email, seed, scopes, keyCreatedAt };
   });
 }
 
@@ -239,10 +244,7 @@ export function buildRuntimeConfig(
     config.scopes as Record<string, { allow?: string[]; deny?: string[] }>,
   );
   const resolvedInsiders = resolveInsiders(
-    config.insiders as Record<
-      string,
-      { scopes?: unknown; allow?: string[]; deny?: string[] }
-    >,
+    config.insiders,
     config.scopes as Record<string, { allow?: string[]; deny?: string[] }>,
     stateFile,
   );
