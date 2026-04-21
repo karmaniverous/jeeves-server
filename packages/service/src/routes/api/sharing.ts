@@ -27,7 +27,27 @@ import { fsPathToUrl, getRoots } from '../../util/platform.js';
 import { setInsiderKey } from '../../util/state.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const serverRoot = path.resolve(__dirname, '..', '..', '..');
+
+/**
+ * Discover the package root by walking up from __dirname until we find a
+ * directory that contains package.json. A fixed number of '..' hops breaks
+ * when the code runs from the compiled `dist/` tree (one extra directory
+ * level compared to `src/`).
+ */
+function findPackageRoot(startDir: string): string {
+  let dir = startDir;
+  let parent = path.dirname(dir);
+  while (dir !== parent) {
+    if (fs.existsSync(path.join(dir, 'package.json'))) return dir;
+    dir = parent;
+    parent = path.dirname(dir);
+  }
+  // Check filesystem root as well
+  if (fs.existsSync(path.join(dir, 'package.json'))) return dir;
+  throw new Error('Could not locate package.json from ' + startDir);
+}
+
+const serverRoot = findPackageRoot(__dirname);
 
 /** Build a deep-share browse URL from its constituent parts. */
 function buildDeepShareUrl(
