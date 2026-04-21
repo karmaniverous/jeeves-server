@@ -8,7 +8,11 @@
 import * as cheerio from 'cheerio';
 import LZString from 'lz-string';
 
-import { computeDeepShareKey, type DeepShareParams } from '../util/crypto.js';
+import {
+  computeDeepShareKey,
+  computePathKey,
+  type DeepShareParams,
+} from '../util/crypto.js';
 
 /**
  * Parse a compressed stack string into an array of paths.
@@ -182,22 +186,64 @@ export function rewriteLinksForDeepShare(
   });
 
   // Rewrite <img> src for images that use /api/raw/ — add key auth
+  rewriteImageAuth($, seed, {
+    depth: maxDepth,
+    dirs,
+    stack: stackCompressed,
+    exp,
+  });
+
+  return $.html();
+}
+
+/**
+ * Rewrite `<img>` src attributes in rendered HTML to include outsider auth.
+ *
+ * Works for both deep shares (with depth/stack params) and zero-depth outsider
+ * shares (simple path keys). This is separated from link traversal so that
+ * embedded images authenticate correctly for any outsider access.
+ */
+export function rewriteImageAuth(
+  $: ReturnType<typeof cheerio.load>,
+  seed: string,
+  deepParams?: DeepShareParams,
+): void {
   $('img').each((_i, el) => {
     const $el = $(el);
     const src = $el.attr('src');
     if (!src || !src.startsWith('/api/raw/')) return;
 
-    const params: DeepShareParams = {
-      depth: maxDepth,
-      dirs,
-      stack: stackCompressed,
-      exp,
-    };
     const rawPath = '/' + src.replace('/api/raw/', '').split('?')[0];
-    const key = computeDeepShareKey(seed, rawPath, params);
-    const authSrc = `${src}${src.includes('?') ? '&' : '?'}key=${key}&d=${String(maxDepth)}&dirs=${dirs ? '1' : '0'}&s=${stackCompressed}${exp ? `&exp=${exp}` : ''}`;
+    const sep = src.includes('?') ? '&' : '?';
+
+    let authSrc: string;
+    if (deepParams) {
+      const key = computeDeepShareKey(seed, rawPath, deepParams);
+      const params = [
+        `key=${key}`,
+        `d=${String(deepParams.depth)}`,
+        `dirs=${deepParams.dirs ? '1' : '0'}`,
+        `s=${deepParams.stack}`,
+        ...(deepParams.exp ? [`exp=${deepParams.exp}`] : []),
+      ];
+      authSrc = `${src}${sep}${params.join('&')}`;
+    } else {
+      const key = computePathKey(seed, rawPath);
+      authSrc = `${src}${sep}key=${key}`;
+    }
+
     $el.attr('src', authSrc);
   });
+}
 
+/**
+ * Convenience wrapper: load HTML, authenticate embedded images with simple
+ * path keys (no deep share params), and return the updated HTML string.
+ *
+ * Route handlers can call this directly without importing cheerio.
+ */
+export function rewriteSimpleImageAuth(html: string, seed: string): string {
+  const $ = cheerio.load(html, null, false);
+  rewriteImageAuth($, seed);
   return $.html();
 }

@@ -12,7 +12,10 @@ import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
 import { csvToHtmlTable } from '../../services/csv.js';
-import { rewriteLinksForDeepShare } from '../../services/deepShareLinks.js';
+import {
+  rewriteLinksForDeepShare,
+  rewriteSimpleImageAuth,
+} from '../../services/deepShareLinks.js';
 import { getOrRenderDiagram } from '../../services/diagramCache.js';
 import {
   renderEmbeddedDiagrams,
@@ -350,20 +353,20 @@ async function renderMarkdownContent(
 
   const deepShare = request.deepShareParams;
   const seed = request.authSeed;
-  if (!isInsider && deepShare && seed) {
-    const maxDepth = parseInt(deepShare.d, 10);
-    const dirs = deepShare.dirs === '1';
-    const currentPath = `/${reqPath}`;
-    if (!isNaN(maxDepth) && maxDepth > 0) {
+  if (!isInsider && seed) {
+    if (deepShare) {
+      const maxDepth = parseInt(deepShare.d, 10);
       html = rewriteLinksForDeepShare(
         html,
         seed,
-        currentPath,
-        maxDepth,
-        dirs,
+        `/${reqPath}`,
+        isNaN(maxDepth) ? 0 : maxDepth,
+        deepShare.dirs === '1',
         deepShare.s,
         (request.query as { exp?: string }).exp,
       );
+    } else {
+      html = rewriteSimpleImageAuth(html, seed);
     }
   }
 
