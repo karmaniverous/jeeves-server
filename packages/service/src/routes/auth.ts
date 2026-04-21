@@ -107,7 +107,7 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
       insider.seed = newSeed;
 
       // Persist to state.json (mutable runtime state)
-      setInsiderKey(insider.email, newSeed, timestamp);
+      await setInsiderKey(insider.email, newSeed, timestamp);
       resetConfig(); // Reload to pick up new state
     }
 

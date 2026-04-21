@@ -63,13 +63,17 @@ export const scopesSchema = z.union([
   scopesObjectSchema,
 ]);
 
-/** Insider entry (identity + scopes only; keys are in state.json) */
+/** Insider entry (identity + scopes + optional persisted seed) */
 export const insiderEntrySchema = z.object({
   scopes: scopesSchema.optional(),
   /** Extra allow patterns merged on top of named scope references */
   allow: z.array(z.string()).optional(),
   /** Extra deny patterns merged on top of named scope references */
   deny: z.array(z.string()).optional(),
+  /** Auto-generated insider seed, persisted in config.json */
+  seed: z.string().min(1).optional(),
+  /** ISO timestamp of when the seed was created */
+  keyCreatedAt: z.string().optional(),
 });
 
 /** Key entry â€" plain string (seed, no scopes) or object with key + optional scopes */

@@ -150,7 +150,7 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // POST /api/rotate-key
-  fastify.post('/api/rotate-key', (request, reply) => {
+  fastify.post('/api/rotate-key', async (request, reply) => {
     const insiderEmail = request.insiderEmail;
     if (!insiderEmail)
       return reply.code(403).send({ error: 'Insider auth required' });
@@ -161,7 +161,7 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
 
     const newSeed = crypto.randomBytes(32).toString('hex');
     const now = new Date().toISOString();
-    setInsiderKey(insider.email, newSeed, now);
+    await setInsiderKey(insider.email, newSeed, now);
     resetConfig();
 
     return reply.send({ ok: true, keyCreatedAt: now });

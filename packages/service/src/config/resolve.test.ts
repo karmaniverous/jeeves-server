@@ -143,6 +143,45 @@ describe('resolveInsiders', () => {
     expect(result[0].seed).toBe('');
     expect(result[0].keyCreatedAt).toBe(null);
   });
+
+  it('prefers config seed over state seed', () => {
+    const stateFile = path.join(tmpDir, 'state.json');
+    fs.writeFileSync(
+      stateFile,
+      JSON.stringify({
+        insiderKeys: {
+          'test@example.com': { seed: 'stateseed', createdAt: '2026-01-01' },
+        },
+      }),
+    );
+    const result = resolveInsiders(
+      {
+        'test@example.com': {
+          seed: 'configseed',
+          keyCreatedAt: '2026-02-01',
+        },
+      },
+      {},
+      stateFile,
+    );
+    expect(result[0].seed).toBe('configseed');
+    expect(result[0].keyCreatedAt).toBe('2026-02-01');
+  });
+
+  it('falls back to state seed when config seed is absent', () => {
+    const stateFile = path.join(tmpDir, 'state.json');
+    fs.writeFileSync(
+      stateFile,
+      JSON.stringify({
+        insiderKeys: {
+          'test@example.com': { seed: 'stateseed', createdAt: '2026-01-01' },
+        },
+      }),
+    );
+    const result = resolveInsiders({ 'test@example.com': {} }, {}, stateFile);
+    expect(result[0].seed).toBe('stateseed');
+    expect(result[0].keyCreatedAt).toBe('2026-01-01');
+  });
 });
 
 describe('resolveNamedScopes', () => {
