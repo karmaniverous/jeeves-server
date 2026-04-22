@@ -2,7 +2,25 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.10.3](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.2...3.10.3)
+#### [3.10.4](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.3...3.10.4)
+
+- fix: rename shared to core, add release-it, upgrade client eslint [`#197`](https://github.com/karmaniverous/jeeves-server/pull/197)
+- fix: upgrade client eslint to v10, fix lint errors from stricter rules [`#196`](https://github.com/karmaniverous/jeeves-server/pull/196)
+- feat: create shared package, add missing plugin tools, DRY types (#194) [`#195`](https://github.com/karmaniverous/jeeves-server/pull/195)
+- feat: create shared package, add missing plugin tools, DRY types [`#194`](https://github.com/karmaniverous/jeeves-server/pull/194)
+- fix: regenerate lockfile with npm 11.11.0 for Linux CI compatibility [`05c0014`](https://github.com/karmaniverous/jeeves-server/commit/05c00141c9d1df2f2763e535dfca315a3ac29ea8)
+- chore: release @karmaniverous/jeeves-server-core v0.1.0 [`c272e0b`](https://github.com/karmaniverous/jeeves-server/commit/c272e0bf277bb0fb355427a91b591bd56d777807)
+- docs: sync all documentation with current implementation [`c536a71`](https://github.com/karmaniverous/jeeves-server/commit/c536a71991519a1609a13b6d706240df7e551a7e)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.10.1 [`65210c5`](https://github.com/karmaniverous/jeeves-server/commit/65210c513eb2dcdb701bea971bd2cd1cec4da282)
+- refactor: rename shared package to @karmaniverous/jeeves-server-core [`e438ca6`](https://github.com/karmaniverous/jeeves-server/commit/e438ca6dd15e38fdc5b91f18824094197724ec55)
+- chore: add release-it infrastructure to core package [`f53dc24`](https://github.com/karmaniverous/jeeves-server/commit/f53dc2458c8bd5c84d4c95d8e1752338db3ebd21)
+- fix: address PR review — URL encoding, rawUrl regression, lockfile sync [`d291d99`](https://github.com/karmaniverous/jeeves-server/commit/d291d999786ab356897ca9e8214104a7139bb270)
+- fix: resolve pre-existing knip failures [`737faf7`](https://github.com/karmaniverous/jeeves-server/commit/737faf7e7a2567fd6342f43c90230dcacdd1050b)
+- public package [`0ab4eec`](https://github.com/karmaniverous/jeeves-server/commit/0ab4eec97aa95a11e7d0f96ac473188ca58ef7df)
+
+#### [service/3.10.3](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.2...service/3.10.3)
+
+> 22 April 2026
 
 - fix: remove state.json and dead keyRotatedAt code (#192) [`#193`](https://github.com/karmaniverous/jeeves-server/pull/193)
 - fix: remove state.json and dead keyRotatedAt code [`#192`](https://github.com/karmaniverous/jeeves-server/pull/192)
@@ -13,6 +31,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - feat: add copy button to table cell hover controls [`#188`](https://github.com/karmaniverous/jeeves-server/pull/188)
 - fix: resolve state.json from state root instead of package directory [`#185`](https://github.com/karmaniverous/jeeves-server/pull/185)
 - updated jeeves core [`0860b2d`](https://github.com/karmaniverous/jeeves-server/commit/0860b2d9149979d38ea7b9a36c9b853a359e3c96)
+- chore: release @karmaniverous/jeeves-server v3.10.3 [`90e48bc`](https://github.com/karmaniverous/jeeves-server/commit/90e48bcd6b1bc4071914a4a1d9381285587b2462)
 - fix: guard navigator.clipboard before writeText calls [`7e2d435`](https://github.com/karmaniverous/jeeves-server/commit/7e2d435d623ce00747cf8c7f0083ab3ae55bc07b)
 - fix: use path.dirname/basename for state dir resolution [`6b2fe9f`](https://github.com/karmaniverous/jeeves-server/commit/6b2fe9fd0deeea32e416ef0a56c440189d61bc36)
 
