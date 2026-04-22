@@ -217,18 +217,8 @@ export function buildRuntimeConfig(
   rootDir: string,
   configPath: string,
 ): RuntimeConfig {
-  const resolvedKeys = resolveKeys(
-    config.keys as Record<
-      string,
-      | string
-      | { key: string; scopes?: unknown; allow?: string[]; deny?: string[] }
-    >,
-    config.scopes as Record<string, { allow?: string[]; deny?: string[] }>,
-  );
-  const resolvedInsiders = resolveInsiders(
-    config.insiders,
-    config.scopes as Record<string, { allow?: string[]; deny?: string[] }>,
-  );
+  const resolvedKeys = resolveKeys(config.keys, config.scopes);
+  const resolvedInsiders = resolveInsiders(config.insiders, config.scopes);
 
   return {
     port: config.port,
@@ -242,7 +232,7 @@ export function buildRuntimeConfig(
     plantuml: resolvePlantuml(config.plantuml, rootDir),
     outsiderPolicy:
       resolveNamedScopes(
-        config.scopes as Record<string, { allow?: string[]; deny?: string[] }>,
+        config.scopes,
         (config.outsiderPolicy as unknown) &&
           typeof config.outsiderPolicy === 'object' &&
           !Array.isArray(config.outsiderPolicy)
@@ -269,15 +259,7 @@ export function buildRuntimeConfig(
     oauth: config.oauth
       ? {
           credentialDir: config.oauth.credentialDir,
-          providers: config.oauth.providers as Record<
-            string,
-            {
-              authUrl: string;
-              tokenUrl: string;
-              pkce: boolean;
-              defaultScopes: string[];
-            }
-          >,
+          providers: config.oauth.providers,
         }
       : null,
     go: config.go,
