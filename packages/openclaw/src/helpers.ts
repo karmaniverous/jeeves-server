@@ -13,7 +13,7 @@ import {
   type PluginApi,
   resolveOptionalPluginSetting,
 } from '@karmaniverous/jeeves';
-import { computeInsiderKey } from '@karmaniverous/jeeves-server-shared';
+import { computeInsiderKey } from '@karmaniverous/jeeves-server-core';
 
 import { PLUGIN_ID } from './constants.js';
 

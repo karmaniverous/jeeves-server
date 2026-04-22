@@ -1,7 +1,6 @@
 {
-  "name": "@karmaniverous/jeeves-server-shared",
+  "name": "@karmaniverous/jeeves-server-core",
   "version": "0.0.0",
-  "private": true,
   "type": "module",
   "scripts": {
     "prebuild": "npx rimraf dist",

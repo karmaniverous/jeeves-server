@@ -12,7 +12,7 @@ import {
   type PluginApi,
   type ToolResult,
 } from '@karmaniverous/jeeves';
-import type { OAuthStartResponse } from '@karmaniverous/jeeves-server-shared';
+import type { OAuthStartResponse } from '@karmaniverous/jeeves-server-core';
 
 import { PLUGIN_ID } from './constants.js';
 import { withAuth } from './helpers.js';

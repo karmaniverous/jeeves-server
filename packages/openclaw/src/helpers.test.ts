@@ -1,5 +1,5 @@
 import type { PluginApi } from '@karmaniverous/jeeves';
-import { computeInsiderKey } from '@karmaniverous/jeeves-server-shared';
+import { computeInsiderKey } from '@karmaniverous/jeeves-server-core';
 import { describe, expect, it } from 'vitest';
 
 import { getPluginKey, withAuth } from './helpers.js';
