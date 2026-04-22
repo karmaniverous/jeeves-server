@@ -232,7 +232,9 @@ export function buildRuntimeConfig(
 ): RuntimeConfig {
   const configRoot = getConfigRoot();
   const stateDir = path.join(
-    configRoot.replace(/[\\/]config$/, path.sep + 'state'),
+    path.basename(configRoot) === 'config'
+      ? path.join(path.dirname(configRoot), 'state')
+      : configRoot,
     'jeeves-server',
   );
   fs.mkdirSync(stateDir, { recursive: true });
