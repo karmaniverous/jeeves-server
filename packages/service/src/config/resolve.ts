@@ -8,6 +8,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { getConfigRoot } from '@karmaniverous/jeeves';
+
 import { computeInsiderKey } from '../util/crypto.js';
 import type { JeevesConfig } from './schema.js';
 import { isScopeName } from './schema.js';
@@ -233,7 +235,21 @@ export function buildRuntimeConfig(
   rootDir: string,
   configPath: string,
 ): RuntimeConfig {
-  const stateFile = path.join(rootDir, 'state.json');
+  const configRoot = getConfigRoot();
+  const stateDir = path.join(
+    path.basename(configRoot) === 'config'
+      ? path.join(path.dirname(configRoot), 'state')
+      : configRoot,
+    'jeeves-server',
+  );
+  fs.mkdirSync(stateDir, { recursive: true });
+  const stateFile = path.join(stateDir, 'state.json');
+
+  // Migrate state.json from old location (package root) if needed
+  const oldStateFile = path.join(rootDir, 'state.json');
+  if (fs.existsSync(oldStateFile) && !fs.existsSync(stateFile)) {
+    fs.copyFileSync(oldStateFile, stateFile);
+  }
 
   const resolvedKeys = resolveKeys(
     config.keys as Record<
