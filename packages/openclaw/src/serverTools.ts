@@ -3,6 +3,8 @@
  *
  * Standard tools (`server_status`, `server_config`, `server_config_apply`,
  * `server_service`) come from `createPluginToolset(descriptor)` in core.
+ *
+ * @packageDocumentation
  */
 
 import {
@@ -12,152 +14,26 @@ import {
   type PluginApi,
   type ToolResult,
 } from '@karmaniverous/jeeves';
+import type { ShareResponse } from '@karmaniverous/jeeves-server-shared';
 
 import { PLUGIN_ID } from './constants.js';
 import { getPluginKey, withAuth } from './helpers.js';
 import { registerOAuthTools } from './oauthTools.js';
+import { registerExtraServerTools } from './serverToolsExtra.js';
+import {
+  type ApiToolConfig,
+  normalizePath,
+  registerApiTool,
+  rewriteUrl,
+  rewriteUrlsInData,
+  toAbsoluteUrl,
+} from './toolUtils.js';
+
+// Re-export for tests and consumers that import from serverTools.
+export { rewriteUrl, rewriteUrlsInData };
 
 /** Milliseconds in one day. */
 const MS_PER_DAY = 86_400_000;
-
-/** Normalize a browse path param: strip leading slash. */
-function normalizePath(params: Record<string, unknown>): string {
-  return String(params.path).replace(/^\//, '');
-}
-
-/** Resolve a possibly-relative API URL against the configured base URL. */
-function toAbsoluteUrl(baseUrl: string, url: string): string {
-  return new URL(url, baseUrl).toString();
-}
-
-/** Check that the character after a prefix match is a valid URL boundary. */
-function isOriginBoundary(url: string, originLength: number): boolean {
-  if (url.length <= originLength) return true;
-  const next = url[originLength];
-  return next === '/' || next === '?' || next === '#';
-}
-
-/**
- * Rewrite a single URL string: replace the baseUrl origin with publicUrl origin.
- * Only rewrites URLs that start with the baseUrl origin.
- */
-export function rewriteUrl(
-  url: string,
-  baseUrl: string,
-  publicUrl: string,
-): string {
-  const base = new URL(baseUrl);
-  const pub = new URL(publicUrl);
-  if (
-    url.startsWith(base.origin) &&
-    isOriginBoundary(url, base.origin.length)
-  ) {
-    return pub.origin + url.slice(base.origin.length);
-  }
-  return url;
-}
-
-/**
- * Deep-walk a JSON-serializable value and rewrite any string that starts
- * with the baseUrl origin to use the publicUrl origin instead.
- */
-export function rewriteUrlsInData(
-  data: unknown,
-  baseUrl: string,
-  publicUrl: string | undefined,
-): unknown {
-  if (!publicUrl) return data;
-
-  const baseOrigin = new URL(baseUrl).origin;
-  const pubOrigin = new URL(publicUrl).origin;
-
-  function walk(value: unknown): unknown {
-    if (typeof value === 'string') {
-      if (
-        value.startsWith(baseOrigin) &&
-        isOriginBoundary(value, baseOrigin.length)
-      ) {
-        return pubOrigin + value.slice(baseOrigin.length);
-      }
-      return value;
-    }
-    if (Array.isArray(value)) {
-      return value.map(walk);
-    }
-    if (value !== null && typeof value === 'object') {
-      const result: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-        result[k] = walk(v);
-      }
-      return result;
-    }
-    return value;
-  }
-
-  return walk(data);
-}
-
-/** Config for a server API tool. */
-interface ApiToolConfig {
-  name: string;
-  description: string;
-  parameters: Record<string, unknown>;
-  /** Build the request: return [endpoint, method?, body?]. */
-  buildRequest: (
-    params: Record<string, unknown>,
-  ) => [string, string?, unknown?];
-  /** Optional response transformer. */
-  transformResponse?: (
-    data: unknown,
-    baseUrl: string,
-    params: Record<string, unknown>,
-  ) => unknown;
-}
-
-/** Register a single API tool with standard try/catch + ok/connectionFail. */
-function registerApiTool(
-  api: PluginApi,
-  baseUrl: string,
-  keySeed: string | undefined,
-  publicUrl: string | undefined,
-  config: ApiToolConfig,
-): void {
-  api.registerTool(
-    {
-      name: config.name,
-      description: config.description,
-      parameters: config.parameters,
-      execute: async (
-        _id: string,
-        params: Record<string, unknown>,
-      ): Promise<ToolResult> => {
-        try {
-          const [endpoint, method, body] = config.buildRequest(params);
-          const url = withAuth(baseUrl + endpoint, keySeed);
-          const init: RequestInit = {};
-          if (method) init.method = method;
-          if (body !== undefined) {
-            init.method = method ?? 'POST';
-            init.headers = { 'Content-Type': 'application/json' };
-            init.body = JSON.stringify(body);
-          }
-          const rawData = await fetchJson(
-            url,
-            Object.keys(init).length > 0 ? init : undefined,
-          );
-          const transformed = config.transformResponse
-            ? config.transformResponse(rawData, baseUrl, params)
-            : rawData;
-          const data = rewriteUrlsInData(transformed, baseUrl, publicUrl);
-          return ok(data);
-        } catch (error) {
-          return connectionFail(error, baseUrl, PLUGIN_ID);
-        }
-      },
-    },
-    { optional: true },
-  );
-}
 
 /** Register all domain-specific server_* tools with the OpenClaw plugin API. */
 export function registerServerTools(
@@ -209,7 +85,7 @@ export function registerServerTools(
     {
       name: 'server_share',
       description:
-        'Generate a share link for a path. Returns an HMAC-signed page URL and raw URL (when applicable), with optional expiry and directory depth.',
+        'Generate a share link for a path. Returns an HMAC-signed page URL and raw URL (when applicable), with optional expiry and directory depth. When insiders are specified, uses the share-for endpoint to target specific audience members.',
       parameters: {
         type: 'object',
         properties: {
@@ -230,11 +106,35 @@ export function registerServerTools(
             description:
               'Include directory listings in deep share (default: false)',
           },
+          insiders: {
+            type: 'array',
+            items: { type: 'string' },
+            description:
+              'Email addresses of target audience insiders. When provided, uses the share-for endpoint.',
+          },
+          enforceOutsiderPolicy: {
+            type: 'boolean',
+            description:
+              'Whether to enforce outsider policy when sharing (default: true)',
+          },
         },
         required: ['path'],
       },
       buildRequest: (params) => {
         const p = normalizePath(params);
+
+        if (Array.isArray(params.insiders) && params.insiders.length > 0) {
+          const body: Record<string, unknown> = {
+            path: '/' + p,
+            insiders: params.insiders,
+          };
+          if (params.depth !== undefined) body.depth = params.depth;
+          if (params.dirs !== undefined) body.dirs = params.dirs;
+          if (params.enforceOutsiderPolicy !== undefined)
+            body.enforceOutsiderPolicy = params.enforceOutsiderPolicy;
+          return ['/api/util/share-for', 'POST', body];
+        }
+
         const body: Record<string, unknown> = { path: '/' + p };
         if (params.expiryDays !== undefined) {
           const ms = Date.now() + (params.expiryDays as number) * MS_PER_DAY;
@@ -244,17 +144,16 @@ export function registerServerTools(
         if (params.dirs !== undefined) body.dirs = params.dirs;
         return ['/api/share', 'POST', body];
       },
-      transformResponse: (data, baseUrl) => {
-        const result = data as {
-          url?: string;
-          path?: string;
-          exp?: string | null;
-          depth?: number;
-          dirs?: boolean;
-        };
+      transformResponse: (data, baseUrl, params) => {
+        // share-for responses already contain absolute URLs
+        if (Array.isArray(params.insiders) && params.insiders.length > 0) {
+          return data;
+        }
+
+        const result = data as ShareResponse;
         const pageUrl = result.url ? toAbsoluteUrl(baseUrl, result.url) : null;
         const rawUrl =
-          pageUrl && !result.dirs && (result.depth ?? 0) === 0
+          pageUrl && !result.dirs && result.depth === 0
             ? pageUrl.replace('/browse/', '/raw/')
             : null;
 
@@ -349,4 +248,5 @@ export function registerServerTools(
   );
 
   registerOAuthTools(api, baseUrl, keySeed, publicUrl);
+  registerExtraServerTools(api, baseUrl, keySeed, publicUrl);
 }

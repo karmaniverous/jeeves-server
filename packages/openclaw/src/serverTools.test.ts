@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { rewriteUrl, rewriteUrlsInData } from './serverTools.js';
+import { rewriteUrl, rewriteUrlsInData } from './toolUtils.js';
 
 describe('rewriteUrl', () => {
   const baseUrl = 'http://127.0.0.1:1934';

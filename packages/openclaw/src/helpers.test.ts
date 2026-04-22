@@ -1,23 +1,24 @@
 import type { PluginApi } from '@karmaniverous/jeeves';
+import { computeInsiderKey } from '@karmaniverous/jeeves-server-shared';
 import { describe, expect, it } from 'vitest';
 
-import { deriveKey, getPluginKey, withAuth } from './helpers.js';
+import { getPluginKey, withAuth } from './helpers.js';
 
-describe('deriveKey', () => {
+describe('computeInsiderKey', () => {
   it('produces a hex string', () => {
-    const key = deriveKey('test-seed');
+    const key = computeInsiderKey('test-seed');
     expect(key).toMatch(/^[0-9a-f]{32}$/);
   });
 
   it('is deterministic', () => {
-    expect(deriveKey('seed-a')).toBe(deriveKey('seed-a'));
+    expect(computeInsiderKey('seed-a')).toBe(computeInsiderKey('seed-a'));
   });
 
   it('varies with seed', () => {
-    expect(deriveKey('seed-a')).not.toBe(deriveKey('seed-b'));
+    expect(computeInsiderKey('seed-a')).not.toBe(computeInsiderKey('seed-b'));
   });
 
-  it('matches computeInsiderKey derivation (HMAC sha256 with "insider")', async () => {
+  it('matches HMAC sha256 with "insider" derivation', async () => {
     // This is the critical interop test: plugin must derive the same key
     // as the server's computeInsiderKey(seed) function.
     const seed = 'test-seed-12345';
@@ -27,7 +28,7 @@ describe('deriveKey', () => {
       .update('insider')
       .digest('hex')
       .substring(0, 32);
-    expect(deriveKey(seed)).toBe(expected);
+    expect(computeInsiderKey(seed)).toBe(expected);
   });
 });
 

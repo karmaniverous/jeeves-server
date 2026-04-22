@@ -9,12 +9,11 @@
  * @packageDocumentation
  */
 
-import { createHmac } from 'node:crypto';
-
 import {
   type PluginApi,
   resolveOptionalPluginSetting,
 } from '@karmaniverous/jeeves';
+import { computeInsiderKey } from '@karmaniverous/jeeves-server-shared';
 
 import { PLUGIN_ID } from './constants.js';
 
@@ -28,18 +27,10 @@ export function getPluginKey(api: PluginApi): string | undefined {
   );
 }
 
-/** Derive HMAC key from seed. */
-export function deriveKey(seed: string): string {
-  return createHmac('sha256', seed)
-    .update('insider')
-    .digest('hex')
-    .substring(0, 32);
-}
-
 /** Append auth key query param to a URL. */
 export function withAuth(url: string, keySeed: string | undefined): string {
   if (!keySeed) return url;
-  const derived = deriveKey(keySeed);
+  const derived = computeInsiderKey(keySeed);
   const sep = url.includes('?') ? '&' : '?';
   return url + sep + 'key=' + derived;
 }
