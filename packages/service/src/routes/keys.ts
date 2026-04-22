@@ -16,13 +16,13 @@ import {
 } from '../auth/resolve.js';
 import { getConfig, resetConfig } from '../config/index.js';
 import { appendEvent } from '../services/eventQueue.js';
+import { writeInsiderSeedToConfig } from '../util/configPersist.js';
 import {
   computeInsiderKey,
   computeOutsiderKeyWithExpiry,
   computePathKey,
   timingSafeEqual,
 } from '../util/crypto.js';
-import { setInsiderKey, setKeyRotationTimestamp } from '../util/state.js';
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const keysRoute: FastifyPluginAsync = async (fastify) => {
@@ -159,13 +159,12 @@ async function rotateInsiderSeed(
   const rotatedSeed = crypto.randomBytes(32).toString('hex');
   const timestamp = new Date().toISOString();
 
-  await setInsiderKey(insider.email, rotatedSeed, timestamp);
+  await writeInsiderSeedToConfig(insider.email, rotatedSeed, timestamp);
   appendEvent({
     kind: 'insider_key_rotated',
     email: insider.email,
     at: timestamp,
   });
-  setKeyRotationTimestamp(timestamp);
   resetConfig();
 
   return { ok: true, keyName: insider.email };

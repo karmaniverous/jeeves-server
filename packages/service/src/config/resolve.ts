@@ -1,14 +1,12 @@
 /**
  * Config resolution — transforms raw validated config into runtime types.
  *
- * Handles: key resolution, insider merging with state, PlantUML server defaults,
+ * Handles: key resolution, insider resolution, PlantUML server defaults,
  * scope normalization, internal key derivation.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
-
-import { getConfigRoot } from '@karmaniverous/jeeves';
 
 import { computeInsiderKey } from '../util/crypto.js';
 import type { JeevesConfig } from './schema.js';
@@ -18,7 +16,6 @@ import type {
   ResolvedInsider,
   ResolvedKey,
   RuntimeConfig,
-  ServerState,
 } from './types.js';
 
 /**
@@ -145,8 +142,7 @@ export function resolveKeys(
 }
 
 /**
- * Resolve insider entries by reading seed from config first, falling back to
- * state.json for migration from older versions.
+ * Resolve insider entries from config seeds.
  */
 export function resolveInsiders(
   insiders: Record<
@@ -160,29 +156,15 @@ export function resolveInsiders(
     }
   >,
   namedScopes: Record<string, { allow?: string[]; deny?: string[] }>,
-  stateFile: string,
 ): ResolvedInsider[] {
-  let serverState: ServerState = {};
-  try {
-    if (fs.existsSync(stateFile)) {
-      serverState = JSON.parse(
-        fs.readFileSync(stateFile, 'utf8'),
-      ) as ServerState;
-    }
-  } catch {
-    /* empty state */
-  }
-
   return Object.entries(insiders).map(([rawEmail, entry]) => {
     const email = rawEmail.toLowerCase();
     const scopes = resolveNamedScopes(namedScopes, entry.scopes, {
       allow: entry.allow,
       deny: entry.deny,
     });
-    // Prefer seed from config.json; fall back to state.json for migration
-    const stateKey = serverState.insiderKeys?.[email];
-    const seed = entry.seed ?? stateKey?.seed ?? '';
-    const keyCreatedAt = entry.keyCreatedAt ?? stateKey?.createdAt ?? null;
+    const seed = entry.seed ?? '';
+    const keyCreatedAt = entry.keyCreatedAt ?? null;
     return { email, seed, scopes, keyCreatedAt };
   });
 }
@@ -235,22 +217,6 @@ export function buildRuntimeConfig(
   rootDir: string,
   configPath: string,
 ): RuntimeConfig {
-  const configRoot = getConfigRoot();
-  const stateDir = path.join(
-    path.basename(configRoot) === 'config'
-      ? path.join(path.dirname(configRoot), 'state')
-      : configRoot,
-    'jeeves-server',
-  );
-  fs.mkdirSync(stateDir, { recursive: true });
-  const stateFile = path.join(stateDir, 'state.json');
-
-  // Migrate state.json from old location (package root) if needed
-  const oldStateFile = path.join(rootDir, 'state.json');
-  if (fs.existsSync(oldStateFile) && !fs.existsSync(stateFile)) {
-    fs.copyFileSync(oldStateFile, stateFile);
-  }
-
   const resolvedKeys = resolveKeys(
     config.keys as Record<
       string,
@@ -262,7 +228,6 @@ export function buildRuntimeConfig(
   const resolvedInsiders = resolveInsiders(
     config.insiders,
     config.scopes as Record<string, { allow?: string[]; deny?: string[] }>,
-    stateFile,
   );
 
   return {
@@ -318,7 +283,6 @@ export function buildRuntimeConfig(
     go: config.go,
     configPath,
     eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),
-    stateFile,
     eventQueuePath: path.join(rootDir, 'logs', 'event-queue.jsonl'),
     eventQueueCursorPath: path.join(rootDir, 'logs', 'event-queue.cursor'),
     eventLogPath: path.join(rootDir, 'logs', 'event-log.jsonl'),

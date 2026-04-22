@@ -13,7 +13,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { buildAuthUrl, exchangeCode, getUserInfo } from '../auth/google.js';
 import { COOKIE_NAME, createSessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
-import { setInsiderKey } from '../util/state.js';
+import { writeInsiderSeedToConfig } from '../util/configPersist.js';
 
 /**
  * Build the redirect URI from the request.
@@ -106,8 +106,7 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
       const timestamp = new Date().toISOString();
       insider.seed = newSeed;
 
-      // Persist to state.json (mutable runtime state)
-      await setInsiderKey(insider.email, newSeed, timestamp);
+      await writeInsiderSeedToConfig(insider.email, newSeed, timestamp);
       resetConfig(); // Reload to pick up new state
     }
 
