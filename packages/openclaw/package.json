@@ -116,6 +116,7 @@
   },
   "dependencies": {
     "@karmaniverous/jeeves": "^0.5.8",
+    "@karmaniverous/jeeves-server-shared": "*",
     "zod": "^4.3.6"
   }
 }

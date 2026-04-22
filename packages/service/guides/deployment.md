@@ -172,13 +172,12 @@ jeeves-server service restart    # or: nssm restart JeevesServer / systemctl res
 
 The server needs:
 - **Read access** to any files you want to serve
-- **Write access** to its working directory for `state.json` and logs
+- **Write access** to the config directory (for persisting auto-generated seeds to `config.json`) and the working directory for logs
 - **Execute access** to Chrome/Chromium for PDF export
 - **Execute access** to event handler commands
 
 ## Backups
 
 Key files to back up:
-- Your config file (`jeeves-server.config.json`) — contains secrets
-- `state.json` — insider keys and rotation state
+- Your config file (`config.json`) — contains secrets, insider seeds, and key seeds
 - Event queue files — `logs/event-queue.jsonl` + `logs/event-queue.cursor`

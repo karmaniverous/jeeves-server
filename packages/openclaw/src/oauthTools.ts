@@ -12,6 +12,7 @@ import {
   type PluginApi,
   type ToolResult,
 } from '@karmaniverous/jeeves';
+import type { OAuthStartResponse } from '@karmaniverous/jeeves-server-shared';
 
 import { PLUGIN_ID } from './constants.js';
 import { withAuth } from './helpers.js';
@@ -77,7 +78,7 @@ export function registerOAuthTools(
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
-          })) as { authUrl?: string };
+          })) as OAuthStartResponse;
 
           const authUrl = data.authUrl;
           if (!authUrl) {

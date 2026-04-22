@@ -5,10 +5,13 @@ OpenClaw plugin for Jeeves Server. Integrates with `@karmaniverous/jeeves` core 
 Provides agents with tools for:
 
 - Server status and capabilities
-- File/directory metadata browsing
-- Share link generation
-- Export (PDF/DOCX/SVG/PNG/ZIP)
+- File/directory browsing, metadata, and drive listing
+- File writing and structured mutation
+- Share link generation (with insider/outsider audience support)
+- Export (PDF/DOCX/SVG/PNG/ZIP) and cache management
+- Key rotation and auth status
 - Event gateway visibility
+- OAuth2 credential management (authorize, status, token retrieval)
 
 ## Install
 
