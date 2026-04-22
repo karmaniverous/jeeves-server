@@ -4,6 +4,7 @@
       "entry": [
         "src/cli/index.ts",
         "src/cli/start-server.ts",
+        "src/dev-server.ts",
         "test-docs/**/*.js"
       ],
       "includeEntryExports": true

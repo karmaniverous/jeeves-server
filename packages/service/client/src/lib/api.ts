@@ -252,14 +252,6 @@ export async function fileMutate(
   });
 }
 
-export async function toggleCheckbox(
-  filePath: string,
-  index: number,
-  checked: boolean,
-): Promise<{ ok: boolean }> {
-  return fileMutate(filePath, { action: 'toggle-checkbox', index, checked });
-}
-
 export async function clearCache(path: string): Promise<{ cleared: { exports: number; diagrams: number } }> {
   return fetchJson<{ cleared: { exports: number; diagrams: number } }>(
     `${API_BASE}/export-cache/${encodeBrowsePath(path)}`,
