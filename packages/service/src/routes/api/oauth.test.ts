@@ -107,7 +107,7 @@ describe('OAuth API routes', () => {
       mockConfig = { oauth: null };
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/start'].handler(
+      await routes['/api/oauth/start'].handler(
         { body: {}, accessMode: 'insider', headers: {} },
         reply,
       );
@@ -117,7 +117,7 @@ describe('OAuth API routes', () => {
     it('returns 401 for non-insider', async () => {
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/start'].handler(
+      await routes['/api/oauth/start'].handler(
         {
           body: {
             provider: 'x',
@@ -136,7 +136,7 @@ describe('OAuth API routes', () => {
     it('returns 400 for missing required fields', async () => {
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/start'].handler(
+      await routes['/api/oauth/start'].handler(
         { body: { provider: 'test' }, accessMode: 'insider', headers: {} },
         reply,
       );
@@ -146,7 +146,7 @@ describe('OAuth API routes', () => {
     it('returns 400 when authUrl/tokenUrl not resolvable', async () => {
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/start'].handler(
+      await routes['/api/oauth/start'].handler(
         {
           body: {
             provider: 'unknown',
@@ -168,7 +168,7 @@ describe('OAuth API routes', () => {
     it('starts flow with named provider', async () => {
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/start'].handler(
+      await routes['/api/oauth/start'].handler(
         {
           body: {
             provider: 'github',
@@ -202,7 +202,7 @@ describe('OAuth API routes', () => {
     it('starts flow with ad-hoc provider', async () => {
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/start'].handler(
+      await routes['/api/oauth/start'].handler(
         {
           body: {
             provider: 'custom',
@@ -227,7 +227,7 @@ describe('OAuth API routes', () => {
     it('includes PKCE params when pkce is true', async () => {
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/start'].handler(
+      await routes['/api/oauth/start'].handler(
         {
           body: {
             provider: 'custom',
@@ -256,7 +256,7 @@ describe('OAuth API routes', () => {
     it('uses explicit origin for redirect_uri', async () => {
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/start'].handler(
+      await routes['/api/oauth/start'].handler(
         {
           body: {
             provider: 'github',
@@ -284,7 +284,7 @@ describe('OAuth API routes', () => {
       mockConfig = { oauth: null };
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/status'].handler(
+      await routes['/api/oauth/status'].handler(
         { query: { provider: 'x', account: 'y' }, accessMode: 'insider' },
         reply,
       );
@@ -294,7 +294,7 @@ describe('OAuth API routes', () => {
     it('returns exists: false for missing credential', async () => {
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/status'].handler(
+      await routes['/api/oauth/status'].handler(
         {
           query: { provider: 'github', account: 'nobody' },
           accessMode: 'insider',
@@ -320,7 +320,7 @@ describe('OAuth API routes', () => {
 
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/status'].handler(
+      await routes['/api/oauth/status'].handler(
         { query: { provider: 'github', account: 'me' }, accessMode: 'insider' },
         reply,
       );
@@ -343,7 +343,7 @@ describe('OAuth API routes', () => {
 
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/status'].handler(
+      await routes['/api/oauth/status'].handler(
         { query: { provider: 'github', account: 'me' }, accessMode: 'insider' },
         reply,
       );
@@ -365,7 +365,7 @@ describe('OAuth API routes', () => {
 
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/status'].handler(
+      await routes['/api/oauth/status'].handler(
         { query: { provider: 'github', account: 'me' }, accessMode: 'insider' },
         reply,
       );
@@ -382,7 +382,7 @@ describe('OAuth API routes', () => {
       mockConfig = { oauth: null };
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/token'].handler(
+      await routes['/api/oauth/token'].handler(
         { query: { provider: 'x', account: 'y' }, accessMode: 'insider' },
         reply,
       );
@@ -392,7 +392,7 @@ describe('OAuth API routes', () => {
     it('returns 404 for missing credential file', async () => {
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/token'].handler(
+      await routes['/api/oauth/token'].handler(
         {
           query: { provider: 'github', account: 'nobody' },
           accessMode: 'insider',
@@ -419,7 +419,7 @@ describe('OAuth API routes', () => {
 
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/token'].handler(
+      await routes['/api/oauth/token'].handler(
         { query: { provider: 'github', account: 'me' }, accessMode: 'insider' },
         reply,
       );
@@ -446,7 +446,7 @@ describe('OAuth API routes', () => {
 
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/token'].handler(
+      await routes['/api/oauth/token'].handler(
         { query: { provider: 'github', account: 'me' }, accessMode: 'insider' },
         reply,
       );
@@ -472,7 +472,7 @@ describe('OAuth API routes', () => {
 
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/token'].handler(
+      await routes['/api/oauth/token'].handler(
         { query: { provider: 'github', account: 'me' }, accessMode: 'insider' },
         reply,
       );
@@ -512,7 +512,7 @@ describe('OAuth API routes', () => {
 
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/token'].handler(
+      await routes['/api/oauth/token'].handler(
         { query: { provider: 'github', account: 'me' }, accessMode: 'insider' },
         reply,
       );
@@ -569,7 +569,7 @@ describe('OAuth API routes', () => {
 
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/token'].handler(
+      await routes['/api/oauth/token'].handler(
         { query: { provider: 'github', account: 'me' }, accessMode: 'insider' },
         reply,
       );
@@ -618,7 +618,7 @@ describe('OAuth API routes', () => {
 
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/token'].handler(
+      await routes['/api/oauth/token'].handler(
         { query: { provider: 'github', account: 'me' }, accessMode: 'insider' },
         reply,
       );
@@ -656,7 +656,7 @@ describe('OAuth API routes', () => {
 
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
-      await routes['/oauth/token'].handler(
+      await routes['/api/oauth/token'].handler(
         { query: { provider: 'github', account: 'me' }, accessMode: 'insider' },
         reply,
       );
