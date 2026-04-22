@@ -44,7 +44,6 @@ function makeConfig(overrides: Partial<RuntimeConfig> = {}): RuntimeConfig {
     go: {},
     configPath: '/etc/jeeves-server.config.json',
     eventsLog: '/var/log/events.log',
-    stateFile: '/var/state.json',
     eventQueuePath: '/var/queue.jsonl',
     eventQueueCursorPath: '/var/cursor.json',
     eventLogPath: '/var/event-log.jsonl',

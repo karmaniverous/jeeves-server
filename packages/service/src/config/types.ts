@@ -86,27 +86,9 @@ export interface RuntimeConfig {
   go: Record<string, string>;
   configPath: string;
   eventsLog: string;
-  stateFile: string;
   eventQueuePath: string;
   eventQueueCursorPath: string;
   eventLogPath: string;
-}
-
-/**
- * Insider key state (auto-generated, persisted in state.json)
- */
-export interface InsiderKeyState {
-  seed: string;
-  createdAt: string;
-}
-
-/**
- * State file structure (mutable runtime state, separate from config)
- */
-export interface ServerState {
-  keyRotatedAt?: string;
-  /** Auto-generated insider keys, keyed by email */
-  insiderKeys?: Record<string, InsiderKeyState>;
 }
 
 /**

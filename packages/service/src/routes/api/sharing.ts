@@ -18,6 +18,7 @@ import { _pathMatchesScopes } from '../../auth/keys.js';
 import { findInsider } from '../../auth/resolve.js';
 import { getConfig, resetConfig } from '../../config/index.js';
 import { encodeStack } from '../../services/deepShareLinks.js';
+import { writeInsiderSeedToConfig } from '../../util/configPersist.js';
 import {
   computeDeepShareKey,
   computeOutsiderKeyWithExpiry,
@@ -25,7 +26,6 @@ import {
   type DeepShareParams,
 } from '../../util/crypto.js';
 import { fsPathToUrl, getRoots } from '../../util/platform.js';
-import { setInsiderKey } from '../../util/state.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -161,7 +161,7 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
 
     const newSeed = crypto.randomBytes(32).toString('hex');
     const now = new Date().toISOString();
-    await setInsiderKey(insider.email, newSeed, now);
+    await writeInsiderSeedToConfig(insider.email, newSeed, now);
     resetConfig();
 
     return reply.send({ ok: true, keyCreatedAt: now });
