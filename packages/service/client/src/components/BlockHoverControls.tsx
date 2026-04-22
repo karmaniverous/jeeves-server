@@ -228,10 +228,17 @@ export function BlockHoverControls({
 
   const handleCopy = useCallback(
     (el: Element) => {
+      const elTag = el.tagName.toLowerCase();
+      if (elTag === 'td' || elTag === 'th') {
+        const text = el.textContent?.trim() ?? '';
+        if (text && navigator.clipboard)
+          navigator.clipboard.writeText(text).catch(() => {});
+        return;
+      }
       const { startLine, endLine } = getSourceRange(el);
       if (!startLine || !endLine) return;
       const text = extractSourceLines(rawContent, startLine, endLine);
-      navigator.clipboard.writeText(text).catch(() => {});
+      if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
     },
     [rawContent, getSourceRange],
   );
@@ -434,18 +441,17 @@ export function BlockHoverControls({
               <Pencil className="h-3 w-3 text-foreground" />
             </button>
 
-            {/* Cell-only: just EDIT */}
+            {/* COPY (shown for all elements including cells) */}
+            <button
+              onClick={() => handleCopy(hoveredEl)}
+              className="p-0.5 bg-popover border border-border rounded hover:bg-accent transition-colors"
+              title="Copy"
+            >
+              <Copy className="h-3 w-3 text-foreground" />
+            </button>
+
             {!isCell && (
               <>
-                {/* COPY */}
-                <button
-                  onClick={() => handleCopy(hoveredEl)}
-                  className="p-0.5 bg-popover border border-border rounded hover:bg-accent transition-colors"
-                  title="Copy"
-                >
-                  <Copy className="h-3 w-3 text-foreground" />
-                </button>
-
                 {/* INSERT ABOVE */}
                 <button
                   onClick={() => handleInsert(hoveredEl, 'before')}
