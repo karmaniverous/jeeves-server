@@ -2,10 +2,27 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.10.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.1...3.10.2)
+#### [3.10.3](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.2...3.10.3)
+
+- fix: remove state.json and dead keyRotatedAt code (#192) [`#193`](https://github.com/karmaniverous/jeeves-server/pull/193)
+- fix: remove state.json and dead keyRotatedAt code [`#192`](https://github.com/karmaniverous/jeeves-server/pull/192)
+- fix: resolve state.json from state root instead of package directory (#185) [`#186`](https://github.com/karmaniverous/jeeves-server/pull/186)
+- feat: add copy button to table cell hover controls (#188) [`#189`](https://github.com/karmaniverous/jeeves-server/pull/189)
+- fix: add /api prefix to OAuth API routes (#190) [`#191`](https://github.com/karmaniverous/jeeves-server/pull/191)
+- fix: add /api prefix to OAuth API routes [`#190`](https://github.com/karmaniverous/jeeves-server/pull/190)
+- feat: add copy button to table cell hover controls [`#188`](https://github.com/karmaniverous/jeeves-server/pull/188)
+- fix: resolve state.json from state root instead of package directory [`#185`](https://github.com/karmaniverous/jeeves-server/pull/185)
+- updated jeeves core [`0860b2d`](https://github.com/karmaniverous/jeeves-server/commit/0860b2d9149979d38ea7b9a36c9b853a359e3c96)
+- fix: guard navigator.clipboard before writeText calls [`7e2d435`](https://github.com/karmaniverous/jeeves-server/commit/7e2d435d623ce00747cf8c7f0083ab3ae55bc07b)
+- fix: use path.dirname/basename for state dir resolution [`6b2fe9f`](https://github.com/karmaniverous/jeeves-server/commit/6b2fe9fd0deeea32e416ef0a56c440189d61bc36)
+
+#### [service/3.10.2](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.1...service/3.10.2)
+
+> 21 April 2026
 
 - fix: store insider seeds in config.json instead of state.json (#185) [`#187`](https://github.com/karmaniverous/jeeves-server/pull/187)
 - fix: store insider seeds in config.json instead of state.json [`#185`](https://github.com/karmaniverous/jeeves-server/pull/185)
+- chore: release @karmaniverous/jeeves-server v3.10.2 [`3cf0e72`](https://github.com/karmaniverous/jeeves-server/commit/3cf0e722d35c9c5c80d9805996290ecfa9c74fdd)
 
 #### [service/3.10.1](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.0...service/3.10.1)
 
