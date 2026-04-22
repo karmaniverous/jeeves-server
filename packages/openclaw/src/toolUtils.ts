@@ -147,6 +147,11 @@ export function registerApiTool(
   );
 }
 
+/** Encode path segments for use in a URL. */
+export function encodePath(p: string): string {
+  return p.split('/').map(encodeURIComponent).join('/');
+}
+
 /** Normalize a browse path param: strip leading slash. */
 export function normalizePath(params: Record<string, unknown>): string {
   return String(params.path).replace(/^\//, '');

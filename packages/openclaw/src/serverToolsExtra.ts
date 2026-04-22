@@ -19,6 +19,7 @@ import type { FileMutationAction } from '@karmaniverous/jeeves-server-shared';
 import { PLUGIN_ID } from './constants.js';
 import {
   type ApiToolConfig,
+  encodePath,
   normalizePath,
   registerApiTool,
   rewriteUrlsInData,
@@ -71,7 +72,11 @@ export function registerExtraServerTools(
       },
       buildRequest: (params) => {
         const p = normalizePath(params);
-        return ['/api/file/' + p, 'PUT', { content: params.content }];
+        return [
+          '/api/file/' + encodePath(p),
+          'PUT',
+          { content: params.content },
+        ];
       },
     },
     {
@@ -154,7 +159,7 @@ export function registerExtraServerTools(
           if (params[key] !== undefined) body[key] = params[key];
         }
 
-        return ['/api/file/' + p, 'POST', body];
+        return ['/api/file/' + encodePath(p), 'POST', body];
       },
     },
     {
@@ -172,7 +177,7 @@ export function registerExtraServerTools(
       },
       buildRequest: (params) => {
         const p = normalizePath(params);
-        return ['/api/export-cache/' + p, 'DELETE'];
+        return ['/api/export-cache/' + encodePath(p), 'DELETE'];
       },
     },
     {

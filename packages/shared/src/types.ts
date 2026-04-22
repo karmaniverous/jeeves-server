@@ -17,8 +17,8 @@ export interface ShareResponse {
   url: string;
   path: string;
   exp: string | null;
-  depth: number;
-  dirs: boolean;
+  depth?: number;
+  dirs?: boolean;
 }
 
 /** POST /api/util/share-for request body. */

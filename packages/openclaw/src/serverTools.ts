@@ -153,7 +153,7 @@ export function registerServerTools(
         const result = data as ShareResponse;
         const pageUrl = result.url ? toAbsoluteUrl(baseUrl, result.url) : null;
         const rawUrl =
-          pageUrl && !result.dirs && result.depth === 0
+          pageUrl && !result.dirs && (result.depth ?? 0) === 0
             ? pageUrl.replace('/browse/', '/raw/')
             : null;
 
