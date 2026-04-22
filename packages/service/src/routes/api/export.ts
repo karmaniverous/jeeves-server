@@ -16,7 +16,7 @@ import type { FastifyPluginAsync } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
 import { appendEvent } from '../../services/eventQueue.js';
-import { type ExportFormat, exportPage } from '../../services/export.js';
+import { exportPage } from '../../services/export.js';
 import {
   cacheExport,
   clearDiagramCacheForFile,
@@ -133,7 +133,7 @@ export const exportRoutes: FastifyPluginAsync = async (fastify) => {
         const buffer = await exportPage({
           url: exportUrl,
           fileName,
-          format: format as ExportFormat,
+          format: format,
         });
 
         // Cache the result

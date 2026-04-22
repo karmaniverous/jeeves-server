@@ -108,7 +108,7 @@ describe('diagramExportRoutes', () => {
         routePath: string,
         handler: (req: unknown, reply: unknown) => Promise<void>,
       ) => {
-        routes[routePath] = handler as (typeof routes)[string];
+        routes[routePath] = handler;
       },
     };
 

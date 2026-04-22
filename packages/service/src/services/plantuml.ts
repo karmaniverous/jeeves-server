@@ -45,19 +45,13 @@ function renderViaJar(filePath: string, format: string): Buffer | null {
     if (fs.existsSync(outFile)) {
       console.warn('[PlantUML jar] render completed with warnings');
       if (err && typeof err === 'object' && 'stderr' in err) {
-        console.warn(
-          '[PlantUML jar] stderr:',
-          String((err as { stderr: unknown }).stderr),
-        );
+        console.warn('[PlantUML jar] stderr:', String(err.stderr));
       }
       return fs.readFileSync(outFile);
     }
     console.error('[PlantUML jar] render failed:', (err as Error).message);
     if (err && typeof err === 'object' && 'stderr' in err) {
-      console.error(
-        '[PlantUML jar] stderr:',
-        String((err as { stderr: unknown }).stderr),
-      );
+      console.error('[PlantUML jar] stderr:', String(err.stderr));
     }
     return null;
   } finally {
