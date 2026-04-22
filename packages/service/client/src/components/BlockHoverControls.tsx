@@ -231,13 +231,14 @@ export function BlockHoverControls({
       const elTag = el.tagName.toLowerCase();
       if (elTag === 'td' || elTag === 'th') {
         const text = el.textContent?.trim() ?? '';
-        if (text) navigator.clipboard.writeText(text).catch(() => {});
+        if (text && navigator.clipboard)
+          navigator.clipboard.writeText(text).catch(() => {});
         return;
       }
       const { startLine, endLine } = getSourceRange(el);
       if (!startLine || !endLine) return;
       const text = extractSourceLines(rawContent, startLine, endLine);
-      navigator.clipboard.writeText(text).catch(() => {});
+      if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
     },
     [rawContent, getSourceRange],
   );
