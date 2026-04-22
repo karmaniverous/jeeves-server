@@ -75,13 +75,36 @@ function insiderKey(seed) {
 |--------|------|-------------|
 | `GET` | `/insider-key` | Get derived insider key (requires `X-API-Key` header with seed) |
 | `GET` | `/key?path=<path>` | Compute outsider key for a path |
-| `POST` | `/rotate-key` | Rotate an insider's key (invalidates all their outsider links) |
+| `POST` | `/api/share` | Generate share link (path, expiryDays, depth, dirs) |
+| `POST` | `/api/util/share-for` | Generate share link for a specific audience (insiders, enforceOutsiderPolicy) |
+| `POST` | `/api/rotate-key` | Rotate an insider's key (invalidates all their outsider links) |
+
+### File Mutation (insider auth required)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `PUT` | `/api/file/<path>` | Overwrite file content |
+| `POST` | `/api/file/<path>` | Apply structured mutations to `.md` files (edit-block, delete-block, insert-block, edit-cell, toggle-checkbox) |
+
+### Export Cache
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `DELETE` | `/api/export-cache/<path>` | Clear export and diagram caches for a path |
 
 ### Authentication
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/auth/status` | Check authentication status and mode |
+| `GET` | `/api/auth/status` | Check authentication status and mode (no auth required) |
+
+### OAuth2 Credential Management (insider auth required)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/oauth/start` | Initiate OAuth2 authorization flow (returns auth URL) |
+| `GET` | `/api/oauth/status?provider=&account=` | Check credential existence and expiry |
+| `GET` | `/api/oauth/token?provider=&account=` | Retrieve valid access token (auto-refreshes if expired) |
 
 ### Event Gateway
 
@@ -140,7 +163,7 @@ See the [Sharing](sharing.md) guide for details on expiring links and directory 
 
 If you're an AI assistant working with Jeeves Server:
 
-1. **Use the OpenClaw plugin** if available — it provides `server_status`, `server_browse`, `server_link_info`, `server_share`, `server_export`, and `server_event_status` tools
+1. **Use the OpenClaw plugin** if available — it provides tools for browsing (`server_browse`, `server_link_info`, `server_drives`), sharing (`server_share`), export (`server_export`, `server_export_cache_clear`), file mutation (`server_file_write`, `server_file_mutate`), auth (`server_auth_status`, `server_rotate_key`), events (`server_event_status`), and OAuth credential management (`oauth_authorize`, `oauth_status`, `oauth_token`)
 2. **Convert Windows paths** to URL paths using the formula above
 3. **Use `/api/status`** for health checks (no auth required)
 4. **Prefer `/browse/` routes** for links you share with humans (renders the SPA)

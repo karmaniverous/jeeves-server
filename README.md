@@ -6,12 +6,13 @@ A self-hosted file browser, document viewer, and webhook gateway. Author documen
 
 ## Packages
 
-This is a monorepo with two published packages:
+This is a monorepo with two published packages and one internal shared package:
 
 | Package | Description |
 |---------|-------------|
 | [`@karmaniverous/jeeves-server`](packages/service/) | The server — file browser, document renderer, export engine, event gateway |
 | [`@karmaniverous/jeeves-server-openclaw`](packages/openclaw/) | OpenClaw plugin — gives AI agents tools for browsing, sharing, and exporting |
+| [`@karmaniverous/jeeves-server-shared`](packages/shared/) | Shared crypto utilities and API types consumed by service and plugin |
 
 ## Quick Start
 

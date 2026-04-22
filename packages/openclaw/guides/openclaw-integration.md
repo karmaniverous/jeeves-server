@@ -67,17 +67,33 @@ In `openclaw.json`, configure the plugin entry:
 
 ## Tools
 
+### Server Tools
+
 | Tool | Purpose |
 |------|---------|
 | `server_status` | Server health: version, uptime, port, Chrome availability, export formats, auth info |
 | `server_browse` | Get file/directory metadata and listings |
 | `server_link_info` | Query available link types for a path |
-| `server_share` | Generate share links with optional expiry and depth |
+| `server_drives` | List available root drives/labels |
+| `server_share` | Generate share links with optional expiry, depth, insider audience, and outsider policy enforcement |
 | `server_export` | Trigger export (PDF, DOCX, SVG, PNG, ZIP) |
+| `server_export_cache_clear` | Clear export and diagram caches for a path |
+| `server_file_write` | Overwrite file content (insider-only) |
+| `server_file_mutate` | Apply structured mutations to `.md` files: edit-block, delete-block, insert-block, edit-cell, toggle-checkbox (insider-only) |
+| `server_rotate_key` | Rotate the authenticated insider's API key |
+| `server_auth_status` | Check current authentication status (no auth required) |
 | `server_event_status` | Query event gateway schemas and recent event log entries |
 | `server_config` | Query resolved server configuration (supports JSONPath) |
 | `server_config_apply` | Apply a configuration patch to the running server |
 | `server_service` | Manage the system service (install, uninstall, start, stop, restart, status) |
+
+### OAuth Tools
+
+| Tool | Purpose |
+|------|---------|
+| `oauth_authorize` | Initiate OAuth2 authorization flow (returns auth URL for user to open) |
+| `oauth_status` | Check credential existence and expiry for a provider/account |
+| `oauth_token` | Retrieve a valid access token (auto-refreshes if expired) |
 
 ## TOOLS.md Injection
 

@@ -117,9 +117,9 @@ jeeves-server config '$.auth.modes'         # Nested query
 
 On Windows, `roots` is ignored. On Linux, if omitted, it defaults to `{ "root": "/" }`.
 
-### Config is immutable at runtime
+### Config persistence
 
-Once the server starts, the config is loaded once and never written to. Mutable state (like auto-generated insider keys) lives in a separate `state.json` file that the server manages itself.
+The config file is loaded at startup and validated against the Zod schema. The server writes back to `config.json` in two cases: when an insider's key seed is auto-generated on first Google login, and when an insider rotates their key. These updates are atomic (file-locked) and the server reloads the affected config section automatically.
 
 ---
 
@@ -345,4 +345,6 @@ If `plantuml` is omitted entirely, only the community server is used.
 | `plantuml` | object | — | PlantUML rendering config |
 | `diagramCachePath` | string | `.diagram-cache` | Cached rendered diagram directory |
 | `outsiderPolicy` | scopes | — | Global outsider sharing constraints |
+| `oauth` | object | — | OAuth2 credential management (credential directory and named providers) |
+| `go` | object | — | Shortlink redirects (`GET /go/:slug` → target URL) |
 | `mermaidCliPath` | string | — | **Deprecated.** Mermaid is now bundled. |

@@ -8,14 +8,14 @@
 
 ## Repository Structure
 
-This is a monorepo with three packages:
+This is a monorepo with four packages:
 
 ```
 packages/
+  shared/           # Shared crypto utilities and API types
   service/          # The Fastify server + React SPA client
     client/         # Vite + React client source
     src/            # Server TypeScript source
-  jeeves-server/    # Config package (config.json)
   openclaw/         # OpenClaw plugin (skills, prompt injection)
 ```
 
@@ -43,7 +43,7 @@ Set these before running the dev server if your paths differ from the defaults.
 From the repo root:
 
 ```bash
-npm run build        # Builds server (tsc) + client (Vite) + OpenClaw plugin
+npm run build        # Builds shared (tsc) + server (tsc) + client (Vite) + OpenClaw plugin
 npm run typecheck    # Type-check all packages
 npm run lint         # ESLint
 ```
@@ -94,7 +94,7 @@ kill -9 <pid>
 |---|---|---|
 | **Port** | 19340 | 1934 |
 | **Entry** | `npx tsx watch packages/service/src/dev-server.ts` | NSSM service (global npm install) |
-| **Config** | `packages/jeeves-server/config.json` | Global install `config.json` |
+| **Config** | `<configDir>/jeeves-server/config.json` | Global install `config.json` |
 | **Client** | Built via `npm run build` | Built during `npm publish` |
 
 **Never copy config between dev and prod.** Each has its own OAuth credentials, session secrets, and key seeds.

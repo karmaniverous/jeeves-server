@@ -25,7 +25,7 @@ Anyone listed in the `insiders` map in your config:
 
 Depends on which auth modes are active:
 
-- **Google OAuth** (`'google'` mode) — Insider logs in with Google. The server checks their email against the `insiders` map. On first login, a key seed is auto-generated and stored in `state.json`.
+- **Google OAuth** (`'google'` mode) — Insider logs in with Google. The server checks their email against the `insiders` map. On first login, a key seed is auto-generated and persisted to `config.json`.
 - **Key auth** (`'keys'` mode) — Insider uses a derived URL key (`?key=<insider-key>`). The key is derived from a configured seed via HMAC-SHA256.
 
 ### What insiders can do
@@ -43,29 +43,35 @@ Depends on which auth modes are active:
 Scopes restrict which paths an insider can access. Three formats are supported:
 
 **Allow-only** (string array — backward compatible):
-```typescript
-'contractor@example.com': {
-  scopes: ['/d/projects/client-x/*'],
-},
+```json
+{
+  "contractor@example.com": {
+    "scopes": ["/d/projects/client-x/*"]
+  }
+}
 ```
 
 **Allow with deny** (broad access with cutouts):
-```typescript
-'team-member@example.com': {
-  scopes: {
-    allow: ['/d/*'],
-    deny: ['/d/secrets/*', '/d/.private/*'],
-  },
-},
+```json
+{
+  "team-member@example.com": {
+    "scopes": {
+      "allow": ["/d/*"],
+      "deny": ["/d/secrets/*", "/d/.private/*"]
+    }
+  }
+}
 ```
 
 **Deny-only** (everything except exclusions):
-```typescript
-'almost-full@example.com': {
-  scopes: {
-    deny: ['/d/hr/*', '/d/finance/*'],
-  },
-},
+```json
+{
+  "almost-full@example.com": {
+    "scopes": {
+      "deny": ["/d/hr/*", "/d/finance/*"]
+    }
+  }
+}
 ```
 
 **Semantics:**
@@ -160,11 +166,13 @@ Use rotation when you need to revoke all shared links at once (e.g., a contracto
 In addition to insider-generated keys, the server supports **named machine keys** for programmatic access:
 
 ```json
-"keys": {
-  primary: 'random-seed-string',
-  'webhook-notion': { key: 'another-seed', scopes: ['/event'] },
-  _internal: 'internal-seed',
-},
+{
+  "keys": {
+    "primary": "random-seed-string",
+    "webhook-notion": { "key": "another-seed", "scopes": ["/event"] },
+    "_internal": "internal-seed"
+  }
+}
 ```
 
 Machine keys follow the same derivation model:
