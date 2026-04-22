@@ -14,7 +14,7 @@ import {
   type PluginApi,
   type ToolResult,
 } from '@karmaniverous/jeeves';
-import type { ShareResponse } from '@karmaniverous/jeeves-server-shared';
+import type { ShareResponse } from '@karmaniverous/jeeves-server-core';
 
 import { PLUGIN_ID } from './constants.js';
 import { getPluginKey, withAuth } from './helpers.js';

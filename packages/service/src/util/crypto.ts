@@ -11,4 +11,4 @@ export {
   computePathKey,
   type DeepShareParams,
   timingSafeEqual,
-} from '@karmaniverous/jeeves-server-shared';
+} from '@karmaniverous/jeeves-server-core';

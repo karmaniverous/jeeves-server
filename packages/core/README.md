@@ -1,8 +1,6 @@
-# @karmaniverous/jeeves-server-shared
+# @karmaniverous/jeeves-server-core
 
-Private shared workspace package providing cryptographic utilities and API types consumed by `@karmaniverous/jeeves-server` (service) and `@karmaniverous/jeeves-server-openclaw` (plugin).
-
-This package is **not published** — it is resolved via npm workspaces within the monorepo.
+Shared workspace package providing cryptographic utilities and API types consumed by `@karmaniverous/jeeves-server` (service) and `@karmaniverous/jeeves-server-openclaw` (plugin).
 
 ## Exports
 
@@ -39,7 +37,7 @@ import {
   computeInsiderKey,
   computePathKey,
   type ShareRequest,
-} from '@karmaniverous/jeeves-server-shared';
+} from '@karmaniverous/jeeves-server-core';
 ```
 
 ## How Packages Consume It
