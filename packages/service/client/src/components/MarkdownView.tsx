@@ -39,19 +39,25 @@ export function MarkdownView({
   const articleRef = useRef<HTMLElement | null>(null);
   const popupOpenRef = useRef(false);
 
-  // Preserve scroll position when content re-renders after a save
-  const [prevHtml, setPrevHtml] = useState(fileRendered.html);
+  // Preserve scroll position when content re-renders after a save.
+  // A native scroll listener continuously tracks position so we always
+  // have the value from before any DOM update. useLayoutEffect restores
+  // it after React commits the new HTML via dangerouslySetInnerHTML.
   const savedScrollRef = useRef<number | null>(null);
-  if (fileRendered.html !== prevHtml) {
-    setPrevHtml(fileRendered.html);
-    if (mainRef.current) {
-      savedScrollRef.current = mainRef.current.scrollTop;
-    }
-  }
+  useEffect(() => {
+    const mainEl = mainRef.current;
+    if (!mainEl) return;
+    const handleScroll = () => {
+      savedScrollRef.current = mainEl.scrollTop;
+    };
+    mainEl.addEventListener('scroll', handleScroll, { passive: true });
+    return () => mainEl.removeEventListener('scroll', handleScroll);
+  }, [mainRef]);
+
   useLayoutEffect(() => {
-    if (savedScrollRef.current !== null && mainRef.current) {
-      mainRef.current.scrollTop = savedScrollRef.current;
-      savedScrollRef.current = null;
+    const mainEl = mainRef.current;
+    if (savedScrollRef.current !== null && mainEl) {
+      mainEl.scrollTop = savedScrollRef.current;
     }
   }, [fileRendered.html, mainRef]);
 
