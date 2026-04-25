@@ -136,8 +136,8 @@ export function MarkdownView({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isInsider, handleUndo, handleRedo]);
 
-  // Enable/disable checkboxes — called from the ref callback (synchronous,
-  // during commit) so checkboxes are interactive before the browser paints.
+  // Enable/disable checkboxes — runs via useLayoutEffect (synchronous, before
+  // paint) so checkboxes are interactive as soon as the DOM is visible.
   // Uses removeAttribute to strip the HTML content attribute, not just the IDL
   // property — mobile WebViews (e.g. Slack) may not reflect .disabled=false
   // to the content attribute, leaving the checkbox visually enabled but
@@ -157,9 +157,16 @@ export function MarkdownView({
     });
   }, [isInsider]);
 
+  useLayoutEffect(() => {
+    const el = articleRef.current;
+    if (el) enableCheckboxes(el);
+  }, [fileRendered.html, enableCheckboxes]);
+
   // Delegated change handler on the article element — survives innerHTML
   // replacement because it's bound to the stable parent, not individual
-  // checkbox nodes.
+  // checkbox nodes. Uses native addEventListener rather than React's onChange
+  // because the checkboxes are injected via dangerouslySetInnerHTML and we
+  // need guaranteed compatibility with mobile WebViews.
   useEffect(() => {
     const el = articleRef.current;
     if (!el || !isInsider) return;
@@ -241,7 +248,6 @@ export function MarkdownView({
                 initInlineSvgPanzoom(el);
                 initEmbeddedDiagramPanzoom(el);
                 initLazyDiagrams(el);
-                enableCheckboxes(el);
               }
             }}
             className={`prose bg-background p-6 rounded-lg border border-border ${
