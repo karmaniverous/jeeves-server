@@ -136,39 +136,59 @@ export function MarkdownView({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isInsider, handleUndo, handleRedo]);
 
-  // Enable/disable checkboxes when insider status or HTML changes
-  useEffect(() => {
-    const el = articleRef.current;
-    if (!el) return;
+  // Enable/disable checkboxes — runs via useLayoutEffect (synchronous, before
+  // paint) so checkboxes are interactive as soon as the DOM is visible.
+  // Uses removeAttribute to strip the HTML content attribute, not just the IDL
+  // property — mobile WebViews (e.g. Slack) may not reflect .disabled=false
+  // to the content attribute, leaving the checkbox visually enabled but
+  // unresponsive to taps.
+  const enableCheckboxes = useCallback((el: HTMLElement) => {
     const checkboxes = el.querySelectorAll<HTMLInputElement>('input[type="checkbox"][data-checkbox-index]');
     checkboxes.forEach((cb) => {
-      cb.disabled = !isInsider;
-      cb.style.cursor = isInsider ? 'pointer' : '';
+      if (isInsider) {
+        cb.removeAttribute('disabled');
+        cb.disabled = false;
+        cb.style.cursor = 'pointer';
+      } else {
+        cb.setAttribute('disabled', '');
+        cb.disabled = true;
+        cb.style.cursor = '';
+      }
     });
-  }, [fileRendered.html, isInsider]);
+  }, [isInsider]);
 
-  // Fire-and-forget checkbox toggle via 'change' event
+  useLayoutEffect(() => {
+    const el = articleRef.current;
+    if (el) enableCheckboxes(el);
+  }, [fileRendered.html, enableCheckboxes]);
+
+  // Delegated change handler on the article element — survives innerHTML
+  // replacement because it's bound to the stable parent, not individual
+  // checkbox nodes. Uses native addEventListener rather than React's onChange
+  // because the checkboxes are injected via dangerouslySetInnerHTML and we
+  // need guaranteed compatibility with mobile WebViews.
   useEffect(() => {
     const el = articleRef.current;
     if (!el || !isInsider) return;
 
-    const checkboxes = el.querySelectorAll<HTMLInputElement>('input[type="checkbox"][data-checkbox-index]');
-
-    function handleChange(this: HTMLInputElement) {
-      const indexAttr = this.getAttribute('data-checkbox-index');
+    function handleChange(e: Event) {
+      const target = e.target;
+      if (!(target instanceof HTMLInputElement)) return;
+      if (target.type !== 'checkbox') return;
+      const indexAttr = target.getAttribute('data-checkbox-index');
       if (indexAttr === null) return;
       const index = parseInt(indexAttr, 10);
-      const checked = this.checked;
+      const checked = target.checked;
       fileMutate(reqPath, { action: 'toggle-checkbox', index, checked }).catch(() =>
         console.warn('Checkbox toggle failed for index', index),
       );
     }
 
-    checkboxes.forEach((cb) => cb.addEventListener('change', handleChange));
+    el.addEventListener('change', handleChange);
     return () => {
-      checkboxes.forEach((cb) => cb.removeEventListener('change', handleChange));
+      el.removeEventListener('change', handleChange);
     };
-  }, [fileRendered.html, isInsider, reqPath]);
+  }, [isInsider, reqPath]);
 
   return (
     <>
