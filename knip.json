@@ -18,7 +18,10 @@
       ],
       "includeEntryExports": true
     },
-    "packages/openclaw": {}
+    "packages/openclaw": {},
+    "packages/core": {
+      "ignoreDependencies": ["auto-changelog"]
+    }
   },
   "ignoreExportsUsedInFile": true
 }
