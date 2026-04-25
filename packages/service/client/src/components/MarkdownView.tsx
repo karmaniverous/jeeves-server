@@ -136,39 +136,52 @@ export function MarkdownView({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isInsider, handleUndo, handleRedo]);
 
-  // Enable/disable checkboxes when insider status or HTML changes
-  useEffect(() => {
-    const el = articleRef.current;
-    if (!el) return;
+  // Enable/disable checkboxes — called from the ref callback (synchronous,
+  // during commit) so checkboxes are interactive before the browser paints.
+  // Uses removeAttribute to strip the HTML content attribute, not just the IDL
+  // property — mobile WebViews (e.g. Slack) may not reflect .disabled=false
+  // to the content attribute, leaving the checkbox visually enabled but
+  // unresponsive to taps.
+  const enableCheckboxes = useCallback((el: HTMLElement) => {
     const checkboxes = el.querySelectorAll<HTMLInputElement>('input[type="checkbox"][data-checkbox-index]');
     checkboxes.forEach((cb) => {
-      cb.disabled = !isInsider;
-      cb.style.cursor = isInsider ? 'pointer' : '';
+      if (isInsider) {
+        cb.removeAttribute('disabled');
+        cb.disabled = false;
+        cb.style.cursor = 'pointer';
+      } else {
+        cb.setAttribute('disabled', '');
+        cb.disabled = true;
+        cb.style.cursor = '';
+      }
     });
-  }, [fileRendered.html, isInsider]);
+  }, [isInsider]);
 
-  // Fire-and-forget checkbox toggle via 'change' event
+  // Delegated change handler on the article element — survives innerHTML
+  // replacement because it's bound to the stable parent, not individual
+  // checkbox nodes.
   useEffect(() => {
     const el = articleRef.current;
     if (!el || !isInsider) return;
 
-    const checkboxes = el.querySelectorAll<HTMLInputElement>('input[type="checkbox"][data-checkbox-index]');
-
-    function handleChange(this: HTMLInputElement) {
-      const indexAttr = this.getAttribute('data-checkbox-index');
+    function handleChange(e: Event) {
+      const target = e.target;
+      if (!(target instanceof HTMLInputElement)) return;
+      if (target.type !== 'checkbox') return;
+      const indexAttr = target.getAttribute('data-checkbox-index');
       if (indexAttr === null) return;
       const index = parseInt(indexAttr, 10);
-      const checked = this.checked;
+      const checked = target.checked;
       fileMutate(reqPath, { action: 'toggle-checkbox', index, checked }).catch(() =>
         console.warn('Checkbox toggle failed for index', index),
       );
     }
 
-    checkboxes.forEach((cb) => cb.addEventListener('change', handleChange));
+    el.addEventListener('change', handleChange);
     return () => {
-      checkboxes.forEach((cb) => cb.removeEventListener('change', handleChange));
+      el.removeEventListener('change', handleChange);
     };
-  }, [fileRendered.html, isInsider, reqPath]);
+  }, [isInsider, reqPath]);
 
   return (
     <>
@@ -228,6 +241,7 @@ export function MarkdownView({
                 initInlineSvgPanzoom(el);
                 initEmbeddedDiagramPanzoom(el);
                 initLazyDiagrams(el);
+                enableCheckboxes(el);
               }
             }}
             className={`prose bg-background p-6 rounded-lg border border-border ${
