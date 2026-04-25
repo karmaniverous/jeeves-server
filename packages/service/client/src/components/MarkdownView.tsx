@@ -40,22 +40,25 @@ export function MarkdownView({
   const popupOpenRef = useRef(false);
 
   // Preserve scroll position when content re-renders after a save.
-  // The cleanup function captures scroll position before React commits
-  // the new HTML; the setup function restores it after.
+  // A native scroll listener continuously tracks position so we always
+  // have the value from before any DOM update. useLayoutEffect restores
+  // it after React commits the new HTML via dangerouslySetInnerHTML.
   const savedScrollRef = useRef<number | null>(null);
+  useEffect(() => {
+    const mainEl = mainRef.current;
+    if (!mainEl) return;
+    const handleScroll = () => {
+      savedScrollRef.current = mainEl.scrollTop;
+    };
+    mainEl.addEventListener('scroll', handleScroll, { passive: true });
+    return () => mainEl.removeEventListener('scroll', handleScroll);
+  }, [mainRef]);
+
   useLayoutEffect(() => {
     const mainEl = mainRef.current;
-    // Restore: runs after DOM update with new HTML
     if (savedScrollRef.current !== null && mainEl) {
       mainEl.scrollTop = savedScrollRef.current;
-      savedScrollRef.current = null;
     }
-    // Capture: runs before the next DOM update
-    return () => {
-      if (mainEl) {
-        savedScrollRef.current = mainEl.scrollTop;
-      }
-    };
   }, [fileRendered.html, mainRef]);
 
   const isInsider = fileRendered.isInsider;
