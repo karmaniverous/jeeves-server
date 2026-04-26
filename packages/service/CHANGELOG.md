@@ -2,7 +2,19 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.10.4](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.3...3.10.4)
+#### [3.10.5](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.4...3.10.5)
+
+- fix: resolve lint errors in MarkdownView scroll preservation [`#199`](https://github.com/karmaniverous/jeeves-server/pull/199)
+- fix: mobile checkbox interaction [`#198`](https://github.com/karmaniverous/jeeves-server/pull/198)
+- chore: release @karmaniverous/jeeves-server-openclaw v0.10.2 [`e0e39d1`](https://github.com/karmaniverous/jeeves-server/commit/e0e39d16ccc8c6bb9b61364b7f68911c25b89f0e)
+- fix: mobile checkbox interaction — use removeAttribute + event delegation [`7fd98e5`](https://github.com/karmaniverous/jeeves-server/commit/7fd98e54e99a1b54d1ecd686b3b4ba26b9a14bd9)
+- fix: use scroll listener for scroll preservation per review [`823378a`](https://github.com/karmaniverous/jeeves-server/commit/823378a111b83eb3dc8bc2c2049d17bd12885635)
+- refactor: move enableCheckboxes to useLayoutEffect per review [`64fd560`](https://github.com/karmaniverous/jeeves-server/commit/64fd560eb31cdc9ee9472d7334ea85b4f35e7b3f)
+- fix: add auto-changelog to knip ignoreDependencies for core package [`aa70a40`](https://github.com/karmaniverous/jeeves-server/commit/aa70a405f5d9c3692f2ccde5913ec4cb095bd327)
+
+#### [service/3.10.4](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.3...service/3.10.4)
+
+> 22 April 2026
 
 - fix: rename shared to core, add release-it, upgrade client eslint [`#197`](https://github.com/karmaniverous/jeeves-server/pull/197)
 - fix: upgrade client eslint to v10, fix lint errors from stricter rules [`#196`](https://github.com/karmaniverous/jeeves-server/pull/196)
@@ -14,6 +26,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore: release @karmaniverous/jeeves-server-openclaw v0.10.1 [`65210c5`](https://github.com/karmaniverous/jeeves-server/commit/65210c513eb2dcdb701bea971bd2cd1cec4da282)
 - refactor: rename shared package to @karmaniverous/jeeves-server-core [`e438ca6`](https://github.com/karmaniverous/jeeves-server/commit/e438ca6dd15e38fdc5b91f18824094197724ec55)
 - chore: add release-it infrastructure to core package [`f53dc24`](https://github.com/karmaniverous/jeeves-server/commit/f53dc2458c8bd5c84d4c95d8e1752338db3ebd21)
+- chore: release @karmaniverous/jeeves-server v3.10.4 [`170ca7e`](https://github.com/karmaniverous/jeeves-server/commit/170ca7e7fdf20ef0d5757f1202b8b4cf9682196b)
 - fix: address PR review — URL encoding, rawUrl regression, lockfile sync [`d291d99`](https://github.com/karmaniverous/jeeves-server/commit/d291d999786ab356897ca9e8214104a7139bb270)
 - fix: resolve pre-existing knip failures [`737faf7`](https://github.com/karmaniverous/jeeves-server/commit/737faf7e7a2567fd6342f43c90230dcacdd1050b)
 - public package [`0ab4eec`](https://github.com/karmaniverous/jeeves-server/commit/0ab4eec97aa95a11e7d0f96ac473188ca58ef7df)
