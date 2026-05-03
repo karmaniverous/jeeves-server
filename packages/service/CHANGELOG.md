@@ -2,13 +2,20 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [3.10.5](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.4...3.10.5)
+#### [3.10.6](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.5...3.10.6)
+
+- updated jeeves-core [`6a1d77b`](https://github.com/karmaniverous/jeeves-server/commit/6a1d77be0435bd6d09ba9426dd7182ca218f3bc2)
+
+#### [service/3.10.5](https://github.com/karmaniverous/jeeves-server/compare/service/3.10.4...service/3.10.5)
+
+> 26 April 2026
 
 - fix: resolve lint errors in MarkdownView scroll preservation [`#199`](https://github.com/karmaniverous/jeeves-server/pull/199)
 - fix: mobile checkbox interaction [`#198`](https://github.com/karmaniverous/jeeves-server/pull/198)
 - chore: release @karmaniverous/jeeves-server-openclaw v0.10.2 [`e0e39d1`](https://github.com/karmaniverous/jeeves-server/commit/e0e39d16ccc8c6bb9b61364b7f68911c25b89f0e)
 - fix: mobile checkbox interaction — use removeAttribute + event delegation [`7fd98e5`](https://github.com/karmaniverous/jeeves-server/commit/7fd98e54e99a1b54d1ecd686b3b4ba26b9a14bd9)
 - fix: use scroll listener for scroll preservation per review [`823378a`](https://github.com/karmaniverous/jeeves-server/commit/823378a111b83eb3dc8bc2c2049d17bd12885635)
+- chore: release @karmaniverous/jeeves-server v3.10.5 [`32f11e5`](https://github.com/karmaniverous/jeeves-server/commit/32f11e5f2f316b3e4a2e02d4211c295f646ea1d2)
 - refactor: move enableCheckboxes to useLayoutEffect per review [`64fd560`](https://github.com/karmaniverous/jeeves-server/commit/64fd560eb31cdc9ee9472d7334ea85b4f35e7b3f)
 - fix: add auto-changelog to knip ignoreDependencies for core package [`aa70a40`](https://github.com/karmaniverous/jeeves-server/commit/aa70a405f5d9c3692f2ccde5913ec4cb095bd327)
 
