@@ -2,7 +2,9 @@
   "name": "@karmaniverous/jeeves-server-core",
   "version": "0.1.0",
   "type": "module",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -51,14 +53,14 @@
         "npm run test",
         "npm run build"
       ],
-      "before:npm:release": [
-        "npx auto-changelog -p",
-        "git add -A"
-      ],
       "after:release": [
         "git switch -c release/core/${version}",
         "git push -u origin release/core/${version}",
         "git switch ${branchName}"
+      ],
+      "after:bump": [
+        "npx auto-changelog -p",
+        "git add CHANGELOG.md"
       ]
     },
     "npm": {
