@@ -36,7 +36,7 @@
     "knip": "knip",
     "release:pre": "dotenvx run -f .env.local -- release-it --no-git.requireBranch --github.prerelease --preRelease"
   },
-  "files": ["dist"],
+  "files": ["dist", "scripts"],
   "publishConfig": {
     "access": "public"
   },
