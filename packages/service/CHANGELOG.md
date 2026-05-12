@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 
 - Add npm publish safety net (.npmignore + gitignore *.local)
 - Add files whitelists and npm-pack-check CI workflow
+- Switch from auto-changelog to git-cliff
 ## [3.10.6] - 2026-05-03
 
 ### 💼 Other
@@ -124,7 +125,7 @@ All notable changes to this project will be documented in this file.
 - Resolve remaining React lint errors
 - Resolve all pre-existing eslint errors
 - Address Gemini review — undo correctness, reactivity, DRY, cleanup
-- Preserve source mapping on diagrams and HTML blocks for block editing
+- Preserve source mapping on diagrams and HTML blocks for block editing ([#167](https://github.com/karmaniverous/jeeves-server/pull/167))
 - Constrain edit popup height to prevent overflow (#168)
 - Address Gemini review — remove redundant variable, handle indented HTML blocks (#168)
 - Resolve built client dir when running under tsx (#170)
@@ -548,7 +549,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 
 ### 🚀 Features
 
-- Core v0.2.0 SDK adoption (#111)
+- Core v0.2.0 SDK adoption (#111) ([#111](https://github.com/karmaniverous/jeeves-server/pull/111))
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -670,12 +671,12 @@ This reverts commit 572cec8bc999df7e834fa66ff948747f2d35be32.
 
 ### 🚀 Features
 
-- Named access scopes (#84)
+- Named access scopes (#84) ([#84](https://github.com/karmaniverous/jeeves-server/pull/84))
 
 ### 🐛 Bug Fixes
 
 - Make resetConfig reload runtime config
-- Plugin auth chain, status endpoint improvements (#83)
+- Plugin auth chain, status endpoint improvements (#83) ([#83](https://github.com/karmaniverous/jeeves-server/pull/83))
 - Normalize path for watcher render (Windows backslash + uppercase drive)
 - Resolve remaining lint errors (type annotations, unused params, unnecessary conditionals)
 
