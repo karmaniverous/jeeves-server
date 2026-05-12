@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - Add npm publish safety net (.npmignore + gitignore *.local)
 - Add files whitelists and npm-pack-check CI workflow
+- Switch from auto-changelog to git-cliff
 ## [0.1.0] - 2026-04-22
 
 ### 💼 Other

@@ -1,6 +1,6 @@
 {
   "name": "@karmaniverous/jeeves-server",
-  "version": "3.10.6",
+  "version": "3.10.7",
   "description": "Secure file browser, markdown viewer, and webhook gateway with PDF/DOCX export and expiring share links",
   "keywords": [
     "fastify",
@@ -36,7 +36,10 @@
     "knip": "knip",
     "release:pre": "dotenvx run -f .env.local -- release-it --no-git.requireBranch --github.prerelease --preRelease"
   },
-  "files": ["dist", "scripts"],
+  "files": [
+    "dist",
+    "scripts"
+  ],
   "publishConfig": {
     "access": "public"
   },
