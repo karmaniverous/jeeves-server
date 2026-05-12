@@ -1,8 +1,10 @@
 {
   "name": "@karmaniverous/jeeves-server-core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -29,7 +31,6 @@
   "devDependencies": {
     "vitest": "^4.1.2",
     "release-it": "^19.2.4",
-
     "@dotenvx/dotenvx": "^1.59.1"
   },
   "engines": {
