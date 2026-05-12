@@ -212,7 +212,7 @@ export function BlockHoverControls({
   const getSourceRange = useCallback((el: Element) => {
     const tag = el.tagName.toLowerCase();
     if (tag === 'td' || tag === 'th') {
-      const table = el.closest('[data-source-start]');
+      const table = el.closest('table[data-source-start]');
       if (table) {
         const start = parseInt(table.getAttribute('data-source-start') ?? '0', 10);
         const end = parseInt(table.getAttribute('data-source-end') ?? '0', 10);
@@ -251,7 +251,7 @@ export function BlockHoverControls({
         const row = el.closest('tr');
         const table = el.closest('table');
         if (!row || !table) return;
-        const { startLine: tableStart } = getSourceRange(el);
+        const tableStart = parseInt(table.getAttribute('data-source-start') ?? '0', 10);
         if (!tableStart) return;
 
         const isHeader = row.closest('thead') !== null;
