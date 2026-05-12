@@ -4,15 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 💼 Other
+
+- Merge remote-tracking branch 'origin/main' into chore/git-cliff-changelogs
+
+# Conflicts:
+#	packages/service/package.json
+## [3.10.7] - 2026-05-12
+
 ### 🐛 Bug Fixes
 
 - Edit-cell line offset — resolve td/th to table, not tr
+- Include scripts/ in service package files for postinstall
 
 ### ⚙️ Miscellaneous Tasks
 
 - Add npm publish safety net (.npmignore + gitignore *.local)
 - Add files whitelists and npm-pack-check CI workflow
 - Switch from auto-changelog to git-cliff
+- Release @karmaniverous/jeeves-server v3.10.7
 ## [3.10.6] - 2026-05-03
 
 ### 💼 Other
