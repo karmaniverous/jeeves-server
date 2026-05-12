@@ -11,7 +11,7 @@
     "lint:fix": "eslint --fix .",
     "test": "vitest run",
     "typecheck": "tsc",
-    "changelog": "auto-changelog",
+    "changelog": "git-cliff -o CHANGELOG.md",
     "knip": "knip",
     "release": "dotenvx run -f .env.local -- release-it",
     "release:pre": "dotenvx run -f .env.local -- release-it --no-git.requireBranch --github.prerelease --preRelease"
@@ -22,7 +22,6 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-typescript": "^12.3.0",
-    "auto-changelog": "^2.5.0",
     "cross-env": "^10.1.0",
     "release-it": "^19.2.4",
     "rollup": "^4.60.1",
@@ -75,7 +74,7 @@
   },
   "release-it": {
     "git": {
-      "changelog": "npx auto-changelog --unreleased-only --stdout --template https://raw.githubusercontent.com/release-it/release-it/main/templates/changelog-compact.hbs",
+      "changelog": "npx git-cliff --unreleased --strip header",
       "commitMessage": "chore: release @karmaniverous/jeeves-server-openclaw v${version}",
       "tagName": "openclaw/${version}",
       "requireBranch": "main"
@@ -94,7 +93,7 @@
         "npm run build"
       ],
       "before:npm:release": [
-        "npx auto-changelog -p",
+        "npx git-cliff -o CHANGELOG.md",
         "git add -A"
       ],
       "after:release": [
@@ -106,13 +105,6 @@
     "npm": {
       "publish": true
     }
-  },
-  "auto-changelog": {
-    "output": "CHANGELOG.md",
-    "tagPrefix": "openclaw/",
-    "unreleased": true,
-    "commitLimit": false,
-    "hideCredit": true
   },
   "dependencies": {
     "@karmaniverous/jeeves": "^0.5.9",
