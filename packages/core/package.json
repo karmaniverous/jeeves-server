@@ -13,6 +13,7 @@
     "lint:fix": "eslint --fix .",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
+    "changelog": "git-cliff -o CHANGELOG.md",
     "release": "dotenvx run -f .env.local -- release-it",
     "release:pre": "dotenvx run -f .env.local -- release-it --no-git.requireBranch --github.prerelease --preRelease"
   },
@@ -28,7 +29,7 @@
   "devDependencies": {
     "vitest": "^4.1.2",
     "release-it": "^19.2.4",
-    "auto-changelog": "^2.5.0",
+
     "@dotenvx/dotenvx": "^1.59.1"
   },
   "engines": {
@@ -36,7 +37,7 @@
   },
   "release-it": {
     "git": {
-      "changelog": "npx auto-changelog --unreleased-only --stdout --template https://raw.githubusercontent.com/release-it/release-it/main/templates/changelog-compact.hbs",
+      "changelog": "npx git-cliff --unreleased --strip header",
       "commitMessage": "chore: release @karmaniverous/jeeves-server-core v${version}",
       "tagName": "core/${version}",
       "requireBranch": "main"
@@ -52,7 +53,7 @@
         "npm run build"
       ],
       "before:npm:release": [
-        "npx auto-changelog -p",
+        "npx git-cliff -o CHANGELOG.md",
         "git add -A"
       ],
       "after:release": [

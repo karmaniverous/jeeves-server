@@ -14,14 +14,13 @@
     "tsx",
     "eslint",
     "tsc",
-    "auto-changelog",
+    "git-cliff",
     "knip",
     "dotenvx",
     "release-it"
   ],
   "ignoreDependencies": [
     "@dotenvx/dotenvx",
-    "auto-changelog",
     "cross-env",
     "release-it",
     "tslib"

@@ -13,7 +13,7 @@
     "tsc",
     "cross-env",
     "vitest",
-    "auto-changelog",
+    "git-cliff",
     "dotenvx",
     "release-it",
     "eslint",
@@ -22,7 +22,6 @@
   "ignoreDependencies": [
     "puppeteer",
     "@dotenvx/dotenvx",
-    "auto-changelog",
     "cross-env",
     "release-it",
     "rimraf"

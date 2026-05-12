@@ -20,7 +20,7 @@
     },
     "packages/openclaw": {},
     "packages/core": {
-      "ignoreDependencies": ["auto-changelog"]
+      "ignoreDependencies": ["git-cliff"]
     }
   },
   "ignoreExportsUsedInFile": true
