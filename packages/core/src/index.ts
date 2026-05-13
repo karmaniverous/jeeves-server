@@ -12,6 +12,23 @@ export {
   type DeepShareParams,
   timingSafeEqual,
 } from './crypto.js';
+export {
+  type AuthMode,
+  authModeSchema,
+  authSchema,
+  DEPRECATED_CONFIG_PROPS,
+  eventConfigSchema,
+  googleAuthSchema,
+  insiderEntrySchema,
+  isScopeName,
+  type JeevesConfig,
+  jeevesConfigSchema,
+  keyEntrySchema,
+  oauthProviderSchema,
+  oauthSchema,
+  scopesObjectSchema,
+  scopesSchema,
+} from './schema.js';
 export type {
   AuthStatusResponse,
   DriveEntry,

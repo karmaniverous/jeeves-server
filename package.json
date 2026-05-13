@@ -36,5 +36,22 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "4.60.3",
+    "@rollup/rollup-linux-x64-musl": "4.60.3",
+    "@rollup/rollup-darwin-x64": "4.60.3",
+    "@rollup/rollup-darwin-arm64": "4.60.3",
+    "@tailwindcss/oxide-android-arm64": "4.2.4",
+    "@tailwindcss/oxide-darwin-arm64": "4.2.4",
+    "@tailwindcss/oxide-darwin-x64": "4.2.4",
+    "@tailwindcss/oxide-freebsd-x64": "4.2.4",
+    "@tailwindcss/oxide-linux-arm-gnueabihf": "4.2.4",
+    "@tailwindcss/oxide-linux-arm64-gnu": "4.2.4",
+    "@tailwindcss/oxide-linux-arm64-musl": "4.2.4",
+    "@tailwindcss/oxide-linux-x64-gnu": "4.2.4",
+    "@tailwindcss/oxide-linux-x64-musl": "4.2.4",
+    "@tailwindcss/oxide-wasm32-wasi": "4.2.4",
+    "@tailwindcss/oxide-win32-arm64-msvc": "4.2.4"
   }
 }

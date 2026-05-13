@@ -30,6 +30,28 @@
       }
     }
   },
+  "contracts": {
+    "tools": [
+      "server_status",
+      "server_config",
+      "server_config_apply",
+      "server_service",
+      "oauth_authorize",
+      "oauth_status",
+      "oauth_token",
+      "server_rotate_key",
+      "server_file_write",
+      "server_file_mutate",
+      "server_export_cache_clear",
+      "server_drives",
+      "server_auth_status",
+      "server_link_info",
+      "server_browse",
+      "server_share",
+      "server_export",
+      "server_event_status"
+    ]
+  },
   "uiHints": {
     "apiUrl": {
       "label": "Server API URL",
