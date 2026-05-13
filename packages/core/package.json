@@ -1,7 +1,15 @@
 {
   "name": "@karmaniverous/jeeves-server-core",
   "version": "0.1.1",
+  "author": "Jeeves",
+  "description": "Shared cryptographic utilities and API types for jeeves-server packages.",
+  "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/karmaniverous/jeeves-server.git",
+    "directory": "packages/core"
+  },
   "files": [
     "dist"
   ],
