@@ -227,7 +227,7 @@ export function buildRuntimeConfig(
     maxZipSizeMb: config.maxZipSizeMb,
     chromePath: config.chromePath,
     roots: config.roots,
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
+
     mermaidCliPath: config.mermaidCliPath,
     plantuml: resolvePlantuml(config.plantuml, rootDir),
     outsiderPolicy:

@@ -1,4 +1,5 @@
 export {
+  type AuthMode,
   authModeSchema,
   authSchema,
   DEPRECATED_CONFIG_PROPS,
@@ -6,12 +7,11 @@ export {
   googleAuthSchema,
   insiderEntrySchema,
   isScopeName,
+  type JeevesConfig,
   jeevesConfigSchema,
   keyEntrySchema,
   oauthProviderSchema,
   oauthSchema,
   scopesObjectSchema,
   scopesSchema,
-  type AuthMode,
-  type JeevesConfig,
 } from '@karmaniverous/jeeves-server-core';
