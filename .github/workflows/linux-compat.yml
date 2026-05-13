@@ -14,6 +14,7 @@ jobs:
     uses: karmaniverous/gha-workflows/.github/workflows/linux-compat.yml@main
     with:
       node-versions: '[22, 24]'
+      install-command: npm install
 
   smoke-tests:
     needs: linux-compat
@@ -29,7 +30,7 @@ jobs:
           cache: npm
 
       - name: Install server dependencies
-        run: npm ci
+        run: npm install
 
       - name: TypeScript compile
         run: npm run build
