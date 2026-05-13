@@ -1,6 +1,6 @@
 {
   "name": "@karmaniverous/jeeves-server-core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "Jeeves",
   "description": "Shared cryptographic utilities and API types for jeeves-server packages.",
   "license": "MIT",
