@@ -27,3 +27,20 @@ export type {
   ShareRequest,
   ShareResponse,
 } from './types.js';
+export {
+  authModeSchema,
+  authSchema,
+  DEPRECATED_CONFIG_PROPS,
+  eventConfigSchema,
+  googleAuthSchema,
+  insiderEntrySchema,
+  isScopeName,
+  jeevesConfigSchema,
+  keyEntrySchema,
+  oauthProviderSchema,
+  oauthSchema,
+  scopesObjectSchema,
+  scopesSchema,
+  type AuthMode,
+  type JeevesConfig,
+} from './schema.js';
