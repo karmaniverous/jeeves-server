@@ -1,4 +1,4 @@
-﻿import { SERVER_PORT } from '@karmaniverous/jeeves';
+import { SERVER_PORT } from '@karmaniverous/jeeves';
 import { z } from 'zod';
 
 /** Config properties deprecated in v3.6.0 (now resolved via core services). */
@@ -39,10 +39,10 @@ export const eventConfigSchema = z.object({
 });
 
 /**
- * Scopes configuration â€" controls which paths a user/key can access.
+ * Scopes configuration — controls which paths a user/key can access.
  *
  * Three forms:
- * - `string` â€" single allow pattern (e.g. '/d/*')
+ * - `string` — single allow pattern (e.g. '/d/*')
  * - `string[]` — array of allow patterns (shorthand for \{ allow: [...] \})
  * - `\{ allow?: string[], deny?: string[] \}` — explicit allow/deny rules
  *
@@ -76,7 +76,7 @@ export const insiderEntrySchema = z.object({
   keyCreatedAt: z.string().optional(),
 });
 
-/** Key entry â€" plain string (seed, no scopes) or object with key + optional scopes */
+/** Key entry — plain string (seed, no scopes) or object with key + optional scopes */
 export const keyEntrySchema = z.union([
   z.string().min(1),
   z.object({
@@ -143,7 +143,7 @@ export const jeevesConfigSchema = z
     maxZipSizeMb: z.number().positive().default(100),
     /**
      * Filesystem roots for the file browser (Linux only).
-     * Map of id â†' filesystem path. On Windows this is ignored (drives are auto-discovered).
+     * Map of id → filesystem path. On Windows this is ignored (drives are auto-discovered).
      * Example: \{ home: '/home/user', projects: '/opt/projects' \}
      * Default: \{ root: '/' \}
      */
@@ -152,7 +152,7 @@ export const jeevesConfigSchema = z
     mermaidCliPath: z.string().optional(),
     /**
      * PlantUML rendering configuration.
-     * - jarPath: local PlantUML jar (requires Java). Tried first â€" supports !include.
+     * - jarPath: local PlantUML jar (requires Java). Tried first — supports !include.
      * - servers: fallback PlantUML server URLs, tried in order.
      *   The public community server (https://www.plantuml.com/plantuml) is always
      *   appended as the last resort unless explicitly listed.
@@ -171,7 +171,7 @@ export const jeevesConfigSchema = z
      */
     diagramCachePath: z.string().optional(),
     /**
-     * Global outsider policy â€" constrains which paths are eligible for outsider sharing.
+     * Global outsider policy — constrains which paths are eligible for outsider sharing.
      * Uses the same allow/deny model as insider scopes.
      * If omitted, all paths are shareable with outsiders.
      */
