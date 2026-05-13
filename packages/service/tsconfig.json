@@ -32,6 +32,7 @@
   ],
   "include": [
     "src/**/*",
-    "*.config.ts"
+    "*.config.ts",
+    "rollup.config.ts"
   ]
 }

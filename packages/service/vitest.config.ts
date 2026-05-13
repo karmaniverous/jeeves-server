@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
-    exclude: ['dist/**', '**/node_modules/**'],
+    exclude: ['dist/**', '.rollup.cache/**', '**/node_modules/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
