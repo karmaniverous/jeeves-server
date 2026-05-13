@@ -4,12 +4,34 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🚀 Features
+
+- Export config Zod schema via core package (#204)
+
+### 🐛 Bug Fixes
+
+- Resolve lint errors in export ordering and stale disable directive
+- Remove unused zod dependency from service package
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump @karmaniverous/jeeves to ^0.5.10
+- Apply safe dependency updates
+- Fix knip configuration hints
+- Update all deps and migrate core/service to rollup+ts builds
+- Merge main into branch, resolve package.json conflicts
+## [3.10.8] - 2026-05-12
+
 ### 💼 Other
 
 - Merge remote-tracking branch 'origin/main' into chore/git-cliff-changelogs
 
 # Conflicts:
 #	packages/service/package.json
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.10.8
 ## [3.10.7] - 2026-05-12
 
 ### 🐛 Bug Fixes
