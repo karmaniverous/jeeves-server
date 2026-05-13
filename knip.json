@@ -2,7 +2,6 @@
   "workspaces": {
     "packages/service": {
       "entry": [
-        "src/cli/index.ts",
         "src/cli/start-server.ts",
         "src/dev-server.ts",
         "test-docs/**/*.js"
@@ -19,9 +18,7 @@
       "includeEntryExports": true
     },
     "packages/openclaw": {},
-    "packages/core": {
-      "ignoreDependencies": ["git-cliff"]
-    }
+    "packages/core": {}
   },
   "ignoreExportsUsedInFile": true
 }
