@@ -4,9 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🚀 Features
+
+- Add contracts.tools to openclaw.plugin.json (#203)
+
 ### ⚙️ Miscellaneous Tasks
 
 - Add npm publish safety net (.npmignore + gitignore *.local)
+- Switch from auto-changelog to git-cliff
+- Bump @karmaniverous/jeeves to ^0.5.10
+- Apply safe dependency updates
 ## [0.10.3] - 2026-05-03
 
 ### 💼 Other
@@ -284,7 +291,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 
 ### 🚀 Features
 
-- Core v0.2.0 SDK adoption (#111)
+- Core v0.2.0 SDK adoption (#111) ([#111](https://github.com/karmaniverous/jeeves-server/pull/111))
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -381,7 +388,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 
 ### 🐛 Bug Fixes
 
-- Plugin auth chain, status endpoint improvements (#83)
+- Plugin auth chain, status endpoint improvements (#83) ([#83](https://github.com/karmaniverous/jeeves-server/pull/83))
 - Remove unnecessary auth from /api/status calls (endpoint is public)
 - Add pattern to StatusResponse events type
 
