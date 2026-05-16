@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🐛 Bug Fixes
+
+- Pin jeeves-server-core dependency to ^0.1.2
+## [0.10.4] - 2026-05-13
+
 ### 🚀 Features
 
 - Add contracts.tools to openclaw.plugin.json (#203)
@@ -14,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Switch from auto-changelog to git-cliff
 - Bump @karmaniverous/jeeves to ^0.5.10
 - Apply safe dependency updates
+- Release @karmaniverous/jeeves-server-openclaw v0.10.4
 ## [0.10.3] - 2026-05-03
 
 ### 💼 Other
