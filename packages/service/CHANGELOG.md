@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🐛 Bug Fixes
+
+- Pin jeeves-server-core dependency to ^0.1.2
+## [3.10.9] - 2026-05-13
+
 ### 🚀 Features
 
 - Export config Zod schema via core package (#204)
@@ -20,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - Fix knip configuration hints
 - Update all deps and migrate core/service to rollup+ts builds
 - Merge main into branch, resolve package.json conflicts
+- Release @karmaniverous/jeeves-server v3.10.9
 ## [3.10.8] - 2026-05-12
 
 ### 💼 Other
