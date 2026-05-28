@@ -55,6 +55,7 @@ function computeSubLink(
   dirs: boolean,
   exp: string | undefined,
   isDirectory: boolean,
+  fragment?: string,
 ): string | null {
   // Check if directories are allowed
   if (isDirectory && !dirs) return null;
@@ -88,6 +89,7 @@ function computeSubLink(
   // Build URL
   let url = `/browse${targetUrlPath}?key=${key}&d=${String(maxDepth)}&dirs=${dirs ? '1' : '0'}&s=${compressedStack}`;
   if (exp) url += `&exp=${exp}`;
+  if (fragment !== undefined) url += `#${fragment}`;
   return url;
 }
 
@@ -149,18 +151,25 @@ export function rewriteLinksForDeepShare(
     // Raw file links — leave as-is (these are for images/downloads)
     if (href.startsWith('/api/raw/')) return;
 
+    // Strip fragment before resolving path, preserve it for later
+    const hashIndex = href.indexOf('#');
+    const hrefWithoutFragment =
+      hashIndex >= 0 ? href.substring(0, hashIndex) : href;
+    const fragment = hashIndex >= 0 ? href.substring(hashIndex + 1) : undefined;
+
     // Determine target path
     let targetPath: string;
-    if (href.startsWith('/browse/')) {
-      targetPath = '/' + href.replace('/browse/', '').split('?')[0];
-    } else if (href.startsWith('/')) {
-      targetPath = href.split('?')[0];
+    if (hrefWithoutFragment.startsWith('/browse/')) {
+      targetPath =
+        '/' + hrefWithoutFragment.replace('/browse/', '').split('?')[0];
+    } else if (hrefWithoutFragment.startsWith('/')) {
+      targetPath = hrefWithoutFragment.split('?')[0];
     } else {
       // Relative link — resolve against current path directory
       const dir = currentPath.substring(0, currentPath.lastIndexOf('/'));
       targetPath = dir
-        ? `${dir}/${href.split('?')[0]}`
-        : `/${href.split('?')[0]}`;
+        ? `${dir}/${hrefWithoutFragment.split('?')[0]}`
+        : `/${hrefWithoutFragment.split('?')[0]}`;
     }
 
     // Normalize
@@ -175,6 +184,7 @@ export function rewriteLinksForDeepShare(
       dirs,
       exp,
       isDirectory,
+      fragment,
     );
 
     if (subLink === null) {
