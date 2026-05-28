@@ -89,7 +89,7 @@ function computeSubLink(
   // Build URL
   let url = `/browse${targetUrlPath}?key=${key}&d=${String(maxDepth)}&dirs=${dirs ? '1' : '0'}&s=${compressedStack}`;
   if (exp) url += `&exp=${exp}`;
-  if (fragment) url += `#${fragment}`;
+  if (fragment !== undefined) url += `#${fragment}`;
   return url;
 }
 
