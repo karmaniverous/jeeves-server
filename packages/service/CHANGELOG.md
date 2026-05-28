@@ -6,7 +6,17 @@ All notable changes to this project will be documented in this file.
 
 ### 🐛 Bug Fixes
 
+- Strip fragment from href before resolving deep share link target path
+- Use strict undefined check for empty fragment preservation
+## [3.10.10] - 2026-05-16
+
+### 🐛 Bug Fixes
+
 - Pin jeeves-server-core dependency to ^0.1.2
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.10.10
 ## [3.10.9] - 2026-05-13
 
 ### 🚀 Features
