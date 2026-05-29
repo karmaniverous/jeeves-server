@@ -11,6 +11,7 @@ import {
   addPrintStyles,
   captureSvgsAsPng,
   launchBrowser,
+  setupAuthInterception,
   SVG_CONTAINER_SELECTORS,
   waitForSpaContent,
 } from './puppeteer.js';
@@ -21,6 +22,8 @@ interface ExportOptions {
   url: string;
   fileName: string;
   format: ExportFormat;
+  /** Internal auth key appended to `/api/raw/` sub-resource requests. */
+  authKey?: string;
 }
 
 // Max bounds for images in DOCX (6 inches × 8 inches at 96dpi)
@@ -34,6 +37,9 @@ async function exportPDF(options: ExportOptions): Promise<Buffer> {
   const browser = await launchBrowser();
   try {
     const page = await browser.newPage();
+    if (options.authKey) {
+      await setupAuthInterception(page, options.authKey);
+    }
     await page.goto(options.url, { waitUntil: 'networkidle0' });
     await waitForSpaContent(page);
     await addPrintStyles(page);
@@ -57,6 +63,9 @@ async function exportDOCX(options: ExportOptions): Promise<Buffer> {
   const browser = await launchBrowser();
   try {
     const page = await browser.newPage();
+    if (options.authKey) {
+      await setupAuthInterception(page, options.authKey);
+    }
     await page.setViewport({ width: 1200, height: 800 });
     await page.goto(options.url, { waitUntil: 'networkidle0' });
     await waitForSpaContent(page);
