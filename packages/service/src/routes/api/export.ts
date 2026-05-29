@@ -134,6 +134,7 @@ export const exportRoutes: FastifyPluginAsync = async (fastify) => {
           url: exportUrl,
           fileName,
           format: format,
+          authKey: exportKey,
         });
 
         // Cache the result

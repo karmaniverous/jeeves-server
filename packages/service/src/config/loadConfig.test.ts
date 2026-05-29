@@ -4,10 +4,14 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@karmaniverous/jeeves', () => ({
-  getConfigRoot: () => loadConfigTestConfigRoot,
-  SERVER_PORT: 1934,
-}));
+vi.mock(import('@karmaniverous/jeeves'), async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    getConfigRoot: () => loadConfigTestConfigRoot,
+    SERVER_PORT: 1934 as const,
+  };
+});
 
 let loadConfigTestConfigRoot = '';
 
