@@ -38,7 +38,7 @@ async function exportPDF(options: ExportOptions): Promise<Buffer> {
   try {
     const page = await browser.newPage();
     if (options.authKey) {
-      await setupAuthInterception(page, options.authKey);
+      await setupAuthInterception(page, options.authKey, options.url);
     }
     await page.goto(options.url, { waitUntil: 'networkidle0' });
     await waitForSpaContent(page);
@@ -64,7 +64,7 @@ async function exportDOCX(options: ExportOptions): Promise<Buffer> {
   try {
     const page = await browser.newPage();
     if (options.authKey) {
-      await setupAuthInterception(page, options.authKey);
+      await setupAuthInterception(page, options.authKey, options.url);
     }
     await page.setViewport({ width: 1200, height: 800 });
     await page.goto(options.url, { waitUntil: 'networkidle0' });

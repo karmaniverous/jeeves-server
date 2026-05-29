@@ -89,14 +89,23 @@ const PRINT_CSS = `
 export async function setupAuthInterception(
   page: Page,
   authKey: string,
+  baseUrl: string,
 ): Promise<void> {
+  const allowedOrigin = new URL(baseUrl).origin;
   await page.setRequestInterception(true);
   page.on('request', (req) => {
-    const url = new URL(req.url());
-    if (url.pathname.startsWith('/api/raw/')) {
-      url.searchParams.set('key', authKey);
-      void req.continue({ url: url.toString() });
-    } else {
+    try {
+      const url = new URL(req.url());
+      if (
+        url.origin === allowedOrigin &&
+        url.pathname.startsWith('/api/raw/')
+      ) {
+        url.searchParams.set('key', authKey);
+        void req.continue({ url: url.toString() });
+      } else {
+        void req.continue();
+      }
+    } catch {
       void req.continue();
     }
   });
