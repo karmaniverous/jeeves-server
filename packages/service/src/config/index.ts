@@ -10,10 +10,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { substituteEnvVars } from '@karmaniverous/jeeves';
+
 import { migrateConfigPath } from './migration.js';
 import { buildRuntimeConfig } from './resolve.js';
 import { DEPRECATED_CONFIG_PROPS, jeevesConfigSchema } from './schema.js';
-import { substituteEnvVars } from './substituteEnvVars.js';
 import type { RuntimeConfig } from './types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
