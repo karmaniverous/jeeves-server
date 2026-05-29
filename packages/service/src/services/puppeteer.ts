@@ -1,6 +1,8 @@
 /**
  * Puppeteer browser management and page preparation utilities.
  * Shared by PDF and DOCX export paths.
+ *
+ * @packageDocumentation
  */
 
 import type { Browser, Page } from 'puppeteer-core';
@@ -77,6 +79,37 @@ const PRINT_CSS = `
   }
   img { object-fit: contain !important; }
 `;
+
+/**
+ * Intercept requests matching `/api/raw/` and append an auth key.
+ *
+ * Must be called **before** `page.goto()` so the interception is active
+ * when the browser fetches sub-resources (images, etc.).
+ */
+export async function setupAuthInterception(
+  page: Page,
+  authKey: string,
+  baseUrl: string,
+): Promise<void> {
+  const allowedOrigin = new URL(baseUrl).origin;
+  await page.setRequestInterception(true);
+  page.on('request', (req) => {
+    try {
+      const url = new URL(req.url());
+      if (
+        url.origin === allowedOrigin &&
+        url.pathname.startsWith('/api/raw/')
+      ) {
+        url.searchParams.set('key', authKey);
+        void req.continue({ url: url.toString() });
+      } else {
+        void req.continue();
+      }
+    } catch {
+      void req.continue();
+    }
+  });
+}
 
 /**
  * Add print styles to a Puppeteer page.
