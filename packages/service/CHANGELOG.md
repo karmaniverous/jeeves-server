@@ -4,10 +4,30 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 💼 Other
+
+- [220] fix: thread auth key through Puppeteer export for raw image resolution (#220)
+- [220] fix: restrict auth key interception to local origin
+- Merge remote-tracking branch 'origin/bugfix/220-raw-image-export-auth' into chore/ncu-update-and-hoist-144
+- Updated core
+
+### 🚜 Refactor
+
+- Use substituteEnvVars from @karmaniverous/jeeves core (#144)
+
+### ⚙️ Miscellaneous Tasks
+
+- Update dependencies via ncu --peer
+## [3.10.11] - 2026-05-28
+
 ### 🐛 Bug Fixes
 
 - Strip fragment from href before resolving deep share link target path
 - Use strict undefined check for empty fragment preservation
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.10.11
 ## [3.10.10] - 2026-05-16
 
 ### 🐛 Bug Fixes
