@@ -43,9 +43,13 @@ describe('GET /status', () => {
   it('returns structured status with SDK shape', async () => {
     // Create a minimal Fastify-like test harness
     const routes: Record<string, (req: unknown) => Promise<unknown>> = {};
+    const closeHooks: (() => Promise<void>)[] = [];
     const fakeFastify = {
       get: (path: string, handler: (req: unknown) => Promise<unknown>) => {
         routes[path] = handler;
+      },
+      addHook: (hook: string, handler: () => Promise<void>) => {
+        if (hook === 'onClose') closeHooks.push(handler);
       },
     };
 
@@ -81,5 +85,14 @@ describe('GET /status', () => {
     expect(exports.diagrams).toEqual(['svg', 'png']);
     expect(exports.chromeAvailable).toBe(true);
     expect((health.diagrams as { mermaid: boolean }).mermaid).toBe(true);
+
+    // Services should be present (cache may or may not have populated)
+    const services = health.services as Record<string, unknown>;
+    expect(services).toHaveProperty('watcher');
+    expect(services).toHaveProperty('runner');
+    expect(services).toHaveProperty('meta');
+
+    // Clean up background interval
+    await Promise.all(closeHooks.map((hook) => hook()));
   });
 });
