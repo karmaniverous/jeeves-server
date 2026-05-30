@@ -4,6 +4,7 @@
  */
 
 import fs from 'node:fs';
+import { builtinModules } from 'node:module';
 
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
@@ -15,9 +16,19 @@ const pkg = JSON.parse(
   fs.readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
 ) as { dependencies?: Record<string, string> };
 
+const external = [
+  /^node:/,
+  ...builtinModules,
+  ...builtinModules.map((m) => new RegExp(`^${m}/`)),
+  ...Object.keys(pkg.dependencies ?? {}).flatMap((dep) => [
+    dep,
+    new RegExp(`^${dep}/`),
+  ]),
+];
+
 const pluginConfig: RollupOptions = {
   input: 'src/index.ts',
-  external: [/^node:/, ...Object.keys(pkg.dependencies ?? {})],
+  external,
   output: {
     dir: 'dist',
     format: 'esm',
@@ -40,7 +51,7 @@ const pluginConfig: RollupOptions = {
 
 const cliConfig: RollupOptions = {
   input: 'src/cli.ts',
-  external: [/^node:/, ...Object.keys(pkg.dependencies ?? {})],
+  external,
   output: {
     file: 'dist/cli.js',
     format: 'esm',
