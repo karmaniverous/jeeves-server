@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🐛 Bug Fixes
+
+- Add content/ to service package files field
+- Background-cache service health checks in /status (#177)
+- Scope refresh timer and add error handling per review
+## [3.10.12] - 2026-05-29
+
 ### 💼 Other
 
 - [220] fix: thread auth key through Puppeteer export for raw image resolution (#220)
@@ -18,6 +25,7 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - Update dependencies via ncu --peer
+- Release @karmaniverous/jeeves-server v3.10.12
 ## [3.10.11] - 2026-05-28
 
 ### 🐛 Bug Fixes
