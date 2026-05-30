@@ -30,7 +30,6 @@ interface ServiceCache {
 }
 
 let serviceCache: ServiceCache | null = null;
-let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
 /**
  * Probe a single service's health endpoint.
@@ -57,18 +56,22 @@ async function checkService(url: string): Promise<ServiceStatus> {
 
 /** Refresh the background service-health cache. */
 async function refreshServiceCache(): Promise<void> {
-  const [watcher, runner, meta] = await Promise.all([
-    checkService(getServiceUrl('watcher')),
-    checkService(getServiceUrl('runner')),
-    checkService(getServiceUrl('meta')),
-  ]);
+  try {
+    const [watcher, runner, meta] = await Promise.all([
+      checkService(getServiceUrl('watcher')),
+      checkService(getServiceUrl('runner')),
+      checkService(getServiceUrl('meta')),
+    ]);
 
-  serviceCache = {
-    watcher,
-    runner,
-    meta,
-    lastChecked: new Date().toISOString(),
-  };
+    serviceCache = {
+      watcher,
+      runner,
+      meta,
+      lastChecked: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error('Failed to refresh service status cache:', error);
+  }
 }
 
 const handleStatus = createStatusHandler({
@@ -136,6 +139,8 @@ const handleStatus = createStatusHandler({
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const statusRoutes: FastifyPluginAsync = async (fastify) => {
+  let refreshTimer: ReturnType<typeof setInterval> | null = null;
+
   // Fire-and-forget initial cache population.
   void refreshServiceCache();
 

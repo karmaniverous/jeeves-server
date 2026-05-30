@@ -43,12 +43,13 @@ describe('GET /status', () => {
   it('returns structured status with SDK shape', async () => {
     // Create a minimal Fastify-like test harness
     const routes: Record<string, (req: unknown) => Promise<unknown>> = {};
+    const closeHooks: (() => Promise<void>)[] = [];
     const fakeFastify = {
       get: (path: string, handler: (req: unknown) => Promise<unknown>) => {
         routes[path] = handler;
       },
-      addHook: (_hook: string, _handler: unknown) => {
-        // no-op for test harness
+      addHook: (hook: string, handler: () => Promise<void>) => {
+        if (hook === 'onClose') closeHooks.push(handler);
       },
     };
 
@@ -90,5 +91,8 @@ describe('GET /status', () => {
     expect(services).toHaveProperty('watcher');
     expect(services).toHaveProperty('runner');
     expect(services).toHaveProperty('meta');
+
+    // Clean up background interval
+    await Promise.all(closeHooks.map((hook) => hook()));
   });
 });
