@@ -47,6 +47,9 @@ describe('GET /status', () => {
       get: (path: string, handler: (req: unknown) => Promise<unknown>) => {
         routes[path] = handler;
       },
+      addHook: (_hook: string, _handler: unknown) => {
+        // no-op for test harness
+      },
     };
 
     await statusRoutes(fakeFastify as never, {});
@@ -81,5 +84,11 @@ describe('GET /status', () => {
     expect(exports.diagrams).toEqual(['svg', 'png']);
     expect(exports.chromeAvailable).toBe(true);
     expect((health.diagrams as { mermaid: boolean }).mermaid).toBe(true);
+
+    // Services should be present (cache may or may not have populated)
+    const services = health.services as Record<string, unknown>;
+    expect(services).toHaveProperty('watcher');
+    expect(services).toHaveProperty('runner');
+    expect(services).toHaveProperty('meta');
   });
 });

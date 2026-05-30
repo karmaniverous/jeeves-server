@@ -3,6 +3,9 @@
  *
  * Returns standard `{ name, version, uptime, status, health }` shape
  * with server-specific details nested under `health`.
+ *
+ * Service health checks (watcher, runner, meta) are cached in the
+ * background on a 60-second interval to avoid blocking the response.
  */
 
 import { createStatusHandler, getServiceUrl } from '@karmaniverous/jeeves';
@@ -11,17 +14,35 @@ import type { FastifyPluginAsync } from 'fastify';
 import { getConfig } from '../config/index.js';
 import { packageVersion } from '../util/packageVersion.js';
 
+/** Health status of a single downstream service. */
 interface ServiceStatus {
   url: string;
   reachable: boolean;
   version?: string;
 }
 
+/** Background cache for downstream service health checks. */
+interface ServiceCache {
+  watcher: ServiceStatus;
+  runner: ServiceStatus;
+  meta: ServiceStatus;
+  lastChecked: string;
+}
+
+let serviceCache: ServiceCache | null = null;
+let refreshTimer: ReturnType<typeof setInterval> | null = null;
+
+/**
+ * Probe a single service's health endpoint.
+ *
+ * Tries `/status` then `/health`, returning the first successful
+ * response. Times out after 1 500 ms per attempt.
+ */
 async function checkService(url: string): Promise<ServiceStatus> {
   for (const endpoint of ['/status', '/health']) {
     try {
       const res = await fetch(`${url}${endpoint}`, {
-        signal: AbortSignal.timeout(3000),
+        signal: AbortSignal.timeout(1500),
       });
       if (res.ok) {
         const data = (await res.json()) as { version?: string };
@@ -34,17 +55,51 @@ async function checkService(url: string): Promise<ServiceStatus> {
   return { url, reachable: false };
 }
 
+/** Refresh the background service-health cache. */
+async function refreshServiceCache(): Promise<void> {
+  const [watcher, runner, meta] = await Promise.all([
+    checkService(getServiceUrl('watcher')),
+    checkService(getServiceUrl('runner')),
+    checkService(getServiceUrl('meta')),
+  ]);
+
+  serviceCache = {
+    watcher,
+    runner,
+    meta,
+    lastChecked: new Date().toISOString(),
+  };
+}
+
 const handleStatus = createStatusHandler({
   name: 'server',
   version: packageVersion,
+  // eslint-disable-next-line @typescript-eslint/require-await
   getHealth: async () => {
     const config = getConfig();
 
-    const [watcher, runner, meta] = await Promise.all([
-      checkService(getServiceUrl('watcher')),
-      checkService(getServiceUrl('runner')),
-      checkService(getServiceUrl('meta')),
-    ]);
+    const services = serviceCache
+      ? {
+          watcher: serviceCache.watcher,
+          runner: serviceCache.runner,
+          meta: serviceCache.meta,
+          lastChecked: serviceCache.lastChecked,
+        }
+      : {
+          watcher: {
+            url: getServiceUrl('watcher'),
+            reachable: false,
+          },
+          runner: {
+            url: getServiceUrl('runner'),
+            reachable: false,
+          },
+          meta: {
+            url: getServiceUrl('meta'),
+            reachable: false,
+          },
+          lastChecked: null,
+        };
 
     return {
       port: config.port,
@@ -74,17 +129,30 @@ const handleStatus = createStatusHandler({
           servers: config.plantuml.servers,
         },
       },
-      services: {
-        watcher,
-        runner,
-        meta,
-      },
+      services,
     };
   },
 });
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const statusRoutes: FastifyPluginAsync = async (fastify) => {
+  // Fire-and-forget initial cache population.
+  void refreshServiceCache();
+
+  // Refresh every 60 seconds.
+  refreshTimer = setInterval(() => {
+    void refreshServiceCache();
+  }, 60_000);
+
+  // Clean up on shutdown.
+  // eslint-disable-next-line @typescript-eslint/require-await
+  fastify.addHook('onClose', async () => {
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
+  });
+
   fastify.get('/status', async () => {
     const result = await handleStatus();
     return result.body;
