@@ -4,11 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 💼 Other
+
+- Updated deps
+## [3.10.13] - 2026-05-30
+
 ### 🐛 Bug Fixes
 
 - Add content/ to service package files field
 - Background-cache service health checks in /status (#177)
 - Scope refresh timer and add error handling per review
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.10.13
 ## [3.10.12] - 2026-05-29
 
 ### 💼 Other
