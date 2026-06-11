@@ -4,9 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 💼 Other
+
+- Updated core
+- Updated jeeves/core
+## [0.1.3] - 2026-05-29
+
 ### ⚙️ Miscellaneous Tasks
 
 - Update dependencies via ncu --peer
+- Release @karmaniverous/jeeves-server-core v0.1.3
 ## [0.1.2] - 2026-05-13
 
 ### 🚀 Features
