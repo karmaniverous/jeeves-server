@@ -1,12 +1,10 @@
 /**
  * Rollup configuration for the OpenClaw plugin package.
  * Two entry points: plugin (ESM + declarations) and CLI (ESM executable).
- *
- * @remarks
- * `@karmaniverous/jeeves` is bundled (not external) because the plugin runs
- * inside `~/.openclaw/extensions/` where there is no `node_modules` tree.
- * Node builtins remain external since they're always available at runtime.
  */
+
+import fs from 'node:fs';
+import { builtinModules } from 'node:module';
 
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
@@ -14,26 +12,23 @@ import resolve from '@rollup/plugin-node-resolve';
 import typescriptPlugin from '@rollup/plugin-typescript';
 import type { RollupOptions } from 'rollup';
 
-const nodeBuiltins = [
-  'node:crypto',
-  'node:child_process',
-  'node:fs',
-  'node:fs/promises',
-  'node:module',
-  'node:path',
-  'node:os',
-  'node:url',
-  'crypto',
-  'child_process',
-  'fs',
-  'path',
-  'os',
-  'url',
+const pkg = JSON.parse(
+  fs.readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
+) as { dependencies?: Record<string, string> };
+
+const external = [
+  /^node:/,
+  ...builtinModules,
+  ...builtinModules.map((m) => new RegExp(`^${m}/`)),
+  ...Object.keys(pkg.dependencies ?? {}).flatMap((dep) => [
+    dep,
+    new RegExp(`^${dep}/`),
+  ]),
 ];
 
 const pluginConfig: RollupOptions = {
   input: 'src/index.ts',
-  external: nodeBuiltins,
+  external,
   output: {
     dir: 'dist',
     format: 'esm',
@@ -56,7 +51,7 @@ const pluginConfig: RollupOptions = {
 
 const cliConfig: RollupOptions = {
   input: 'src/cli.ts',
-  external: nodeBuiltins,
+  external,
   output: {
     file: 'dist/cli.js',
     format: 'esm',
