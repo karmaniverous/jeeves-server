@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🐛 Bug Fixes
+
+- *(openclaw)* Externalize @karmaniverous/jeeves in rollup config (closes #224)
+
+### 💼 Other
+
+- Updated deps
+
+### 🚜 Refactor
+
+- *(openclaw)* Use builtinModules and shared external array per review
+## [0.10.6] - 2026-05-29
+
 ### 💼 Other
 
 - Updated core
@@ -11,6 +24,7 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - Update dependencies via ncu --peer
+- Release @karmaniverous/jeeves-server-openclaw v0.10.6
 ## [0.10.5] - 2026-05-16
 
 ### 🐛 Bug Fixes
