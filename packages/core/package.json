@@ -1,7 +1,7 @@
 {
   "author": "Jeeves",
   "dependencies": {
-    "@karmaniverous/jeeves": "^0.5.11",
+    "@karmaniverous/jeeves": "^0.5.12",
     "zod": "^4.4.3"
   },
   "description": "Shared cryptographic utilities and API types for jeeves-server packages.",
