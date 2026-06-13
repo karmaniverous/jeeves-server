@@ -68,6 +68,28 @@ Legacy paths (`jeeves-server.config.json`) are auto-migrated to the new conventi
 }
 ```
 
+### Logging
+
+Optional logging configuration. Matches the pattern used by jeeves-watcher and jeeves-meta.
+
+```json
+{
+  "logging": {
+    "level": "debug",
+    "file": "/var/log/jeeves-server.log"
+  }
+}
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `level` | string | `info` | Pino log level: `trace`, `debug`, `info`, `warn`, `error`, `fatal` |
+| `file` | string | — | Log file path. When set, logs are written to this file via pino file transport. When omitted, logs go to stdout. |
+
+The entire `logging` block is optional. When absent, the server uses pino's default (`info` level, stdout).
+
+> **Not hot-reloadable.** Logging config is set when the Fastify server is constructed. Changes require `jeeves-server service restart`.
+
 ### Environment variable substitution
 
 String values in the config support `${VAR_NAME}` substitution from `process.env`:

@@ -14,6 +14,21 @@ Shared workspace package providing cryptographic utilities and API types consume
 | `computeDeepShareKey(seed, path, params)` | HMAC-SHA256 key for deep directory shares with depth/dirs/stack/expiry |
 | `timingSafeEqual(a, b)` | Constant-time string comparison to prevent timing attacks |
 
+### Config Schema
+
+| Export | Description |
+|--------|-------------|
+| `loggingConfigSchema` | Zod schema for `logging` config block (`level`, `file`, both optional) |
+| `LoggingConfig` | Inferred TypeScript type from `loggingConfigSchema` |
+| `jeevesConfigSchema` | Full server config Zod schema (includes `logging`, `oauth`, all other fields) |
+
+### Endpoint Catalog
+
+| Export | Description |
+|--------|-------------|
+| `EndpointEntry` | Interface describing a single API operation (method, path, description, auth flags) |
+| `serverEndpoints` | Complete declarative catalog of all jeeves-server API endpoints (38 entries) |
+
 ### API Types
 
 | Type | Description |
@@ -36,6 +51,9 @@ Shared workspace package providing cryptographic utilities and API types consume
 import {
   computeInsiderKey,
   computePathKey,
+  serverEndpoints,
+  type EndpointEntry,
+  type LoggingConfig,
   type ShareRequest,
 } from '@karmaniverous/jeeves-server-core';
 ```
