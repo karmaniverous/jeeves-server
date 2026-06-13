@@ -86,9 +86,9 @@ export function TabBar({
         </div>
       )}
       {undoRedoControls}
-      {isInsider && activeTab === 'raw' && file?.content != null && !editing && (
+      {isInsider && file?.content != null && !editing && (
         <button
-          onClick={() => setEditing(true)}
+          onClick={() => { if (activeTab !== 'raw') setViewTab('raw'); setEditing(true); }}
           className="ml-2 flex items-center gap-1 px-2 py-1 text-sm text-muted-foreground hover:text-foreground border border-border rounded transition-colors"
           title="Edit file"
         >
