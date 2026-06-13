@@ -15,6 +15,15 @@ Operate and interact with a jeeves-server deployment. Use for file browsing, doc
 | `server_config` | Query resolved server configuration (supports JSONPath) |
 | `server_config_apply` | Apply a configuration patch to the running server |
 | `server_service` | Manage the system service (install, uninstall, start, stop, restart, status) |
+| `server_file_write` | Overwrite file content (insider-only; file must already exist) |
+| `server_file_mutate` | Apply structured .md mutations: edit-block, delete-block, insert-block, edit-cell, toggle-checkbox |
+| `server_rotate_key` | Rotate the authenticated insider's API key (invalidates all share links) |
+| `server_export_cache_clear` | Clear export and diagram caches for a given path |
+| `server_drives` | List available root drives/labels configured on the server |
+| `server_auth_status` | Check current authentication status |
+| `oauth_authorize` | Initiate OAuth2 authorization for a provider/account |
+| `oauth_status` | Check if valid OAuth2 credentials exist for a provider/account |
+| `oauth_token` | Retrieve a valid access token (with automatic refresh) |
 
 ## Browse Paths
 
@@ -28,9 +37,19 @@ To convert a Windows file path to a browse path:
 
 When the `publicUrl` plugin config is set (e.g. `https://jeeves.example.com`), all URLs returned by server tools are automatically rewritten to use the public domain instead of the internal `apiUrl`. No manual URL rewriting is needed.
 
-## Checkbox Toggling
+## Inline Editing
 
-Insiders can toggle GFM task-list checkboxes in rendered Markdown pages via the web UI. The server exposes `POST /api/toggle-checkbox/*` with stale-write protection (mtime-based conflict detection). This is a web-UI feature — no agent tool is required.
+Insiders can edit rendered Markdown pages via the web UI:
+- **Block editing:** Hover controls on rendered blocks (paragraphs, headings, lists, tables, code, diagrams) for edit, copy, insert, and delete
+- **Cell editing:** Direct table cell editing
+- **Checkbox toggling:** Interactive task-list checkboxes via `POST /api/file/*` with `action: 'toggle-checkbox'` (fire-and-forget, last-write-wins)
+- **Full-document editing:** Edit button in the tab bar (visible on both rendered and raw tabs for insiders)
+
+All mutations go through `POST /api/file/*` (unified mutation endpoint). The `server_file_mutate` tool provides agent access to the same mutations.
+
+## Auth Gate
+
+Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) returns a branded sign-in page instead of the SPA. The page shows a "Sign in with Google" button (when Google auth is configured) or an API key required message. After sign-in, the user is redirected back to the originally requested page. API routes continue returning JSON 401 for programmatic clients.
 
 ## Browse Features
 
@@ -120,6 +139,9 @@ Or create `jeeves-server/config.json` manually (JSON only):
     "_internal": "random-hex-seed-for-puppeteer",
     "_plugin": "random-hex-seed-for-openclaw-plugin",
     "primary": "random-hex-seed-for-api-access"
+  },
+  "logging": {
+    "level": "info"
   }
 }
 ```

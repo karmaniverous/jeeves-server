@@ -12,7 +12,7 @@ All API requests (except `/health` and `/api/status`) authenticate via `?key=<in
 
 ### Browser Auth Gate
 
-When an unauthenticated browser hits a SPA route (`/browse/*`, `/runner/*`), the server returns a branded sign-in page instead of the SPA. The page offers a "Sign in with Google" button (when Google OAuth is configured) or an API key required message (keys-only mode). After successful Google sign-in, the user is redirected back to the originally requested page.
+When an unauthenticated browser hits a SPA route (`/`, `/browse/*`, `/runner/*`), the server returns a branded sign-in page instead of the SPA. The page offers a "Sign in with Google" button (when Google OAuth is configured) or an API key required message (keys-only mode). After successful Google sign-in, the user is redirected back to the originally requested page.
 
 API routes continue returning JSON `{ error: 'Unauthorized' }` for programmatic clients — the sign-in page only applies to browser-navigated SPA paths.
 
