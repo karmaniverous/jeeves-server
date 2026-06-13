@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@karmaniverous/jeeves": "^0.5.12",
-    "@karmaniverous/jeeves-server-core": "^0.1.4",
+    "@karmaniverous/jeeves-server-core": "^0.1.5",
     "zod": "^4.4.3"
   },
   "description": "OpenClaw plugin for jeeves-server — file browsing, sharing, export, and event gateway tools",
