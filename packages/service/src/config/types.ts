@@ -3,10 +3,10 @@
  * Config types are derived from Zod schema in schema.ts.
  */
 
-import type { AuthMode, JeevesConfig } from './schema.js';
+import type { AuthMode, JeevesConfig, LoggingConfig } from './schema.js';
 
 // Re-export config types from schema
-export type { AuthMode, JeevesConfig };
+export type { AuthMode, JeevesConfig, LoggingConfig };
 
 /**
  * Normalized scopes — always resolved to \{ allow, deny \} form.
@@ -82,6 +82,8 @@ export interface RuntimeConfig {
       }
     >;
   } | null;
+  /** Logging configuration (not hot-reloadable). */
+  logging?: LoggingConfig;
   /** Shortlink slug → redirect target map. */
   go: Record<string, string>;
   configPath: string;

@@ -33,8 +33,19 @@ async function start() {
   try {
     const config = isConfigInitialized() ? getConfig() : initConfig();
 
+    // Logging config (not hot-reloadable — requires service restart)
+    const loggerConfig: Record<string, unknown> = {
+      level: config.logging?.level ?? 'info',
+    };
+    if (config.logging?.file) {
+      loggerConfig.transport = {
+        target: 'pino/file',
+        options: { destination: config.logging.file, mkdir: true },
+      };
+    }
+
     const fastify = Fastify({
-      logger: true,
+      logger: loggerConfig,
     });
 
     // Register plugins

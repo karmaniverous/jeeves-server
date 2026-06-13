@@ -10,6 +10,8 @@ export {
   type JeevesConfig,
   jeevesConfigSchema,
   keyEntrySchema,
+  type LoggingConfig,
+  loggingConfigSchema,
   oauthProviderSchema,
   oauthSchema,
   scopesObjectSchema,
