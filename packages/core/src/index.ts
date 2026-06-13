@@ -12,6 +12,7 @@ export {
   type DeepShareParams,
   timingSafeEqual,
 } from './crypto.js';
+export { type EndpointEntry, serverEndpoints } from './endpoints.js';
 export {
   type AuthMode,
   authModeSchema,
