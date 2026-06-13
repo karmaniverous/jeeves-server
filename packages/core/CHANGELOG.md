@@ -6,8 +6,22 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [213] feat: add logging.level and logging.file config support (#213)
+- [210] feat: shared endpoint catalog in core package (#210)
+
+### 📚 Documentation
+
+- Sync README, guides, and core exports with touched code
+## [0.1.4] - 2026-06-11
+
+### 💼 Other
+
 - Updated core
 - Updated jeeves/core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-core v0.1.4
 ## [0.1.3] - 2026-05-29
 
 ### ⚙️ Miscellaneous Tasks
