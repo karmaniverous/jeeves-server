@@ -4,9 +4,42 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🐛 Bug Fixes
+
+- Address Copilot review and CI smoke test failures
+
+### 💼 Other
+
+- [211] fix: show edit button on rendered tab for insiders (#211)
+- [213] feat: add logging.level and logging.file config support (#213)
+- [214] feat: auth-gated SPA fallback with branded sign-in page (#214)
+- Updated core
+
+### 🚜 Refactor
+
+- DRY deep-share param extraction, remove redundant nullish coalescing
+
+### 📚 Documentation
+
+- Sync README, guides, and core exports with touched code
+- Sync SKILL.md and api-integration guide with touched code
+
+### 🧪 Testing
+
+- Add tests for extractDeepParams and sanitizeReturnTo, consolidate signInPage tests
+
+### ⚙️ Miscellaneous Tasks
+
+- Add zod direct dependency, remove stale package-directory
+## [3.10.14] - 2026-06-11
+
 ### 💼 Other
 
 - Updated deps
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.10.14
 ## [3.10.13] - 2026-05-30
 
 ### 🐛 Bug Fixes
