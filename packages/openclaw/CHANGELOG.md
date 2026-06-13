@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 💼 Other
+
+- Updated core
+
+### 📚 Documentation
+
+- Sync SKILL.md and api-integration guide with touched code
+## [0.10.7] - 2026-06-11
+
 ### 🐛 Bug Fixes
 
 - *(openclaw)* Externalize @karmaniverous/jeeves in rollup config (closes #224)
@@ -15,6 +24,10 @@ All notable changes to this project will be documented in this file.
 ### 🚜 Refactor
 
 - *(openclaw)* Use builtinModules and shared external array per review
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-openclaw v0.10.7
 ## [0.10.6] - 2026-05-29
 
 ### 💼 Other
