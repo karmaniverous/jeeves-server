@@ -104,11 +104,10 @@ async function start() {
 
         // Extract the browse path from the URL for path-scoped key verification.
         // /browse/j/docs/readme.md → j/docs/readme.md
+        // /browse or /browse/ → /
         const urlPath =
-          request.url
-            .split('?')[0]
-            .replace(/^\/browse\//, '')
-            .replace(/^\/runner\//, '') || '/';
+          request.url.split('?')[0].replace(/^\/(browse|runner)(\/|$)/, '') ||
+          '/';
 
         const deepParams =
           query.d !== undefined && query.s !== undefined

@@ -130,10 +130,12 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
     const rawReturnTo = request.query.state
       ? Buffer.from(request.query.state, 'base64url').toString()
       : '/browse';
-    // Reject absolute URLs to prevent open redirect
-    const returnTo = /^[a-z]+:\/\//i.test(rawReturnTo)
-      ? '/browse'
-      : rawReturnTo;
+    // Only allow relative paths starting with a single / (blocks protocol-relative
+    // URLs like //evil.com, scheme URLs like javascript:..., and CRLF injection)
+    const returnTo =
+      rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//')
+        ? rawReturnTo
+        : '/browse';
     return reply.redirect(returnTo);
   });
 

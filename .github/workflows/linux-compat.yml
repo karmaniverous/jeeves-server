@@ -98,12 +98,21 @@ jobs:
           echo "README.md status: $HTTP_CODE"
           [ "$HTTP_CODE" = "200" ] || (echo "FAIL: README.md returned $HTTP_CODE" && exit 1)
 
-      - name: Smoke test - SPA loads
+      - name: Smoke test - SPA loads (authenticated)
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" "http://localhost:1934/browse?key=$INSIDER_KEY")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          echo "SPA (authenticated) status: $HTTP_CODE"
+          [ "$HTTP_CODE" = "200" ] || (echo "FAIL: SPA didn't load with key" && exit 1)
+
+      - name: Smoke test - SPA auth gate (unauthenticated)
         run: |
           RESPONSE=$(curl -s -w "\n%{http_code}" http://localhost:1934/browse)
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-          echo "SPA status: $HTTP_CODE"
-          [ "$HTTP_CODE" = "200" ] || (echo "FAIL: SPA didn't load" && exit 1)
+          echo "SPA (unauthenticated) status: $HTTP_CODE"
+          [ "$HTTP_CODE" = "401" ] || (echo "FAIL: expected 401 for unauthenticated SPA, got $HTTP_CODE" && exit 1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          echo "$BODY" | grep -q "Sign in to continue" || (echo "FAIL: sign-in page not rendered" && exit 1)
 
       - name: Stop server
         if: always()
