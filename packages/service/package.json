@@ -20,12 +20,12 @@
     "markdown-it-anchor": "^9.2.0",
     "markdown-it-task-lists": "^2.1.1",
     "mime-types": "^3.0.2",
-    "package-directory": "^8.2.0",
     "picomatch": "^4.0.4",
     "plantuml-encoder": "^1.4.0",
     "puppeteer": "^24.43.1",
     "puppeteer-core": "^23.11.1",
-    "radash": "^12.1.1"
+    "radash": "^12.1.1",
+    "zod": "^4.4.3"
   },
   "description": "Secure file browser, markdown viewer, and webhook gateway with PDF/DOCX export and expiring share links",
   "devDependencies": {
