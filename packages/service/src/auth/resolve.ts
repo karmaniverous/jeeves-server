@@ -168,6 +168,15 @@ export function extractDeepParams(
 }
 
 /**
+ * Validate a returnTo redirect target for open-redirect safety.
+ * Only allows relative paths starting with a single /.
+ * Returns the fallback value for anything else.
+ */
+export function sanitizeReturnTo(raw: string, fallback = '/browse'): string {
+  return raw.startsWith('/') && !raw.startsWith('//') ? raw : fallback;
+}
+
+/**
  * Find a resolved insider by email.
  */
 export function findInsider(

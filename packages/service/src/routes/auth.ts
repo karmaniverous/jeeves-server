@@ -11,6 +11,7 @@ import crypto from 'node:crypto';
 import type { FastifyPluginAsync } from 'fastify';
 
 import { buildAuthUrl, exchangeCode, getUserInfo } from '../auth/google.js';
+import { sanitizeReturnTo } from '../auth/resolve.js';
 import { COOKIE_NAME, createSessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
 import { writeInsiderSeedToConfig } from '../util/configPersist.js';
@@ -130,12 +131,7 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
     const rawReturnTo = request.query.state
       ? Buffer.from(request.query.state, 'base64url').toString()
       : '/browse';
-    // Only allow relative paths starting with a single / (blocks protocol-relative
-    // URLs like //evil.com, scheme URLs like javascript:..., and CRLF injection)
-    const returnTo =
-      rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//')
-        ? rawReturnTo
-        : '/browse';
+    const returnTo = sanitizeReturnTo(rawReturnTo);
     return reply.redirect(returnTo);
   });
 

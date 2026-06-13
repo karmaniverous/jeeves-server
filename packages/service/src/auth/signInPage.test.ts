@@ -3,48 +3,32 @@ import { describe, expect, it } from 'vitest';
 import { renderSignInPage } from './signInPage.js';
 
 describe('renderSignInPage', () => {
-  it('includes the page title', () => {
+  it('renders valid HTML with title, heading, path context, and dark mode support', () => {
     const html = renderSignInPage('/browse/j/docs/readme.md', ['google']);
     expect(html).toContain('<title>Jeeves Server');
-  });
-
-  it('includes the sign-in heading', () => {
-    const html = renderSignInPage('/browse/j/docs/readme.md', ['google']);
     expect(html).toContain('Sign in to continue');
-  });
-
-  it('shows the requested path', () => {
-    const html = renderSignInPage('/browse/j/docs/readme.md', ['google']);
     expect(html).toContain('/browse/j/docs/readme.md');
+    expect(html).toContain('prefers-color-scheme: dark');
   });
 
-  it('renders a Google sign-in link when google mode is active', () => {
-    const html = renderSignInPage('/browse/j/docs/readme.md', ['google']);
-    expect(html).toContain('/auth/login?returnTo=');
-    expect(html).toContain('Sign in with Google');
-  });
-
-  it('encodes the returnTo URL', () => {
+  it('renders Google sign-in link with encoded returnTo when google mode is active', () => {
     const html = renderSignInPage('/browse/j/docs/readme.md?foo=bar', [
       'google',
     ]);
+    expect(html).toContain('/auth/login?returnTo=');
+    expect(html).toContain('Sign in with Google');
     expect(html).toContain(
       encodeURIComponent('/browse/j/docs/readme.md?foo=bar'),
     );
   });
 
-  it('shows key-required message when google mode is absent', () => {
+  it('shows key-required message without Google link when google mode is absent', () => {
     const html = renderSignInPage('/browse/j/docs/readme.md', ['keys']);
     expect(html).toContain('API key for access');
     expect(html).not.toContain('Sign in with Google');
   });
 
-  it('includes dark mode media query', () => {
-    const html = renderSignInPage('/browse/j/docs/readme.md', ['google']);
-    expect(html).toContain('prefers-color-scheme: dark');
-  });
-
-  it('escapes HTML entities in the URL', () => {
+  it('escapes HTML entities in the URL to prevent XSS', () => {
     const html = renderSignInPage('/browse/<script>alert(1)</script>', [
       'google',
     ]);
