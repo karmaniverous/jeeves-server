@@ -5,6 +5,8 @@
 import type { FastifyInstance } from 'fastify';
 
 import {
+  type AuthQuery,
+  extractDeepParams,
   resolveInsiderKeyAuth,
   resolveKeyAuth,
   resolveSessionAuth,
@@ -70,17 +72,8 @@ export function addAuthMiddleware(fastify: FastifyInstance): void {
     }
 
     // General API auth
-    const query = request.query as {
-      key?: string;
-      exp?: string;
-      d?: string;
-      dirs?: string;
-      s?: string;
-    };
-    const deepParams =
-      query.d !== undefined && query.s !== undefined
-        ? { d: query.d, dirs: query.dirs ?? '0', s: query.s }
-        : undefined;
+    const query = request.query as AuthQuery;
+    const deepParams = extractDeepParams(query);
 
     const urlPath = request.url
       .split('?')[0]

@@ -262,6 +262,7 @@ export function buildRuntimeConfig(
           providers: config.oauth.providers,
         }
       : null,
+    logging: config.logging,
     go: config.go,
     configPath,
     eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),

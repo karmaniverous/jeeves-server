@@ -74,7 +74,7 @@ jeeves-server init --config /path/to/config-dir
 jeeves-server start --config /path/to/jeeves-server/config.json
 ```
 
-Configuration is validated at startup against a [Zod 4](https://github.com/colinhacks/zod) schema. The schema in `packages/service/src/config/schema.ts` is the single source of truth.
+Configuration is validated at startup against a [Zod 4](https://github.com/colinhacks/zod) schema. The schema in `packages/core/src/schema.ts` is the single source of truth (re-exported by the service package).
 
 **Environment variable substitution:** Use `${VAR_NAME}` in string config values and they'll be replaced from `process.env` at load time.
 

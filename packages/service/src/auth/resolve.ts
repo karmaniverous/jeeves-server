@@ -146,6 +146,36 @@ export function resolveSessionAuth(
   };
 }
 
+/** Query params used for auth resolution on SPA and API routes. */
+export interface AuthQuery {
+  key?: string;
+  exp?: string;
+  d?: string;
+  dirs?: string;
+  s?: string;
+}
+
+/**
+ * Extract deep share params from a parsed query object.
+ * Returns undefined when no deep share context is present.
+ */
+export function extractDeepParams(
+  query: AuthQuery,
+): { d: string; dirs: string; s: string } | undefined {
+  return query.d !== undefined && query.s !== undefined
+    ? { d: query.d, dirs: query.dirs ?? '0', s: query.s }
+    : undefined;
+}
+
+/**
+ * Validate a returnTo redirect target for open-redirect safety.
+ * Only allows relative paths starting with a single /.
+ * Returns the fallback value for anything else.
+ */
+export function sanitizeReturnTo(raw: string, fallback = '/browse'): string {
+  return raw.startsWith('/') && !raw.startsWith('//') ? raw : fallback;
+}
+
 /**
  * Find a resolved insider by email.
  */

@@ -112,6 +112,23 @@ function getScopeRefs(scopes: unknown): string[] {
   return [];
 }
 
+/** Logging configuration. Not hot-reloadable — changes require service restart. */
+export const loggingConfigSchema = z.object({
+  /** Log level. */
+  level: z
+    .string()
+    .optional()
+    .describe('Logging level (trace, debug, info, warn, error, fatal).'),
+  /** Log file path. */
+  file: z
+    .string()
+    .optional()
+    .describe('Path to log file (logs to stdout if omitted).'),
+});
+
+/** Inferred logging config type. */
+export type LoggingConfig = z.infer<typeof loggingConfigSchema>;
+
 /** OAuth provider configuration */
 export const oauthProviderSchema = z.object({
   authUrl: z.string().pipe(z.url()),
@@ -176,6 +193,11 @@ export const jeevesConfigSchema = z
      * If omitted, all paths are shareable with outsiders.
      */
     outsiderPolicy: scopesSchema.optional(),
+    /**
+     * Logging configuration.
+     * Not hot-reloadable — changes require a service restart.
+     */
+    logging: loggingConfigSchema.optional(),
     /** OAuth2 credential management configuration */
     oauth: oauthSchema.optional(),
     /**
