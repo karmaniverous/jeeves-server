@@ -12,7 +12,12 @@ import fastifyStatic from '@fastify/static';
 import { getBindAddress } from '@karmaniverous/jeeves';
 import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 
-import { resolveKeyAuth, resolveSessionAuth } from './auth/resolve.js';
+import {
+  type AuthQuery,
+  extractDeepParams,
+  resolveKeyAuth,
+  resolveSessionAuth,
+} from './auth/resolve.js';
 import { renderSignInPage } from './auth/signInPage.js';
 import { getConfig, initConfig, isConfigInitialized } from './config/index.js';
 import { apiRoute } from './routes/api/index.js';
@@ -94,13 +99,7 @@ async function start() {
         reply: FastifyReply,
       ) => {
         const cfg = getConfig();
-        const query = request.query as {
-          key?: string;
-          exp?: string;
-          d?: string;
-          dirs?: string;
-          s?: string;
-        };
+        const query = request.query as AuthQuery;
 
         // Extract the browse path from the URL for path-scoped key verification.
         // /browse/j/docs/readme.md → j/docs/readme.md
@@ -109,16 +108,12 @@ async function start() {
           request.url.split('?')[0].replace(/^\/(browse|runner)(\/|$)/, '') ||
           '/';
 
-        const deepParams =
-          query.d !== undefined && query.s !== undefined
-            ? { d: query.d, dirs: query.dirs ?? '0', s: query.s }
-            : undefined;
         const keyResult = resolveKeyAuth(
           cfg,
           urlPath,
           query.key,
           query.exp,
-          deepParams,
+          extractDeepParams(query),
         );
         const sessionResult = resolveSessionAuth(cfg, request);
 
