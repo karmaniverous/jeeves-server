@@ -12,6 +12,8 @@ import fastifyStatic from '@fastify/static';
 import { getBindAddress } from '@karmaniverous/jeeves';
 import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 
+import { resolveKeyAuth, resolveSessionAuth } from './auth/resolve.js';
+import { renderSignInPage } from './auth/signInPage.js';
 import { getConfig, initConfig, isConfigInitialized } from './config/index.js';
 import { apiRoute } from './routes/api/index.js';
 import { authRoute } from './routes/auth.js';
@@ -85,11 +87,51 @@ async function start() {
         prefix: '/app/',
       });
 
-      // SPA fallback — all these routes serve index.html for client-side routing
+      // Auth-gated SPA fallback — serves index.html for authenticated users,
+      // branded sign-in page for unauthenticated users (#214)
       const spaFallback = async (
-        _request: FastifyRequest,
+        request: FastifyRequest,
         reply: FastifyReply,
-      ) => reply.sendFile('index.html', clientDir);
+      ) => {
+        const cfg = getConfig();
+        const query = request.query as {
+          key?: string;
+          exp?: string;
+          d?: string;
+          dirs?: string;
+          s?: string;
+        };
+
+        // Extract the browse path from the URL for path-scoped key verification.
+        // /browse/j/docs/readme.md → j/docs/readme.md
+        const urlPath =
+          request.url
+            .split('?')[0]
+            .replace(/^\/browse\//, '')
+            .replace(/^\/runner\//, '') || '/';
+
+        const deepParams =
+          query.d !== undefined && query.s !== undefined
+            ? { d: query.d, dirs: query.dirs ?? '0', s: query.s }
+            : undefined;
+        const keyResult = resolveKeyAuth(
+          cfg,
+          urlPath,
+          query.key,
+          query.exp,
+          deepParams,
+        );
+        const sessionResult = resolveSessionAuth(cfg, request);
+
+        if (keyResult.valid || sessionResult.valid) {
+          return reply.sendFile('index.html', clientDir);
+        }
+
+        return reply
+          .type('text/html')
+          .code(401)
+          .send(renderSignInPage(request.url, cfg.authModes));
+      };
 
       for (const route of [
         '/',
@@ -109,7 +151,7 @@ async function start() {
           (request.url.startsWith('/browse') ||
             request.url.startsWith('/runner'))
         ) {
-          return reply.sendFile('index.html', clientDir);
+          return spaFallback(request, reply);
         }
         return reply.code(404).send({ error: 'Not found' });
       });

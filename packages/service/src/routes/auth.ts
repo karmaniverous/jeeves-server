@@ -126,10 +126,14 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
       maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
     });
 
-    // Redirect to returnTo or root
-    const returnTo = request.query.state
+    // Redirect to returnTo or root (with open-redirect protection)
+    const rawReturnTo = request.query.state
       ? Buffer.from(request.query.state, 'base64url').toString()
       : '/browse';
+    // Reject absolute URLs to prevent open redirect
+    const returnTo = /^[a-z]+:\/\//i.test(rawReturnTo)
+      ? '/browse'
+      : rawReturnTo;
     return reply.redirect(returnTo);
   });
 
