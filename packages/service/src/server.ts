@@ -127,7 +127,7 @@ async function start() {
         return reply
           .type('text/html')
           .code(401)
-          .send(renderSignInPage(request.url, cfg.authModes));
+          .send(renderSignInPage(request.url, cfg.authModes, cfg.branding));
       };
 
       for (const route of [
