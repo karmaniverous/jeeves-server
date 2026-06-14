@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🚀 Features
+
+- Expand config schema for magic link auth and instance branding
+
+### 🐛 Bug Fixes
+
+- Resolve lint errors (prettier, deprecated z.email, unnecessary optionals, async mocks)
+
+### 🚜 Refactor
+
+- SOLID/DRY pass - generic TTL map, DEFAULT_BRANDING, setSessionCookie, renderErrorPage, export DEFAULT_TEMPLATE
+## [0.1.5] - 2026-06-13
+
 ### 💼 Other
 
 - [213] feat: add logging.level and logging.file config support (#213)
@@ -12,6 +25,10 @@ All notable changes to this project will be documented in this file.
 ### 📚 Documentation
 
 - Sync README, guides, and core exports with touched code
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-core v0.1.5
 ## [0.1.4] - 2026-06-11
 
 ### 💼 Other
