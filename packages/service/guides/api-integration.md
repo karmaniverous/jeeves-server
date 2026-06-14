@@ -12,7 +12,7 @@ All API requests (except `/health` and `/api/status`) authenticate via `?key=<in
 
 ### Browser Auth Gate
 
-When an unauthenticated browser hits a SPA route (`/`, `/browse/*`, `/runner/*`), the server returns a branded sign-in page instead of the SPA. The page offers a "Sign in with Google" button (when Google OAuth is configured) or an API key required message (keys-only mode). After successful Google sign-in, the user is redirected back to the originally requested page.
+When an unauthenticated browser hits a SPA route (`/`, `/browse/*`, `/runner/*`), the server returns a branded sign-in page instead of the SPA. The page shows an email login form as the primary action (when email auth is configured), with a "Sign in with Google" button below (when Google OAuth is also configured). When only Google auth is active, the Google button is shown alone. When only key auth is active, an API key required message is displayed. The page reflects instance branding (name, emoji) when configured. After successful sign-in, the user is redirected back to the originally requested page.
 
 API routes continue returning JSON `{ error: 'Unauthorized' }` for programmatic clients — the sign-in page only applies to browser-navigated SPA paths.
 
@@ -103,6 +103,8 @@ function insiderKey(seed) {
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api/auth/status` | Check authentication status and mode (no auth required) |
+| `POST` | `/api/auth/magic` | Request a magic login link (no auth required, always returns 200) |
+| `GET` | `/auth/magic/callback` | Magic link callback — validates token, sets session cookie (top-level route, no auth required) |
 
 ### OAuth2 Credential Management (insider auth required)
 

@@ -38,12 +38,20 @@ Legacy paths (`jeeves-server.config.json`) are auto-migrated to the new conventi
   "port": 1934,
   "chromePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
   "auth": {
-    "modes": ["keys", "google"],
+    "modes": ["keys", "google", "email"],
     "google": {
       "clientId": "your-google-client-id",
       "clientSecret": "your-google-client-secret"
     },
-    "sessionSecret": "random-session-signing-secret"
+    "sessionSecret": "random-session-signing-secret",
+    "email": {
+      "smtpUrl": "smtps://user:pass@smtp.example.com:465",
+      "fromAddress": "login@example.com"
+    }
+  },
+  "branding": {
+    "name": "My Docs Server",
+    "emoji": "📚"
   },
   "scopes": {
     "restricted": {
@@ -141,23 +149,23 @@ On Windows, `roots` is ignored. On Linux, if omitted, it defaults to `{ "root": 
 
 ### Config persistence
 
-The config file is loaded at startup and validated against the Zod schema. The server writes back to `config.json` in two cases: when an insider's key seed is auto-generated on first Google login, and when an insider rotates their key. These updates are atomic (file-locked) and the server reloads the affected config section automatically.
+The config file is loaded at startup and validated against the Zod schema. The server writes back to `config.json` in two cases: when an insider's key seed is auto-generated on first login (Google OAuth or email magic link), and when an insider rotates their key. These updates are atomic (file-locked) and the server reloads the affected config section automatically.
 
 ---
 
 ## Authentication Modes
 
-Jeeves Server supports two authentication methods, configured via `auth.modes`:
+Jeeves Server supports three authentication methods, configured via `auth.modes`:
 
 ```json
 {
   "auth": {
-    "modes": ["google", "keys"]
+    "modes": ["email", "google", "keys"]
   }
 }
 ```
 
-You can enable one or both. The order matters — modes are checked in the order listed.
+You can enable any combination. The order matters — modes are checked in the order listed.
 
 ### Google OAuth (`"google"`)
 
@@ -192,16 +200,35 @@ Users authenticate by appending `?key=<value>` to any URL. The server derives ke
 curl -H "X-API-Key: <seed>" https://your-domain.com/insider-key
 ```
 
+### Email Magic Link (`"email"`)
+
+**Best for:** Teams where insiders don't use Google Workspace, or any setup where passwordless email login is preferred.
+
+Users enter their email on the sign-in page. If the email matches a configured insider, the server sends a login link via SMTP. Clicking the link sets a session cookie — identical to Google OAuth sessions.
+
+**Requirements when enabled:**
+- `auth.email.smtpUrl` — SMTP connection string (e.g. `smtps://user:pass@smtp.example.com:465`)
+- `auth.email.fromAddress` — Sender email address (e.g. `login@jeeves.id`)
+- `auth.sessionSecret` — a random string for signing session cookies (shared with Google auth)
+- At least one entry in `insiders`
+
+**Security notes:**
+- The `POST /api/auth/magic` endpoint always returns 200 OK regardless of whether the email matches an insider (prevents email enumeration)
+- Login links are single-use and expire after 10 minutes
+- Tokens are stored in-memory (not persisted — server restart invalidates all pending links)
+
 ### Both Modes Together
 
-When both are active, browser users log in with Google, and bots/scripts use `?key=` for stateless access. Both methods work on every endpoint.
+When multiple modes are active, browser users log in with Google or email magic link, and bots/scripts use `?key=` for stateless access. All methods work on every endpoint.
 
 | Scenario | Recommended |
 |----------|-------------|
-| Team of humans accessing via browser | `["google"]` |
+| Team of humans with Google Workspace | `["google"]` |
+| Team without Google Workspace | `["email"]` |
 | Bot/script access only | `["keys"]` |
-| Humans + bots on the same server | `["google", "keys"]` |
-| Quick local setup, no Google credentials | `["keys"]` |
+| Humans + bots on the same server | `["google", "keys"]` or `["email", "keys"]` |
+| Maximum flexibility (all login methods) | `["email", "google", "keys"]` |
+| Quick local setup, no credentials | `["keys"]` |
 
 ---
 
@@ -345,6 +372,43 @@ If `plantuml` is omitted entirely, only the community server is used.
 
 ---
 
+## Instance Branding
+
+Customize the server's appearance and email communications:
+
+```json
+{
+  "branding": {
+    "name": "My Company Docs",
+    "emoji": "📚",
+    "theme": {
+      "light": {
+        "primary": "#1a73e8",
+        "background": "#ffffff"
+      },
+      "dark": {
+        "primary": "#8ab4f8",
+        "background": "#1a1a1a"
+      }
+    },
+    "emailTemplate": "<p>{{branding.emoji}} Click <a href=\"{{{magicLink}}}\">here</a> to sign in to {{branding.name}}</p>"
+  }
+}
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `name` | string | `"Jeeves Server"` | Instance display name — used in page title, navbar, and login emails |
+| `emoji` | string | `"🎩"` | Home icon in the navbar |
+| `theme` | object | — | CSS variable overrides under `light` and `dark` keys |
+| `emailTemplate` | string | — | Handlebars template for magic link emails. Available variables: `{{magicLink}}`, `{{branding.name}}`, `{{branding.emoji}}` |
+
+The `theme` object maps CSS custom property names to values. Keys under `light` are injected into `:root`; keys under `dark` are injected into `.dark`. When omitted, the default Tailwind theme applies.
+
+Branding is surfaced via the `/status` endpoint (no auth required) so the React client can apply it on load.
+
+---
+
 ## Config Reference
 
 | Field | Type | Default | Description |
@@ -364,6 +428,8 @@ If `plantuml` is omitted entirely, only the community server is used.
 | ~~`runnerUrl`~~ | — | — | **Deprecated in v3.6.0.** Use core service discovery. |
 | ~~`host`~~ | — | — | **Deprecated in v3.6.0.** Use `getBindAddress()` via core. |
 | ~~`metaUrl`~~ | — | — | **Deprecated in v3.6.0.** Use core service discovery. |
+| `branding` | object | — | Instance branding (name, emoji, theme, email template) |
+| `auth.email` | object | — | Email magic link config (required when modes includes `"email"`) |
 | `plantuml` | object | — | PlantUML rendering config |
 | `diagramCachePath` | string | `.diagram-cache` | Cached rendered diagram directory |
 | `outsiderPolicy` | scopes | — | Global outsider sharing constraints |

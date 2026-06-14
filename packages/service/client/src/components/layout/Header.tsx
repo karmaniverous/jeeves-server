@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 
 import { AccountMenu, type CollapsedItem } from '@/components/AccountMenu';
 import { SearchModal } from '@/components/SearchModal';
+import { useBranding } from '@/lib/BrandingContext';
 import { Button } from '@/components/ui/button';
 import type { BreadcrumbItem } from '@/lib/api';
 
@@ -40,6 +41,7 @@ export function Header({
   downloadMenuItem,
   linkMenuItem,
 }: HeaderProps) {
+  const branding = useBranding();
   const hasKeyMgmt = isInsider && onRotateKey;
   const [readmeUrl, setReadmeUrl] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -155,8 +157,8 @@ export function Header({
       <div className="flex items-center gap-1">
         {/* Breadcrumbs — takes remaining space, truncates */}
         <div className="flex items-center min-w-0 flex-1">
-          <Link to="/browse" className="text-3xl no-underline shrink-0 mr-1" title="Jeeves Server">
-            🎩
+          <Link to="/browse" className="text-3xl no-underline shrink-0 mr-1" title={branding.name}>
+            {branding.emoji}
           </Link>
           <nav className="flex items-center gap-1 min-w-0 overflow-x-auto overflow-y-hidden scrollbar-thin">
             {breadcrumbs.map((crumb, i) => (

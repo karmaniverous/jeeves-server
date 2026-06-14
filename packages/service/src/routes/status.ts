@@ -12,6 +12,7 @@ import { createStatusHandler, getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyPluginAsync } from 'fastify';
 
 import { getConfig } from '../config/index.js';
+import { DEFAULT_BRANDING } from '../config/schema.js';
 import { packageVersion } from '../util/packageVersion.js';
 
 /** Health status of a single downstream service. */
@@ -133,6 +134,13 @@ const handleStatus = createStatusHandler({
         },
       },
       services,
+      branding: config.branding
+        ? {
+            name: config.branding.name,
+            emoji: config.branding.emoji,
+            theme: config.branding.theme,
+          }
+        : DEFAULT_BRANDING,
     };
   },
 });

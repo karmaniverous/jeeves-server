@@ -26,11 +26,13 @@ import { registerConfigRoute } from './routes/config.js';
 import { eventRoute } from './routes/event.js';
 import { goRoute } from './routes/go.js';
 import { keysRoute } from './routes/keys.js';
+import { magicCallbackRoute } from './routes/magicCallback.js';
 import { oauthRoute } from './routes/oauth.js';
 import { pathRoute } from './routes/path/index.js';
 import { staticRoutes } from './routes/static.js';
 import { statusRoutes } from './routes/status.js';
 import { initDiagramCache } from './services/diagramCache.js';
+import { initTransport } from './services/email.js';
 import { startQueueProcessor } from './services/eventQueue.js';
 import { initExportCache } from './services/exportCache.js';
 
@@ -68,6 +70,7 @@ async function start() {
     registerConfigRoute(fastify);
     await fastify.register(statusRoutes);
     await fastify.register(authRoute);
+    await fastify.register(magicCallbackRoute);
     await fastify.register(oauthRoute);
     await fastify.register(keysRoute);
     await fastify.register(eventRoute);
@@ -124,7 +127,7 @@ async function start() {
         return reply
           .type('text/html')
           .code(401)
-          .send(renderSignInPage(request.url, cfg.authModes));
+          .send(renderSignInPage(request.url, cfg.authModes, cfg.branding));
       };
 
       for (const route of [
@@ -149,6 +152,11 @@ async function start() {
         }
         return reply.code(404).send({ error: 'Not found' });
       });
+    }
+
+    // Initialize email transport (if email auth is configured)
+    if (config.authModes.includes('email') && config.emailAuth) {
+      initTransport(config.emailAuth.smtpUrl);
     }
 
     // Initialize caches

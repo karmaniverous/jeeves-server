@@ -7,6 +7,8 @@
 
 import crypto from 'node:crypto';
 
+import type { FastifyReply, FastifyRequest } from 'fastify';
+
 const COOKIE_NAME = 'jeeves_session';
 const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
@@ -72,6 +74,27 @@ export function verifySessionCookie(
   } catch {
     return null;
   }
+}
+
+/**
+ * Set the standard insider session cookie on a reply.
+ */
+export function setSessionCookie(
+  reply: FastifyReply,
+  request: FastifyRequest,
+  email: string,
+  sessionSecret: string,
+  picture?: string,
+): void {
+  const cookieValue = createSessionCookie(email, sessionSecret, picture);
+  void reply.setCookie(COOKIE_NAME, cookieValue, {
+    path: '/',
+    httpOnly: true,
+    secure:
+      (request.headers['x-forwarded-proto'] as string | undefined) === 'https',
+    sameSite: 'lax',
+    maxAge: 30 * 24 * 60 * 60,
+  });
 }
 
 export { COOKIE_NAME };

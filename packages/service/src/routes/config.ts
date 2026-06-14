@@ -36,6 +36,12 @@ export function sanitizeConfig(config: RuntimeConfig): unknown {
       ...i,
       seed: '[REDACTED]',
     })),
+    emailAuth: config.emailAuth
+      ? {
+          smtpUrl: '[REDACTED]',
+          fromAddress: config.emailAuth.fromAddress,
+        }
+      : null,
   };
 }
 

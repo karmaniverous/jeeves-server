@@ -86,6 +86,21 @@ export interface RuntimeConfig {
   logging?: LoggingConfig;
   /** Shortlink slug → redirect target map. */
   go: Record<string, string>;
+  /** Resolved branding configuration */
+  branding?: {
+    name: string;
+    emoji: string;
+    theme?: {
+      light?: Record<string, string>;
+      dark?: Record<string, string>;
+    };
+    emailTemplate?: string;
+  };
+  /** Email auth configuration (null if not configured) */
+  emailAuth?: {
+    smtpUrl: string;
+    fromAddress: string;
+  } | null;
   configPath: string;
   eventsLog: string;
   eventQueuePath: string;

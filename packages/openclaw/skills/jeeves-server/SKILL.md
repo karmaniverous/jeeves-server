@@ -49,7 +49,7 @@ All mutations go through `POST /api/file/*` (unified mutation endpoint). The `se
 
 ## Auth Gate
 
-Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) returns a branded sign-in page instead of the SPA. The page shows a "Sign in with Google" button (when Google auth is configured) or an API key required message. After sign-in, the user is redirected back to the originally requested page. API routes continue returning JSON 401 for programmatic clients.
+Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) returns a branded sign-in page instead of the SPA. The sign-in page shows an email login form (when email auth is configured) as the primary action, with a "Sign in with Google" button below (when Google auth is also configured). When only Google auth is active, the Google button is shown alone. When only key auth is active, an API key required message is displayed. The page reflects instance branding (name, emoji) when configured. After sign-in, the user is redirected back to the originally requested page. API routes continue returning JSON 401 for programmatic clients.
 
 ## Browse Features
 
@@ -60,7 +60,7 @@ Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) ret
 
 ## Sharing
 
-- **Insiders** authenticate via Google OAuth or key-based auth — bare URLs work for them
+- **Insiders** authenticate via Google OAuth, email magic link, or key-based auth — bare URLs work for them
 - **Outsiders** need HMAC share links — use `server_share` to generate them
 - Share links have configurable expiry (default 30 days)
 - Directory shares support depth control for recursive access
@@ -148,7 +148,7 @@ Or create `jeeves-server/config.json` manually (JSON only):
 
 **Key fields:**
 - `chromePath` — **required**, path to Chrome/Chromium executable
-- `auth.modes` — **required**, array of `"keys"` and/or `"google"`
+- `auth.modes` — **required**, array of `"keys"`, `"google"`, and/or `"email"`
 - `scopes` — named scope definitions (allow/deny), referenced by name from insiders and keys
 - `insiders` — map of email → `{ scopes?, allow?, deny? }`
 - `keys._internal` — required for PDF/DOCX export (Puppeteer auth)
