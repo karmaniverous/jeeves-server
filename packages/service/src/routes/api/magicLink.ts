@@ -34,7 +34,7 @@ export const magicLinkApiRoute: FastifyPluginAsync = async (fastify) => {
         (i) => i.email.toLowerCase() === email,
       );
 
-      if (insider && config.emailAuth) {
+      if (insider && config.authModes.includes('email') && config.emailAuth) {
         // Generate a secure token
         const token = crypto.randomBytes(32).toString('hex');
         storeMagicToken(token, { email });
@@ -44,6 +44,7 @@ export const magicLinkApiRoute: FastifyPluginAsync = async (fastify) => {
           (request.headers['x-forwarded-proto'] as string | undefined) ??
           'http';
         const host =
+          (request.headers['x-forwarded-host'] as string | undefined) ??
           (request.headers['host'] as string | undefined) ??
           request.hostname;
         const magicLink = `${proto}://${host}/auth/magic/callback?token=${token}`;

@@ -155,7 +155,7 @@ async function start() {
     }
 
     // Initialize email transport (if email auth is configured)
-    if (config.emailAuth) {
+    if (config.authModes.includes('email') && config.emailAuth) {
       initTransport(config.emailAuth.smtpUrl);
     }
 

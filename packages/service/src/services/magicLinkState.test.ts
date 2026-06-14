@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   clearAllMagicTokens,
@@ -43,5 +43,28 @@ describe('magicLinkState', () => {
     clearAllMagicTokens();
     expect(consumeMagicToken('a')).toBeNull();
     expect(consumeMagicToken('b')).toBeNull();
+  });
+
+  describe('TTL expiry', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('expires tokens after 10 minutes', () => {
+      storeMagicToken('ttl-test', { email: 'ttl@example.com' });
+
+      // Advance 9 minutes — should still be valid
+      vi.advanceTimersByTime(9 * 60 * 1000);
+      expect(consumeMagicToken('ttl-test')).not.toBeNull();
+
+      // Store again and advance past 10 minutes
+      storeMagicToken('ttl-test-2', { email: 'ttl2@example.com' });
+      vi.advanceTimersByTime(11 * 60 * 1000);
+      expect(consumeMagicToken('ttl-test-2')).toBeNull();
+    });
   });
 });

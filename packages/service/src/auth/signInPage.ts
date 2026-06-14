@@ -32,7 +32,7 @@ export function renderSignInPage(
 
   const emailFormHtml = hasEmail
     ? `<div class="email-form" id="emailForm">
-  <form id="magicForm" onsubmit="return false;">
+  <form id="magicForm" onsubmit="submitMagic(); return false;">
     <input
       type="email"
       id="emailInput"
@@ -40,7 +40,7 @@ export function renderSignInPage(
       required
       class="email-input"
     >
-    <button type="submit" class="btn-primary" onclick="submitMagic()">Send Login Link</button>
+    <button type="submit" class="btn-primary">Send Login Link</button>
     <div class="error-msg" id="emailError" style="display:none;"></div>
   </form>
 </div>

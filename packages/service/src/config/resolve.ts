@@ -270,7 +270,7 @@ export function buildRuntimeConfig(
       theme: config.branding?.theme,
       emailTemplate: config.branding?.emailTemplate,
     },
-    emailAuth: config.auth.email ? {
+    emailAuth: config.auth.modes.includes('email') && config.auth.email ? {
       smtpUrl: config.auth.email.smtpUrl,
       fromAddress: config.auth.email.fromAddress,
     } : null,
