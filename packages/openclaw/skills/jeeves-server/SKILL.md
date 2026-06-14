@@ -60,7 +60,7 @@ Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) ret
 
 ## Sharing
 
-- **Insiders** authenticate via Google OAuth or key-based auth — bare URLs work for them
+- **Insiders** authenticate via Google OAuth, email magic link, or key-based auth — bare URLs work for them
 - **Outsiders** need HMAC share links — use `server_share` to generate them
 - Share links have configurable expiry (default 30 days)
 - Directory shares support depth control for recursive access
@@ -148,7 +148,7 @@ Or create `jeeves-server/config.json` manually (JSON only):
 
 **Key fields:**
 - `chromePath` — **required**, path to Chrome/Chromium executable
-- `auth.modes` — **required**, array of `"keys"` and/or `"google"`
+- `auth.modes` — **required**, array of `"keys"`, `"google"`, and/or `"email"`
 - `scopes` — named scope definitions (allow/deny), referenced by name from insiders and keys
 - `insiders` — map of email → `{ scopes?, allow?, deny? }`
 - `keys._internal` — required for PDF/DOCX export (Puppeteer auth)

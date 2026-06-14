@@ -149,23 +149,23 @@ On Windows, `roots` is ignored. On Linux, if omitted, it defaults to `{ "root": 
 
 ### Config persistence
 
-The config file is loaded at startup and validated against the Zod schema. The server writes back to `config.json` in two cases: when an insider's key seed is auto-generated on first Google login, and when an insider rotates their key. These updates are atomic (file-locked) and the server reloads the affected config section automatically.
+The config file is loaded at startup and validated against the Zod schema. The server writes back to `config.json` in two cases: when an insider's key seed is auto-generated on first login (Google OAuth or email magic link), and when an insider rotates their key. These updates are atomic (file-locked) and the server reloads the affected config section automatically.
 
 ---
 
 ## Authentication Modes
 
-Jeeves Server supports two authentication methods, configured via `auth.modes`:
+Jeeves Server supports three authentication methods, configured via `auth.modes`:
 
 ```json
 {
   "auth": {
-    "modes": ["google", "keys"]
+    "modes": ["email", "google", "keys"]
   }
 }
 ```
 
-You can enable one or both. The order matters — modes are checked in the order listed.
+You can enable any combination. The order matters — modes are checked in the order listed.
 
 ### Google OAuth (`"google"`)
 
