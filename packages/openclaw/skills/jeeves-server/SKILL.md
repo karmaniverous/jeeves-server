@@ -49,7 +49,7 @@ All mutations go through `POST /api/file/*` (unified mutation endpoint). The `se
 
 ## Auth Gate
 
-Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) returns a branded sign-in page instead of the SPA. The page shows a "Sign in with Google" button (when Google auth is configured) or an API key required message. After sign-in, the user is redirected back to the originally requested page. API routes continue returning JSON 401 for programmatic clients.
+Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) returns a branded sign-in page instead of the SPA. The sign-in page shows an email login form (when email auth is configured) as the primary action, with a "Sign in with Google" button below (when Google auth is also configured). When only Google auth is active, the Google button is shown alone. When only key auth is active, an API key required message is displayed. The page reflects instance branding (name, emoji) when configured. After sign-in, the user is redirected back to the originally requested page. API routes continue returning JSON 401 for programmatic clients.
 
 ## Browse Features
 

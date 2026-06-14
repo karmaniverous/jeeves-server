@@ -55,6 +55,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 - **SVG, Mermaid & PlantUML Diagrams** — Rendered inline with pan/zoom; Mermaid is bundled, PlantUML uses a fallback pipeline (local jar → private servers → community server)
 - **Embedded Diagrams in Markdown** — `mermaid` and `plantuml` fenced code blocks render as inline SVGs
 - **Secure Sharing** — Expiring links with HMAC signatures, scoped access
+- **Magic Link Auth** — Passwordless email login via SMTP, alongside Google OAuth and key-based auth
+- **Instance Branding** — Configurable name, emoji, color themes, and email templates
 - **Named Access Scopes** — Define reusable scope policies, reference them by name across insiders and keys
 - **Event Gateway** — Webhook receiver with JSON Schema validation and durable queue
 - **Semantic Search** — Full-text search via [jeeves-watcher](https://github.com/karmaniverous/jeeves-watcher) integration

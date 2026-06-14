@@ -26,6 +26,7 @@ Anyone listed in the `insiders` map in your config:
 Depends on which auth modes are active:
 
 - **Google OAuth** (`'google'` mode) — Insider logs in with Google. The server checks their email against the `insiders` map. On first login, a key seed is auto-generated and persisted to `config.json`.
+- **Email magic link** (`'email'` mode) — Insider enters their email on the sign-in page. If the email matches an insider, the server sends a one-time login link via SMTP. Clicking the link sets a session cookie identical to Google OAuth. On first login, a key seed is auto-generated.
 - **Key auth** (`'keys'` mode) — Insider uses a derived URL key (`?key=<insider-key>`). The key is derived from a configured seed via HMAC-SHA256.
 
 ### What insiders can do
