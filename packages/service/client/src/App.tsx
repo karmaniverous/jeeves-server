@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
+import { BrandingProvider } from '@/lib/BrandingProvider';
 import { AuthProvider } from '@/lib/auth';
 import { UndoProvider } from '@/lib/UndoContext';
 import { FileBrowser } from '@/pages/FileBrowser';
@@ -9,17 +10,19 @@ import { RunnerJob } from '@/pages/RunnerJob';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <UndoProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/runner/:jobId" element={<RunnerJob />} />
-            <Route path="/runner" element={<Runner />} />
-            <Route path="/browse/*" element={<FileBrowser />} />
-            <Route path="/" element={<Home />} />
-          </Routes>
-        </BrowserRouter>
-      </UndoProvider>
-    </AuthProvider>
+    <BrandingProvider>
+      <AuthProvider>
+        <UndoProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/runner/:jobId" element={<RunnerJob />} />
+              <Route path="/runner" element={<Runner />} />
+              <Route path="/browse/*" element={<FileBrowser />} />
+              <Route path="/" element={<Home />} />
+            </Routes>
+          </BrowserRouter>
+        </UndoProvider>
+      </AuthProvider>
+    </BrandingProvider>
   );
 }
