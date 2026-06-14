@@ -264,6 +264,16 @@ export function buildRuntimeConfig(
       : null,
     logging: config.logging,
     go: config.go,
+    branding: {
+      name: config.branding?.name ?? 'Jeeves Server',
+      emoji: config.branding?.emoji ?? '🎩',
+      theme: config.branding?.theme,
+      emailTemplate: config.branding?.emailTemplate,
+    },
+    emailAuth: config.auth.email ? {
+      smtpUrl: config.auth.email.smtpUrl,
+      fromAddress: config.auth.email.fromAddress,
+    } : null,
     configPath,
     eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),
     eventQueuePath: path.join(rootDir, 'logs', 'event-queue.jsonl'),

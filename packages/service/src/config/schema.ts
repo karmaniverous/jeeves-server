@@ -2,7 +2,10 @@ export {
   type AuthMode,
   authModeSchema,
   authSchema,
+  type Branding,
+  brandingSchema,
   DEPRECATED_CONFIG_PROPS,
+  emailAuthSchema,
   eventConfigSchema,
   googleAuthSchema,
   insiderEntrySchema,
@@ -16,4 +19,5 @@ export {
   oauthSchema,
   scopesObjectSchema,
   scopesSchema,
+  themeOverridesSchema,
 } from '@karmaniverous/jeeves-server-core';

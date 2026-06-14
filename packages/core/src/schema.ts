@@ -10,12 +10,20 @@ export const DEPRECATED_CONFIG_PROPS = [
 ] as const;
 
 /** Supported authentication methods */
-export const authModeSchema = z.enum(['google', 'keys']);
+export const authModeSchema = z.enum(['google', 'keys', 'email']);
 
 /** Google OAuth configuration */
 export const googleAuthSchema = z.object({
   clientId: z.string().min(1),
   clientSecret: z.string().min(1),
+});
+
+/** Email (magic link) authentication configuration */
+export const emailAuthSchema = z.object({
+  /** SMTP connection string (e.g. smtps://user:pass@smtp.example.com:465) */
+  smtpUrl: z.string().min(1),
+  /** Sender email address for magic link emails */
+  fromAddress: z.string().email(),
 });
 
 /** Auth configuration */
@@ -28,6 +36,8 @@ export const authSchema = z.object({
   google: googleAuthSchema.optional(),
   /** Session cookie signing secret. Required if modes includes "google". */
   sessionSecret: z.string().min(1).optional(),
+  /** Email (magic link) auth config. Required if modes includes "email". */
+  email: emailAuthSchema.optional(),
 });
 
 /** Event webhook configuration */
@@ -143,6 +153,24 @@ export const oauthSchema = z.object({
   providers: z.record(z.string(), oauthProviderSchema).default({}),
 });
 
+/** Theme overrides for light and dark modes */
+export const themeOverridesSchema = z.record(z.string(), z.string());
+
+/** Instance branding configuration */
+export const brandingSchema = z.object({
+  /** Instance display name (used in page title, navbar, emails) */
+  name: z.string().default('Jeeves Server'),
+  /** Instance emoji (used as home icon in navbar) */
+  emoji: z.string().default('🎩'),
+  /** CSS variable overrides grouped by theme mode */
+  theme: z.object({
+    light: themeOverridesSchema.optional(),
+    dark: themeOverridesSchema.optional(),
+  }).optional(),
+  /** Handlebars template for magic link emails. Supports {{magicLink}}, {{branding.name}}, {{branding.emoji}} */
+  emailTemplate: z.string().optional(),
+});
+
 /** Top-level Jeeves Server configuration */
 export const jeevesConfigSchema = z
   .object({
@@ -219,6 +247,8 @@ export const jeevesConfigSchema = z
           }),
       )
       .default({}),
+    /** Instance branding (name, emoji, theme overrides, email template) */
+    branding: brandingSchema.optional(),
   })
   .superRefine((config, ctx) => {
     // Google auth mode requires google config + sessionSecret
@@ -235,6 +265,25 @@ export const jeevesConfigSchema = z
           code: 'custom',
           message:
             'auth.sessionSecret is required when auth.modes includes "google"',
+          path: ['auth', 'sessionSecret'],
+        });
+      }
+    }
+
+    // Email auth mode requires email config
+    if (config.auth.modes.includes('email')) {
+      if (!config.auth.email) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'auth.email is required when auth.modes includes "email"',
+          path: ['auth', 'email'],
+        });
+      }
+      if (!config.auth.sessionSecret) {
+        ctx.addIssue({
+          code: 'custom',
+          message:
+            'auth.sessionSecret is required when auth.modes includes "email"',
           path: ['auth', 'sessionSecret'],
         });
       }
@@ -302,3 +351,6 @@ export type JeevesConfig = z.infer<typeof jeevesConfigSchema>;
 
 /** Auth mode type */
 export type AuthMode = z.infer<typeof authModeSchema>;
+
+/** Inferred branding type */
+export type Branding = z.infer<typeof brandingSchema>;
