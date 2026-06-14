@@ -133,6 +133,13 @@ const handleStatus = createStatusHandler({
         },
       },
       services,
+      branding: config.branding
+        ? {
+            name: config.branding.name,
+            emoji: config.branding.emoji,
+            theme: config.branding.theme,
+          }
+        : { name: 'Jeeves Server', emoji: '🎩' },
     };
   },
 });
