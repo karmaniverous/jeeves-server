@@ -1,9 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import Handlebars from 'handlebars';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
   clearTransport,
-  DEFAULT_TEMPLATE,
   getTransport,
   initTransport,
   sendMagicLinkEmail,
@@ -21,37 +19,6 @@ describe('email service', () => {
     });
   });
 
-  describe('default template rendering', () => {
-    it('renders the default template with branding and magic link', () => {
-      const template = Handlebars.compile(DEFAULT_TEMPLATE);
-      const html = template({
-        magicLink: 'https://example.com/auth/magic/callback?token=abc123',
-        branding: { name: 'Test Server', emoji: '🧪' },
-      });
-
-      expect(html).toContain('🧪 Test Server');
-      expect(html).toContain(
-        'href="https://example.com/auth/magic/callback?token=abc123"',
-      );
-      expect(html).toContain('expires in 10 minutes');
-    });
-  });
-
-  describe('custom template rendering', () => {
-    it('renders a custom template with branding variables', () => {
-      const customTemplate =
-        '<p>Hello from {{branding.name}}! <a href="{{magicLink}}">Login</a></p>';
-      const template = Handlebars.compile(customTemplate);
-      const html = template({
-        magicLink: 'https://example.com/login',
-        branding: { name: 'Custom App', emoji: '🚀' },
-      });
-
-      expect(html).toContain('Hello from Custom App!');
-      expect(html).toContain('href="https://example.com/login"');
-    });
-  });
-
   describe('sendMagicLinkEmail', () => {
     it('throws if transport is not initialized', async () => {
       await expect(
@@ -62,6 +29,61 @@ describe('email service', () => {
           { name: 'Test', emoji: '🧪' },
         ),
       ).rejects.toThrow('Email transport not initialized');
+    });
+
+    it('sends email with default template when no custom template is provided', async () => {
+      initTransport('smtp://localhost:2525');
+      const t = getTransport()!;
+
+      let sentOpts: Record<string, unknown> = {};
+      (t as unknown as { sendMail: (opts: Record<string, unknown>) => Promise<{ messageId: string }> }).sendMail =
+        async (opts: Record<string, unknown>) => {
+          sentOpts = opts;
+          return { messageId: 'test' };
+        };
+
+      await sendMagicLinkEmail(
+        'user@example.com',
+        'https://example.com/auth/magic/callback?token=xyz',
+        'login@jeeves.id',
+        { name: 'My Server', emoji: '🏠' },
+      );
+
+      expect(sentOpts.from).toBe('login@jeeves.id');
+      expect(sentOpts.to).toBe('user@example.com');
+      expect(sentOpts.subject).toBe('🏠 Sign in to My Server');
+      const html = sentOpts.html as string;
+      expect(html).toContain('🏠 My Server');
+      expect(html).toContain('https://example.com/auth/magic/callback?token=xyz');
+      expect(html).toContain('expires in 10 minutes');
+    });
+  });
+
+  describe('sendMagicLinkEmail with custom template', () => {
+    it('uses the custom template when provided', async () => {
+      initTransport('smtp://localhost:2525');
+      const t = getTransport()!;
+
+      // Capture the sendMail call
+      let sentHtml = '';
+      (t as unknown as { sendMail: (opts: { html?: string }) => Promise<{ messageId: string }> }).sendMail =
+        async (opts: { html?: string }) => {
+          sentHtml = (opts.html as string) ?? '';
+          return { messageId: 'test' };
+        };
+
+      const customTemplate =
+        '<p>Hello from {{branding.name}}! <a href="{{{magicLink}}}">Login</a></p>';
+      await sendMagicLinkEmail(
+        'test@example.com',
+        'https://example.com/login?token=abc',
+        'noreply@example.com',
+        { name: 'Custom App', emoji: '🚀' },
+        customTemplate,
+      );
+
+      expect(sentHtml).toContain('Hello from Custom App!');
+      expect(sentHtml).toContain('href="https://example.com/login?token=abc"');
     });
   });
 });
