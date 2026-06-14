@@ -12,6 +12,7 @@ import crypto from 'node:crypto';
 
 import type { FastifyPluginAsync } from 'fastify';
 
+import { DEFAULT_BRANDING } from '../../config/schema.js';
 import { getConfig } from '../../config/index.js';
 import { sendMagicLinkEmail } from '../../services/email.js';
 import { storeMagicToken } from '../../services/magicLinkState.js';
@@ -50,17 +51,14 @@ export const magicLinkApiRoute: FastifyPluginAsync = async (fastify) => {
         const magicLink = `${proto}://${host}/auth/magic/callback?token=${token}`;
 
         // Send the email (fire-and-forget — don't block the response)
-        const branding = config.branding ?? {
-          name: 'Jeeves Server',
-          emoji: '🎩',
-        };
+        const branding = config.branding ?? DEFAULT_BRANDING;
 
         sendMagicLinkEmail(
           email,
           magicLink,
           config.emailAuth.fromAddress,
           { name: branding.name, emoji: branding.emoji },
-          branding.emailTemplate,
+          config.branding?.emailTemplate,
         ).catch((err: unknown) => {
           fastify.log.error(
             { err, email },

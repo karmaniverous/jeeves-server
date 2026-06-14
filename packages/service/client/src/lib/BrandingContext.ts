@@ -9,7 +9,7 @@ export interface BrandingData {
   };
 }
 
-const DEFAULT_BRANDING: BrandingData = {
+export const DEFAULT_BRANDING: BrandingData = {
   name: 'Jeeves Server',
   emoji: '🎩',
 };

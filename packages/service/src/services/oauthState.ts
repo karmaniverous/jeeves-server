@@ -5,6 +5,8 @@
 
 import path from 'node:path';
 
+import { createTtlStateMap } from './ttlStateMap.js';
+
 /** Build the credential file path for a provider/account pair. */
 export function credentialPath(
   credentialDir: string,
@@ -25,43 +27,19 @@ export interface PendingAuth {
   account: string;
 }
 
-const TTL_MS = 10 * 60 * 1000; // 10 minutes
-
-const pendingMap = new Map<string, PendingAuth>();
-const timers = new Map<string, ReturnType<typeof setTimeout>>();
+const map = createTtlStateMap<PendingAuth>(10 * 60 * 1000);
 
 /** Store a pending auth entry with automatic 10-minute TTL. */
 export function storePending(state: string, data: PendingAuth): void {
-  // Clear any existing timer for this state
-  const existing = timers.get(state);
-  if (existing) clearTimeout(existing);
-
-  pendingMap.set(state, data);
-  timers.set(
-    state,
-    setTimeout(() => {
-      pendingMap.delete(state);
-      timers.delete(state);
-    }, TTL_MS),
-  );
+  map.store(state, data);
 }
 
 /** Consume a pending auth entry (single-use). Returns null if not found or expired. */
 export function consumePending(state: string): PendingAuth | null {
-  const data = pendingMap.get(state);
-  if (!data) return null;
-
-  pendingMap.delete(state);
-  const timer = timers.get(state);
-  if (timer) clearTimeout(timer);
-  timers.delete(state);
-
-  return data;
+  return map.consume(state);
 }
 
 /** Clear all pending entries (for testing). */
 export function clearAllPending(): void {
-  for (const timer of timers.values()) clearTimeout(timer);
-  pendingMap.clear();
-  timers.clear();
+  map.clearAll();
 }

@@ -354,3 +354,9 @@ export type AuthMode = z.infer<typeof authModeSchema>;
 
 /** Inferred branding type */
 export type Branding = z.infer<typeof brandingSchema>;
+
+/** Default branding values. Single source of truth for all fallbacks. */
+export const DEFAULT_BRANDING = {
+  name: 'Jeeves Server',
+  emoji: '🎩',
+} as const;

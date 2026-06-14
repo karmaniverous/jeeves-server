@@ -18,7 +18,7 @@ export interface EmailBranding {
 }
 
 /** Default magic link email template (plain HTML). */
-const DEFAULT_TEMPLATE = `<!DOCTYPE html>
+export const DEFAULT_TEMPLATE = `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: system-ui, -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 20px;">

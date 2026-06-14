@@ -11,6 +11,7 @@
 import { createStatusHandler, getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyPluginAsync } from 'fastify';
 
+import { DEFAULT_BRANDING } from '../config/schema.js';
 import { getConfig } from '../config/index.js';
 import { packageVersion } from '../util/packageVersion.js';
 
@@ -139,7 +140,7 @@ const handleStatus = createStatusHandler({
             emoji: config.branding.emoji,
             theme: config.branding.theme,
           }
-        : { name: 'Jeeves Server', emoji: '🎩' },
+        : DEFAULT_BRANDING,
     };
   },
 });

@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { computeInsiderKey } from '../util/crypto.js';
+import { DEFAULT_BRANDING } from './schema.js';
 import type { JeevesConfig } from './schema.js';
 import { isScopeName } from './schema.js';
 import type {
@@ -265,8 +266,8 @@ export function buildRuntimeConfig(
     logging: config.logging,
     go: config.go,
     branding: {
-      name: config.branding?.name ?? 'Jeeves Server',
-      emoji: config.branding?.emoji ?? '🎩',
+      name: config.branding?.name ?? DEFAULT_BRANDING.name,
+      emoji: config.branding?.emoji ?? DEFAULT_BRANDING.emoji,
       theme: config.branding?.theme,
       emailTemplate: config.branding?.emailTemplate,
     },

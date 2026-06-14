@@ -12,7 +12,7 @@ import type { FastifyPluginAsync } from 'fastify';
 
 import { buildAuthUrl, exchangeCode, getUserInfo } from '../auth/google.js';
 import { sanitizeReturnTo } from '../auth/resolve.js';
-import { COOKIE_NAME, createSessionCookie } from '../auth/session.js';
+import { COOKIE_NAME, setSessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
 import { writeInsiderSeedToConfig } from '../util/configPersist.js';
 
@@ -112,20 +112,7 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
     }
 
     // Set session cookie
-    const cookieValue = createSessionCookie(
-      email,
-      sessionSecret,
-      userInfo.picture,
-    );
-    void reply.setCookie(COOKIE_NAME, cookieValue, {
-      path: '/',
-      httpOnly: true,
-      secure:
-        (request.headers['x-forwarded-proto'] as string | undefined) ===
-        'https',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
-    });
+    setSessionCookie(reply, request, email, sessionSecret, userInfo.picture);
 
     // Redirect to returnTo or root (with open-redirect protection)
     const rawReturnTo = request.query.state

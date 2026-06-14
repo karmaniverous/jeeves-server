@@ -1,11 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { BrandingContext, type BrandingData } from './BrandingContext';
-
-const DEFAULT_BRANDING: BrandingData = {
-  name: 'Jeeves Server',
-  emoji: '🎩',
-};
+import { BrandingContext, DEFAULT_BRANDING, type BrandingData } from './BrandingContext';
 
 export function BrandingProvider({ children }: { children: ReactNode }) {
   const [branding, setBranding] = useState<BrandingData>(DEFAULT_BRANDING);

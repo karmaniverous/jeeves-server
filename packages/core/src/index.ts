@@ -19,6 +19,7 @@ export {
   authSchema,
   type Branding,
   brandingSchema,
+  DEFAULT_BRANDING,
   DEPRECATED_CONFIG_PROPS,
   emailAuthSchema,
   eventConfigSchema,
