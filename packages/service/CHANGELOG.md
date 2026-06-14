@@ -4,6 +4,39 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🚀 Features
+
+- Expand config schema for magic link auth and instance branding
+- Surface branding in /status, redact emailAuth in /config
+- Add branding context and wire into App and Header
+- Add mailer service for magic link auth (nodemailer + handlebars)
+- Magic link backend routes + token state + transport init
+- Redesign sign-in page with email magic link form and branding support
+
+### 🐛 Bug Fixes
+
+- Address Copilot PR review comments on magic-link-branding
+- Resolve lint errors (prettier, deprecated z.email, unnecessary optionals, async mocks)
+- Only show auth buttons for fully configured modes (getEffectiveAuthModes)
+
+### 💼 Other
+
+- Updated core
+
+### 🚜 Refactor
+
+- SOLID/DRY pass - generic TTL map, DEFAULT_BRANDING, setSessionCookie, renderErrorPage, export DEFAULT_TEMPLATE
+
+### 📚 Documentation
+
+- Update guides, README, and skill for magic link auth and branding
+- Fix stale auth references in setup, SKILL, and api-integration guides
+
+### 🧪 Testing
+
+- Add ttlStateMap, errorPage tests; improve email tests with mock transport
+## [3.10.15] - 2026-06-13
+
 ### 🐛 Bug Fixes
 
 - Address Copilot review and CI smoke test failures
@@ -31,6 +64,7 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - Add zod direct dependency, remove stale package-directory
+- Release @karmaniverous/jeeves-server v3.10.15
 ## [3.10.14] - 2026-06-11
 
 ### 💼 Other
