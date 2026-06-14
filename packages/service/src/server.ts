@@ -20,6 +20,7 @@ import {
 } from './auth/resolve.js';
 import { renderSignInPage } from './auth/signInPage.js';
 import { getConfig, initConfig, isConfigInitialized } from './config/index.js';
+import { getEffectiveAuthModes } from './config/types.js';
 import { apiRoute } from './routes/api/index.js';
 import { authRoute } from './routes/auth.js';
 import { registerConfigRoute } from './routes/config.js';
@@ -127,7 +128,13 @@ async function start() {
         return reply
           .type('text/html')
           .code(401)
-          .send(renderSignInPage(request.url, cfg.authModes, cfg.branding));
+          .send(
+            renderSignInPage(
+              request.url,
+              getEffectiveAuthModes(cfg),
+              cfg.branding,
+            ),
+          );
       };
 
       for (const route of [

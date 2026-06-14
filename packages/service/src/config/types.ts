@@ -109,6 +109,24 @@ export interface RuntimeConfig {
 }
 
 /**
+ * Compute effective auth modes — only those with complete configuration.
+ * Filters out modes where required config is missing.
+ */
+export function getEffectiveAuthModes(config: RuntimeConfig): AuthMode[] {
+  return config.authModes.filter((mode) => {
+    if (mode === 'google')
+      return config.googleAuth !== null && config.sessionSecret !== null;
+    if (mode === 'email')
+      return (
+        config.emailAuth !== null &&
+        config.emailAuth !== undefined &&
+        config.sessionSecret !== null
+      );
+    return true; // 'keys' is always available if listed
+  });
+}
+
+/**
  * Access mode for authenticated requests
  */
 export type AccessMode = 'insider' | 'outsider';
