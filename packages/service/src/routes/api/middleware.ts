@@ -25,6 +25,7 @@ export function addAuthMiddleware(fastify: FastifyInstance): void {
     if (request.url.startsWith('/api/readme-link')) return;
     if (request.url.startsWith('/api/content-link/')) return;
     if (request.url.startsWith('/api/auth/status')) return;
+    if (request.url.startsWith('/api/auth/magic')) return;
     if (request.url.startsWith('/api/diagram/')) return;
     if (request.url.startsWith('/api/status')) return;
 
