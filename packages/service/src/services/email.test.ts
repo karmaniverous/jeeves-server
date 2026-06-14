@@ -36,11 +36,16 @@ describe('email service', () => {
       const t = getTransport()!;
 
       let sentOpts: Record<string, unknown> = {};
-      (t as unknown as { sendMail: (opts: Record<string, unknown>) => Promise<{ messageId: string }> }).sendMail =
-        async (opts: Record<string, unknown>) => {
-          sentOpts = opts;
-          return { messageId: 'test' };
-        };
+      (
+        t as unknown as {
+          sendMail: (
+            opts: Record<string, unknown>,
+          ) => Promise<{ messageId: string }>;
+        }
+      ).sendMail = (opts: Record<string, unknown>) => {
+        sentOpts = opts;
+        return Promise.resolve({ messageId: 'test' });
+      };
 
       await sendMagicLinkEmail(
         'user@example.com',
@@ -54,7 +59,9 @@ describe('email service', () => {
       expect(sentOpts.subject).toBe('🏠 Sign in to My Server');
       const html = sentOpts.html as string;
       expect(html).toContain('🏠 My Server');
-      expect(html).toContain('https://example.com/auth/magic/callback?token=xyz');
+      expect(html).toContain(
+        'https://example.com/auth/magic/callback?token=xyz',
+      );
       expect(html).toContain('expires in 10 minutes');
     });
   });
@@ -66,11 +73,14 @@ describe('email service', () => {
 
       // Capture the sendMail call
       let sentHtml = '';
-      (t as unknown as { sendMail: (opts: { html?: string }) => Promise<{ messageId: string }> }).sendMail =
-        async (opts: { html?: string }) => {
-          sentHtml = (opts.html as string) ?? '';
-          return { messageId: 'test' };
-        };
+      (
+        t as unknown as {
+          sendMail: (opts: { html?: string }) => Promise<{ messageId: string }>;
+        }
+      ).sendMail = (opts: { html?: string }) => {
+        sentHtml = opts.html ?? '';
+        return Promise.resolve({ messageId: 'test' });
+      };
 
       const customTemplate =
         '<p>Hello from {{branding.name}}! <a href="{{{magicLink}}}">Login</a></p>';

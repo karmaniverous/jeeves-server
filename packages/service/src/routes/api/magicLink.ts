@@ -12,8 +12,8 @@ import crypto from 'node:crypto';
 
 import type { FastifyPluginAsync } from 'fastify';
 
-import { DEFAULT_BRANDING } from '../../config/schema.js';
 import { getConfig } from '../../config/index.js';
+import { DEFAULT_BRANDING } from '../../config/schema.js';
 import { sendMagicLinkEmail } from '../../services/email.js';
 import { storeMagicToken } from '../../services/magicLinkState.js';
 
@@ -25,7 +25,7 @@ export const magicLinkApiRoute: FastifyPluginAsync = async (fastify) => {
       const config = getConfig();
 
       // Always return 200 to prevent email enumeration
-      const email = request.body?.email?.toLowerCase()?.trim();
+      const email = request.body.email?.toLowerCase().trim();
       if (!email) {
         return reply.code(200).send({ ok: true });
       }
@@ -46,7 +46,7 @@ export const magicLinkApiRoute: FastifyPluginAsync = async (fastify) => {
           'http';
         const host =
           (request.headers['x-forwarded-host'] as string | undefined) ??
-          (request.headers['host'] as string | undefined) ??
+          request.headers['host'] ??
           request.hostname;
         const magicLink = `${proto}://${host}/auth/magic/callback?token=${token}`;
 
@@ -60,10 +60,7 @@ export const magicLinkApiRoute: FastifyPluginAsync = async (fastify) => {
           { name: branding.name, emoji: branding.emoji },
           config.branding?.emailTemplate,
         ).catch((err: unknown) => {
-          fastify.log.error(
-            { err, email },
-            'Failed to send magic link email',
-          );
+          fastify.log.error({ err, email }, 'Failed to send magic link email');
         });
       }
 

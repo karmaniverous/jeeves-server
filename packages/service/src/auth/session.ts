@@ -91,8 +91,7 @@ export function setSessionCookie(
     path: '/',
     httpOnly: true,
     secure:
-      (request.headers['x-forwarded-proto'] as string | undefined) ===
-      'https',
+      (request.headers['x-forwarded-proto'] as string | undefined) === 'https',
     sameSite: 'lax',
     maxAge: 30 * 24 * 60 * 60,
   });

@@ -9,8 +9,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { computeInsiderKey } from '../util/crypto.js';
-import { DEFAULT_BRANDING } from './schema.js';
 import type { JeevesConfig } from './schema.js';
+import { DEFAULT_BRANDING } from './schema.js';
 import { isScopeName } from './schema.js';
 import type {
   NormalizedScopes,
@@ -271,10 +271,13 @@ export function buildRuntimeConfig(
       theme: config.branding?.theme,
       emailTemplate: config.branding?.emailTemplate,
     },
-    emailAuth: config.auth.modes.includes('email') && config.auth.email ? {
-      smtpUrl: config.auth.email.smtpUrl,
-      fromAddress: config.auth.email.fromAddress,
-    } : null,
+    emailAuth:
+      config.auth.modes.includes('email') && config.auth.email
+        ? {
+            smtpUrl: config.auth.email.smtpUrl,
+            fromAddress: config.auth.email.fromAddress,
+          }
+        : null,
     configPath,
     eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),
     eventQueuePath: path.join(rootDir, 'logs', 'event-queue.jsonl'),

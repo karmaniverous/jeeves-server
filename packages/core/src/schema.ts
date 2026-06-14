@@ -23,7 +23,7 @@ export const emailAuthSchema = z.object({
   /** SMTP connection string (e.g. smtps://user:pass@smtp.example.com:465) */
   smtpUrl: z.string().min(1),
   /** Sender email address for magic link emails */
-  fromAddress: z.string().email(),
+  fromAddress: z.email(),
 });
 
 /** Auth configuration */
@@ -163,10 +163,12 @@ export const brandingSchema = z.object({
   /** Instance emoji (used as home icon in navbar) */
   emoji: z.string().default('🎩'),
   /** CSS variable overrides grouped by theme mode */
-  theme: z.object({
-    light: themeOverridesSchema.optional(),
-    dark: themeOverridesSchema.optional(),
-  }).optional(),
+  theme: z
+    .object({
+      light: themeOverridesSchema.optional(),
+      dark: themeOverridesSchema.optional(),
+    })
+    .optional(),
   /** Handlebars template for magic link emails. Supports {{magicLink}}, {{branding.name}}, {{branding.emoji}} */
   emailTemplate: z.string().optional(),
 });
