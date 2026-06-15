@@ -8,7 +8,7 @@ describe('renderSignInPage', () => {
     expect(html).toContain('<title>');
     expect(html).toContain('Sign in to continue');
     expect(html).toContain('/browse/j/docs/readme.md');
-    expect(html).toContain('prefers-color-scheme: dark');
+    expect(html).toContain('.dark body');
   });
 
   it('renders Google sign-in link with encoded returnTo when google mode is active', () => {

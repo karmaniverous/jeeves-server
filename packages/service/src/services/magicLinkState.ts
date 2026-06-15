@@ -8,6 +8,7 @@ import { createTtlStateMap } from './ttlStateMap.js';
 /** Data stored for a pending magic link token. */
 export interface PendingMagicLink {
   email: string;
+  returnTo?: string;
 }
 
 const map = createTtlStateMap<PendingMagicLink>(10 * 60 * 1000);
