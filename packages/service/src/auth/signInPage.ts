@@ -56,7 +56,7 @@ function submitMagic() {
   fetch('/api/auth/magic', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email, returnTo: ${JSON.stringify(requestUrl)} })
+    body: JSON.stringify({ email: email, returnTo: window.location.pathname + window.location.search })
   })
   .then(function(res) {
     if (res.ok) {

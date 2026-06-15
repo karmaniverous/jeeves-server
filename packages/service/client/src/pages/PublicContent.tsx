@@ -4,7 +4,6 @@
  */
 import { useEffect, useRef, useState } from 'react';
 
-import { DownloadDropdown } from '@/components/DownloadDropdown';
 import { Header } from '@/components/layout/Header';
 import { MarkdownView } from '@/components/MarkdownView';
 import { useTopBar } from '@/hooks/useTopBar';
@@ -27,24 +26,18 @@ export function PublicContent({ slug }: PublicContentProps) {
   const [file, setFile] = useState<FileContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentSlug, setCurrentSlug] = useState(slug);
-
-  // Reset state synchronously when slug changes (avoids setState in effect)
-  if (slug !== currentSlug) {
-    setCurrentSlug(slug);
-    setFile(null);
-    setLoading(true);
-    setError(null);
-  }
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
   const { topBarRef, topBarHeight } = useTopBar();
 
   const title = TITLES[slug] ?? slug;
 
-  // Re-fetch when slug changes
+  // Reset and re-fetch when slug changes
   useEffect(() => {
     let cancelled = false;
+    setFile(null);
+    setLoading(true);
+    setError(null);
     const load = async () => {
       try {
         const r = await fetch(`/api/public-content/${slug}`);
@@ -77,29 +70,6 @@ export function PublicContent({ slug }: PublicContentProps) {
           theme={theme}
           onToggleTheme={toggleTheme}
           breadcrumbs={[{ label: title, path: slug }]}
-          downloadDropdown={
-            file ? (
-              <DownloadDropdown
-                reqPath={slug}
-                file={file}
-                variant="header"
-              />
-            ) : undefined
-          }
-          downloadMenuItem={
-            file
-              ? (onDismiss) => (
-                  <DownloadDropdown
-                    reqPath={slug}
-                    file={file}
-                    variant="menuItem"
-                    onStateChange={(s) => {
-                      if (s === 'done') setTimeout(onDismiss, 800);
-                    }}
-                  />
-                )
-              : undefined
-          }
         />
       </div>
 

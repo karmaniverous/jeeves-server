@@ -12,6 +12,7 @@ import crypto from 'node:crypto';
 
 import type { FastifyPluginAsync } from 'fastify';
 
+import { sanitizeReturnTo } from '../../auth/resolve.js';
 import { getConfig } from '../../config/index.js';
 import { DEFAULT_BRANDING } from '../../config/schema.js';
 import { sendMagicLinkEmail } from '../../services/email.js';
@@ -30,7 +31,9 @@ export const magicLinkApiRoute: FastifyPluginAsync = async (fastify) => {
         return reply.code(200).send({ ok: true });
       }
 
-      const returnTo = request.body.returnTo;
+      const returnTo = request.body.returnTo
+        ? sanitizeReturnTo(request.body.returnTo)
+        : undefined;
 
       // Check if email matches a configured insider
       const insider = config.resolvedInsiders.find(

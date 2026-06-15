@@ -77,16 +77,29 @@ export function addAuthMiddleware(fastify: FastifyInstance): void {
     const query = request.query as AuthQuery;
     const deepParams = extractDeepParams(query);
 
-    const urlPath = decodeURIComponent(
-      request.url
+    let urlPath: string;
+    try {
+      urlPath = decodeURIComponent(
+        request.url
+          .split('?')[0]
+          .replace('/api/path', '')
+          .replace('/api/drives', '/')
+          .replace('/api/file', '')
+          .replace('/api/raw', '')
+          .replace('/api/export-cache', '')
+          .replace('/api/export', ''),
+      );
+    } catch {
+      // Malformed percent-encoding — use the raw path
+      urlPath = request.url
         .split('?')[0]
         .replace('/api/path', '')
         .replace('/api/drives', '/')
         .replace('/api/file', '')
         .replace('/api/raw', '')
         .replace('/api/export-cache', '')
-        .replace('/api/export', ''),
-    );
+        .replace('/api/export', '');
+    }
 
     // Try key-based auth
     let authResult = resolveKeyAuth(

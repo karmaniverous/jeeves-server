@@ -19,6 +19,6 @@ const config = initConfig(configPath);
 
 // Override port for dev to avoid colliding with the prod service.
 const devPort = Number(process.env.JEEVES_SERVER_PORT) || 19340;
-(config as { port: number }).port = devPort;
+config.port = devPort;
 
 await import('./server.js');

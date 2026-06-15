@@ -14,6 +14,7 @@ import crypto from 'node:crypto';
 import type { FastifyPluginAsync } from 'fastify';
 
 import { renderErrorPage } from '../auth/errorPage.js';
+import { sanitizeReturnTo } from '../auth/resolve.js';
 import { setSessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
 import { consumeMagicToken } from '../services/magicLinkState.js';
@@ -87,7 +88,7 @@ export const magicCallbackRoute: FastifyPluginAsync = async (fastify) => {
       setSessionCookie(reply, request, pending.email, sessionSecret);
 
       // Redirect to the originally requested path, or /browse as fallback.
-      const returnTo = pending.returnTo || '/browse';
+      const returnTo = sanitizeReturnTo(pending.returnTo || '/browse');
       return reply.redirect(returnTo);
     },
   );

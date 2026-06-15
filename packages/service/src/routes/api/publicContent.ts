@@ -5,7 +5,7 @@
  * No authentication required.
  */
 
-import fs from 'node:fs';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -20,7 +20,6 @@ const serverRoot = packageDirectorySync({ cwd: __dirname }) ?? __dirname;
 /** Allowed slug pattern — alphanumeric, hyphens, underscores only. */
 const SLUG_RE = /^[\w-]+$/;
 
-// eslint-disable-next-line @typescript-eslint/require-await
 export const publicContentRoute: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { slug: string } }>(
     '/api/public-content/:slug',
@@ -37,11 +36,13 @@ export const publicContentRoute: FastifyPluginAsync = async (fastify) => {
           ? path.join(serverRoot, 'guides', 'user-guide.md')
           : path.join(serverRoot, 'content', `${slug}.md`);
 
-      if (!fs.existsSync(filePath)) {
+      let markdown: string;
+      try {
+        markdown = await fs.readFile(filePath, 'utf8');
+      } catch {
         return reply.code(404).send({ error: 'Not found' });
       }
 
-      const markdown = fs.readFileSync(filePath, 'utf8');
       const { html, headings } = parseMarkdown(markdown, {
         linkWindowsPaths: false,
       });
