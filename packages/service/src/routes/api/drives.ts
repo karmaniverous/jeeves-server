@@ -4,13 +4,16 @@
  * Handles: GET /api/drives
  */
 
-import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
+import type {
+  FastifyPluginCallback,
+  FastifyReply,
+  FastifyRequest,
+} from 'fastify';
 
 import { getConfig } from '../../config/index.js';
 import { getRoots } from '../../util/platform.js';
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const drivesRoutes: FastifyPluginAsync = async (fastify) => {
+export const drivesRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   const roots = getRoots(getConfig().roots);
 
   fastify.get(
@@ -20,4 +23,5 @@ export const drivesRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.send(drives);
     },
   );
+  done();
 };

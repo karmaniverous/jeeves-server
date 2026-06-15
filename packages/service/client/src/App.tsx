@@ -37,9 +37,9 @@ export default function App() {
         <BrowserRouter>
           <UndoProvider>
             <Routes>
-              <Route path="/readme" element={<PublicContent slug="readme" />} />
-              <Route path="/privacy" element={<PublicContent slug="privacy" />} />
-              <Route path="/terms" element={<PublicContent slug="terms" />} />
+              <Route path="/readme" element={<PublicContent key="readme" slug="readme" />} />
+              <Route path="/privacy" element={<PublicContent key="privacy" slug="privacy" />} />
+              <Route path="/terms" element={<PublicContent key="terms" slug="terms" />} />
               <Route
                 path="*"
                 element={

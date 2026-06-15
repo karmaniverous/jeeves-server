@@ -7,14 +7,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
 import { getContentType, isInlineType } from '../../util/fileDetection.js';
 import { getRoots, urlPathToFs } from '../../util/platform.js';
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const rawRoutes: FastifyPluginAsync = async (fastify) => {
+export const rawRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   const roots = getRoots(getConfig().roots);
 
   fastify.get<{ Params: { '*': string } }>(
@@ -51,4 +50,5 @@ export const rawRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.send(fs.readFileSync(resolved));
     },
   );
+  done();
 };

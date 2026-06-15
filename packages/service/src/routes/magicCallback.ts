@@ -11,7 +11,7 @@
 
 import crypto from 'node:crypto';
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 
 import { renderErrorPage } from '../auth/errorPage.js';
 import { sanitizeReturnTo } from '../auth/resolve.js';
@@ -20,8 +20,11 @@ import { getConfig, resetConfig } from '../config/index.js';
 import { consumeMagicToken } from '../services/magicLinkState.js';
 import { writeInsiderSeedToConfig } from '../util/configPersist.js';
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const magicCallbackRoute: FastifyPluginAsync = async (fastify) => {
+export const magicCallbackRoute: FastifyPluginCallback = (
+  fastify,
+  _opts,
+  done,
+) => {
   fastify.get<{ Querystring: { token?: string } }>(
     '/auth/magic/callback',
     async (request, reply) => {
@@ -92,4 +95,5 @@ export const magicCallbackRoute: FastifyPluginAsync = async (fastify) => {
       return reply.redirect(returnTo);
     },
   );
+  done();
 };

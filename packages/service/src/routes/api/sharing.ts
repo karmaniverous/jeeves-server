@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { FastifyPluginAsync, FastifyReply } from 'fastify';
+import type { FastifyPluginCallback, FastifyReply } from 'fastify';
 import { packageDirectorySync } from 'package-directory';
 
 import { _pathMatchesScopes } from '../../auth/keys.js';
@@ -46,8 +46,7 @@ function buildDeepShareUrl(
   return url;
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
+export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   const roots = getRoots(getConfig().roots);
 
   /** Resolve the _internal key seed, or send a 503 error. */
@@ -286,4 +285,5 @@ export const sharingRoutes: FastifyPluginAsync = async (fastify) => {
 
     return reply.send(response);
   });
+  done();
 };

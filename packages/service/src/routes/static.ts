@@ -7,12 +7,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const staticRoutes: FastifyPluginAsync = async (fastify) => {
+export const staticRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   // robots.txt — block all crawlers
   fastify.get('/robots.txt', async (_request, reply) => {
     reply.type('text/plain').send('User-agent: *\nDisallow: /\n');
@@ -51,4 +50,5 @@ export const staticRoutes: FastifyPluginAsync = async (fastify) => {
     );
     return reply.type('application/javascript').send(fs.readFileSync(filePath));
   });
+  done();
 };

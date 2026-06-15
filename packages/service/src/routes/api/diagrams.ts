@@ -4,15 +4,14 @@
  * Handles: /api/diagram/:type/:hash
  */
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 
 import {
   getDiagramSource,
   renderDiagramToSvg,
 } from '../../services/embeddedDiagrams.js';
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const diagramsRoutes: FastifyPluginAsync = async (fastify) => {
+export const diagramsRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   fastify.get<{ Params: { type: string; hash: string } }>(
     '/api/diagram/:type/:hash',
     async (request, reply) => {
@@ -50,4 +49,5 @@ export const diagramsRoutes: FastifyPluginAsync = async (fastify) => {
         .send(svg);
     },
   );
+  done();
 };

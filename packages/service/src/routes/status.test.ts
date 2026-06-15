@@ -53,7 +53,7 @@ describe('GET /status', () => {
       },
     };
 
-    await statusRoutes(fakeFastify as never, {});
+    statusRoutes(fakeFastify as never, {}, () => {});
 
     const handler = routes['/status'];
     expect(handler).toBeDefined();

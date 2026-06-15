@@ -12,7 +12,7 @@ import path from 'node:path';
 
 import { getBindAddress } from '@karmaniverous/jeeves';
 import archiver from 'archiver';
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
 import { appendEvent } from '../../services/eventQueue.js';
@@ -26,8 +26,7 @@ import {
 } from '../../services/exportCache.js';
 import { getDirSize, getRoots, urlPathToFs } from '../../util/platform.js';
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const exportRoutes: FastifyPluginAsync = async (fastify) => {
+export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   const roots = getRoots(getConfig().roots);
 
   // GET /api/export/*
@@ -187,4 +186,5 @@ export const exportRoutes: FastifyPluginAsync = async (fastify) => {
       });
     },
   );
+  done();
 };

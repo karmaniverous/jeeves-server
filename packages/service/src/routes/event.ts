@@ -9,7 +9,7 @@ import {
   type JsonMapMap,
 } from '@karmaniverous/jsonmap';
 import Ajv from 'ajv';
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 import * as _ from 'radash';
 
 import { verifyKey } from '../auth/keys.js';
@@ -63,8 +63,7 @@ async function transformBody(
   return result as Record<string, unknown>;
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const eventRoute: FastifyPluginAsync = async (fastify) => {
+export const eventRoute: FastifyPluginCallback = (fastify, _opts, done) => {
   // Auth middleware
   fastify.addHook('preHandler', async (request, reply) => {
     if (!request.url.startsWith('/event')) return;
@@ -111,4 +110,5 @@ export const eventRoute: FastifyPluginAsync = async (fastify) => {
       return { matched: null };
     }
   });
+  done();
 };

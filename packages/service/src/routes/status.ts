@@ -9,7 +9,7 @@
  */
 
 import { createStatusHandler, getServiceUrl } from '@karmaniverous/jeeves';
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 
 import { getConfig } from '../config/index.js';
 import { DEFAULT_BRANDING } from '../config/schema.js';
@@ -78,8 +78,7 @@ async function refreshServiceCache(): Promise<void> {
 const handleStatus = createStatusHandler({
   name: 'server',
   version: packageVersion,
-  // eslint-disable-next-line @typescript-eslint/require-await
-  getHealth: async () => {
+  getHealth: () => {
     const config = getConfig();
 
     const services = serviceCache
@@ -105,7 +104,7 @@ const handleStatus = createStatusHandler({
           lastChecked: null,
         };
 
-    return {
+    return Promise.resolve({
       port: config.port,
       chrome: {
         configured: Boolean(config.chromePath),
@@ -141,12 +140,11 @@ const handleStatus = createStatusHandler({
             theme: config.branding.theme,
           }
         : DEFAULT_BRANDING,
-    };
+    });
   },
 });
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const statusRoutes: FastifyPluginAsync = async (fastify) => {
+export const statusRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
   // Fire-and-forget initial cache population.
@@ -158,8 +156,7 @@ export const statusRoutes: FastifyPluginAsync = async (fastify) => {
   }, 60_000);
 
   // Clean up on shutdown.
-  // eslint-disable-next-line @typescript-eslint/require-await
-  fastify.addHook('onClose', async () => {
+  fastify.addHook('onClose', () => {
     if (refreshTimer) {
       clearInterval(refreshTimer);
       refreshTimer = null;
@@ -170,4 +167,5 @@ export const statusRoutes: FastifyPluginAsync = async (fastify) => {
     const result = await handleStatus();
     return result.body;
   });
+  done();
 };

@@ -10,7 +10,7 @@
 import { stat } from 'node:fs/promises';
 
 import { getServiceUrl } from '@karmaniverous/jeeves';
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 import picomatch from 'picomatch';
 
 import { getConfig } from '../../config/index.js';
@@ -72,8 +72,7 @@ interface GroupedResult {
   }>;
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const searchRoutes: FastifyPluginAsync = async (fastify) => {
+export const searchRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   fastify.post<{
     Body: {
       query: string;
@@ -280,4 +279,5 @@ export const searchRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
   });
+  done();
 };
