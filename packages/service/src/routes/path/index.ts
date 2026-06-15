@@ -2,10 +2,9 @@
  * Legacy /path redirect — sends all /path/* requests to /browse/*
  */
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const pathRoute: FastifyPluginAsync = async (fastify) => {
+export const pathRoute: FastifyPluginCallback = (fastify, _opts, done) => {
   // Redirect /path (root) to /browse
   fastify.get('/path', async (_request, reply) => {
     return reply.redirect('/browse');
@@ -21,4 +20,5 @@ export const pathRoute: FastifyPluginAsync = async (fastify) => {
       return reply.redirect(`/browse/${reqPath}${query}`);
     },
   );
+  done();
 };

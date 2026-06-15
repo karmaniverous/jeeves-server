@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 
 import {
   _directoryVisibleUnderScopes,
@@ -75,8 +75,11 @@ export async function mapDirectoryEntry(
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const directoryRoutes: FastifyPluginAsync = async (fastify) => {
+export const directoryRoutes: FastifyPluginCallback = (
+  fastify,
+  _opts,
+  done,
+) => {
   const roots = getRoots(getConfig().roots);
 
   fastify.get<{ Params: { '*': string } }>(
@@ -157,4 +160,5 @@ export const directoryRoutes: FastifyPluginAsync = async (fastify) => {
       });
     },
   );
+  done();
 };

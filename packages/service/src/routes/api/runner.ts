@@ -6,7 +6,7 @@
  */
 
 import { getServiceUrl } from '@karmaniverous/jeeves';
-import type { FastifyPluginAsync, FastifyReply } from 'fastify';
+import type { FastifyPluginCallback, FastifyReply } from 'fastify';
 
 function getRunnerUrl(): string {
   return getServiceUrl('runner');
@@ -33,8 +33,7 @@ async function proxyToRunner(
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const runnerRoutes: FastifyPluginAsync = async (fastify) => {
+export const runnerRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   fastify.addHook('preHandler', async (request, reply) => {
     if (request.accessMode !== 'insider') {
       return reply.code(403).send({ error: 'Insider access required' });
@@ -97,4 +96,5 @@ export const runnerRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/api/runner/status', async (_req, reply) => {
     await proxyToRunner(reply, '/status');
   });
+  done();
 };

@@ -11,7 +11,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import type { FastifyPluginAsync, FastifyReply } from 'fastify';
+import type { FastifyPluginCallback, FastifyReply } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
 import {
@@ -100,8 +100,11 @@ async function serveDiagramExport(
   sendDiagram(reply, buffer, format, downloadName);
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const diagramExportRoutes: FastifyPluginAsync = async (fastify) => {
+export const diagramExportRoutes: FastifyPluginCallback = (
+  fastify,
+  _opts,
+  done,
+) => {
   const roots = getRoots(getConfig().roots);
 
   // GET /api/mermaid-export/*
@@ -167,4 +170,5 @@ export const diagramExportRoutes: FastifyPluginAsync = async (fastify) => {
       );
     },
   );
+  done();
 };

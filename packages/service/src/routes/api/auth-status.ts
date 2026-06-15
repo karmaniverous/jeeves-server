@@ -4,7 +4,11 @@
  * Handles: /api/auth/status
  */
 
-import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
+import type {
+  FastifyPluginCallback,
+  FastifyReply,
+  FastifyRequest,
+} from 'fastify';
 
 import {
   findInsider,
@@ -13,8 +17,11 @@ import {
 } from '../../auth/resolve.js';
 import { getConfig } from '../../config/index.js';
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const authStatusRoutes: FastifyPluginAsync = async (fastify) => {
+export const authStatusRoutes: FastifyPluginCallback = (
+  fastify,
+  _opts,
+  done,
+) => {
   fastify.get(
     '/api/auth/status',
     async (request: FastifyRequest, reply: FastifyReply) => {
@@ -82,4 +89,5 @@ export const authStatusRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.send({ authenticated: false, isInsider: false });
     },
   );
+  done();
 };

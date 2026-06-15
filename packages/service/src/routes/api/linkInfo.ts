@@ -6,14 +6,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
 import { getPlantUmlFormats } from '../../services/plantuml.js';
 import { getRoots, urlPathToFs } from '../../util/platform.js';
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const linkInfoRoutes: FastifyPluginAsync = async (fastify) => {
+export const linkInfoRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   const roots = getRoots(getConfig().roots);
 
   fastify.get<{ Params: { '*': string } }>(
@@ -80,4 +79,5 @@ export const linkInfoRoutes: FastifyPluginAsync = async (fastify) => {
       });
     },
   );
+  done();
 };

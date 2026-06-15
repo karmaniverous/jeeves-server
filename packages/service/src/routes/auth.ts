@@ -8,7 +8,7 @@
 
 import crypto from 'node:crypto';
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 
 import { buildAuthUrl, exchangeCode, getUserInfo } from '../auth/google.js';
 import { sanitizeReturnTo } from '../auth/resolve.js';
@@ -31,8 +31,7 @@ function getRedirectUri(request: {
   return `${proto}://${host}/auth/callback`;
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const authRoute: FastifyPluginAsync = async (fastify) => {
+export const authRoute: FastifyPluginCallback = (fastify, _opts, done) => {
   // GET /auth/login
   fastify.get<{ Querystring: { returnTo?: string } }>(
     '/auth/login',
@@ -128,4 +127,5 @@ export const authRoute: FastifyPluginAsync = async (fastify) => {
     void reply.clearCookie(COOKIE_NAME, { path: '/' });
     return reply.redirect('/');
   });
+  done();
 };

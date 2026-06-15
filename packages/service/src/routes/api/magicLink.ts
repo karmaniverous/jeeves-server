@@ -10,7 +10,7 @@
 
 import crypto from 'node:crypto';
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 
 import { sanitizeReturnTo } from '../../auth/resolve.js';
 import { getConfig } from '../../config/index.js';
@@ -18,8 +18,11 @@ import { DEFAULT_BRANDING } from '../../config/schema.js';
 import { sendMagicLinkEmail } from '../../services/email.js';
 import { storeMagicToken } from '../../services/magicLinkState.js';
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const magicLinkApiRoute: FastifyPluginAsync = async (fastify) => {
+export const magicLinkApiRoute: FastifyPluginCallback = (
+  fastify,
+  _opts,
+  done,
+) => {
   fastify.post<{ Body: { email?: string; returnTo?: string } }>(
     '/api/auth/magic',
     async (request, reply) => {
@@ -72,4 +75,5 @@ export const magicLinkApiRoute: FastifyPluginAsync = async (fastify) => {
       return reply.code(200).send({ ok: true });
     },
   );
+  done();
 };

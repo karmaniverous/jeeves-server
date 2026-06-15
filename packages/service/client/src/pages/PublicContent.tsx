@@ -32,12 +32,9 @@ export function PublicContent({ slug }: PublicContentProps) {
 
   const title = TITLES[slug] ?? slug;
 
-  // Reset and re-fetch when slug changes
+  // Re-fetch when slug changes
   useEffect(() => {
     let cancelled = false;
-    setFile(null);
-    setLoading(true);
-    setError(null);
     const load = async () => {
       try {
         const r = await fetch(`/api/public-content/${slug}`);
@@ -45,10 +42,12 @@ export function PublicContent({ slug }: PublicContentProps) {
         const data = (await r.json()) as FileContent;
         if (!cancelled) {
           setFile(data);
+          setError(null);
           setLoading(false);
         }
       } catch (err: unknown) {
         if (!cancelled) {
+          setFile(null);
           setError(
             err instanceof Error ? err.message : 'Failed to load content',
           );

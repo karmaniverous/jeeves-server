@@ -52,7 +52,7 @@ describe('GET /api/link-info', () => {
         routes[routePath] = handler;
       },
     };
-    await linkInfoRoutes(fakeFastify as never, {});
+    linkInfoRoutes(fakeFastify as never, {}, () => {});
     const handler = routes['/api/link-info/*'];
 
     let result: unknown;

@@ -7,12 +7,11 @@
  * @packageDocumentation
  */
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 
 import { getConfig } from '../config/index.js';
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const goRoute: FastifyPluginAsync = async (fastify) => {
+export const goRoute: FastifyPluginCallback = (fastify, _opts, done) => {
   fastify.get<{ Params: { slug: string } }>(
     '/go/:slug',
     async (request, reply) => {
@@ -27,4 +26,5 @@ export const goRoute: FastifyPluginAsync = async (fastify) => {
       return reply.redirect(target, 302);
     },
   );
+  done();
 };

@@ -7,7 +7,7 @@
 
 import crypto from 'node:crypto';
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 
 import {
   findInsider,
@@ -24,8 +24,7 @@ import {
   timingSafeEqual,
 } from '../util/crypto.js';
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const keysRoute: FastifyPluginAsync = async (fastify) => {
+export const keysRoute: FastifyPluginCallback = (fastify, _opts, done) => {
   // GET /key - Compute path-specific outsider key (requires raw API key seed in header)
   fastify.get<{ Querystring: { path?: string } }>(
     '/key',
@@ -147,6 +146,7 @@ export const keysRoute: FastifyPluginAsync = async (fastify) => {
       return reply.code(401).send({ error: 'Invalid insider key' });
     },
   );
+  done();
 };
 
 async function rotateInsiderSeed(

@@ -100,7 +100,7 @@ describe('diagramExportRoutes', () => {
     ) => Promise<void>
   > = {};
 
-  beforeEach(async () => {
+  beforeEach(() => {
     fs.mkdirSync(tmpDir, { recursive: true });
 
     const fakeFastify = {
@@ -112,7 +112,7 @@ describe('diagramExportRoutes', () => {
       },
     };
 
-    await diagramExportRoutes(fakeFastify as never, {});
+    diagramExportRoutes(fakeFastify as never, {}, () => {});
   });
 
   afterEach(() => {

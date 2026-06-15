@@ -34,7 +34,7 @@ let transport: Transporter | null = null;
 /**
  * Initialize (or reinitialize) the nodemailer transport.
  *
- * @param smtpUrl - SMTP connection string (e.g. smtps://user:pass@smtp.example.com:465)
+ * @param smtpUrl - SMTP connection string (e.g. smtps://user:pass\@smtp.example.com:465)
  */
 export function initTransport(smtpUrl: string): void {
   transport = createTransport(smtpUrl);

@@ -9,7 +9,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 import { packageDirectorySync } from 'package-directory';
 
 import { parseMarkdown } from '../../services/markdown.js';
@@ -20,7 +20,11 @@ const serverRoot = packageDirectorySync({ cwd: __dirname }) ?? __dirname;
 /** Allowed slug pattern — alphanumeric, hyphens, underscores only. */
 const SLUG_RE = /^[\w-]+$/;
 
-export const publicContentRoute: FastifyPluginAsync = async (fastify) => {
+export const publicContentRoute: FastifyPluginCallback = (
+  fastify,
+  _opts,
+  done,
+) => {
   fastify.get<{ Params: { slug: string } }>(
     '/api/public-content/:slug',
     async (request, reply) => {
@@ -60,4 +64,6 @@ export const publicContentRoute: FastifyPluginAsync = async (fastify) => {
       });
     },
   );
+
+  done();
 };
