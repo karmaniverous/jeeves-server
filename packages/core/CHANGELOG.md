@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🐛 Bug Fixes
+
+- Resolve lint warnings — tsdoc escaping, restore eslint-disable, setState anti-pattern
+## [0.1.6] - 2026-06-14
+
 ### 🚀 Features
 
 - Expand config schema for magic link auth and instance branding
@@ -15,6 +20,10 @@ All notable changes to this project will be documented in this file.
 ### 🚜 Refactor
 
 - SOLID/DRY pass - generic TTL map, DEFAULT_BRANDING, setSessionCookie, renderErrorPage, export DEFAULT_TEMPLATE
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-core v0.1.6
 ## [0.1.5] - 2026-06-13
 
 ### 💼 Other
