@@ -26,6 +26,7 @@ export function addAuthMiddleware(fastify: FastifyInstance): void {
     if (request.url.startsWith('/api/content-link/')) return;
     if (request.url.startsWith('/api/auth/status')) return;
     if (request.url.startsWith('/api/auth/magic')) return;
+    if (request.url.startsWith('/api/public-content/')) return;
     if (request.url.startsWith('/api/diagram/')) return;
     if (request.url.startsWith('/api/status')) return;
 
@@ -76,14 +77,16 @@ export function addAuthMiddleware(fastify: FastifyInstance): void {
     const query = request.query as AuthQuery;
     const deepParams = extractDeepParams(query);
 
-    const urlPath = request.url
-      .split('?')[0]
-      .replace('/api/path', '')
-      .replace('/api/drives', '/')
-      .replace('/api/file', '')
-      .replace('/api/raw', '')
-      .replace('/api/export-cache', '')
-      .replace('/api/export', '');
+    const urlPath = decodeURIComponent(
+      request.url
+        .split('?')[0]
+        .replace('/api/path', '')
+        .replace('/api/drives', '/')
+        .replace('/api/file', '')
+        .replace('/api/raw', '')
+        .replace('/api/export-cache', '')
+        .replace('/api/export', ''),
+    );
 
     // Try key-based auth
     let authResult = resolveKeyAuth(

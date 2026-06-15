@@ -86,7 +86,9 @@ export const magicCallbackRoute: FastifyPluginAsync = async (fastify) => {
       // Set session cookie (identical shape to Google OAuth sessions)
       setSessionCookie(reply, request, pending.email, sessionSecret);
 
-      return reply.redirect('/browse');
+      // Redirect to the originally requested path, or /browse as fallback.
+      const returnTo = pending.returnTo || '/browse';
+      return reply.redirect(returnTo);
     },
   );
 };

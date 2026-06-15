@@ -1,6 +1,7 @@
 ---
 title: Service Guides
 children:
+  - ./user-guide.md
   - ./setup.md
   - ./sharing.md
   - ./exports.md
@@ -12,6 +13,7 @@ children:
 
 # Service Guides
 
+- [User Guide](./user-guide.md) — Browsing, searching, sharing, exports, and keyboard shortcuts.
 - [Setup & Configuration](./setup.md) — Installation, auth modes, JSON config, named scopes, and config reference.
 - [Insiders, Outsiders & Sharing](./sharing.md) — The access model, HMAC key derivation, expiring links, and key rotation.
 - [Exporting & Downloads](./exports.md) — PDF, DOCX, SVG, PNG, and ZIP export via Puppeteer and bundled Mermaid/PlantUML.

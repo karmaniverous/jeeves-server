@@ -19,8 +19,8 @@ import { storeMagicToken } from '../../services/magicLinkState.js';
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const magicLinkApiRoute: FastifyPluginAsync = async (fastify) => {
-  fastify.post<{ Body: { email?: string } }>(
-    '/auth/magic',
+  fastify.post<{ Body: { email?: string; returnTo?: string } }>(
+    '/api/auth/magic',
     async (request, reply) => {
       const config = getConfig();
 
@@ -30,6 +30,8 @@ export const magicLinkApiRoute: FastifyPluginAsync = async (fastify) => {
         return reply.code(200).send({ ok: true });
       }
 
+      const returnTo = request.body.returnTo;
+
       // Check if email matches a configured insider
       const insider = config.resolvedInsiders.find(
         (i) => i.email.toLowerCase() === email,
@@ -38,7 +40,7 @@ export const magicLinkApiRoute: FastifyPluginAsync = async (fastify) => {
       if (insider && config.authModes.includes('email') && config.emailAuth) {
         // Generate a secure token
         const token = crypto.randomBytes(32).toString('hex');
-        storeMagicToken(token, { email });
+        storeMagicToken(token, { email, returnTo });
 
         // Build the magic link URL
         const proto =

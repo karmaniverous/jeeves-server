@@ -1,5 +1,6 @@
-import { ExternalLink, LogOut, User } from 'lucide-react';
+import { LogOut, Menu, Scale, Shield, User } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { useAuth } from '@/lib/AuthContext';
 
@@ -37,23 +38,11 @@ const BREAKPOINT_CLASS: Record<string, string> = {
 
 export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
   const { authenticated, email, picture } = useAuth();
+  // Key-auth users (outsiders with ?key= URLs) are authenticated but don't
+  // have an account session. Show hamburger menu, not account avatar.
+  const hasSession = authenticated && !!email && !email.startsWith('key:');
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [privacyUrl, setPrivacyUrl] = useState<string | null>(null);
-  const [termsUrl, setTermsUrl] = useState<string | null>(null);
-
-  // Fetch content share links on mount
-  useEffect(() => {
-    fetch('/api/content-link/privacy')
-      .then((r) => r.json())
-      .then((data: { url?: string }) => { if (data.url) setPrivacyUrl(data.url); })
-      .catch(() => {});
-    fetch('/api/content-link/terms')
-      .then((r) => r.json())
-      .then((data: { url?: string }) => { if (data.url) setTermsUrl(data.url); })
-      .catch(() => {});
-  }, []);
-
   // Track whether a nested Radix dropdown is currently open
   const nestedDropdownOpen = useCallback(() => {
     return !!document.querySelector('[data-radix-popper-content-wrapper]');
@@ -80,8 +69,6 @@ export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
     };
   }, [open, nestedDropdownOpen]);
 
-  if (!authenticated) return null;
-
   const initial = email ? email[0].toUpperCase() : '?';
 
   return (
@@ -89,29 +76,35 @@ export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-zinc-700 transition-colors"
-        title={email ?? 'Account'}
+        title={hasSession ? (email ?? 'Account') : 'Menu'}
       >
-        {picture ? (
-          <img src={picture} alt="" className="h-7 w-7 rounded-full" referrerPolicy="no-referrer" />
+        {hasSession ? (
+          picture ? (
+            <img src={picture} alt="" className="h-7 w-7 rounded-full" referrerPolicy="no-referrer" />
+          ) : (
+            <div className="h-7 w-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-semibold">
+              {initial}
+            </div>
+          )
         ) : (
-          <div className="h-7 w-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-semibold">
-            {initial}
-          </div>
+          <Menu className="h-5 w-5 text-zinc-300" />
         )}
       </button>
 
       {open && (
         <div className="absolute right-0 top-full mt-1 w-56 bg-popover border border-border rounded-lg shadow-lg z-50 py-1">
-          {/* User info — links to Google account */}
-          <a
-            href="https://myaccount.google.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 border-b border-border hover:bg-accent transition-colors"
-          >
-            <User className="h-4 w-4 text-foreground" />
-            <span className="text-sm text-foreground truncate">{email}</span>
-          </a>
+          {/* User info — links to Google account (session only) */}
+          {hasSession && (
+            <a
+              href="https://myaccount.google.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-2 border-b border-border hover:bg-accent transition-colors"
+            >
+              <User className="h-4 w-4 text-foreground" />
+              <span className="text-sm text-foreground truncate">{email}</span>
+            </a>
+          )}
 
           {/* Collapsed items — each visible in menu only below its breakpoint */}
           {collapsedItems.map((item, i) => (
@@ -120,46 +113,40 @@ export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
             </div>
           ))}
 
-          {/* Separator before sign out if there are collapsed items */}
-          {collapsedItems.length > 0 && (
+          {/* Separator before sign out — only when there's content above AND below */}
+          {(hasSession || collapsedItems.length > 0) && hasSession && (
             <div className="border-b border-border" />
           )}
 
-          <a
-            href="/auth/logout"
-            className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign out
-          </a>
-
-          {/* Legal links — share links to content/*.md */}
-          {(privacyUrl ?? termsUrl) && (
-            <div className="border-t border-border mt-1 pt-1">
-              {privacyUrl && (
-                <a
-                  href={privacyUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent transition-colors"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  Privacy
-                </a>
-              )}
-              {termsUrl && (
-                <a
-                  href={termsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent transition-colors"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  Terms
-                </a>
-              )}
-            </div>
+          {hasSession && (
+            <a
+              href="/auth/logout"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </a>
           )}
+
+          {/* Legal links — only show separator when there's content above */}
+          <div className={hasSession || collapsedItems.length > 0 ? 'border-t border-border mt-1 pt-1' : ''}>
+            <Link
+              to="/privacy"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent transition-colors"
+            >
+              <Shield className="h-3 w-3" />
+              Privacy
+            </Link>
+            <Link
+              to="/terms"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent transition-colors"
+            >
+              <Scale className="h-3 w-3" />
+              Terms
+            </Link>
+          </div>
         </div>
       )}
     </div>

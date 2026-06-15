@@ -12,15 +12,7 @@ import fastifyStatic from '@fastify/static';
 import { getBindAddress } from '@karmaniverous/jeeves';
 import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 
-import {
-  type AuthQuery,
-  extractDeepParams,
-  resolveKeyAuth,
-  resolveSessionAuth,
-} from './auth/resolve.js';
-import { renderSignInPage } from './auth/signInPage.js';
 import { getConfig, initConfig, isConfigInitialized } from './config/index.js';
-import { getEffectiveAuthModes } from './config/types.js';
 import { apiRoute } from './routes/api/index.js';
 import { authRoute } from './routes/auth.js';
 import { registerConfigRoute } from './routes/config.js';
@@ -96,45 +88,14 @@ async function start() {
         prefix: '/app/',
       });
 
-      // Auth-gated SPA fallback — serves index.html for authenticated users,
-      // branded sign-in page for unauthenticated users (#214)
+      // SPA fallback — always serve index.html for SPA routes.
+      // Auth gating is handled client-side by the React AuthGate component,
+      // which checks /api/auth/status and renders SignIn when unauthenticated.
       const spaFallback = async (
-        request: FastifyRequest,
+        _request: FastifyRequest,
         reply: FastifyReply,
       ) => {
-        const cfg = getConfig();
-        const query = request.query as AuthQuery;
-
-        // Extract the browse path from the URL for path-scoped key verification.
-        // /browse/j/docs/readme.md → j/docs/readme.md
-        // /browse or /browse/ → /
-        const urlPath =
-          request.url.split('?')[0].replace(/^\/(browse|runner)(\/|$)/, '') ||
-          '/';
-
-        const keyResult = resolveKeyAuth(
-          cfg,
-          urlPath,
-          query.key,
-          query.exp,
-          extractDeepParams(query),
-        );
-        const sessionResult = resolveSessionAuth(cfg, request);
-
-        if (keyResult.valid || sessionResult.valid) {
-          return reply.sendFile('index.html', clientDir);
-        }
-
-        return reply
-          .type('text/html')
-          .code(401)
-          .send(
-            renderSignInPage(
-              request.url,
-              getEffectiveAuthModes(cfg),
-              cfg.branding,
-            ),
-          );
+        return reply.sendFile('index.html', clientDir);
       };
 
       for (const route of [
@@ -143,6 +104,9 @@ async function start() {
         '/browse/*',
         '/runner',
         '/runner/*',
+        '/readme',
+        '/privacy',
+        '/terms',
       ]) {
         fastify.get(route, spaFallback);
       }
