@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🐛 Bug Fixes
+
+- SPA sign-in, public content routes, magic link, URL encoding, dark mode
+- Address Copilot review — XSS, open redirect, async I/O, React anti-patterns
+- Resolve lint warnings — tsdoc escaping, restore eslint-disable, setState anti-pattern
+
+### 💼 Other
+
+- Updated core
+
+### 🚜 Refactor
+
+- Replace all FastifyPluginAsync eslint-disables with FastifyPluginCallback
+## [3.11.0] - 2026-06-14
+
 ### 🚀 Features
 
 - Expand config schema for magic link auth and instance branding
@@ -35,6 +50,10 @@ All notable changes to this project will be documented in this file.
 ### 🧪 Testing
 
 - Add ttlStateMap, errorPage tests; improve email tests with mock transport
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.11.0
 ## [3.10.15] - 2026-06-13
 
 ### 🐛 Bug Fixes
