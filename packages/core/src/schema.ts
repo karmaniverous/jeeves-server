@@ -20,7 +20,7 @@ export const googleAuthSchema = z.object({
 
 /** Email (magic link) authentication configuration */
 export const emailAuthSchema = z.object({
-  /** SMTP connection string (e.g. smtps://user:pass@smtp.example.com:465) */
+  /** SMTP connection string (e.g. smtps://user:pass\@smtp.example.com:465) */
   smtpUrl: z.string().min(1),
   /** Sender email address for magic link emails */
   fromAddress: z.email(),
@@ -169,7 +169,7 @@ export const brandingSchema = z.object({
       dark: themeOverridesSchema.optional(),
     })
     .optional(),
-  /** Handlebars template for magic link emails. Supports {{magicLink}}, {{branding.name}}, {{branding.emoji}} */
+  /** Handlebars template for magic link emails. Supports \{\{magicLink\}\}, \{\{branding.name\}\}, \{\{branding.emoji\}\} */
   emailTemplate: z.string().optional(),
 });
 

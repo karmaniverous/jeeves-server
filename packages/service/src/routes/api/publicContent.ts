@@ -20,6 +20,7 @@ const serverRoot = packageDirectorySync({ cwd: __dirname }) ?? __dirname;
 /** Allowed slug pattern — alphanumeric, hyphens, underscores only. */
 const SLUG_RE = /^[\w-]+$/;
 
+// eslint-disable-next-line @typescript-eslint/require-await -- Fastify plugin signature requires async
 export const publicContentRoute: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Params: { slug: string } }>(
     '/api/public-content/:slug',
