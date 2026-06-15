@@ -7,11 +7,20 @@ All notable changes to this project will be documented in this file.
 ### 💼 Other
 
 - Updated core
+## [0.11.0] - 2026-06-14
+
+### 💼 Other
+
+- Updated core
 
 ### 📚 Documentation
 
 - Update guides, README, and skill for magic link auth and branding
 - Fix stale auth references in setup, SKILL, and api-integration guides
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-openclaw v0.11.0
 ## [0.10.8] - 2026-06-13
 
 ### 💼 Other
