@@ -7,7 +7,7 @@
 export async function loadCodeMirror() {
   const [
     { EditorView, basicSetup },
-    { EditorState, Prec },
+    { EditorState, Prec, Compartment },
     { keymap },
     { oneDark },
   ] = await Promise.all([
@@ -16,7 +16,7 @@ export async function loadCodeMirror() {
     import('@codemirror/view'),
     import('@codemirror/theme-one-dark'),
   ]);
-  return { EditorView, EditorState, Prec, basicSetup, keymap, oneDark };
+  return { EditorView, EditorState, Prec, Compartment, basicSetup, keymap, oneDark };
 }
 
 /** Map file extensions to CodeMirror language support (lazy-loaded) */

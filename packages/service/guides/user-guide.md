@@ -35,7 +35,7 @@ The **file browser** is your home screen. Navigate through directories by clicki
 | Type | Extensions | Rendering |
 |------|-----------|-----------|
 | **Markdown** | `.md` | Full formatting, [table of contents](#table-of-contents), embedded [diagrams](#diagrams) |
-| **Code** | `.ts`, `.js`, `.py`, `.json`, etc. | Syntax highlighting with line numbers |
+| **Code** | `.ts`, `.js`, `.py`, `.json`, etc. | Syntax highlighting with line numbers, copy and word-wrap toggle |
 | **CSV** | `.csv` | Formatted tables |
 | **SVG** | `.svg` | Interactive pan-and-zoom viewer |
 | **Mermaid diagrams** | `.mmd` | Rendered flowcharts, sequence diagrams, Gantt charts, etc. |
@@ -49,6 +49,13 @@ For files that support rendering (Markdown, CSV, SVG, diagrams), you can toggle 
 
 - **Rendered** — Formatted output with full styling.
 - **Raw** — Source text with syntax highlighting.
+
+### Code Block Toolbar
+
+All code blocks (in both rendered and raw views) display a hover toolbar with two controls:
+
+- **Copy** — Copies the block content to clipboard. Shows a green checkmark on success.
+- **Word Wrap** — Toggles line wrapping on/off. Plain text files (`.txt`, `.log`, `.csv`) default to wrap on; code files default to wrap off.
 
 Use the tab bar below the header to switch views.
 
