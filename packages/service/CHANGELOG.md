@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🚀 Features
+
+- Unified code block toolbar with word-wrap toggle and copy button
+
+### 📚 Documentation
+
+- Update README, user guide, and spec for unified code block toolbar
+## [3.11.1] - 2026-06-15
+
 ### 🐛 Bug Fixes
 
 - SPA sign-in, public content routes, magic link, URL encoding, dark mode
@@ -17,6 +26,10 @@ All notable changes to this project will be documented in this file.
 ### 🚜 Refactor
 
 - Replace all FastifyPluginAsync eslint-disables with FastifyPluginCallback
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.11.1
 ## [3.11.0] - 2026-06-14
 
 ### 🚀 Features
