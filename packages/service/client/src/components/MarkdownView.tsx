@@ -13,7 +13,6 @@ import type { FileContent } from '@/lib/api';
 import { fileMutate, saveFile } from '@/lib/api';
 import { useUndo } from '@/lib/useUndo';
 import { initCodeBlockCm6 } from '@/lib/codeBlockCm6';
-import { injectCopyButtons } from '@/lib/codeBlockCopy';
 import { useTheme } from '@/lib/theme';
 import { scrollToIdInContainer } from './scrollUtils';
 
@@ -250,7 +249,6 @@ export function MarkdownView({
               articleRef.current = el;
               if (el) {
                 if (!plainCode) initCodeBlockCm6(el, theme);
-                injectCopyButtons(el);
                 initInlineSvgPanzoom(el);
                 initEmbeddedDiagramPanzoom(el);
                 initLazyDiagrams(el);
