@@ -51,7 +51,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 - **Markdown Rendering** — Prose with collapsible TOC sidebar, collapsible frontmatter, adjustable reading width, dark/light themes
 - **CSV Table Rendering** — `.csv` files render as HTML tables with a Rendered/Raw tab
 - **PDF & DOCX Export** — One-click, perfectly rendered, business-ready
-- **Code Highlighting** — Syntax highlighting with copy buttons
+- **Code Highlighting** — Syntax highlighting with copy and word-wrap toggle
 - **SVG, Mermaid & PlantUML Diagrams** — Rendered inline with pan/zoom; Mermaid is bundled, PlantUML uses a fallback pipeline (local jar → private servers → community server)
 - **Embedded Diagrams in Markdown** — `mermaid` and `plantuml` fenced code blocks render as inline SVGs
 - **Secure Sharing** — Expiring links with HMAC signatures, scoped access
