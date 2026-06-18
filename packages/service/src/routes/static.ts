@@ -9,6 +9,8 @@ import { fileURLToPath } from 'node:url';
 
 import type { FastifyPluginCallback } from 'fastify';
 
+import { getConfig } from '../config/index.js';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const staticRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
@@ -19,7 +21,8 @@ export const staticRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
 
   // Favicon
   fastify.get('/favicon.svg', async (_request, reply) => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="0.9em" font-size="90">🎩</text></svg>`;
+    const emoji = getConfig().branding?.emoji || '🎩';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="0.9em" font-size="90">${emoji}</text></svg>`;
     reply.type('image/svg+xml').send(svg);
   });
 
