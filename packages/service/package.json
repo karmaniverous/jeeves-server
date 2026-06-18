@@ -15,19 +15,19 @@
     "archiver": "^7.0.1",
     "cheerio": "^1.2.0",
     "fastify": "^5.8.5",
+    "handlebars": "^4.7.9",
     "lz-string": "^1.5.0",
     "markdown-it": "^14.2.0",
     "markdown-it-anchor": "^9.2.0",
     "markdown-it-task-lists": "^2.1.1",
     "mime-types": "^3.0.2",
     "nodemailer": "^8.0.11",
+    "package-directory": "^8.2.0",
     "picomatch": "^4.0.4",
     "plantuml-encoder": "^1.4.0",
     "puppeteer": "^24.43.1",
     "puppeteer-core": "^23.11.1",
-    "radash": "^12.1.1",
-    "handlebars": "^4.7.9",
-    "package-directory": "^3.0.0"
+    "radash": "^12.1.1"
   },
   "description": "Secure file browser, markdown viewer, and webhook gateway with PDF/DOCX export and expiring share links",
   "devDependencies": {
