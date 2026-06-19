@@ -108,7 +108,6 @@ export interface RuntimeConfig {
   eventLogPath: string;
 }
 
-
 /**
  * Access mode for authenticated requests
  */
