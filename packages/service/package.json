@@ -57,6 +57,7 @@
   "files": [
     "dist",
     "content",
+    "guides",
     "scripts"
   ],
   "keywords": [
