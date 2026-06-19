@@ -6,12 +6,21 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [README-404] fix: include guides/ in package files (fixes /readme 404)
+## [3.11.3] - 2026-06-19
+
+### 💼 Other
+
 - [ISSUE-239] feat: dynamic favicon from config
 
 Fixes #239. Also resolves lingering knip errors for unlisted and unused dependencies.
 - [ISSUE-239] fix: restore accidentally deleted types in types.ts
 - [ISSUE-239] fix: use correct versions for updated dependencies
 - Lintfix
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.11.3
 ## [3.11.2] - 2026-06-16
 
 ### 🚀 Features
