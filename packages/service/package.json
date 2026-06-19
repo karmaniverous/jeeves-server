@@ -133,5 +133,5 @@
     "typecheck": "cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc --noEmit"
   },
   "type": "module",
-  "version": "3.11.2"
+  "version": "3.11.3"
 }
