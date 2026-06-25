@@ -146,37 +146,62 @@ async function executeEntry(entry: QueueEntry): Promise<{
   });
 }
 
+/** Maximum number of queue entries processed concurrently. */
+const MAX_CONCURRENT_PROCESSES = 3;
+
 /**
- * Process one batch of queue entries
+ * Process one batch of queue entries with bounded concurrency.
  */
 async function processBatch(): Promise<void> {
   const { entries, newPosition } = readEntriesFromCursor();
 
-  for (const entry of entries) {
-    try {
-      const { exitCode, durationMs } = await executeEntry(entry);
+  if (entries.length === 0) return;
 
-      // Log to event log
-      logEvent({
-        event: entry.event,
-        matched: true,
-        exitCode,
-        durationMs,
-      });
-    } catch {
-      // Log error but continue (errors are ignored per spec)
-      logEvent({
-        event: entry.event,
-        matched: true,
-        exitCode: -1,
-        durationMs: 0,
-      });
+  // Process entries with concurrency limit using a simple semaphore approach
+  const executing: Promise<void>[] = [];
+
+  for (const entry of entries) {
+    const task = (async () => {
+      try {
+        const { exitCode, durationMs } = await executeEntry(entry);
+        logEvent({
+          event: entry.event,
+          matched: true,
+          exitCode,
+          durationMs,
+        });
+      } catch {
+        // Log error but continue (errors are ignored per spec)
+        logEvent({
+          event: entry.event,
+          matched: true,
+          exitCode: -1,
+          durationMs: 0,
+        });
+      }
+    })();
+
+    executing.push(task);
+
+    // When we hit the concurrency limit, wait for the oldest task to complete
+    if (executing.length >= MAX_CONCURRENT_PROCESSES) {
+      await executing.shift();
     }
   }
 
-  // Update cursor
-  if (entries.length > 0) {
-    writeCursor(newPosition);
+  // Wait for all remaining tasks
+  await Promise.all(executing);
+
+  writeCursor(newPosition);
+}
+
+/**
+ * Self-scheduling drain loop — prevents overlapping batches.
+ */
+async function drainLoop(): Promise<void> {
+  for (;;) {
+    await processBatch();
+    await new Promise<void>((r) => setTimeout(r, 5000));
   }
 }
 
@@ -184,13 +209,5 @@ async function processBatch(): Promise<void> {
  * Start the queue drain loop
  */
 export function startQueueProcessor(): void {
-  setInterval(
-    () => {
-      void processBatch();
-    },
-    5000, // Check every 5 seconds
-  );
-
-  // Process immediately on start
-  void processBatch();
+  void drainLoop();
 }

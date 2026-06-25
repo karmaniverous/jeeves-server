@@ -251,6 +251,10 @@ export const jeevesConfigSchema = z
       .default({}),
     /** Instance branding (name, emoji, theme overrides, email template) */
     branding: brandingSchema.optional(),
+    /** Absolute path to the durable event queue JSONL file. Cursor file is derived as eventQueue + '.cursor'. */
+    eventQueue: z.string().min(1).optional(),
+    /** Public base URL (e.g. https://jeeves.johngalt.id). When set, API responses include full public URLs. */
+    publicUrl: z.url().optional(),
   })
   .superRefine((config, ctx) => {
     // Google auth mode requires google config + sessionSecret

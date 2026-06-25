@@ -279,9 +279,17 @@ export function buildRuntimeConfig(
           }
         : null,
     configPath,
-    eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),
-    eventQueuePath: path.join(rootDir, 'logs', 'event-queue.jsonl'),
-    eventQueueCursorPath: path.join(rootDir, 'logs', 'event-queue.cursor'),
-    eventLogPath: path.join(rootDir, 'logs', 'event-log.jsonl'),
+    publicUrl: config.publicUrl,
+    eventsLog: config.eventQueue
+      ? path.join(path.dirname(config.eventQueue), 'webhook-events.jsonl')
+      : path.join(rootDir, 'logs', 'webhook-events.jsonl'),
+    eventQueuePath:
+      config.eventQueue ?? path.join(rootDir, 'logs', 'event-queue.jsonl'),
+    eventQueueCursorPath: config.eventQueue
+      ? config.eventQueue + '.cursor'
+      : path.join(rootDir, 'logs', 'event-queue.cursor'),
+    eventLogPath: config.eventQueue
+      ? path.join(path.dirname(config.eventQueue), 'event-log.jsonl')
+      : path.join(rootDir, 'logs', 'event-log.jsonl'),
   };
 }
