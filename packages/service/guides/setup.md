@@ -72,6 +72,9 @@ Legacy paths (`jeeves-server.config.json`) are auto-migrated to the new conventi
       "scopes": ["/event"]
     }
   },
+  "publicUrl": "https://docs.example.com",
+  "eventQueue": "/var/state/jeeves-server/event-queue.jsonl",
+  "eventQueueConcurrency": 3,
   "events": {}
 }
 ```
@@ -97,6 +100,36 @@ Optional logging configuration. Matches the pattern used by jeeves-watcher and j
 The entire `logging` block is optional. When absent, the server uses pino's default (`info` level, stdout).
 
 > **Not hot-reloadable.** Logging config is set when the Fastify server is constructed. Changes require `jeeves-server service restart`.
+
+### Public URL
+
+When the server is behind a reverse proxy (Caddy, nginx), set `publicUrl` so API responses include full public URLs:
+
+```json
+{
+  "publicUrl": "https://docs.example.com"
+}
+```
+
+The OpenClaw plugin reads this value from the server config to rewrite tool response URLs. If not set, URLs use the local API address.
+
+### Event queue storage
+
+By default the event queue is stored inside the npm install directory, which is fragile across upgrades. Set `eventQueue` to a stable path:
+
+```json
+{
+  "eventQueue": "/var/state/jeeves-server/event-queue.jsonl",
+  "eventQueueConcurrency": 3
+}
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `eventQueue` | string | `{installDir}/logs/event-queue.jsonl` | Absolute path to the durable event queue file. The cursor file is created alongside as `eventQueue + '.cursor'`. |
+| `eventQueueConcurrency` | number | `3` | Maximum concurrent event queue entries per batch. |
+
+See the [Event Gateway](event-gateway.md) guide for details on queue processing.
 
 ### Environment variable substitution
 

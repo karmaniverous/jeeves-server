@@ -119,12 +119,19 @@ See the [Insiders, Outsiders & Sharing](sharing.md) guide for full details on th
 
 Events are processed through a **durable JSONL queue**:
 
-1. **Append** — Validated events are appended to `logs/event-queue.jsonl` with metadata
-2. **Drain** — A single-threaded processor reads entries sequentially
+1. **Append** — Validated events are appended to the queue file with metadata
+2. **Drain** — A self-scheduling drain loop processes batches with bounded concurrency (no overlapping batches)
 3. **Execute** — For each entry, the `cmd` is spawned with the (optionally mapped) body piped as JSON to stdin
 4. **Timeout** — Commands are killed after `timeoutMs` (per-event or the global `eventTimeoutMs` default)
 5. **Errors logged** — The command is responsible for its own error handling; the queue processor logs and moves on
-6. **Cursor** — A cursor file (`logs/event-queue.cursor`) tracks the byte offset of the last processed entry, surviving restarts
+6. **Cursor** — A cursor file (queue path + `.cursor`) tracks the byte offset of the last processed entry, surviving restarts
+
+### Queue configuration
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `eventQueue` | `string` | `{installDir}/logs/event-queue.jsonl` | Absolute path to the durable queue JSONL file. Cursor file is derived as `eventQueue + '.cursor'`. Set this to a stable location outside `node_modules`. |
+| `eventQueueConcurrency` | `number` | `3` | Maximum number of queue entries processed concurrently within a single batch. |
 
 ### Queue entry format
 

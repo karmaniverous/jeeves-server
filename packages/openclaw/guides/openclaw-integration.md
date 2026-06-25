@@ -49,8 +49,7 @@ In `openclaw.json`, configure the plugin entry:
         "config": {
           "apiUrl": "http://127.0.0.1:1934",
           "pluginKey": "same-hex-seed-as-server-_plugin-key",
-          "configRoot": "j:/config",
-          "publicUrl": "https://jeeves.example.com"
+          "configRoot": "/path/to/config"
         }
       }
     }
@@ -62,8 +61,9 @@ In `openclaw.json`, configure the plugin entry:
 |-------------|----------|---------|-------------|
 | `apiUrl` | No | `http://127.0.0.1:1934` | jeeves-server API base URL |
 | `pluginKey` | No | — | Server `_plugin` key seed (for authenticated API calls) |
-| `configRoot` | No | `j:/config` | Platform config root directory. Core derives component config dirs from this path. |
-| `publicUrl` | No | — | Public base URL (e.g. `https://jeeves.example.com`). When set, all URLs returned by tools are rewritten to use this host instead of `apiUrl`. |
+| `configRoot` | Yes | — | Platform config root directory. Core derives component config dirs from this path. Set via plugin config or `JEEVES_CONFIG_ROOT` env var. |
+
+The plugin reads `publicUrl` from the server’s own config at `{configRoot}/jeeves-server/config.json`. See the [Setup guide](../../service/guides/setup.md#public-url) for details.
 
 ## Tools
 
@@ -83,6 +83,7 @@ In `openclaw.json`, configure the plugin entry:
 | `server_rotate_key` | Rotate the authenticated insider's API key |
 | `server_auth_status` | Check current authentication status (no auth required) |
 | `server_event_status` | Query event gateway schemas and recent event log entries |
+| `server_resolve_path` | Convert an absolute filesystem path to a server browse path and optional public URL |
 | `server_config` | Query resolved server configuration (supports JSONPath) |
 | `server_config_apply` | Apply a configuration patch to the running server |
 | `server_service` | Manage the system service (install, uninstall, start, stop, restart, status) |
