@@ -21,12 +21,7 @@
       },
       "configRoot": {
         "type": "string",
-        "description": "Platform config root directory (e.g. j:/config). Core derives component config dirs from this path.",
-        "default": "j:/config"
-      },
-      "publicUrl": {
-        "type": "string",
-        "description": "Public base URL for shareable links (e.g. https://jeeves.johngalt.id). When set, all URLs returned to tool callers are rewritten to use this host. When absent, URLs use the apiUrl (development behavior)."
+        "description": "Platform config root directory. Core derives component config dirs from this path."
       }
     }
   },
@@ -49,7 +44,8 @@
       "server_browse",
       "server_share",
       "server_export",
-      "server_event_status"
+      "server_event_status",
+      "server_resolve_path"
     ]
   },
   "uiHints": {
@@ -63,11 +59,7 @@
     },
     "configRoot": {
       "label": "Config Root",
-      "placeholder": "j:/config"
-    },
-    "publicUrl": {
-      "label": "Public URL",
-      "placeholder": "https://jeeves.johngalt.id"
+      "placeholder": "/path/to/config"
     }
   }
 }

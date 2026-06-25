@@ -61,7 +61,7 @@ export function registerExtraServerTools(
         properties: {
           path: {
             type: 'string',
-            description: 'File path (e.g. "j/domains/projects/readme.md")',
+            description: 'File path (e.g. "<drive>/path/to/file.md")',
           },
           content: {
             type: 'string',
@@ -199,12 +199,31 @@ export function registerExtraServerTools(
         properties: {},
       },
       buildRequest: () => ['/api/auth/status'],
+      skipAuth: true,
+    },
+    {
+      name: 'server_resolve_path',
+      description:
+        'Convert an absolute filesystem path to a server browse path and optional public URL.',
+      parameters: {
+        type: 'object',
+        properties: {
+          fsPath: {
+            type: 'string',
+            description: 'Absolute filesystem path to resolve',
+          },
+        },
+        required: ['fsPath'],
+      },
+      buildRequest: (params) => [
+        '/api/resolve-path?fsPath=' + encodeURIComponent(String(params.fsPath)),
+      ],
+      skipAuth: true,
     },
   ];
 
   for (const tool of tools) {
-    // server_auth_status does not require auth
-    if (tool.name === 'server_auth_status') {
+    if (tool.skipAuth) {
       api.registerTool(
         {
           name: tool.name,

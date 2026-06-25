@@ -5,6 +5,7 @@
  * and starts a ComponentWriter to manage the Server section in TOOLS.md.
  */
 
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -53,25 +54,43 @@ function getServiceUrl(api: PluginApi): string {
   );
 }
 
-/** Resolve the optional public URL for shareable links. */
-function getPublicUrl(api: PluginApi): string | undefined {
-  return resolveOptionalPluginSetting(
-    api,
-    PLUGIN_ID,
-    'publicUrl',
-    'JEEVES_SERVER_PUBLIC_URL',
-  );
+/**
+ * Resolve the public URL from the server's own config.
+ * Falls back to JEEVES_SERVER_PUBLIC_URL env var.
+ * The server is the single source of truth for its own address.
+ */
+function getPublicUrl(configRoot: string): string | undefined {
+  // Env var override
+  const envUrl = process.env['JEEVES_SERVER_PUBLIC_URL'];
+  if (envUrl) return envUrl;
+
+  // Read from server config
+  try {
+    const configPath = join(configRoot, 'jeeves-server', 'config.json');
+    const raw = JSON.parse(readFileSync(configPath, 'utf-8')) as Record<
+      string,
+      unknown
+    >;
+    return typeof raw['publicUrl'] === 'string' ? raw['publicUrl'] : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /** Resolve the platform config root from plugin config or environment. */
 function getConfigRoot(api: PluginApi): string {
-  return resolvePluginSetting(
+  const value = resolveOptionalPluginSetting(
     api,
     PLUGIN_ID,
     'configRoot',
     'JEEVES_CONFIG_ROOT',
-    'j:/config',
   );
+  if (!value) {
+    throw new Error(
+      'configRoot not configured — set it in plugin config or via JEEVES_CONFIG_ROOT env var',
+    );
+  }
+  return value;
 }
 
 /** Resolve the globally installed service CLI entry point on Windows. */
@@ -164,7 +183,7 @@ export default function register(api: PluginApi): void {
     api.registerTool(tool, { optional: true });
   }
 
-  const publicUrl = getPublicUrl(api);
+  const publicUrl = getPublicUrl(configRoot);
   registerServerTools(api, baseUrl, publicUrl);
 
   // Resolve gatewayUrl for cleanup escalation

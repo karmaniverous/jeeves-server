@@ -208,6 +208,33 @@ export function deriveInternalKey(resolvedKeys: ResolvedKey[]): string | null {
 }
 
 /**
+ * Resolve event queue and log file paths.
+ *
+ * When `eventQueue` is configured, all event-related files are co-located in
+ * the same directory. Otherwise they fall back to `{rootDir}/logs/`.
+ */
+function resolveEventPaths(
+  eventQueue: string | undefined,
+  rootDir: string,
+): Pick<
+  RuntimeConfig,
+  'eventsLog' | 'eventQueuePath' | 'eventQueueCursorPath' | 'eventLogPath'
+> {
+  const logDir = eventQueue
+    ? path.dirname(eventQueue)
+    : path.join(rootDir, 'logs');
+
+  return {
+    eventsLog: path.join(logDir, 'webhook-events.jsonl'),
+    eventQueuePath: eventQueue ?? path.join(logDir, 'event-queue.jsonl'),
+    eventQueueCursorPath: eventQueue
+      ? eventQueue + '.cursor'
+      : path.join(logDir, 'event-queue.cursor'),
+    eventLogPath: path.join(logDir, 'event-log.jsonl'),
+  };
+}
+
+/**
  * Build the full RuntimeConfig from validated config, resolved runtime values, and paths.
  *
  * Centralizes the mapping from parsed config + resolved values → RuntimeConfig,
@@ -279,9 +306,8 @@ export function buildRuntimeConfig(
           }
         : null,
     configPath,
-    eventsLog: path.join(rootDir, 'logs', 'webhook-events.jsonl'),
-    eventQueuePath: path.join(rootDir, 'logs', 'event-queue.jsonl'),
-    eventQueueCursorPath: path.join(rootDir, 'logs', 'event-queue.cursor'),
-    eventLogPath: path.join(rootDir, 'logs', 'event-log.jsonl'),
+    publicUrl: config.publicUrl,
+    eventQueueConcurrency: config.eventQueueConcurrency,
+    ...resolveEventPaths(config.eventQueue, rootDir),
   };
 }

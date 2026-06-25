@@ -53,7 +53,7 @@ export function registerServerTools(
         properties: {
           path: {
             type: 'string',
-            description: 'Browse path (e.g. "j/domains/projects/readme.md")',
+            description: 'Browse path (e.g. "<drive>/path/to/file.md")',
           },
         },
         required: ['path'],
@@ -72,7 +72,7 @@ export function registerServerTools(
         properties: {
           path: {
             type: 'string',
-            description: 'Browse path (e.g. "j/domains/projects")',
+            description: 'Browse path (e.g. "<drive>/path/to/dir")',
           },
         },
         required: ['path'],

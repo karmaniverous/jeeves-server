@@ -106,6 +106,10 @@ export interface RuntimeConfig {
   eventQueuePath: string;
   eventQueueCursorPath: string;
   eventLogPath: string;
+  /** Public base URL for shareable links (e.g. https://jeeves.johngalt.id). */
+  publicUrl?: string;
+  /** Maximum concurrent event queue entries. */
+  eventQueueConcurrency: number;
 }
 
 /**

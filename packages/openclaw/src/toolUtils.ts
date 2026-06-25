@@ -100,6 +100,8 @@ export interface ApiToolConfig {
     baseUrl: string,
     params: Record<string, unknown>,
   ) => unknown;
+  /** When true, the tool is registered without plugin-key auth. Default: false. */
+  skipAuth?: boolean;
 }
 
 /** Register a single API tool with standard try/catch + ok/connectionFail. */
