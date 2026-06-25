@@ -6,7 +6,24 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [SERVER-312] fix: remove hardcoded j:/config fallback for configRoot (#244)
+- [SERVER-312] fix: replace hardcoded j/ drive prefix in tool examples (#246)
+- [SERVER-312] fix: require auth for server_resolve_path plugin tool (#247)
+- [SERVER-312] fix: make resolve-path endpoint unauthenticated (#247)
+- [SERVER-312] fix: remove publicUrl from plugin config, make eventQueueConcurrency configurable (#245, #247)
+- [SERVER-312] docs: update guides for eventQueue, eventQueueConcurrency, publicUrl, server_resolve_path (#244, #245, #246, #247)
+- [SERVER-312] refactor: extract resolveEventPaths helper, add skipAuth to ApiToolConfig (#245, #247)
+- [SERVER-312] docs: sync skill, guides, and config reference with touched code (#244, #245, #246, #247)
 - Updated core
+## [0.11.1] - 2026-06-15
+
+### 💼 Other
+
+- Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-openclaw v0.11.1
 ## [0.11.0] - 2026-06-14
 
 ### 💼 Other
