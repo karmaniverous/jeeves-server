@@ -221,11 +221,8 @@ export function registerExtraServerTools(
   ];
 
   for (const tool of tools) {
-    // server_auth_status and server_resolve_path do not require auth
-    if (
-      tool.name === 'server_auth_status' ||
-      tool.name === 'server_resolve_path'
-    ) {
+    // server_auth_status does not require auth
+    if (tool.name === 'server_auth_status') {
       api.registerTool(
         {
           name: tool.name,
