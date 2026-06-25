@@ -6,7 +6,25 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [SERVER-312] fix: prevent overlapping event queue batches, add eventQueue config (#245)
+- [SERVER-312] feat: expose resolve-path API endpoint, add publicUrl to server config (#247)
+- [SERVER-312] fix: make resolve-path endpoint unauthenticated (#247)
+- [SERVER-312] fix: remove publicUrl from plugin config, make eventQueueConcurrency configurable (#245, #247)
+- [SERVER-312] docs: update guides for eventQueue, eventQueueConcurrency, publicUrl, server_resolve_path (#244, #245, #246, #247)
+- [SERVER-312] refactor: extract resolveEventPaths helper, add skipAuth to ApiToolConfig (#245, #247)
+- [SERVER-312] test: replace trivial eventQueue tests, add resolve-path and config path resolution coverage (#244, #245, #247)
+- [SERVER-312] docs: sync skill, guides, and config reference with touched code (#244, #245, #246, #247)
+- [SERVER-312] fix: address Copilot review — drainLoop error handling, resolve-path 404/400, absolute path validation, stale cursor recovery (#245, #247)
+- Updated core
+## [3.11.4] - 2026-06-19
+
+### 💼 Other
+
 - [README-404] fix: include guides/ in package files (fixes /readme 404)
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.11.4
 ## [3.11.3] - 2026-06-19
 
 ### 💼 Other
