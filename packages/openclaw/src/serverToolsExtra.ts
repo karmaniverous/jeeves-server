@@ -199,6 +199,7 @@ export function registerExtraServerTools(
         properties: {},
       },
       buildRequest: () => ['/api/auth/status'],
+      skipAuth: true,
     },
     {
       name: 'server_resolve_path',
@@ -217,15 +218,12 @@ export function registerExtraServerTools(
       buildRequest: (params) => [
         '/api/resolve-path?fsPath=' + encodeURIComponent(String(params.fsPath)),
       ],
+      skipAuth: true,
     },
   ];
 
   for (const tool of tools) {
-    // server_auth_status and server_resolve_path do not require auth
-    if (
-      tool.name === 'server_auth_status' ||
-      tool.name === 'server_resolve_path'
-    ) {
+    if (tool.skipAuth) {
       api.registerTool(
         {
           name: tool.name,
