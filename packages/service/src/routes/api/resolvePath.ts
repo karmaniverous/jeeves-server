@@ -8,6 +8,8 @@
  * but need server-addressable URLs.
  */
 
+import path from 'node:path';
+
 import type { FastifyPluginCallback } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
@@ -27,9 +29,26 @@ export const resolvePathRoutes: FastifyPluginCallback = (
         .send({ error: 'fsPath query parameter required' });
     }
 
+    // Reject non-absolute paths
+    if (!path.isAbsolute(fsPath)) {
+      return reply
+        .status(400)
+        .send({ error: 'fsPath must be an absolute path' });
+    }
+
     const config = getConfig();
     const roots = getRoots(config.roots);
     const urlPath = fsPathToUrl(fsPath, roots);
+
+    // Verify the path resolved under a known root.
+    // fsPathToUrl returns the input path as-is on Linux when no root matches.
+    const rootIds = roots.map((r) => r.id);
+    const resolved = urlPath.replace(/^\//, '').split('/')[0];
+    if (!resolved || !rootIds.includes(resolved)) {
+      return reply
+        .status(404)
+        .send({ error: 'Path does not fall under any configured root' });
+    }
 
     // Strip leading slash to produce a browse path (drive-relative)
     const browsePath = urlPath.replace(/^\//, '');

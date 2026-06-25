@@ -152,7 +152,12 @@ async function executeEntry(entry: QueueEntry): Promise<{
 async function processBatch(): Promise<void> {
   const { entries, newPosition } = readEntriesFromCursor();
 
-  if (entries.length === 0) return;
+  if (entries.length === 0) {
+    // Write cursor even on empty batches to recover from stale cursors
+    // (e.g. after queue file truncation/rotation)
+    if (newPosition > 0) writeCursor(newPosition);
+    return;
+  }
 
   const maxConcurrent = getConfig().eventQueueConcurrency;
 
@@ -196,10 +201,18 @@ async function processBatch(): Promise<void> {
 
 /**
  * Self-scheduling drain loop — prevents overlapping batches.
+ * Catches and logs errors so the loop never dies silently.
  */
 async function drainLoop(): Promise<void> {
   for (;;) {
-    await processBatch();
+    try {
+      await processBatch();
+    } catch (err) {
+      console.error(
+        '[event-queue] processBatch error:',
+        err instanceof Error ? err.message : err,
+      );
+    }
     await new Promise<void>((r) => setTimeout(r, 5000));
   }
 }

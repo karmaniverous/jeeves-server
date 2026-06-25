@@ -6,7 +6,7 @@
  *
  * The drain loop (`processBatch`, concurrency, `drainLoop`) spawns child
  * processes and runs as an infinite loop — these are integration-test
- * concerns covered by the event gateway E2E tests.
+ * concerns not currently covered by automated tests.
  */
 
 import fs from 'node:fs';
