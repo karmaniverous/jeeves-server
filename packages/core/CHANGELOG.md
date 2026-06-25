@@ -4,9 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 💼 Other
+
+- [SERVER-312] fix: prevent overlapping event queue batches, add eventQueue config (#245)
+- [SERVER-312] fix: remove publicUrl from plugin config, make eventQueueConcurrency configurable (#245, #247)
+- [SERVER-312] fix: address Copilot review — drainLoop error handling, resolve-path 404/400, absolute path validation, stale cursor recovery (#245, #247)
+## [0.1.7] - 2026-06-15
+
 ### 🐛 Bug Fixes
 
 - Resolve lint warnings — tsdoc escaping, restore eslint-disable, setState anti-pattern
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-core v0.1.7
 ## [0.1.6] - 2026-06-14
 
 ### 🚀 Features
