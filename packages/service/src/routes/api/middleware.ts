@@ -29,6 +29,7 @@ export function addAuthMiddleware(fastify: FastifyInstance): void {
     if (request.url.startsWith('/api/public-content/')) return;
     if (request.url.startsWith('/api/diagram/')) return;
     if (request.url.startsWith('/api/status')) return;
+    if (request.url.startsWith('/api/resolve-path')) return;
 
     const config = getConfig();
 
