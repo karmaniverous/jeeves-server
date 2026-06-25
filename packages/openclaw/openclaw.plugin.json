@@ -22,10 +22,6 @@
       "configRoot": {
         "type": "string",
         "description": "Platform config root directory. Core derives component config dirs from this path."
-      },
-      "publicUrl": {
-        "type": "string",
-        "description": "Public base URL for shareable links (e.g. https://jeeves.johngalt.id). When set, all URLs returned to tool callers are rewritten to use this host. When absent, URLs use the apiUrl (development behavior)."
       }
     }
   },
@@ -64,10 +60,6 @@
     "configRoot": {
       "label": "Config Root",
       "placeholder": "/path/to/config"
-    },
-    "publicUrl": {
-      "label": "Public URL",
-      "placeholder": "https://jeeves.johngalt.id"
     }
   }
 }

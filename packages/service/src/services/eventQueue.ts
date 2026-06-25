@@ -146,9 +146,6 @@ async function executeEntry(entry: QueueEntry): Promise<{
   });
 }
 
-/** Maximum number of queue entries processed concurrently. */
-const MAX_CONCURRENT_PROCESSES = 3;
-
 /**
  * Process one batch of queue entries with bounded concurrency.
  */
@@ -156,6 +153,8 @@ async function processBatch(): Promise<void> {
   const { entries, newPosition } = readEntriesFromCursor();
 
   if (entries.length === 0) return;
+
+  const maxConcurrent = getConfig().eventQueueConcurrency;
 
   // Process entries with concurrency limit using a simple semaphore approach
   const executing: Promise<void>[] = [];
@@ -184,7 +183,7 @@ async function processBatch(): Promise<void> {
     executing.push(task);
 
     // When we hit the concurrency limit, wait for the oldest task to complete
-    if (executing.length >= MAX_CONCURRENT_PROCESSES) {
+    if (executing.length >= maxConcurrent) {
       await executing.shift();
     }
   }

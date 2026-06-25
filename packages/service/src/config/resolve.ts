@@ -280,6 +280,7 @@ export function buildRuntimeConfig(
         : null,
     configPath,
     publicUrl: config.publicUrl,
+    eventQueueConcurrency: config.eventQueueConcurrency,
     eventsLog: config.eventQueue
       ? path.join(path.dirname(config.eventQueue), 'webhook-events.jsonl')
       : path.join(rootDir, 'logs', 'webhook-events.jsonl'),

@@ -253,6 +253,8 @@ export const jeevesConfigSchema = z
     branding: brandingSchema.optional(),
     /** Absolute path to the durable event queue JSONL file. Cursor file is derived as eventQueue + '.cursor'. */
     eventQueue: z.string().min(1).optional(),
+    /** Maximum number of event queue entries processed concurrently. Defaults to 3. */
+    eventQueueConcurrency: z.number().int().positive().default(3),
     /** Public base URL (e.g. https://jeeves.johngalt.id). When set, API responses include full public URLs. */
     publicUrl: z.url().optional(),
   })

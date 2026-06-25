@@ -231,6 +231,7 @@ describe('buildRuntimeConfig', () => {
       keys: { primary: 'a'.repeat(64) },
       insiders: {},
       go: {},
+      eventQueueConcurrency: 3,
     } as JeevesConfig;
 
     const result = buildRuntimeConfig(

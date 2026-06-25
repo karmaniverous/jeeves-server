@@ -47,6 +47,7 @@ function makeConfig(overrides: Partial<RuntimeConfig> = {}): RuntimeConfig {
     eventQueuePath: '/var/queue.jsonl',
     eventQueueCursorPath: '/var/cursor.json',
     eventLogPath: '/var/event-log.jsonl',
+    eventQueueConcurrency: 3,
     ...overrides,
   };
 }
