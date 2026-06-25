@@ -65,13 +65,18 @@ function getPublicUrl(api: PluginApi): string | undefined {
 
 /** Resolve the platform config root from plugin config or environment. */
 function getConfigRoot(api: PluginApi): string {
-  return resolvePluginSetting(
+  const value = resolveOptionalPluginSetting(
     api,
     PLUGIN_ID,
     'configRoot',
     'JEEVES_CONFIG_ROOT',
-    'j:/config',
   );
+  if (!value) {
+    throw new Error(
+      'configRoot not configured — set it in plugin config or via JEEVES_CONFIG_ROOT env var',
+    );
+  }
+  return value;
 }
 
 /** Resolve the globally installed service CLI entry point on Windows. */

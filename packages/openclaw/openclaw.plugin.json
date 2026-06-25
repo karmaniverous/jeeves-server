@@ -21,8 +21,7 @@
       },
       "configRoot": {
         "type": "string",
-        "description": "Platform config root directory (e.g. j:/config). Core derives component config dirs from this path.",
-        "default": "j:/config"
+        "description": "Platform config root directory. Core derives component config dirs from this path."
       },
       "publicUrl": {
         "type": "string",
@@ -49,7 +48,8 @@
       "server_browse",
       "server_share",
       "server_export",
-      "server_event_status"
+      "server_event_status",
+      "server_resolve_path"
     ]
   },
   "uiHints": {
@@ -63,7 +63,7 @@
     },
     "configRoot": {
       "label": "Config Root",
-      "placeholder": "j:/config"
+      "placeholder": "/path/to/config"
     },
     "publicUrl": {
       "label": "Public URL",
