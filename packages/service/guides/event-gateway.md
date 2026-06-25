@@ -145,7 +145,7 @@ The queue survives server restarts. On startup, the processor reads the cursor f
 
 ## Event Logging
 
-All events — matched and unmatched — are logged to `logs/event-log.jsonl`:
+All events — matched and unmatched — are logged to the event log file (co-located with the queue when `eventQueue` is configured, otherwise `{installDir}/logs/event-log.jsonl`):
 
 ```jsonl
 {"ts":"2026-02-15T05:00:00Z","event":"notion-page-update","matched":true,"exitCode":0,"durationMs":1234}
@@ -199,14 +199,14 @@ The `eventLog` array in the response contains entries newest-first, each with `t
 
 ### Via log files
 
-Check the event log for failures:
+Check the event log for failures (adjust the path if `eventQueue` is configured):
 
 ```bash
 # Recent failures
-grep '"exitCode":' logs/event-log.jsonl | grep -v '"exitCode":0'
+grep '"exitCode":' /path/to/event-log.jsonl | grep -v '"exitCode":0'
 
 # Unmatched events (potential misconfiguration)
-grep '"matched":false' logs/event-log.jsonl
+grep '"matched":false' /path/to/event-log.jsonl
 ```
 
 ## Example: Notion Webhook Integration

@@ -465,6 +465,9 @@ Branding is surfaced via the `/status` endpoint (no auth required) so the React 
 | `auth.email` | object | — | Email magic link config (required when modes includes `"email"`) |
 | `plantuml` | object | — | PlantUML rendering config |
 | `diagramCachePath` | string | `.diagram-cache` | Cached rendered diagram directory |
+| `publicUrl` | string | — | Public base URL (e.g. `https://docs.example.com`). When set, API responses include full public URLs. |
+| `eventQueue` | string | `{installDir}/logs/event-queue.jsonl` | Absolute path to the durable event queue file. Cursor file is `eventQueue + '.cursor'`. |
+| `eventQueueConcurrency` | number | `3` | Maximum concurrent event queue entries per batch. |
 | `outsiderPolicy` | scopes | — | Global outsider sharing constraints |
 | `oauth` | object | — | OAuth2 credential management (credential directory and named providers) |
 | `go` | object | — | Shortlink redirects (`GET /go/:slug` → target URL) |

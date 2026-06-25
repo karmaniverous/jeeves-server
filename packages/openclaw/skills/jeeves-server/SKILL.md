@@ -21,6 +21,7 @@ Operate and interact with a jeeves-server deployment. Use for file browsing, doc
 | `server_export_cache_clear` | Clear export and diagram caches for a given path |
 | `server_drives` | List available root drives/labels configured on the server |
 | `server_auth_status` | Check current authentication status |
+| `server_resolve_path` | Convert an absolute filesystem path to a server browse path and optional public URL |
 | `oauth_authorize` | Initiate OAuth2 authorization for a provider/account |
 | `oauth_status` | Check if valid OAuth2 credentials exist for a provider/account |
 | `oauth_token` | Retrieve a valid access token (with automatic refresh) |
@@ -35,7 +36,7 @@ To convert a Windows file path to a browse path:
 
 ## Public URL Rewriting
 
-When the `publicUrl` plugin config is set (e.g. `https://jeeves.example.com`), all URLs returned by server tools are automatically rewritten to use the public domain instead of the internal `apiUrl`. No manual URL rewriting is needed.
+When `publicUrl` is configured in the server's own config (`{configRoot}/jeeves-server/config.json`), all URLs returned by server tools are automatically rewritten to use the public domain instead of the internal `apiUrl`. No manual URL rewriting is needed.
 
 ## Inline Editing
 
