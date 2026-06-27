@@ -20,7 +20,7 @@ export const resolvePathRoutes: FastifyPluginCallback = (
   _opts,
   done,
 ) => {
-  fastify.get('/resolve-path', async (request, reply) => {
+  fastify.get('/api/resolve-path', async (request, reply) => {
     const { fsPath } = request.query as { fsPath?: string };
 
     if (!fsPath) {
