@@ -132,6 +132,21 @@ export function fsPathToUrl(fsPath: string, roots: RootEntry[]): string {
 }
 
 /**
+ * Encode a URL path segment-by-segment for safe use in URIs.
+ *
+ * Splits on `/`, applies `encodeURIComponent` to each non-empty segment,
+ * and rejoins. Preserves leading slash if present.
+ */
+export function encodeUrlPath(urlPath: string): string {
+  const hasLeadingSlash = urlPath.startsWith('/');
+  const encoded = urlPath
+    .split('/')
+    .map((segment) => (segment ? encodeURIComponent(segment) : segment))
+    .join('/');
+  return hasLeadingSlash && !encoded.startsWith('/') ? '/' + encoded : encoded;
+}
+
+/**
  * Split a filesystem path into breadcrumb parts.
  * Returns [\{label, urlPath\}] from root to leaf.
  */

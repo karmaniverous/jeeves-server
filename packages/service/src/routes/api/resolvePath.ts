@@ -13,7 +13,7 @@ import path from 'node:path';
 import type { FastifyPluginCallback } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
-import { fsPathToUrl, getRoots } from '../../util/platform.js';
+import { encodeUrlPath, fsPathToUrl, getRoots } from '../../util/platform.js';
 
 export const resolvePathRoutes: FastifyPluginCallback = (
   fastify,
@@ -52,7 +52,7 @@ export const resolvePathRoutes: FastifyPluginCallback = (
 
     // Strip leading slash to produce a browse path (drive-relative)
     const browsePath = urlPath.replace(/^\//, '');
-    const browseUrl = '/browse/' + browsePath;
+    const browseUrl = '/browse/' + encodeUrlPath(browsePath);
 
     const response: Record<string, string> = { browsePath, browseUrl };
 

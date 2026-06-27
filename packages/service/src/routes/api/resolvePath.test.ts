@@ -11,7 +11,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { fsPathToUrl, getRoots } from '../../util/platform.js';
+import { encodeUrlPath, fsPathToUrl, getRoots } from '../../util/platform.js';
 
 const isWindows = process.platform === 'win32';
 
@@ -23,7 +23,7 @@ function buildResolveResponse(
   browsePath: string,
   publicUrl: string | undefined,
 ): Record<string, string> {
-  const browseUrl = '/browse/' + browsePath;
+  const browseUrl = '/browse/' + encodeUrlPath(browsePath);
   const response: Record<string, string> = { browsePath, browseUrl };
   if (publicUrl) {
     const base = publicUrl.replace(/\/+$/, '');
@@ -37,6 +37,9 @@ const testRoots = isWindows ? getRoots(undefined) : getRoots({ j: '/srv/j' });
 const testFsPath = isWindows
   ? 'J:\\domains\\test.md'
   : '/srv/j/domains/test.md';
+const testFsPathSpecial = isWindows
+  ? 'J:\\slack\\ax-legal-ip (C0BBG5VH147)\\notes.md'
+  : '/srv/j/slack/ax-legal-ip (C0BBG5VH147)/notes.md';
 const expectedRootId = 'j';
 
 describe('resolve-path logic', () => {
@@ -102,5 +105,45 @@ describe('resolve-path logic', () => {
     expect(response.publicUrl).toMatch(
       /^https:\/\/docs\.example\.com\/browse\//,
     );
+  });
+
+  it('encodes special characters in browseUrl', () => {
+    const urlPath = fsPathToUrl(testFsPathSpecial, testRoots);
+    const browsePath = urlPath.replace(/^\//, '');
+    const response = buildResolveResponse(
+      browsePath,
+      'https://docs.example.com',
+    );
+
+    // browsePath stays raw
+    expect(browsePath).toContain('ax-legal-ip (C0BBG5VH147)');
+
+    // browseUrl has encoded spaces
+    expect(response.browseUrl).not.toContain(' ');
+    expect(response.browseUrl).toContain('ax-legal-ip%20(C0BBG5VH147)');
+
+    // publicUrl also encoded
+    expect(response.publicUrl).not.toContain(' ');
+    expect(response.publicUrl).toContain('ax-legal-ip%20(C0BBG5VH147)');
+  });
+});
+
+describe('encodeUrlPath', () => {
+  it('encodes spaces and parentheses', () => {
+    expect(encodeUrlPath('j/slack/ax-legal-ip (C0BBG5VH147)/notes.md')).toBe(
+      'j/slack/ax-legal-ip%20(C0BBG5VH147)/notes.md',
+    );
+  });
+
+  it('preserves leading slash', () => {
+    expect(encodeUrlPath('/j/test file.md')).toBe('/j/test%20file.md');
+  });
+
+  it('leaves clean paths unchanged', () => {
+    expect(encodeUrlPath('j/domains/test.md')).toBe('j/domains/test.md');
+  });
+
+  it('handles empty segments', () => {
+    expect(encodeUrlPath('/j//test.md')).toBe('/j//test.md');
   });
 });
