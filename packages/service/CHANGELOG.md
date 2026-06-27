@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [SERVER-312] fix: resolve-path route must use /api/ prefix to match middleware bypass and meta caller
+## [3.12.0] - 2026-06-25
+
+### 💼 Other
+
 - [SERVER-312] fix: prevent overlapping event queue batches, add eventQueue config (#245)
 - [SERVER-312] feat: expose resolve-path API endpoint, add publicUrl to server config (#247)
 - [SERVER-312] fix: make resolve-path endpoint unauthenticated (#247)
@@ -16,6 +21,10 @@ All notable changes to this project will be documented in this file.
 - [SERVER-312] docs: sync skill, guides, and config reference with touched code (#244, #245, #246, #247)
 - [SERVER-312] fix: address Copilot review — drainLoop error handling, resolve-path 404/400, absolute path validation, stale cursor recovery (#245, #247)
 - Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.12.0
 ## [3.11.4] - 2026-06-19
 
 ### 💼 Other
