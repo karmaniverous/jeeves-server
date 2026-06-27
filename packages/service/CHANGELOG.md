@@ -4,9 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🐛 Bug Fixes
+
+- Encode URL path segments in resolve-path API response
+## [3.12.1] - 2026-06-27
+
 ### 💼 Other
 
 - [SERVER-312] fix: resolve-path route must use /api/ prefix to match middleware bypass and meta caller
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.12.1
 ## [3.12.0] - 2026-06-25
 
 ### 💼 Other
