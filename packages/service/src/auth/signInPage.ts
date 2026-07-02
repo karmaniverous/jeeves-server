@@ -31,22 +31,17 @@ export function renderSignInPage(
   const brandEmoji = branding?.emoji ?? '🎩';
 
   const emailFormHtml = hasEmail
-    ? `<div class="email-form" id="emailForm">
-  <form id="magicForm" onsubmit="submitMagic(); return false;">
-    <input
-      type="email"
-      id="emailInput"
-      placeholder="Enter your email"
-      required
-      class="email-input"
-    >
-    <button type="submit" class="btn-primary">Send Login Link</button>
-    <div class="error-msg" id="emailError" style="display:none;"></div>
-  </form>
-</div>
-<div class="confirmation" id="emailConfirmation" style="display:none;">
-  <p class="muted">Check your email for a login link — if you&apos;re registered, one is on its way.</p>
-</div>
+    ? `<form id="magicForm" onsubmit="submitMagic(); return false;">
+  <input
+    type="email"
+    id="emailInput"
+    placeholder="Enter your email"
+    required
+    class="email-input"
+  >
+  <button type="submit" class="btn-primary">Send Login Link</button>
+  <div class="error-msg" id="emailError" style="display:none;"></div>
+</form>
 <script>
 function submitMagic() {
   var email = document.getElementById('emailInput').value;
@@ -59,13 +54,13 @@ function submitMagic() {
     body: JSON.stringify({ email: email, returnTo: window.location.pathname + window.location.search })
   })
   .then(function(res) {
-    if (res.ok) {
-      document.getElementById('emailForm').style.display = 'none';
-      document.getElementById('emailConfirmation').style.display = 'block';
-    } else {
-      errorEl.textContent = 'Something went wrong. Please try again.';
-      errorEl.style.display = 'block';
-    }
+    if (res.ok) { return res.json(); }
+    errorEl.textContent = 'Something went wrong. Please try again.';
+    errorEl.style.display = 'block';
+    return null;
+  })
+  .then(function(data) {
+    if (data && data.verifyUrl) { window.location.href = data.verifyUrl; }
   })
   .catch(function() {
     errorEl.textContent = 'Network error. Please try again.';

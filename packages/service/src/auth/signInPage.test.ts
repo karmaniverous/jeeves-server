@@ -76,16 +76,23 @@ describe('renderSignInPage', () => {
     expect(html).toContain('Jeeves Server');
   });
 
-  it('includes hidden confirmation message element in the page', () => {
+  it('redirects browser to verifyUrl after successful POST when email mode is active', () => {
     const html = renderSignInPage('/browse/j/docs', ['email']);
-    expect(html).toContain('id="emailConfirmation"');
-    expect(html).toContain('style="display:none;"');
-    expect(html).toContain('Check your email for a login link');
+    expect(html).toContain('verifyUrl');
+    expect(html).toContain('window.location.href');
+    expect(html).toContain('res.json()');
   });
 
-  it('confirmation message is present even when Google mode is also active', () => {
+  it('redirects to verifyUrl when both email and Google modes are active', () => {
     const html = renderSignInPage('/browse/j/docs', ['email', 'google']);
-    expect(html).toContain('id="emailConfirmation"');
+    expect(html).toContain('verifyUrl');
+    expect(html).toContain('window.location.href');
     expect(html).toContain('Sign in with Google');
+  });
+
+  it('includes email error element initially hidden', () => {
+    const html = renderSignInPage('/browse/j/docs', ['email']);
+    expect(html).toContain('id="emailError"');
+    expect(html).toContain('style="display:none;"');
   });
 });

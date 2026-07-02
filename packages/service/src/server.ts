@@ -20,6 +20,7 @@ import { eventRoute } from './routes/event.js';
 import { goRoute } from './routes/go.js';
 import { keysRoute } from './routes/keys.js';
 import { magicCallbackRoute } from './routes/magicCallback.js';
+import { magicVerifyRoute } from './routes/magicVerify.js';
 import { oauthRoute } from './routes/oauth.js';
 import { pathRoute } from './routes/path/index.js';
 import { staticRoutes } from './routes/static.js';
@@ -64,6 +65,7 @@ async function start() {
     await fastify.register(statusRoutes);
     await fastify.register(authRoute);
     await fastify.register(magicCallbackRoute);
+    await fastify.register(magicVerifyRoute);
     await fastify.register(oauthRoute);
     await fastify.register(keysRoute);
     await fastify.register(eventRoute);
