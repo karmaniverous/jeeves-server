@@ -25,6 +25,7 @@ describe('email service', () => {
         sendMagicLinkEmail(
           'test@example.com',
           'https://example.com/login',
+          'a3k7 m9p2',
           'noreply@example.com',
           { name: 'Test', emoji: '🧪' },
         ),
@@ -50,6 +51,7 @@ describe('email service', () => {
       await sendMagicLinkEmail(
         'user@example.com',
         'https://example.com/auth/magic/callback?token=xyz',
+        'b5r2 t8qn',
         'login@jeeves.id',
         { name: 'My Server', emoji: '🏠' },
       );
@@ -62,7 +64,8 @@ describe('email service', () => {
       expect(html).toContain(
         'https://example.com/auth/magic/callback?token=xyz',
       );
-      expect(html).toContain('expires in 10 minutes');
+      expect(html).toContain('b5r2 t8qn');
+      expect(html).toContain('expire');
     });
   });
 
@@ -83,16 +86,18 @@ describe('email service', () => {
       };
 
       const customTemplate =
-        '<p>Hello from {{branding.name}}! <a href="{{{magicLink}}}">Login</a></p>';
+        '<p>Hello from {{branding.name}}! Code: {{otpCode}} <a href="{{{magicLink}}}">Login</a></p>';
       await sendMagicLinkEmail(
         'test@example.com',
         'https://example.com/login?token=abc',
+        'x9f4 k2jm',
         'noreply@example.com',
         { name: 'Custom App', emoji: '🚀' },
         customTemplate,
       );
 
       expect(sentHtml).toContain('Hello from Custom App!');
+      expect(sentHtml).toContain('Code: x9f4 k2jm');
       expect(sentHtml).toContain('href="https://example.com/login?token=abc"');
     });
   });
