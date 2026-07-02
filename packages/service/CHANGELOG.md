@@ -4,9 +4,43 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🚀 Features
+
+- *(#252)* Self-validating signed token, delete magicLinkState
+- *(#252)* OTP generation, AES-256-GCM encryption, email template
+- *(#252)* Verification page, magicVerify route, sign-in redirect
+- *(#253)* Server-side auth gate in SPA fallback handler
+
+### 🐛 Bug Fixes
+
+- *(#241)* Fix zero-byte ZIP export and add tar format for directories
+- Address copilot review - returnTo type guard, archive error logging, aria-labels, outsider docs
+
+### 🚜 Refactor
+
+- *(#253)* Remove client-side AuthGate, replace with AuthStatusProvider
+- Extract shared page shell (DRY pass - signInPage, verifyPage, pageShell)
+
+### 📚 Documentation
+
+- Sync guides, skill, and API reference with #241 tar format, #252 OTP flow, #253 auth gate
+
+### 🧪 Testing
+
+- Add magicToken + pageShell tests, replace trivial export/verifyPage tests
+
+### ⚙️ Miscellaneous Tasks
+
+- Dependency audit - update minor/patch deps (prettier, eslint, rollup, tailwindcss)
+## [3.12.2] - 2026-06-27
+
 ### 🐛 Bug Fixes
 
 - Encode URL path segments in resolve-path API response
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.12.2
 ## [3.12.1] - 2026-06-27
 
 ### 💼 Other
