@@ -25,7 +25,9 @@ function getDownloadItems(reqPath: string, file: { fileName: string; type: strin
   const items: DownloadItem[] = [];
 
   if (isDirectory || !file) {
-    items.push({ label: 'ZIP', href: `/api/export/${reqPath}?format=zip`, filename: `${reqPath.split('/').pop() ?? 'archive'}.zip` });
+    const baseDirName = reqPath.split('/').pop() ?? 'archive';
+    items.push({ label: 'ZIP', href: `/api/export/${reqPath}?format=zip`, filename: `${baseDirName}.zip` });
+    items.push({ label: 'Tar', href: `/api/export/${reqPath}?format=tar`, filename: `${baseDirName}.tar` });
     return items;
   }
 
