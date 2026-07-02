@@ -74,7 +74,7 @@ Available formats depend on file type and server capabilities:
 - **CSV files:** rendered as HTML tables (no additional export formats)
 - **Mermaid diagrams:** SVG, PNG, PDF (Mermaid CLI is bundled)
 - **PlantUML diagrams:** Formats depend on server configuration (jar downloaded automatically via postinstall)
-- **Directories:** ZIP (insider-only)
+- **Directories:** ZIP, Tar (insider-only)
 
 Use `server_link_info` first to check which formats are available for a path.
 

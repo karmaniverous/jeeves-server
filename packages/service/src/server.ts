@@ -12,6 +12,8 @@ import fastifyStatic from '@fastify/static';
 import { getBindAddress } from '@karmaniverous/jeeves';
 import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 
+import { resolveAuth } from './auth/resolve.js';
+import { renderSignInPage } from './auth/signInPage.js';
 import { getConfig, initConfig, isConfigInitialized } from './config/index.js';
 import { apiRoute } from './routes/api/index.js';
 import { authRoute } from './routes/auth.js';
@@ -20,6 +22,7 @@ import { eventRoute } from './routes/event.js';
 import { goRoute } from './routes/go.js';
 import { keysRoute } from './routes/keys.js';
 import { magicCallbackRoute } from './routes/magicCallback.js';
+import { magicVerifyRoute } from './routes/magicVerify.js';
 import { oauthRoute } from './routes/oauth.js';
 import { pathRoute } from './routes/path/index.js';
 import { staticRoutes } from './routes/static.js';
@@ -64,6 +67,7 @@ async function start() {
     await fastify.register(statusRoutes);
     await fastify.register(authRoute);
     await fastify.register(magicCallbackRoute);
+    await fastify.register(magicVerifyRoute);
     await fastify.register(oauthRoute);
     await fastify.register(keysRoute);
     await fastify.register(eventRoute);
@@ -88,13 +92,19 @@ async function start() {
         prefix: '/app/',
       });
 
-      // SPA fallback — always serve index.html for SPA routes.
-      // Auth gating is handled client-side by the React AuthGate component,
-      // which checks /api/auth/status and renders SignIn when unauthenticated.
+      // SPA fallback — serve index.html for authenticated requests;
+      // render server-side sign-in page for unauthenticated ones.
       const spaFallback = async (
-        _request: FastifyRequest,
+        request: FastifyRequest,
         reply: FastifyReply,
       ) => {
+        const cfg = getConfig();
+        const auth = resolveAuth(cfg, request);
+        if (auth.type === 'none') {
+          return reply
+            .type('text/html')
+            .send(renderSignInPage(request.url, cfg.authModes, cfg.branding));
+        }
         return reply.sendFile('index.html', clientDir);
       };
 

@@ -10,7 +10,7 @@ import { Header } from '@/components/layout/Header';
 import { RunHistory } from '@/components/runner/RunHistory';
 import { StatusPill } from '@/components/runner/StatusPill';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/AuthContext';
+import { useAuthStatus } from '@/lib/AuthStatusContext';
 import type { RunEntry, RunnerJob as RunnerJobType } from '@/lib/runner-api';
 import {
   disableJob,
@@ -29,7 +29,7 @@ export function RunnerJob() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [theme, toggleTheme] = useTheme();
-  const { isInsider, searchEnabled, keyCreatedAt, rotateKey } = useAuth();
+  const { isInsider, searchEnabled, keyCreatedAt, rotateKey } = useAuthStatus();
 
   const keyAge = useMemo(() => computeKeyAge(keyCreatedAt), [keyCreatedAt]);
 

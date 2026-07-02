@@ -46,37 +46,55 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       const format = request.query.format ?? 'pdf';
       const stats = fs.statSync(resolved);
 
-      // ZIP export for directories
+      // ZIP/tar export for directories
       if (stats.isDirectory()) {
-        if (format !== 'zip')
+        if (format !== 'zip' && format !== 'tar')
           return reply
             .code(400)
-            .send({ error: 'Directories only support ZIP export' });
+            .send({ error: 'Directories only support zip or tar export' });
         const isInsider = request.accessMode === 'insider';
         if (!isInsider)
           return reply
             .code(403)
-            .send({ error: 'ZIP export requires insider access' });
+            .send({ error: 'Archive export requires insider access' });
 
         const config = getConfig();
         const totalSize = getDirSize(resolved);
         const maxSizeBytes = config.maxZipSizeMb * 1024 * 1024;
         if (totalSize > maxSizeBytes) {
           return reply.code(413).send({
-            error: `Directory too large for ZIP export (${String(Math.round(totalSize / 1024 / 1024))}MB, max ${String(config.maxZipSizeMb)}MB)`,
+            error: `Directory too large for archive export (${String(Math.round(totalSize / 1024 / 1024))}MB, max ${String(config.maxZipSizeMb)}MB)`,
           });
         }
 
         const dirName = path.basename(resolved);
-        const archive = archiver('zip', { zlib: { level: 6 } });
-        reply.header('Content-Type', 'application/zip');
-        reply.header(
+        const isTar = format === 'tar';
+        const contentType = isTar ? 'application/x-tar' : 'application/zip';
+        const fileExt = isTar ? 'tar' : 'zip';
+        const archive = isTar
+          ? archiver('tar')
+          : archiver('zip', { zlib: { level: 6 } });
+
+        reply.hijack();
+        const res = reply.raw;
+        res.setHeader('Content-Type', contentType);
+        res.setHeader(
           'Content-Disposition',
-          `attachment; filename="${dirName}.zip"`,
+          `attachment; filename="${dirName}.${fileExt}"`,
         );
-        reply.send(archive);
+        res.statusCode = 200;
+
+        archive.on('error', (err: unknown) => {
+          fastify.log.error(
+            { err, path: resolved, format },
+            'Archive export failed',
+          );
+          res.destroy();
+        });
+
+        archive.pipe(res);
         archive.directory(resolved, dirName);
-        void archive.finalize();
+        await archive.finalize();
         return;
       }
 

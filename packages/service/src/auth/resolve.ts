@@ -185,3 +185,42 @@ export function findInsider(
 ): ResolvedInsider | undefined {
   return insiders.find((i) => i.email.toLowerCase() === email.toLowerCase());
 }
+
+/**
+ * Resolve the authentication state for a request for the SPA auth gate.
+ *
+ * Checks session cookie first, then falls back to key-based auth (handles
+ * outsider share links). Returns the access type: 'insider', 'outsider',
+ * or 'none' when the request carries no valid credentials.
+ *
+ * @param config - Current runtime configuration.
+ * @param request - Incoming Fastify request.
+ * @returns Object with `type` field: 'insider', 'outsider', or 'none'.
+ */
+export function resolveAuth(
+  config: RuntimeConfig,
+  request: FastifyRequest,
+): { type: 'insider' | 'outsider' | 'none' } {
+  // Session cookie takes priority
+  const sessionResult = resolveSessionAuth(config, request);
+  if (sessionResult.valid && sessionResult.mode) {
+    return { type: sessionResult.mode };
+  }
+
+  // Key param fallback — handles outsider share links
+  const query = request.query as AuthQuery;
+  const deepParams = extractDeepParams(query);
+  const urlPath = request.url.split('?')[0];
+  const keyResult = resolveKeyAuth(
+    config,
+    urlPath,
+    query.key,
+    query.exp,
+    deepParams,
+  );
+  if (keyResult.valid && keyResult.mode) {
+    return { type: keyResult.mode };
+  }
+
+  return { type: 'none' };
+}

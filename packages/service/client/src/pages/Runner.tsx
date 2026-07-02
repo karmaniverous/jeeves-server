@@ -11,7 +11,7 @@ import { nextSort, sortJobs } from '@/components/runner/jobTableUtils';
 import type { SortColumn, SortState } from '@/components/runner/JobTable';
 import { StatsBar } from '@/components/runner/StatsBar';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/AuthContext';
+import { useAuthStatus } from '@/lib/AuthStatusContext';
 import type { RunnerJob, RunnerStats } from '@/lib/runner-api';
 import { getRunnerJobs, getRunnerStats, triggerJobRun } from '@/lib/runner-api';
 import { useTheme } from '@/lib/theme';
@@ -28,7 +28,7 @@ export function Runner() {
   const [sort, setSort] = useState<SortState>({ column: null, direction: 'desc' });
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [theme, toggleTheme] = useTheme();
-  const { isInsider, searchEnabled, keyCreatedAt, rotateKey } = useAuth();
+  const { isInsider, searchEnabled, keyCreatedAt, rotateKey } = useAuthStatus();
 
   const keyAge = useMemo(() => computeKeyAge(keyCreatedAt), [keyCreatedAt]);
 

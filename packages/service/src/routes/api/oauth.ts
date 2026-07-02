@@ -90,8 +90,7 @@ export const oauthApiRoutes: FastifyPluginAsync = (fastify) => {
 
       // Merge named provider defaults (request fields override)
       const namedProvider = config.oauth.providers[provider] as
-        | (typeof config.oauth.providers)[string]
-        | undefined;
+        (typeof config.oauth.providers)[string] | undefined;
       const body = request.body as Partial<StartBody>;
       const authUrl = body.authUrl ?? namedProvider?.authUrl;
       const tokenUrl = body.tokenUrl ?? namedProvider?.tokenUrl;

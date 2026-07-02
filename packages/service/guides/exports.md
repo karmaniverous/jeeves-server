@@ -4,7 +4,7 @@ title: "Exporting & Downloads"
 
 # Exporting & Downloads
 
-Jeeves Server can export files as PDF, DOCX, or ZIP — turning Markdown into business-ready documents with one click.
+Jeeves Server can export files as PDF, DOCX, ZIP, or tar — turning Markdown into business-ready documents with one click.
 
 ## Export Types
 
@@ -16,6 +16,7 @@ Jeeves Server can export files as PDF, DOCX, or ZIP — turning Markdown into bu
 | **PNG** | Mermaid, PlantUML | Rendered via Mermaid CLI or PlantUML jar/server |
 | **EPS** | PlantUML (jar only) | Vector export via PlantUML jar |
 | **ZIP** | Directories | Entire directory tree compressed via [`archiver`](https://github.com/archiverjs/node-archiver) |
+| **Tar** | Directories | Uncompressed tar archive via [`archiver`](https://github.com/archiverjs/node-archiver) |
 | **Raw** | Any file | Direct file download |
 
 ## Using Exports
@@ -213,29 +214,29 @@ graph TD
 
 Embedded diagrams appear in PDF and DOCX exports as rendered SVGs — what you see in the browser is what you get in the export.
 
-## ZIP Export
+## Directory Archive Export
 
-Directories can be downloaded as ZIP archives. The header shows a ZIP download option when viewing a directory.
+Directories can be downloaded as ZIP or tar archives. The download dropdown in the header shows both options when viewing a directory.
 
 ### Size limit
 
-The `maxZipSizeMb` config setting (default: 100 MB) prevents accidentally zipping enormous directories:
+The `maxZipSizeMb` config setting (default: 100 MB) prevents accidentally archiving enormous directories:
 
 ```
-maxZipSizeMb: 100,  // Refuse ZIP for directories larger than this
+maxZipSizeMb: 100,  // Refuse archive for directories larger than this
 ```
 
-When the total directory size exceeds this limit, the ZIP option is disabled with a message explaining why.
+When the total directory size exceeds this limit, the archive options are disabled with a message explaining why.
 
 ### What's included
 
-The ZIP contains the entire directory tree — all files and subdirectories. No files are excluded.
+The archive contains the entire directory tree — all files and subdirectories. No files are excluded.
 
 ## Export for Outsiders
 
 Outsiders (people using share links) can also export files:
 - **PDF and DOCX** exports work on shared markdown files
 - **Raw download** works on any shared file
-- **ZIP** works on shared directories (within the size limit)
+- **ZIP/Tar** is not available — directory archive exports require insider access
 
 The share link's authentication covers the export — no additional credentials needed.

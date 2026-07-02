@@ -245,10 +245,19 @@ Users enter their email on the sign-in page. If the email matches a configured i
 - `auth.sessionSecret` — a random string for signing session cookies (shared with Google auth)
 - At least one entry in `insiders`
 
+**How it works:**
+1. User enters their email on the sign-in page.
+2. If the email matches a configured insider, the server generates a self-validating signed token (HMAC-SHA256, stateless) and an 8-character OTP code.
+3. The signed token is encrypted with AES-256-GCM using the OTP as the key.
+4. The user's browser is redirected to a verification page containing the encrypted blob in the URL.
+5. The server sends an email containing both the OTP code and a clickable magic link.
+6. The user either enters the OTP code on the verification page (which decrypts the token client-side) or clicks the magic link directly.
+
 **Security notes:**
-- The `POST /api/auth/magic` endpoint always returns 200 OK regardless of whether the email matches an insider (prevents email enumeration)
-- Login links are single-use and expire after 10 minutes
-- Tokens are stored in-memory (not persisted — server restart invalidates all pending links)
+- The `POST /api/auth/magic` endpoint always returns 200 OK with a `verifyUrl` regardless of whether the email matches an insider (prevents email enumeration — invalid emails receive a fake encrypted blob)
+- Tokens are fully stateless (self-validating signed tokens with HMAC-SHA256) — no server-side storage
+- Tokens expire after 10 minutes
+- OTP alphabet is 32 lowercase alphanumeric characters with ambiguous characters (0, 1, o, l) excluded
 
 ### Both Modes Together
 
@@ -434,7 +443,7 @@ Customize the server's appearance and email communications:
 | `name` | string | `"Jeeves Server"` | Instance display name — used in page title, navbar, and login emails |
 | `emoji` | string | `"🎩"` | Home icon in the navbar |
 | `theme` | object | — | CSS variable overrides under `light` and `dark` keys |
-| `emailTemplate` | string | — | Handlebars template for magic link emails. Available variables: `{{magicLink}}`, `{{branding.name}}`, `{{branding.emoji}}` |
+| `emailTemplate` | string | — | Handlebars template for magic link emails. Available variables: `{{{magicLink}}}`, `{{otpCode}}`, `{{branding.name}}`, `{{branding.emoji}}` |
 
 The `theme` object maps CSS custom property names to values. Keys under `light` are injected into `:root`; keys under `dark` are injected into `.dark`. When omitted, the default Tailwind theme applies.
 
