@@ -106,6 +106,7 @@ export function renderVerifyPage(branding?: {
     autocomplete="one-time-code"
     inputmode="text"
     maxlength="9"
+    aria-label="One-time verification code"
     autofocus
   >
   <button type="submit" class="btn-primary">Verify Code</button>

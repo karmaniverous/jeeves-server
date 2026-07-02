@@ -122,6 +122,7 @@ export function renderSignInPage(
     id="emailInput"
     placeholder="Enter your email"
     required
+    aria-label="Email address"
     class="email-input"
   >
   <button type="submit" class="btn-primary">Send Login Link</button>

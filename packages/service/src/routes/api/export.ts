@@ -84,8 +84,12 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
         );
         res.statusCode = 200;
 
-        archive.on('error', () => {
-          res.end();
+        archive.on('error', (err: unknown) => {
+          fastify.log.error(
+            { err, path: resolved, format },
+            'Archive export failed',
+          );
+          res.destroy();
         });
 
         archive.pipe(res);

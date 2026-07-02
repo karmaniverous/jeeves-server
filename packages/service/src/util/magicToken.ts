@@ -123,8 +123,10 @@ export function verifyToken(
     return null;
   }
 
-  // Validate required fields and expiry
+  // Validate required fields, optional field types, and expiry
   if (typeof payload.email !== 'string' || !payload.email) return null;
+  if (payload.returnTo !== undefined && typeof payload.returnTo !== 'string')
+    return null;
   if (typeof payload.exp !== 'number' || payload.exp < Date.now()) return null;
 
   return payload;

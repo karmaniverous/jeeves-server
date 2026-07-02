@@ -237,6 +237,6 @@ The archive contains the entire directory tree — all files and subdirectories.
 Outsiders (people using share links) can also export files:
 - **PDF and DOCX** exports work on shared markdown files
 - **Raw download** works on any shared file
-- **ZIP/Tar** works on shared directories (within the size limit)
+- **ZIP/Tar** is not available — directory archive exports require insider access
 
 The share link's authentication covers the export — no additional credentials needed.
