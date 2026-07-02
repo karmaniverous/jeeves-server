@@ -1,10 +1,10 @@
 /**
  * Magic link callback route — top-level, unauthenticated.
  *
- * GET /auth/magic/callback?token=<token>
+ * GET /auth/magic/callback?token=<signed-token>
  *
- * Validates the token, issues a session cookie (identical to Google OAuth),
- * and redirects to /browse.
+ * Verifies the self-validating signed token (HMAC-SHA256), issues a session
+ * cookie (identical to Google OAuth), and redirects to returnTo.
  *
  * @packageDocumentation
  */
@@ -17,8 +17,8 @@ import { renderErrorPage } from '../auth/errorPage.js';
 import { sanitizeReturnTo } from '../auth/resolve.js';
 import { setSessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
-import { consumeMagicToken } from '../services/magicLinkState.js';
 import { writeInsiderSeedToConfig } from '../util/configPersist.js';
+import { verifyToken } from '../util/magicToken.js';
 
 export const magicCallbackRoute: FastifyPluginCallback = (
   fastify,
@@ -37,19 +37,6 @@ export const magicCallbackRoute: FastifyPluginCallback = (
           .send(renderErrorPage('Login Link Error', 'No token provided.'));
       }
 
-      const pending = consumeMagicToken(token);
-      if (!pending) {
-        return reply
-          .type('text/html')
-          .code(400)
-          .send(
-            renderErrorPage(
-              'Login Link Error',
-              'This login link has expired or has already been used. Please request a new one.',
-            ),
-          );
-      }
-
       const config = getConfig();
       const sessionSecret = config.sessionSecret;
 
@@ -60,9 +47,23 @@ export const magicCallbackRoute: FastifyPluginCallback = (
           .send(renderErrorPage('Error', 'Server configuration error.'));
       }
 
+      // Verify HMAC signature, parse payload, check expiry
+      const payload = verifyToken(token, sessionSecret);
+      if (!payload) {
+        return reply
+          .type('text/html')
+          .code(400)
+          .send(
+            renderErrorPage(
+              'Login Link Error',
+              'This login link has expired or is invalid. Please request a new one.',
+            ),
+          );
+      }
+
       // Look up the insider
       const insider = config.resolvedInsiders.find(
-        (i) => i.email.toLowerCase() === pending.email.toLowerCase(),
+        (i) => i.email.toLowerCase() === payload.email.toLowerCase(),
       );
 
       if (!insider) {
@@ -88,10 +89,10 @@ export const magicCallbackRoute: FastifyPluginCallback = (
       }
 
       // Set session cookie (identical shape to Google OAuth sessions)
-      setSessionCookie(reply, request, pending.email, sessionSecret);
+      setSessionCookie(reply, request, payload.email, sessionSecret);
 
       // Redirect to the originally requested path, or /browse as fallback.
-      const returnTo = sanitizeReturnTo(pending.returnTo || '/browse');
+      const returnTo = sanitizeReturnTo(payload.returnTo ?? '/browse');
       return reply.redirect(returnTo);
     },
   );

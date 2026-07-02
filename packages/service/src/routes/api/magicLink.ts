@@ -5,10 +5,11 @@
  * matches a configured insider. Always returns 200 OK to prevent email
  * enumeration.
  *
+ * Tokens are self-validating signed payloads (HMAC-SHA256) — no server-side
+ * token storage required.
+ *
  * @packageDocumentation
  */
-
-import crypto from 'node:crypto';
 
 import type { FastifyPluginCallback } from 'fastify';
 
@@ -16,7 +17,7 @@ import { sanitizeReturnTo } from '../../auth/resolve.js';
 import { getConfig } from '../../config/index.js';
 import { DEFAULT_BRANDING } from '../../config/schema.js';
 import { sendMagicLinkEmail } from '../../services/email.js';
-import { storeMagicToken } from '../../services/magicLinkState.js';
+import { signToken } from '../../util/magicToken.js';
 
 export const magicLinkApiRoute: FastifyPluginCallback = (
   fastify,
@@ -44,9 +45,16 @@ export const magicLinkApiRoute: FastifyPluginCallback = (
       );
 
       if (insider && config.authModes.includes('email') && config.emailAuth) {
-        // Generate a secure token
-        const token = crypto.randomBytes(32).toString('hex');
-        storeMagicToken(token, { email, returnTo });
+        const sessionSecret = config.sessionSecret;
+        if (!sessionSecret) {
+          fastify.log.error(
+            'sessionSecret not configured — cannot sign magic token',
+          );
+          return reply.code(200).send({ ok: true });
+        }
+
+        // Generate a self-validating signed token (no server-side storage)
+        const token = signToken({ email, returnTo }, sessionSecret);
 
         // Build the magic link URL
         const proto =
