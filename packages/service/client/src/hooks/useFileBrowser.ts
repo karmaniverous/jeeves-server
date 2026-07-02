@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import type { BreadcrumbItem } from '@/lib/api';
-import { useAuth } from '@/lib/AuthContext';
+import { useAuthStatus } from '@/lib/AuthStatusContext';
 import { useTheme } from '@/lib/theme';
 import { useFileData } from './useFileData';
 import { useShareSettings } from './useShareSettings';
@@ -69,7 +69,7 @@ export function useFileBrowser() {
   };
 
   // Auth
-  const { isInsider: authInsider, searchEnabled, keyCreatedAt, rotateKey } = useAuth();
+  const { isInsider: authInsider, searchEnabled, keyCreatedAt, rotateKey } = useAuthStatus();
   const breadcrumbs: BreadcrumbItem[] = directory?.breadcrumbs ?? file?.breadcrumbs ?? [];
   const isInsider = directory?.isInsider ?? file?.isInsider ?? authInsider;
   const keyAge = keyCreatedAt ? formatRelativeTime(keyCreatedAt) : null;

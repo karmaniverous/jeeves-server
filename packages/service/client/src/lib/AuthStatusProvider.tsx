@@ -1,15 +1,17 @@
 /**
- * Auth provider component.
+ * Auth status provider component.
+ *
+ * Fetches /api/auth/status once on mount to populate display-level auth
+ * state (email, picture, isInsider). No auth gating — the server-side gate
+ * (#253) guarantees authentication before the SPA loads.
  */
 import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { getAuthStatus, rotateKey as apiRotateKey } from './api';
-import { AuthContext } from './AuthContext';
+import { AuthStatusContext } from './AuthStatusContext';
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [loading, setLoading] = useState(true);
-  const [authenticated, setAuthenticated] = useState(false);
+export function AuthStatusProvider({ children }: { children: ReactNode }) {
   const [email, setEmail] = useState<string | undefined>();
   const [picture, setPicture] = useState<string | undefined>();
   const [isInsider, setIsInsider] = useState(false);
@@ -20,17 +22,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const browsePath = window.location.pathname.replace(/^\/browse/, '') || '/';
     getAuthStatus(browsePath)
       .then((status) => {
-        setAuthenticated(status.authenticated);
         setEmail(status.email);
         setPicture(status.picture);
         setIsInsider(status.isInsider);
         setSearchEnabled(!!status.searchEnabled);
         setKeyCreatedAt(status.keyCreatedAt);
       })
-      .catch(() => {
-        setAuthenticated(false);
-      })
-      .finally(() => setLoading(false));
+      .catch(() => {});
   }, []);
 
   const rotateKey = useCallback(async () => {
@@ -41,10 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider
-      value={{ loading, authenticated, email, picture, isInsider, searchEnabled, keyCreatedAt, rotateKey }}
+    <AuthStatusContext.Provider
+      value={{ email, picture, isInsider, searchEnabled, keyCreatedAt, rotateKey }}
     >
       {children}
-    </AuthContext.Provider>
+    </AuthStatusContext.Provider>
   );
 }

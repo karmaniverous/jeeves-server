@@ -2,7 +2,7 @@ import { LogOut, Menu, Scale, Shield, User } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { useAuth } from '@/lib/AuthContext';
+import { useAuthStatus } from '@/lib/AuthStatusContext';
 
 export interface CollapsedItem {
   node: React.ReactNode | ((onDismiss: () => void) => React.ReactNode);
@@ -37,10 +37,10 @@ const BREAKPOINT_CLASS: Record<string, string> = {
 };
 
 export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
-  const { authenticated, email, picture } = useAuth();
-  // Key-auth users (outsiders with ?key= URLs) are authenticated but don't
-  // have an account session. Show hamburger menu, not account avatar.
-  const hasSession = authenticated && !!email && !email.startsWith('key:');
+  const { email, picture } = useAuthStatus();
+  // Key-auth users (outsiders with ?key= URLs) have a key: prefixed email.
+  // Show hamburger menu for those users and unauthenticated views, not avatar.
+  const hasSession = !!email && !email.startsWith('key:');
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   // Track whether a nested Radix dropdown is currently open
