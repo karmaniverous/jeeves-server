@@ -26,7 +26,7 @@ Anyone listed in the `insiders` map in your config:
 Depends on which auth modes are active:
 
 - **Google OAuth** (`'google'` mode) — Insider logs in with Google. The server checks their email against the `insiders` map. On first login, a key seed is auto-generated and persisted to `config.json`.
-- **Email magic link** (`'email'` mode) — Insider enters their email on the sign-in page. If the email matches an insider, the server sends a one-time login link via SMTP. Clicking the link sets a session cookie identical to Google OAuth. On first login, a key seed is auto-generated.
+- **Email magic link** (`'email'` mode) — Insider enters their email on the sign-in page and is redirected to a verification page. If the email matches an insider, the server sends an email containing a one-time code and a clickable magic link. The user enters the code on the verification page (which decrypts a stateless token client-side) or clicks the magic link directly. Either path sets a session cookie identical to Google OAuth. On first login, a key seed is auto-generated.
 - **Key auth** (`'keys'` mode) — Insider uses a derived URL key (`?key=<insider-key>`). The key is derived from a configured seed via HMAC-SHA256.
 
 ### What insiders can do
@@ -34,7 +34,7 @@ Depends on which auth modes are active:
 - Browse all drives and directories (within their scopes)
 - View rendered Markdown, code, SVG, Mermaid diagrams, and images
 - Switch between Rendered and Raw views
-- Export files as PDF, DOCX, or ZIP
+- Export files as PDF, DOCX, ZIP, or tar
 - Copy insider links (for other insiders)
 - Generate outsider links (for external sharing)
 - Rotate their key (invalidating all their outsider links)

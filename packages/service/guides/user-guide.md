@@ -14,7 +14,7 @@ Your experience depends on how you access the server:
 You can sign in using one of the available methods shown on the login page:
 
 - **Google** — Click the Google button to authenticate with your Google account.
-- **Email (Magic Link)** — Enter your email address and check your inbox for a one-time login link. The link expires after 10 minutes and can only be used once.
+- **Email (Magic Link)** — Enter your email address. You'll be redirected to a verification page, and a one-time code will be sent to your inbox. Enter the 8-character code on the verification page to sign in, or click the magic link in the email directly. The code and link expire after 10 minutes.
 
 Your administrator determines which sign-in methods are available. If you only see a message about an API key, contact your administrator for access.
 
@@ -165,7 +165,7 @@ Click the **download** icon in the header to access export options. Available fo
 | Source | Available Exports |
 |--------|------------------|
 | Markdown files | PDF, DOCX, Raw download |
-| Directories | ZIP archive |
+| Directories | ZIP archive, Tar archive |
 | Diagrams (Mermaid, PlantUML) | SVG, PNG |
 | Any file | Raw download |
 

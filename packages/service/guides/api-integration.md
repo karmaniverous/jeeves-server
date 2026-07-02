@@ -71,7 +71,7 @@ function insiderKey(seed) {
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/export/<path>?format=pdf\|docx\|zip` | Export file or directory |
+| `GET` | `/api/export/<path>?format=pdf\|docx\|zip\|tar` | Export file or directory |
 | `GET` | `/api/mermaid-export/<path>?format=svg\|png\|pdf` | Export Mermaid diagram |
 | `GET` | `/api/plantuml-export/<path>?format=svg\|png\|pdf\|eps` | Export PlantUML diagram |
 
@@ -103,8 +103,9 @@ function insiderKey(seed) {
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api/auth/status` | Check authentication status and mode (no auth required) |
-| `POST` | `/api/auth/magic` | Request a magic login link (no auth required, always returns 200) |
-| `GET` | `/auth/magic/callback` | Magic link callback — validates token, sets session cookie (top-level route, no auth required) |
+| `POST` | `/api/auth/magic` | Request a magic login link (no auth required, always returns 200 with `{ verifyUrl }`) |
+| `GET` | `/auth/magic/verify` | OTP verification page — server-rendered page where users enter the emailed code (top-level route, no auth required) |
+| `GET` | `/auth/magic/callback` | Magic link callback — verifies signed token, sets session cookie (top-level route, no auth required) |
 
 ### OAuth2 Credential Management (insider auth required)
 
