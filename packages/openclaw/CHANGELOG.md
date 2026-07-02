@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 📚 Documentation
+
+- Sync guides, skill, and API reference with #241 tar format, #252 OTP flow, #253 auth gate
+## [0.12.0] - 2026-06-25
+
 ### 💼 Other
 
 - [SERVER-312] fix: remove hardcoded j:/config fallback for configRoot (#244)
@@ -15,6 +20,10 @@ All notable changes to this project will be documented in this file.
 - [SERVER-312] refactor: extract resolveEventPaths helper, add skipAuth to ApiToolConfig (#245, #247)
 - [SERVER-312] docs: sync skill, guides, and config reference with touched code (#244, #245, #246, #247)
 - Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-openclaw v0.12.0
 ## [0.11.1] - 2026-06-15
 
 ### 💼 Other
