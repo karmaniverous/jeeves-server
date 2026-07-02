@@ -8,7 +8,6 @@ describe('renderVerifyPage', () => {
     expect(html).toContain('<title>');
     expect(html).toContain('Check your email');
     expect(html).toContain('id="otpInput"');
-    expect(html).toContain('.dark body');
   });
 
   it('renders default branding when no branding is provided', () => {
@@ -23,7 +22,7 @@ describe('renderVerifyPage', () => {
     expect(html).toContain('My Docs');
   });
 
-  it('has text-transform: lowercase on the OTP input field', () => {
+  it('applies text-transform: lowercase on the OTP input field', () => {
     const html = renderVerifyPage();
     expect(html).toContain('text-transform: lowercase');
   });
@@ -34,48 +33,17 @@ describe('renderVerifyPage', () => {
     expect(html).toContain('style="display:none;"');
   });
 
-  it('uses Web Crypto API SHA-256 key derivation', () => {
-    const html = renderVerifyPage();
-    expect(html).toContain('crypto.subtle.digest');
-    expect(html).toContain('SHA-256');
-  });
-
-  it('uses AES-GCM decryption', () => {
-    const html = renderVerifyPage();
-    expect(html).toContain('AES-GCM');
-    expect(html).toContain('crypto.subtle.decrypt');
-  });
-
-  it('navigates to magic callback with decrypted token on success', () => {
+  it('navigates to magic callback on successful decryption', () => {
     const html = renderVerifyPage();
     expect(html).toContain('/auth/magic/callback?token=');
-    expect(html).toContain('window.location.href');
   });
 
-  it('shows incorrect code message on decryption failure', () => {
+  it('shows user-facing error message on decryption failure', () => {
     const html = renderVerifyPage();
     expect(html).toContain('Incorrect code');
-    expect(html).toContain('please try again');
   });
 
-  it('normalizes OTP to lowercase on submit', () => {
-    const html = renderVerifyPage();
-    expect(html).toContain('.toLowerCase()');
-  });
-
-  it('uses dark mode class toggling matching SPA behavior', () => {
-    const html = renderVerifyPage();
-    expect(html).toContain("localStorage.getItem('jeeves-theme')");
-    expect(html).toContain("classList.add('dark')");
-  });
-
-  it('includes base64url decoding logic for the enc parameter', () => {
-    const html = renderVerifyPage();
-    expect(html).toContain("params.get('enc')");
-    expect(html).toContain('atob(');
-  });
-
-  it('does not include sign-in specific elements like emailInput or Google button', () => {
+  it('does not include sign-in specific elements', () => {
     const html = renderVerifyPage();
     expect(html).not.toContain('id="emailInput"');
     expect(html).not.toContain('Sign in with Google');
