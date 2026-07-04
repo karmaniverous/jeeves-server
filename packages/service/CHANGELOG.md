@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🐛 Bug Fixes
+
+- SPA auth gate path prefix for share keys
+## [3.13.0] - 2026-07-02
+
 ### 🚀 Features
 
 - *(#252)* Self-validating signed token, delete magicLinkState
@@ -32,6 +37,7 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - Dependency audit - update minor/patch deps (prettier, eslint, rollup, tailwindcss)
+- Release @karmaniverous/jeeves-server v3.13.0
 ## [3.12.2] - 2026-06-27
 
 ### 🐛 Bug Fixes
