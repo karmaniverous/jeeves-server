@@ -210,7 +210,12 @@ export function resolveAuth(
   // Key param fallback — handles outsider share links
   const query = request.query as AuthQuery;
   const deepParams = extractDeepParams(query);
-  const urlPath = request.url.split('?')[0];
+  let urlPath = request.url.split('?')[0];
+  if (urlPath.startsWith('/browse')) {
+    urlPath = urlPath.substring('/browse'.length) || '/';
+  } else if (urlPath.startsWith('/runner')) {
+    urlPath = urlPath.substring('/runner'.length) || '/';
+  }
   const keyResult = resolveKeyAuth(
     config,
     urlPath,
