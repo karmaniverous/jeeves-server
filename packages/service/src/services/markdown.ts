@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 
 import * as cheerio from 'cheerio';
-import MarkdownIt from 'markdown-it';
+import MarkdownIt, { type MarkdownIt as MarkdownItInstance } from 'markdown-it';
 import anchor from 'markdown-it-anchor';
 import taskLists from 'markdown-it-task-lists';
 
@@ -136,7 +136,7 @@ export function parseMarkdown(
   });
 
   // Plugin: GFM task-list checkboxes
-  md.use(taskLists as (md: MarkdownIt) => void);
+  md.use(taskLists as (md: MarkdownItInstance) => void);
 
   // Core rule: add source mapping attributes to all block tokens
   md.core.ruler.push('source_map', (state) => {
@@ -160,7 +160,7 @@ export function parseMarkdown(
     const sourceStart = token.attrGet('data-source-start');
     const sourceEnd = token.attrGet('data-source-end');
     const sourceAttrs = sourceStart
-      ? ` data-source-start="${sourceStart}" data-source-end="${sourceEnd ?? ''}"`
+      ? ` data-source-start="${String(sourceStart)}" data-source-end="${String(sourceEnd ?? '')}"`
       : '';
 
     // Diagram code blocks → register for async rendering
@@ -192,7 +192,7 @@ export function parseMarkdown(
     const sourceEnd = token.attrGet('data-source-end') ?? sourceStart;
     if (!sourceStart || !sourceEnd) return token.content;
 
-    const attrs = ` data-source-start="${sourceStart}" data-source-end="${sourceEnd}"`;
+    const attrs = ` data-source-start="${String(sourceStart)}" data-source-end="${String(sourceEnd)}"`;
     // Inject into the first opening HTML tag (allow leading whitespace)
     const injected = token.content.replace(
       /^(\s*<[a-zA-Z][^\s/>]*)/,
@@ -208,8 +208,8 @@ export function parseMarkdown(
     const base = options.basePath;
     md.renderer.rules.image = (tokens, idx) => {
       const token = tokens[idx];
-      let src = token.attrGet('src') ?? '';
-      const title = token.attrGet('title') ?? '';
+      let src = String(token.attrGet('src') ?? '');
+      const title = String(token.attrGet('title') ?? '');
       const alt = token.children
         ? token.children
             .filter((t) => t.type === 'text' || t.type === 'code_inline')
@@ -238,7 +238,7 @@ export function parseMarkdown(
   for (let i = 0; i < tokens.length; i++) {
     if (tokens[i].type === 'heading_open') {
       const level = parseInt(tokens[i].tag.slice(1), 10);
-      const slug = tokens[i].attrGet('id') ?? '';
+      const slug = String(tokens[i].attrGet('id') ?? '');
 
       // Next token is inline with heading content
       const inlineToken = tokens[i + 1];

@@ -198,8 +198,10 @@ export async function captureSvgsAsPng(
   body { margin: 0; padding: 0; background: #fff; }
   svg { width: 1152px; height: auto; display: block; }
 </style></head><body>${svgHtml}</body></html>`,
-      { waitUntil: 'networkidle0' },
+      { waitUntil: 'load' },
     );
+    // setContent no longer accepts networkidle* (puppeteer 25); equivalent wait:
+    await svgPage.waitForNetworkIdle({ idleTime: 500, concurrency: 0 });
 
     const svgHandle = await svgPage.$('svg');
     if (svgHandle) {

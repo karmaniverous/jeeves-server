@@ -39,8 +39,7 @@ export const serverDescriptor = jeevesComponentDescriptorSchema.parse({
       default: 'CHANGE_ME_defaultKey',
     },
   }),
-  onConfigApply: async (config: Record<string, unknown> | undefined) => {
-    void config; // config argument reserved for future use
+  onConfigApply: async () => {
     const { resetConfig } = await import('./config/index.js');
     resetConfig();
   },
