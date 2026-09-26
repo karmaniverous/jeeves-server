@@ -26,7 +26,7 @@ import {
 import { PLUGIN_ID } from './constants.js';
 
 /** Environment variable consulted when plugin config has no `configRoot`. */
-export const CONFIG_ROOT_ENV_VAR = 'JEEVES_CONFIG_ROOT';
+const CONFIG_ROOT_ENV_VAR = 'JEEVES_CONFIG_ROOT';
 
 /** Error returned by tools (and logged once) while `configRoot` is unset. */
 export const CONFIG_ROOT_MISSING_MESSAGE = `configRoot not configured — set plugins.entries.${PLUGIN_ID}.config.configRoot in the plugin config or the ${CONFIG_ROOT_ENV_VAR} environment variable`;

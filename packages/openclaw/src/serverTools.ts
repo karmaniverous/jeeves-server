@@ -25,13 +25,9 @@ import {
   normalizePath,
   type PublicUrlResolver,
   registerApiTool,
-  rewriteUrl,
   rewriteUrlsInData,
   toAbsoluteUrl,
 } from './toolUtils.js';
-
-// Re-export for tests and consumers that import from serverTools.
-export { rewriteUrl, rewriteUrlsInData };
 
 /** Milliseconds in one day. */
 const MS_PER_DAY = 86_400_000;

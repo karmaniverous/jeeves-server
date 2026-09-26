@@ -1,27 +1,5 @@
 {
   "$schema": "https://unpkg.com/knip@latest/schema.json",
-  "entry": [
-    "src/index.ts"
-  ],
-  "project": [
-    "src/**/*.ts"
-  ],
-  "ignoreBinaries": [
-    "rimraf",
-    "cross-env",
-    "rollup",
-    "tsx",
-    "eslint",
-    "tsc",
-    "git-cliff",
-    "knip",
-    "dotenvx",
-    "release-it"
-  ],
-  "ignoreDependencies": [
-    "@dotenvx/dotenvx",
-    "cross-env",
-    "release-it",
-    "tslib"
-  ]
+  "project": ["src/**/*.ts"],
+  "ignoreBinaries": ["rimraf", "tsx", "eslint", "tsc", "git-cliff", "knip"]
 }

@@ -1,29 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@latest/schema.json",
-  "entry": [
-    "src/cli/start-server.ts"
-  ],
-  "project": [
-    "src/**/*.ts"
-  ],
-  "ignoreBinaries": [
-    "tsx",
-    "rimraf",
-    "tsc",
-    "cross-env",
-    "vitest",
-    "git-cliff",
-    "dotenvx",
-    "release-it",
-    "eslint",
-    "knip"
-  ],
-  "ignoreDependencies": [
-    "puppeteer",
-    "@dotenvx/dotenvx",
-    "cross-env",
-    "release-it",
-    "rimraf"
-  ],
+  "entry": ["src/cli/start-server.ts", "src/dev-server.ts"],
+  "project": ["src/**/*.ts"],
+  "ignoreBinaries": ["tsx", "tsc", "git-cliff", "eslint", "knip"],
   "ignoreExportsUsedInFile": true
 }
