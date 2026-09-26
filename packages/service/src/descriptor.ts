@@ -60,8 +60,4 @@ export const serverDescriptor = jeevesComponentDescriptorSchema.parse({
     '--config',
     configPath,
   ],
-  sectionId: 'Server',
-  refreshIntervalSeconds: 61,
-  generateToolsContent: () => '',
-  dependencies: { hard: [], soft: ['watcher', 'runner', 'meta'] },
 });
