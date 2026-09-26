@@ -60,6 +60,7 @@
   "allowScripts": {
     "@turbodocx/html-to-docx": true,
     "esbuild": true,
+    "fsevents": true,
     "lefthook": true,
     "puppeteer": true
   }
