@@ -110,8 +110,13 @@ describe('register', () => {
     const { api, tools, warn } = createApi();
     register(api);
 
-    for (const name of ['server_status', 'server_drives']) {
-      const result = await run(tools, name);
+    for (const [name, params] of [
+      ['server_status', {}],
+      ['server_config', {}],
+      ['server_config_apply', { config: {} }],
+      ['server_drives', {}],
+    ] as const) {
+      const result = await run(tools, name, params);
       expect(result.isError).toBeFalsy();
     }
     // No publicUrl without configRoot: URLs are returned unrewritten.
@@ -150,23 +155,6 @@ describe('register', () => {
     const text = result.content[0]?.text ?? '';
     expect(text).toContain('Invalid action: bogus');
     expect(text).not.toContain('configRoot not configured');
-  });
-
-  it('runs the standard HTTP tools without configRoot', async () => {
-    const { api, tools } = createApi();
-    register(api);
-
-    for (const [name, params] of [
-      ['server_status', {}],
-      ['server_config', {}],
-      ['server_config_apply', { config: {} }],
-    ] as const) {
-      const result = await run(tools, name, params);
-      expect(result.content[0]?.text).not.toContain(
-        'configRoot not configured',
-      );
-      expect(result.isError).toBeFalsy();
-    }
   });
 
   it('works with configRoot from plugin config', async () => {
