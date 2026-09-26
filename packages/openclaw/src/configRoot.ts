@@ -1,6 +1,6 @@
 /**
  * Lazy platform `configRoot` resolution for the jeeves-server plugin.
- * Reads plugin config, then `JEEVES_CONFIG_ROOT`; warns once; defers core `init()`; guards tools.
+ * Reads plugin config, then `JEEVES_CONFIG_ROOT`; warns once; defers core `init()`; gates only configRoot-reading tools.
  *
  * @remarks
  * With a running gateway, `openclaw plugins install` activates the plugin
@@ -9,6 +9,10 @@
  * config at registration time: the root is resolved each time a tool runs,
  * and core `init()` is called on first use (and again only if the root
  * changes).
+ *
+ * Only tools whose implementation reads `configRoot` are gated (see
+ * {@link CONFIG_ROOT_GATES}). Tools that only call the service HTTP API keep
+ * working without it.
  *
  * @packageDocumentation
  */
@@ -29,7 +33,22 @@ import { PLUGIN_ID } from './constants.js';
 const CONFIG_ROOT_ENV_VAR = 'JEEVES_CONFIG_ROOT';
 
 /** Error returned by tools (and logged once) while `configRoot` is unset. */
-export const CONFIG_ROOT_MISSING_MESSAGE = `configRoot not configured — set plugins.entries.${PLUGIN_ID}.config.configRoot in the plugin config or the ${CONFIG_ROOT_ENV_VAR} environment variable`;
+export const CONFIG_ROOT_MISSING_MESSAGE = `configRoot not configured — set it in plugin config (plugins.entries.${PLUGIN_ID}.config.configRoot) or via ${CONFIG_ROOT_ENV_VAR}`;
+
+/** Decides, per call, whether a tool invocation reads `configRoot`. */
+export type ConfigRootGate = (params: Record<string, unknown>) => boolean;
+
+/**
+ * Tools (and, where it matters, actions) whose implementation reads
+ * `configRoot`. Every other tool only calls an HTTP API and is not gated.
+ *
+ * - `server_service` `install`: jeeves core resolves the service config path
+ *   via `getComponentConfigDir()`, which needs core `init({ configRoot })`.
+ *   Its other actions only drive the OS service manager by service name.
+ */
+export const CONFIG_ROOT_GATES: Readonly<Record<string, ConfigRootGate>> = {
+  server_service: (params) => params['action'] === 'install',
+};
 
 /** Lazily resolves `configRoot` and initializes jeeves core on first use. */
 export type ConfigRootResolver = {
@@ -104,35 +123,40 @@ export function createConfigRootResolver(api: PluginApi): ConfigRootResolver {
 }
 
 /**
- * Wrap a tool so it returns {@link CONFIG_ROOT_MISSING_MESSAGE} instead of
- * running while `configRoot` is unset.
+ * Wrap a tool so that calls the gate marks as reading `configRoot` return
+ * {@link CONFIG_ROOT_MISSING_MESSAGE} instead of running while it is unset.
+ * Resolving the root also initializes jeeves core for those calls.
  */
 export function guardTool(
   tool: ToolDescriptor,
   resolver: ConfigRootResolver,
+  gate: ConfigRootGate = () => true,
 ): ToolDescriptor {
   return {
     ...tool,
     execute: (id, params) =>
-      resolver.resolve()
+      !gate(params) || resolver.resolve()
         ? tool.execute(id, params)
         : Promise.resolve(fail(CONFIG_ROOT_MISSING_MESSAGE)),
   };
 }
 
 /**
- * Return a view of `api` whose `registerTool` guards every tool with
- * {@link guardTool}. All other members pass through unchanged.
+ * Return a view of `api` whose `registerTool` guards the tools listed in
+ * `gates` with {@link guardTool} and registers every other tool unchanged.
+ * All other members pass through unchanged.
  */
 export function createGuardedApi(
   api: PluginApi,
   resolver: ConfigRootResolver,
+  gates: Readonly<Record<string, ConfigRootGate>> = CONFIG_ROOT_GATES,
 ): PluginApi {
   const registerTool = (
     tool: ToolDescriptor,
     options?: ToolRegistrationOptions,
   ): void => {
-    api.registerTool(guardTool(tool, resolver), options);
+    const gate = Object.hasOwn(gates, tool.name) ? gates[tool.name] : undefined;
+    api.registerTool(gate ? guardTool(tool, resolver, gate) : tool, options);
   };
   return new Proxy(api, {
     get: (target, prop, receiver) =>

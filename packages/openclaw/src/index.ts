@@ -135,8 +135,9 @@ function createPublicUrlResolver(
 
 /**
  * Register all jeeves-server tools. Always succeeds, even with no plugin
- * config: a missing `configRoot` logs one warning, and each tool returns a
- * clear error until it is set.
+ * config: a missing `configRoot` logs one warning. Only calls that read
+ * `configRoot` (`server_service` `install`) return an error until it is
+ * set; the HTTP API tools keep working.
  */
 export default function register(api: PluginApi): void {
   const configRoot = createConfigRootResolver(api);

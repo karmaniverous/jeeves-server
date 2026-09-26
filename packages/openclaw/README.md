@@ -58,7 +58,7 @@ Add an unscoped `_plugin` key to your Jeeves Server config:
 | `pluginKey` | — | Server `_plugin` key seed |
 | `configRoot` | — | Platform config root (core derives component config dirs). Falls back to the `JEEVES_CONFIG_ROOT` env var. |
 
-The plugin always loads, even before `configRoot` is set: it logs one warning, and its tools return a `configRoot not configured` error until you set `configRoot` in the plugin config or `JEEVES_CONFIG_ROOT`. The root is read when a tool runs, not at registration.
+The plugin always loads, even before `configRoot` is set: it logs one warning. Tools that only call the server's HTTP API keep working (without `publicUrl` rewriting). Only calls that read `configRoot` (`server_service` with `action: install`) return a `configRoot not configured` error until you set `configRoot` in the plugin config or `JEEVES_CONFIG_ROOT`. The root is read when a tool runs, not at registration.
 
 URLs returned by tools are rewritten to the server's `publicUrl`, read from `{configRoot}/jeeves-server/config.json` (or the `JEEVES_SERVER_PUBLIC_URL` env var).
 

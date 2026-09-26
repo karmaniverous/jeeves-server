@@ -226,7 +226,7 @@ Restart the gateway (and jeeves-server, if its `keys._plugin` changed) to load t
 
 ## Troubleshooting
 
-If a tool reports `configRoot not configured`: set `plugins.entries.jeeves-server-openclaw.config.configRoot` (e.g. `jeeves install server --config-root <config-root>`) or the `JEEVES_CONFIG_ROOT` environment variable, then restart the gateway.
+If a tool reports `configRoot not configured` (only `server_service` `install` reads it; the HTTP API tools work without it): set `plugins.entries.jeeves-server-openclaw.config.configRoot` (e.g. `jeeves install server --config-root <config-root>`) or the `JEEVES_CONFIG_ROOT` environment variable, then restart the gateway.
 
 If the server is unreachable:
 

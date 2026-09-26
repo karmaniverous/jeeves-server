@@ -7,6 +7,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  CONFIG_ROOT_GATES,
   CONFIG_ROOT_MISSING_MESSAGE,
   createConfigRootResolver,
   createGuardedApi,
@@ -116,6 +117,35 @@ describe('guardTool', () => {
     expect(result.content[0]?.text).toContain(CONFIG_ROOT_MISSING_MESSAGE);
     expect(tool.execute).not.toHaveBeenCalled();
   });
+
+  it('runs calls the gate does not mark as reading configRoot', async () => {
+    const tool = makeTool();
+    const resolve = vi.fn(() => undefined);
+    const guarded = guardTool(
+      tool,
+      { resolve, warnIfUnset: vi.fn() },
+      (params) => params['action'] === 'install',
+    );
+
+    await expect(guarded.execute('id', { action: 'status' })).resolves.toBe(
+      okResult,
+    );
+    expect(resolve).not.toHaveBeenCalled();
+    expect((await guarded.execute('id', { action: 'install' })).isError).toBe(
+      true,
+    );
+  });
+});
+
+describe('CONFIG_ROOT_GATES', () => {
+  it('gates only server_service install', () => {
+    expect(Object.keys(CONFIG_ROOT_GATES)).toEqual(['server_service']);
+    const gate = CONFIG_ROOT_GATES['server_service'];
+    expect(gate({ action: 'install' })).toBe(true);
+    for (const action of ['uninstall', 'start', 'stop', 'restart', 'status']) {
+      expect(gate({ action })).toBe(false);
+    }
+  });
 });
 
 describe('createGuardedApi', () => {
@@ -136,6 +166,25 @@ describe('createGuardedApi', () => {
 
     expect(guardedApi.pluginConfig).toBe(api.pluginConfig);
     expect(registered).toHaveLength(1);
+    // 'demo' is not a configRoot-reading tool: registered unguarded.
+    await expect(registered[0].execute('id', {})).resolves.toBe(okResult);
+  });
+
+  it('guards tools listed in the gates', async () => {
+    const registered: ToolDescriptor[] = [];
+    const api: PluginApi = {
+      registerTool: (tool) => {
+        registered.push(tool);
+      },
+    };
+    const guardedApi = createGuardedApi(
+      api,
+      { resolve: () => undefined, warnIfUnset: vi.fn() },
+      { demo: () => true },
+    );
+
+    guardedApi.registerTool(makeTool());
+
     expect((await registered[0].execute('id', {})).isError).toBe(true);
   });
 });

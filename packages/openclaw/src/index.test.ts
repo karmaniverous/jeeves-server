@@ -106,20 +106,67 @@ describe('register', () => {
     expect(() => getConfigRoot()).toThrow(/init\(\) must be called first/);
   });
 
-  it('returns a clear tool error without config, naming both ways to set it', async () => {
+  it('runs HTTP-only tools without configRoot', async () => {
     const { api, tools, warn } = createApi();
     register(api);
 
     for (const name of ['server_status', 'server_drives']) {
       const result = await run(tools, name);
-      expect(result.isError).toBe(true);
-      const text = result.content[0]?.text ?? '';
-      expect(text).toContain('configRoot not configured');
-      expect(text).toContain(`plugins.entries.${PLUGIN_ID}.config.configRoot`);
-      expect(text).toContain('JEEVES_CONFIG_ROOT');
+      expect(result.isError).toBeFalsy();
     }
-    expect(fetch).not.toHaveBeenCalled();
+    // No publicUrl without configRoot: URLs are returned unrewritten.
+    expect((await run(tools, 'server_drives')).content[0]?.text).toContain(
+      `${BASE_URL}/browse/j/a.md`,
+    );
+    expect(fetch).toHaveBeenCalled();
     expect(warn).toHaveBeenCalledTimes(1);
+    expect(() => getConfigRoot()).toThrow(/init\(\) must be called first/);
+  });
+
+  it('returns a clear error from a configRoot-reading call without config', async () => {
+    const { api, tools, warn } = createApi();
+    register(api);
+
+    const result = await run(tools, 'server_service', { action: 'install' });
+
+    expect(result.isError).toBe(true);
+    const text = result.content[0]?.text ?? '';
+    expect(text).toContain(CONFIG_ROOT_MISSING_MESSAGE);
+    expect(text).toContain('configRoot not configured');
+    expect(text).toContain(`plugins.entries.${PLUGIN_ID}.config.configRoot`);
+    expect(text).toContain('JEEVES_CONFIG_ROOT');
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes non-install server_service calls through the gate without configRoot', async () => {
+    const { api, tools } = createApi();
+    register(api);
+
+    // An invalid action reaches core's service tool (which rejects it) without
+    // touching a real service; the configRoot gate must not intercept it.
+    const result = await run(tools, 'server_service', { action: 'bogus' });
+
+    expect(result.isError).toBe(true);
+    const text = result.content[0]?.text ?? '';
+    expect(text).toContain('Invalid action: bogus');
+    expect(text).not.toContain('configRoot not configured');
+  });
+
+  it('runs the standard HTTP tools without configRoot', async () => {
+    const { api, tools } = createApi();
+    register(api);
+
+    for (const [name, params] of [
+      ['server_status', {}],
+      ['server_config', {}],
+      ['server_config_apply', { config: {} }],
+    ] as const) {
+      const result = await run(tools, name, params);
+      expect(result.content[0]?.text).not.toContain(
+        'configRoot not configured',
+      );
+      expect(result.isError).toBeFalsy();
+    }
   });
 
   it('works with configRoot from plugin config', async () => {
@@ -167,11 +214,19 @@ describe('register', () => {
     const pluginConfig: Record<string, unknown> = {};
     const { api, tools, warn } = createApi({ pluginConfig });
     register(api);
-    expect((await run(tools, 'server_drives')).isError).toBe(true);
+    expect(
+      (await run(tools, 'server_service', { action: 'install' })).isError,
+    ).toBe(true);
+    expect((await run(tools, 'server_drives')).content[0]?.text).not.toContain(
+      PUBLIC_URL,
+    );
 
     pluginConfig['configRoot'] = root;
 
-    expect((await run(tools, 'server_drives')).isError).toBeFalsy();
+    expect((await run(tools, 'server_drives')).content[0]?.text).toContain(
+      PUBLIC_URL,
+    );
+    expect(getConfigRoot()).toBe(root);
     expect(warn).toHaveBeenCalledTimes(1);
   });
 
