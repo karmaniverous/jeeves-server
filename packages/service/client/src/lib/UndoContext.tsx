@@ -30,25 +30,31 @@ export function UndoProvider({ children }: { children: ReactNode }) {
     return stack[stack.length - 1];
   }, []);
 
-  const confirmUndo = useCallback((filePath: string, currentContent: string) => {
-    const stack = undoStackRef.current.get(filePath);
-    if (!stack || stack.length === 0) return;
-    stack.pop();
-    const redoStack = redoStackRef.current.get(filePath) ?? [];
-    redoStack.push(currentContent);
-    redoStackRef.current.set(filePath, redoStack);
-    setVersion((v) => v + 1);
-  }, []);
+  const confirmUndo = useCallback(
+    (filePath: string, currentContent: string) => {
+      const stack = undoStackRef.current.get(filePath);
+      if (!stack || stack.length === 0) return;
+      stack.pop();
+      const redoStack = redoStackRef.current.get(filePath) ?? [];
+      redoStack.push(currentContent);
+      redoStackRef.current.set(filePath, redoStack);
+      setVersion((v) => v + 1);
+    },
+    [],
+  );
 
-  const confirmRedo = useCallback((filePath: string, currentContent: string) => {
-    const stack = redoStackRef.current.get(filePath);
-    if (!stack || stack.length === 0) return;
-    stack.pop();
-    const undoStack = undoStackRef.current.get(filePath) ?? [];
-    undoStack.push(currentContent);
-    undoStackRef.current.set(filePath, undoStack);
-    setVersion((v) => v + 1);
-  }, []);
+  const confirmRedo = useCallback(
+    (filePath: string, currentContent: string) => {
+      const stack = redoStackRef.current.get(filePath);
+      if (!stack || stack.length === 0) return;
+      stack.pop();
+      const undoStack = undoStackRef.current.get(filePath) ?? [];
+      undoStack.push(currentContent);
+      undoStackRef.current.set(filePath, undoStack);
+      setVersion((v) => v + 1);
+    },
+    [],
+  );
 
   const canUndo = useCallback((filePath: string): boolean => {
     const stack = undoStackRef.current.get(filePath);
@@ -61,7 +67,18 @@ export function UndoProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <UndoContext.Provider value={{ pushUndo, peekUndo, peekRedo, confirmUndo, confirmRedo, canUndo, canRedo, version }}>
+    <UndoContext.Provider
+      value={{
+        pushUndo,
+        peekUndo,
+        peekRedo,
+        confirmUndo,
+        confirmRedo,
+        canUndo,
+        canRedo,
+        version,
+      }}
+    >
       {children}
     </UndoContext.Provider>
   );

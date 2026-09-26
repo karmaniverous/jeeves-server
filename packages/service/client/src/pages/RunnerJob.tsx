@@ -51,7 +51,9 @@ export function RunnerJob() {
   }, [jobId]);
 
   useEffect(() => {
-    queueMicrotask(() => { void fetchData(); });
+    queueMicrotask(() => {
+      void fetchData();
+    });
   }, [fetchData]);
 
   const handleToggleEnabled = useCallback(async () => {
@@ -81,7 +83,9 @@ export function RunnerJob() {
   ];
 
   return (
-    <div className={`h-screen overflow-hidden ${theme === 'dark' ? 'dark' : ''}`}>
+    <div
+      className={`h-screen overflow-hidden ${theme === 'dark' ? 'dark' : ''}`}
+    >
       <div className="h-full flex flex-col bg-background text-foreground">
         {/* Shared header */}
         <Header
@@ -110,7 +114,9 @@ export function RunnerJob() {
           )}
 
           {loading ? (
-            <div className="text-center py-12 text-muted-foreground">Loading...</div>
+            <div className="text-center py-12 text-muted-foreground">
+              Loading...
+            </div>
           ) : job ? (
             <>
               {/* Job Info Card */}
@@ -119,9 +125,22 @@ export function RunnerJob() {
                   <div>
                     <h1 className="text-xl font-semibold">{job.name}</h1>
                     <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
-                      <span>Type: <span className="text-foreground">{job.type}</span></span>
-                      <span>Schedule: <code className="text-xs bg-muted px-1 py-0.5 rounded">{job.schedule}</code></span>
-                      <span>Overlap: <span className="text-foreground">{job.overlapPolicy}</span></span>
+                      <span>
+                        Type:{' '}
+                        <span className="text-foreground">{job.type}</span>
+                      </span>
+                      <span>
+                        Schedule:{' '}
+                        <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                          {job.schedule}
+                        </code>
+                      </span>
+                      <span>
+                        Overlap:{' '}
+                        <span className="text-foreground">
+                          {job.overlapPolicy}
+                        </span>
+                      </span>
                     </div>
                   </div>
                   <StatusPill status={job.enabled ? job.status : 'disabled'} />
@@ -134,10 +153,15 @@ export function RunnerJob() {
                     onClick={() => void handleToggleEnabled()}
                     className="gap-1.5"
                   >
-                    {job.enabled
-                      ? <><PowerOff className="h-3.5 w-3.5" /> Disable</>
-                      : <><Power className="h-3.5 w-3.5" /> Enable</>
-                    }
+                    {job.enabled ? (
+                      <>
+                        <PowerOff className="h-3.5 w-3.5" /> Disable
+                      </>
+                    ) : (
+                      <>
+                        <Power className="h-3.5 w-3.5" /> Enable
+                      </>
+                    )}
                   </Button>
                   <Button
                     variant="outline"
@@ -154,13 +178,17 @@ export function RunnerJob() {
               {/* Run History */}
               <div className="bg-card border border-border rounded-lg overflow-hidden">
                 <div className="px-4 py-3 border-b border-border">
-                  <h2 className="text-sm font-medium text-muted-foreground">Run History</h2>
+                  <h2 className="text-sm font-medium text-muted-foreground">
+                    Run History
+                  </h2>
                 </div>
                 <RunHistory runs={runs} />
               </div>
             </>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">Job not found</div>
+            <div className="text-center py-12 text-muted-foreground">
+              Job not found
+            </div>
           )}
         </div>
       </div>

@@ -53,9 +53,11 @@ function SortIcon({ column, sort }: { column: SortColumn; sort: SortState }) {
   if (sort.column !== column) {
     return <ArrowUpDown className="h-3 w-3 opacity-40" />;
   }
-  return sort.direction === 'asc'
-    ? <ArrowUp className="h-3 w-3" />
-    : <ArrowDown className="h-3 w-3" />;
+  return sort.direction === 'asc' ? (
+    <ArrowUp className="h-3 w-3" />
+  ) : (
+    <ArrowDown className="h-3 w-3" />
+  );
 }
 
 interface ColumnDef {
@@ -89,7 +91,9 @@ export function JobTableHeader({ sort, onSort }: JobTableHeaderProps) {
                 </span>
               </th>
             ))}
-            <th className={`${colClass.action} font-medium text-muted-foreground`} />
+            <th
+              className={`${colClass.action} font-medium text-muted-foreground`}
+            />
           </tr>
         </thead>
       </table>
@@ -119,14 +123,20 @@ export function JobTableBody({ jobs, onRunNow }: JobTableBodyProps) {
               onClick={() => navigate(`/runner/${job.id}`)}
             >
               <td className={`${colClass.name} font-medium`}>{job.name}</td>
-              <td className={`${colClass.type} text-muted-foreground`}>{job.type}</td>
-              <td className={`${colClass.schedule} font-mono text-xs text-muted-foreground`}>
+              <td className={`${colClass.type} text-muted-foreground`}>
+                {job.type}
+              </td>
+              <td
+                className={`${colClass.schedule} font-mono text-xs text-muted-foreground`}
+              >
                 {job.schedule}
               </td>
               <td className={colClass.status}>
                 <StatusPill status={job.enabled ? job.status : 'disabled'} />
               </td>
-              <td className={`${colClass.lastRun} text-muted-foreground text-xs`}>
+              <td
+                className={`${colClass.lastRun} text-muted-foreground text-xs`}
+              >
                 {formatTime(job.lastRun)}
               </td>
               <td className={colClass.action}>
@@ -150,4 +160,3 @@ export function JobTableBody({ jobs, onRunNow }: JobTableBodyProps) {
     </div>
   );
 }
-

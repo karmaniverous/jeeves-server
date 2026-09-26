@@ -6,7 +6,7 @@ import { RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Header } from '@/components/layout/Header';
-import { JobTableBody, JobTableHeader,  } from '@/components/runner/JobTable';
+import { JobTableBody, JobTableHeader } from '@/components/runner/JobTable';
 import { nextSort, sortJobs } from '@/components/runner/jobTableUtils';
 import type { SortColumn, SortState } from '@/components/runner/JobTable';
 import { StatsBar } from '@/components/runner/StatsBar';
@@ -25,7 +25,10 @@ export function Runner() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [sort, setSort] = useState<SortState>({ column: null, direction: 'desc' });
+  const [sort, setSort] = useState<SortState>({
+    column: null,
+    direction: 'desc',
+  });
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [theme, toggleTheme] = useTheme();
   const { isInsider, searchEnabled, keyCreatedAt, rotateKey } = useAuthStatus();
@@ -42,33 +45,43 @@ export function Runner() {
       setStats(statsData);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch runner data');
+      setError(
+        err instanceof Error ? err.message : 'Failed to fetch runner data',
+      );
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    queueMicrotask(() => { void fetchData(); });
+    queueMicrotask(() => {
+      void fetchData();
+    });
   }, [fetchData]);
 
   useEffect(() => {
     if (autoRefresh) {
-      intervalRef.current = setInterval(() => void fetchData(), REFRESH_INTERVAL);
+      intervalRef.current = setInterval(
+        () => void fetchData(),
+        REFRESH_INTERVAL,
+      );
     }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [autoRefresh, fetchData]);
 
-  const handleRunNow = useCallback(async (id: string) => {
-    try {
-      await triggerJobRun(id);
-      await fetchData();
-    } catch {
-      await fetchData();
-    }
-  }, [fetchData]);
+  const handleRunNow = useCallback(
+    async (id: string) => {
+      try {
+        await triggerJobRun(id);
+        await fetchData();
+      } catch {
+        await fetchData();
+      }
+    },
+    [fetchData],
+  );
 
   const handleSort = useCallback((column: SortColumn) => {
     setSort((prev) => nextSort(prev, column));
@@ -79,7 +92,9 @@ export function Runner() {
   const breadcrumbs = [{ label: 'Runner', path: 'runner' }];
 
   return (
-    <div className={`h-screen overflow-hidden ${theme === 'dark' ? 'dark' : ''}`}>
+    <div
+      className={`h-screen overflow-hidden ${theme === 'dark' ? 'dark' : ''}`}
+    >
       <div className="h-full flex flex-col bg-background text-foreground">
         {/* Shared header */}
         <Header
@@ -127,7 +142,9 @@ export function Runner() {
         )}
 
         {loading ? (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground">Loading...</div>
+          <div className="flex-1 flex items-center justify-center text-muted-foreground">
+            Loading...
+          </div>
         ) : (
           /* Single card: header pinned, body scrolls, scrollbar inside card */
           <div className="flex-1 min-h-0 max-w-6xl mx-auto w-full px-4 pt-1 flex flex-col">
@@ -138,7 +155,10 @@ export function Runner() {
               </div>
               {/* Scrollable table body — padding inside the scroll for mobile bottom space */}
               <div className="flex-1 overflow-y-auto pb-32">
-                <JobTableBody jobs={sortedJobs} onRunNow={(id) => void handleRunNow(id)} />
+                <JobTableBody
+                  jobs={sortedJobs}
+                  onRunNow={(id) => void handleRunNow(id)}
+                />
               </div>
             </div>
           </div>

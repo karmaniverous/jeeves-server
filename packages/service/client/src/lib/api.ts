@@ -60,7 +60,15 @@ export interface DriveEntry {
 }
 
 export interface FileContent {
-  type: 'markdown' | 'text' | 'csv' | 'svg' | 'mermaid' | 'plantuml' | 'image' | 'binary';
+  type:
+    | 'markdown'
+    | 'text'
+    | 'csv'
+    | 'svg'
+    | 'mermaid'
+    | 'plantuml'
+    | 'image'
+    | 'binary';
   content?: string;
   html?: string;
   headings?: { level: number; text: string; slug: string }[];
@@ -98,7 +106,10 @@ export interface AuthStatus {
 }
 
 /** Rotate insider key — invalidates all existing shares */
-export async function rotateKey(): Promise<{ ok: boolean; keyCreatedAt?: string }> {
+export async function rotateKey(): Promise<{
+  ok: boolean;
+  keyCreatedAt?: string;
+}> {
   return fetchJson('/api/rotate-key', { method: 'POST' });
 }
 
@@ -131,7 +142,9 @@ export async function getDrives(): Promise<DriveEntry[]> {
 }
 
 export async function getDirectory(path: string): Promise<DirectoryListing> {
-  return fetchJson<DirectoryListing>(`${API_BASE}/path/${encodeBrowsePath(path)}`);
+  return fetchJson<DirectoryListing>(
+    `${API_BASE}/path/${encodeBrowsePath(path)}`,
+  );
 }
 
 export async function getFile(path: string): Promise<FileContent> {
@@ -139,11 +152,15 @@ export async function getFile(path: string): Promise<FileContent> {
   const pageParams = new URLSearchParams(window.location.search);
   const renderDiagrams = pageParams.get('render_diagrams');
   const qs = renderDiagrams ? `?render_diagrams=${renderDiagrams}` : '';
-  return fetchJson<FileContent>(`${API_BASE}/file/${encodeBrowsePath(path)}${qs}`);
+  return fetchJson<FileContent>(
+    `${API_BASE}/file/${encodeBrowsePath(path)}${qs}`,
+  );
 }
 
 export async function getFileRaw(path: string): Promise<FileContent> {
-  return fetchJson<FileContent>(`${API_BASE}/file/${encodeBrowsePath(path)}?raw=1`);
+  return fetchJson<FileContent>(
+    `${API_BASE}/file/${encodeBrowsePath(path)}?raw=1`,
+  );
 }
 
 export async function getAuthStatus(browsePath?: string): Promise<AuthStatus> {
@@ -172,12 +189,18 @@ export async function getShareLink(
   });
 }
 
-export async function saveFile(path: string, content: string): Promise<{ ok: boolean; size: number }> {
-  return fetchJson<{ ok: boolean; size: number }>(`${API_BASE}/file/${encodeBrowsePath(path)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content }),
-  });
+export async function saveFile(
+  path: string,
+  content: string,
+): Promise<{ ok: boolean; size: number }> {
+  return fetchJson<{ ok: boolean; size: number }>(
+    `${API_BASE}/file/${encodeBrowsePath(path)}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+    },
+  );
 }
 
 export interface SearchChunk {
@@ -223,7 +246,6 @@ export async function searchDocuments(
   });
 }
 
-
 export interface SearchFacet {
   field: string;
   type: string;
@@ -245,17 +267,21 @@ export async function fileMutate(
   filePath: string,
   body: Record<string, unknown>,
 ): Promise<{ ok: boolean }> {
-  return fetchJson<{ ok: boolean }>(`${API_BASE}/file/${encodeBrowsePath(filePath)}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  return fetchJson<{ ok: boolean }>(
+    `${API_BASE}/file/${encodeBrowsePath(filePath)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  );
 }
 
-export async function clearCache(path: string): Promise<{ cleared: { exports: number; diagrams: number } }> {
+export async function clearCache(
+  path: string,
+): Promise<{ cleared: { exports: number; diagrams: number } }> {
   return fetchJson<{ cleared: { exports: number; diagrams: number } }>(
     `${API_BASE}/export-cache/${encodeBrowsePath(path)}`,
     { method: 'DELETE' },
   );
 }
-

@@ -22,12 +22,22 @@ interface DirectoryRowProps {
   onShareSettingsChange: (settings: ShareSettings) => void;
 }
 
-export function DirectoryRow({ entry, basePath, isInsider, shareSettings, onShareSettingsChange }: DirectoryRowProps) {
+export function DirectoryRow({
+  entry,
+  basePath,
+  isInsider,
+  shareSettings,
+  onShareSettingsChange,
+}: DirectoryRowProps) {
   const entryPath = basePath ? `${basePath}/${entry.name}` : entry.name;
   const isDir = entry.type === 'directory';
   const hasRaw = !isDir;
   const urlPath = `/${entryPath}`;
-  const typeLabel = isDir ? 'Directory' : entry.ext ? entry.ext.slice(1).toUpperCase() : 'File';
+  const typeLabel = isDir
+    ? 'Directory'
+    : entry.ext
+      ? entry.ext.slice(1).toUpperCase()
+      : 'File';
 
   return (
     <tr className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors">
@@ -37,12 +47,23 @@ export function DirectoryRow({ entry, basePath, isInsider, shareSettings, onShar
             to={`/browse/${entryPath}`}
             className="text-blue-500 hover:underline flex items-center gap-2 min-w-0"
           >
-            {isDir ? <FolderOpen className="h-4 w-4 text-yellow-500 shrink-0" /> : <FileText className="h-4 w-4 text-zinc-400 shrink-0" />}
+            {isDir ? (
+              <FolderOpen className="h-4 w-4 text-yellow-500 shrink-0" />
+            ) : (
+              <FileText className="h-4 w-4 text-zinc-400 shrink-0" />
+            )}
             <span className="truncate">{entry.name}</span>
           </Link>
           <div className="ml-auto flex items-center gap-0.5 shrink-0">
             {isInsider && (
-              <LinkDropdown path={urlPath} shareSettings={shareSettings} onShareSettingsChange={onShareSettingsChange} showRaw={hasRaw} compact isDirectory={isDir} />
+              <LinkDropdown
+                path={urlPath}
+                shareSettings={shareSettings}
+                onShareSettingsChange={onShareSettingsChange}
+                showRaw={hasRaw}
+                compact
+                isDirectory={isDir}
+              />
             )}
             <DownloadDropdown
               reqPath={entryPath}
@@ -56,10 +77,14 @@ export function DirectoryRow({ entry, basePath, isInsider, shareSettings, onShar
       <td className="px-4 py-2.5 text-muted-foreground text-sm">{typeLabel}</td>
       <td className="px-4 py-2.5 text-muted-foreground text-sm">
         {isDir
-          ? (entry.itemCount != null ? `${entry.itemCount} ${entry.itemCount === 1 ? 'item' : 'items'}` : '-')
+          ? entry.itemCount != null
+            ? `${entry.itemCount} ${entry.itemCount === 1 ? 'item' : 'items'}`
+            : '-'
           : formatSize(entry.size)}
       </td>
-      <td className="px-4 py-2.5 text-muted-foreground text-sm">{entry.mtime ?? '-'}</td>
+      <td className="px-4 py-2.5 text-muted-foreground text-sm">
+        {entry.mtime ?? '-'}
+      </td>
     </tr>
   );
 }

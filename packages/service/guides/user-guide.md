@@ -33,7 +33,7 @@ The **file browser** is your home screen. Navigate through directories by clicki
 ### Supported File Types
 
 | Type | Extensions | Rendering |
-|------|-----------|-----------|
+| --- | --- | --- |
 | **Markdown** | `.md` | Full formatting, [table of contents](#table-of-contents), embedded [diagrams](#diagrams) |
 | **Code** | `.ts`, `.js`, `.py`, `.json`, etc. | Syntax highlighting with line numbers, copy and word-wrap toggle |
 | **CSV** | `.csv` | Formatted tables |
@@ -162,12 +162,12 @@ Share links may have an expiry date set by the insider who created them. Expired
 
 Click the **download** icon in the header to access export options. Available formats depend on the file type:
 
-| Source | Available Exports |
-|--------|------------------|
-| Markdown files | PDF, DOCX, Raw download |
-| Directories | ZIP archive, Tar archive |
-| Diagrams (Mermaid, PlantUML) | SVG, PNG |
-| Any file | Raw download |
+| Source                       | Available Exports        |
+| ---------------------------- | ------------------------ |
+| Markdown files               | PDF, DOCX, Raw download  |
+| Directories                  | ZIP archive, Tar archive |
+| Diagrams (Mermaid, PlantUML) | SVG, PNG                 |
+| Any file                     | Raw download             |
 
 Both [insiders](#insider-experience) and [outsiders](#outsider-experience) can download and export content they have access to.
 
@@ -175,10 +175,10 @@ Both [insiders](#insider-experience) and [outsiders](#outsider-experience) can d
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|---|---|
+| Shortcut           | Action                                 |
+| ------------------ | -------------------------------------- |
 | `Ctrl+K` / `Cmd+K` | Open [search](#search) (insiders only) |
-| `Ctrl+Enter` | Save when [editing](#inline-editing) |
+| `Ctrl+Enter`       | Save when [editing](#inline-editing)   |
 
 ---
 

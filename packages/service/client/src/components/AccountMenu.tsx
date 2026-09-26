@@ -31,9 +31,9 @@ interface AccountMenuProps {
 const BREAKPOINT_CLASS: Record<string, string> = {
   'bp-400': 'min-[400px]:hidden',
   'bp-480': 'min-[480px]:hidden',
-  sm: 'sm:hidden',       // 640px
-  md: 'md:hidden',       // 768px
-  lg: 'lg:hidden',       // 1024px
+  sm: 'sm:hidden', // 640px
+  md: 'md:hidden', // 768px
+  lg: 'lg:hidden', // 1024px
 };
 
 export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
@@ -80,7 +80,12 @@ export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
       >
         {hasSession ? (
           picture ? (
-            <img src={picture} alt="" className="h-7 w-7 rounded-full" referrerPolicy="no-referrer" />
+            <img
+              src={picture}
+              alt=""
+              className="h-7 w-7 rounded-full"
+              referrerPolicy="no-referrer"
+            />
           ) : (
             <div className="h-7 w-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-semibold">
               {initial}
@@ -109,7 +114,9 @@ export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
           {/* Collapsed items — each visible in menu only below its breakpoint */}
           {collapsedItems.map((item, i) => (
             <div key={i} className={BREAKPOINT_CLASS[item.breakpoint]}>
-              {typeof item.node === 'function' ? item.node(() => setOpen(false)) : item.node}
+              {typeof item.node === 'function'
+                ? item.node(() => setOpen(false))
+                : item.node}
             </div>
           ))}
 
@@ -129,7 +136,13 @@ export function AccountMenu({ collapsedItems = [] }: AccountMenuProps) {
           )}
 
           {/* Legal links — only show separator when there's content above */}
-          <div className={hasSession || collapsedItems.length > 0 ? 'border-t border-border mt-1 pt-1' : ''}>
+          <div
+            className={
+              hasSession || collapsedItems.length > 0
+                ? 'border-t border-border mt-1 pt-1'
+                : ''
+            }
+          >
             <Link
               to="/privacy"
               onClick={() => setOpen(false)}

@@ -16,7 +16,14 @@ interface ConfirmDialogProps {
   onConfirm: () => void;
 }
 
-export function ConfirmDialog({ open, onOpenChange, title, description, confirmLabel = 'Continue', onConfirm }: ConfirmDialogProps) {
+export function ConfirmDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  confirmLabel = 'Continue',
+  onConfirm,
+}: ConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -24,7 +31,9 @@ export function ConfirmDialog({ open, onOpenChange, title, description, confirmL
         <AlertDialogDescription>{description}</AlertDialogDescription>
         <div className="flex justify-end gap-2 mt-2">
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>{confirmLabel}</AlertDialogAction>
+          <AlertDialogAction onClick={onConfirm}>
+            {confirmLabel}
+          </AlertDialogAction>
         </div>
       </AlertDialogContent>
     </AlertDialog>

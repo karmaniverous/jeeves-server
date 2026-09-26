@@ -6,17 +6,8 @@
     "noEmit": false,
     "declaration": true,
     "declarationMap": true,
-    "types": [
-      "node",
-      "vitest/globals"
-    ]
+    "types": ["node", "vitest/globals"]
   },
-  "include": [
-    "src/**/*",
-    "rollup.config.ts"
-  ],
-  "exclude": [
-    "dist",
-    "node_modules"
-  ]
+  "include": ["src/**/*", "rollup.config.ts"],
+  "exclude": ["dist", "node_modules"]
 }

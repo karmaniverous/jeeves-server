@@ -21,7 +21,9 @@ export function useTopBar(depsKey = '') {
     return () => window.removeEventListener('resize', measureTopBar);
   }, [measureTopBar]);
 
-  useEffect(() => { measureTopBar(); }, [measureTopBar, depsKey]);
+  useEffect(() => {
+    measureTopBar();
+  }, [measureTopBar, depsKey]);
 
   return { topBarRef, mainRef, topBarHeight };
 }

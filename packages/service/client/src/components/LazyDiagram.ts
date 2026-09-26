@@ -15,7 +15,9 @@ import { createPanzoomWrapper } from './panzoom';
  */
 export function initLazyDiagrams(article: HTMLElement): () => void {
   const cleanups: (() => void)[] = [];
-  const placeholders = article.querySelectorAll<HTMLDivElement>('.embedded-diagram-lazy');
+  const placeholders = article.querySelectorAll<HTMLDivElement>(
+    '.embedded-diagram-lazy',
+  );
 
   if (placeholders.length === 0) return () => {};
 
@@ -25,7 +27,9 @@ export function initLazyDiagrams(article: HTMLElement): () => void {
     void loadDiagram(placeholder, cleanups);
   }
 
-  return () => { for (const cleanup of cleanups) cleanup(); };
+  return () => {
+    for (const cleanup of cleanups) cleanup();
+  };
 }
 
 async function loadDiagram(
@@ -40,7 +44,9 @@ async function loadDiagram(
     const url = withKey(`/api/diagram/${type}/${hash}.svg`);
     const resp = await fetch(url);
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({ error: 'Render failed' })) as { error?: string };
+      const err = (await resp
+        .json()
+        .catch(() => ({ error: 'Render failed' }))) as { error?: string };
       throw new Error(err.error ?? `HTTP ${String(resp.status)}`);
     }
     const svgText = await resp.text();
@@ -56,7 +62,10 @@ async function loadDiagram(
     // Preserve source mapping for block editing hover controls
     const copySourceAttrs = (target: HTMLElement) => {
       if (placeholder.dataset.sourceStart)
-        target.setAttribute('data-source-start', placeholder.dataset.sourceStart);
+        target.setAttribute(
+          'data-source-start',
+          placeholder.dataset.sourceStart,
+        );
       if (placeholder.dataset.sourceEnd)
         target.setAttribute('data-source-end', placeholder.dataset.sourceEnd);
     };
@@ -69,9 +78,13 @@ async function loadDiagram(
     }
 
     // Use shared panzoom wrapper
-    const { wrapper, initPanzoom, cleanup } = createPanzoomWrapper(svg, container, {
-      wrapperExtraClass: 'embedded-diagram-panzoom',
-    });
+    const { wrapper, initPanzoom, cleanup } = createPanzoomWrapper(
+      svg,
+      container,
+      {
+        wrapperExtraClass: 'embedded-diagram-panzoom',
+      },
+    );
 
     copySourceAttrs(wrapper);
     placeholder.replaceWith(wrapper);
@@ -79,11 +92,14 @@ async function loadDiagram(
     cleanups.push(cleanup);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    const label = type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Diagram';
+    const label = type
+      ? type.charAt(0).toUpperCase() + type.slice(1)
+      : 'Diagram';
     const retries = Number(placeholder.dataset.retryCount ?? '0');
-    const reloadHint = retries > 0
-      ? '<div class="diagram-reload-hint">Still failing? Try reloading the page — the diagram source may have changed.</div>'
-      : '';
+    const reloadHint =
+      retries > 0
+        ? '<div class="diagram-reload-hint">Still failing? Try reloading the page — the diagram source may have changed.</div>'
+        : '';
     placeholder.innerHTML = `<div class="embedded-diagram-error" data-type="${type}"><div class="diagram-error-label">${label} render failed: ${escapeHtml(message)}</div>${reloadHint}<button class="diagram-retry-btn">Retry</button></div>`;
 
     const retryBtn = placeholder.querySelector('.diagram-retry-btn');
@@ -96,8 +112,5 @@ async function loadDiagram(
 }
 
 function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

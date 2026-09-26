@@ -18,22 +18,44 @@ import { useUndo } from '@/lib/useUndo';
 
 export function FileBrowser() {
   const {
-    reqPath, theme, toggleTheme,
-    shareSettings, setShareSettings,
-    mobileTocOpen, setMobileTocOpen,
-    proseWidth, toggleProseWidth,
-    drives, directory, fileRaw, fileRendered, file,
-    loading, error, editing, setEditing,
-    viewTab, setViewTab,
-    breadcrumbs, isInsider, searchEnabled, keyAge,
-    rotateKeyDialogOpen, setRotateKeyDialogOpen,
-    handleRotateKey, confirmRotateKey,
-    topBarRef, mainRef, topBarHeight,
-    handleSave, refetch,
+    reqPath,
+    theme,
+    toggleTheme,
+    shareSettings,
+    setShareSettings,
+    mobileTocOpen,
+    setMobileTocOpen,
+    proseWidth,
+    toggleProseWidth,
+    drives,
+    directory,
+    fileRaw,
+    fileRendered,
+    file,
+    loading,
+    error,
+    editing,
+    setEditing,
+    viewTab,
+    setViewTab,
+    breadcrumbs,
+    isInsider,
+    searchEnabled,
+    keyAge,
+    rotateKeyDialogOpen,
+    setRotateKeyDialogOpen,
+    handleRotateKey,
+    confirmRotateKey,
+    topBarRef,
+    mainRef,
+    topBarHeight,
+    handleSave,
+    refetch,
   } = useFileBrowser();
 
   // Undo/redo controls for header
-  const { peekUndo, peekRedo, confirmUndo, confirmRedo, canUndo, canRedo } = useUndo();
+  const { peekUndo, peekRedo, confirmUndo, confirmRedo, canUndo, canRedo } =
+    useUndo();
   const [undoSaving, setUndoSaving] = useState(false);
   const currentContent = (fileRaw ?? fileRendered)?.content ?? '';
 
@@ -78,26 +100,83 @@ export function FileBrowser() {
 
           keyAge={editing ? undefined : keyAge}
           onRotateKey={editing ? undefined : handleRotateKey}
-          downloadDropdown={editing ? undefined :
-            file ? (
-              <DownloadDropdown reqPath={reqPath} file={file} variant="header" />
+          downloadDropdown={
+            editing ? undefined : file ? (
+              <DownloadDropdown
+                reqPath={reqPath}
+                file={file}
+                variant="header"
+              />
             ) : directory ? (
-              <DownloadDropdown reqPath={reqPath} file={null} isDirectory variant="header" />
+              <DownloadDropdown
+                reqPath={reqPath}
+                file={null}
+                isDirectory
+                variant="header"
+              />
             ) : undefined
           }
-          downloadMenuItem={editing ? undefined :
-            file ? (
-              (onDismiss) => <DownloadDropdown reqPath={reqPath} file={file} variant="menuItem" onStateChange={(s) => { if (s === 'done') setTimeout(onDismiss, 800); }} />
-            ) : directory ? (
-              (onDismiss) => <DownloadDropdown reqPath={reqPath} file={null} isDirectory variant="menuItem" onStateChange={(s) => { if (s === 'done') setTimeout(onDismiss, 800); }} />
+          downloadMenuItem={
+            editing
+              ? undefined
+              : file
+                ? (onDismiss) => (
+                    <DownloadDropdown
+                      reqPath={reqPath}
+                      file={file}
+                      variant="menuItem"
+                      onStateChange={(s) => {
+                        if (s === 'done') setTimeout(onDismiss, 800);
+                      }}
+                    />
+                  )
+                : directory
+                  ? (onDismiss) => (
+                      <DownloadDropdown
+                        reqPath={reqPath}
+                        file={null}
+                        isDirectory
+                        variant="menuItem"
+                        onStateChange={(s) => {
+                          if (s === 'done') setTimeout(onDismiss, 800);
+                        }}
+                      />
+                    )
+                  : undefined
+          }
+          linkControls={
+            editing ? undefined : isInsider ? (
+              <LinkDropdown
+                path={`/${reqPath}`}
+                shareSettings={shareSettings}
+                onShareSettingsChange={setShareSettings}
+                showEvent
+                showRaw={!!file}
+                variant="header"
+                isDirectory={!file}
+              />
             ) : undefined
           }
-          linkControls={editing ? undefined : isInsider ? (
-            <LinkDropdown path={`/${reqPath}`} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} showEvent showRaw={!!file} variant="header" isDirectory={!file} />
-          ) : undefined}
-          linkMenuItem={editing ? undefined : isInsider ? (
-            (onDismiss) => <LinkDropdown path={`/${reqPath}`} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} showEvent showRaw={!!file} variant="menuItem" isDirectory={!file} onStateChange={(s) => { if (s === 'done') setTimeout(onDismiss, 800); }} />
-          ) : undefined}
+          linkMenuItem={
+            editing
+              ? undefined
+              : isInsider
+                ? (onDismiss) => (
+                    <LinkDropdown
+                      path={`/${reqPath}`}
+                      shareSettings={shareSettings}
+                      onShareSettingsChange={setShareSettings}
+                      showEvent
+                      showRaw={!!file}
+                      variant="menuItem"
+                      isDirectory={!file}
+                      onStateChange={(s) => {
+                        if (s === 'done') setTimeout(onDismiss, 800);
+                      }}
+                    />
+                  )
+                : undefined
+          }
         />
 
         {/* Tabs for file views */}
@@ -116,50 +195,84 @@ export function FileBrowser() {
             mobileTocOpen={mobileTocOpen}
             setMobileTocOpen={setMobileTocOpen}
             loading={loading}
-            undoRedoControls={!editing && isInsider && (canUndo(reqPath) || canRedo(reqPath)) ? (
-              <div className="flex items-center gap-0.5 ml-2">
-                {canUndo(reqPath) && (
-                  <button
-                    onClick={handleUndo}
-                    disabled={undoSaving}
-                    title="Undo (Ctrl+Z)"
-                    className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-                  >
-                    {undoSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Undo2 className="h-4 w-4" />}
-                  </button>
-                )}
-                {canRedo(reqPath) && (
-                  <button
-                    onClick={handleRedo}
-                    disabled={undoSaving}
-                    title="Redo (Ctrl+Shift+Z)"
-                    className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-                  >
-                    {undoSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Redo2 className="h-4 w-4" />}
-                  </button>
-                )}
-              </div>
-            ) : undefined}
+            undoRedoControls={
+              !editing &&
+              isInsider &&
+              (canUndo(reqPath) || canRedo(reqPath)) ? (
+                <div className="flex items-center gap-0.5 ml-2">
+                  {canUndo(reqPath) && (
+                    <button
+                      onClick={handleUndo}
+                      disabled={undoSaving}
+                      title="Undo (Ctrl+Z)"
+                      className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                    >
+                      {undoSaving ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Undo2 className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
+                  {canRedo(reqPath) && (
+                    <button
+                      onClick={handleRedo}
+                      disabled={undoSaving}
+                      title="Redo (Ctrl+Shift+Z)"
+                      className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                    >
+                      {undoSaving ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Redo2 className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
+              ) : undefined
+            }
           />
         )}
       </div>
 
       <main
         ref={mainRef}
-        className={showFileView ? 'px-0 pb-32 overflow-y-auto' : 'p-4 pb-32 md:px-6 md:pt-6 overflow-y-auto'}
-        style={{ marginTop: `${topBarHeight}px`, height: `calc(100vh - ${topBarHeight}px)` }}
+        className={
+          showFileView
+            ? 'px-0 pb-32 overflow-y-auto'
+            : 'p-4 pb-32 md:px-6 md:pt-6 overflow-y-auto'
+        }
+        style={{
+          marginTop: `${topBarHeight}px`,
+          height: `calc(100vh - ${topBarHeight}px)`,
+        }}
       >
-        {loading && !reqPath && <div className="text-muted-foreground text-sm">Loading...</div>}
-        {error && <div className="text-destructive text-sm">Error: {error}</div>}
+        {loading && !reqPath && (
+          <div className="text-muted-foreground text-sm">Loading...</div>
+        )}
+        {error && (
+          <div className="text-destructive text-sm">Error: {error}</div>
+        )}
 
         {/* Drive listing */}
         {!loading && !error && drives && (
-          <DriveList drives={drives} isInsider={isInsider} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} />
+          <DriveList
+            drives={drives}
+            isInsider={isInsider}
+            shareSettings={shareSettings}
+            onShareSettingsChange={setShareSettings}
+          />
         )}
 
         {/* Directory listing */}
         {!loading && !error && directory && (
-          <DirectoryTable entries={directory.entries} basePath={reqPath} isInsider={isInsider} shareSettings={shareSettings} onShareSettingsChange={setShareSettings} />
+          <DirectoryTable
+            entries={directory.entries}
+            basePath={reqPath}
+            isInsider={isInsider}
+            shareSettings={shareSettings}
+            onShareSettingsChange={setShareSettings}
+          />
         )}
 
         {/* File viewer */}

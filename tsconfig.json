@@ -3,9 +3,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "lib": [
-      "ES2022"
-    ],
+    "lib": ["ES2022"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
@@ -14,11 +12,5 @@
     "strict": true,
     "target": "ES2022"
   },
-  "exclude": [
-    "coverage",
-    "dist",
-    "docs",
-    "node_modules",
-    ".stan"
-  ]
+  "exclude": ["coverage", "dist", "docs", "node_modules", ".stan"]
 }

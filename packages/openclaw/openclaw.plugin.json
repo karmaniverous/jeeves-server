@@ -3,9 +3,7 @@
   "name": "Jeeves Server",
   "description": "File browsing, document sharing, export, and event gateway tools for jeeves-server.",
   "version": "0.13.0",
-  "skills": [
-    "dist/skills/jeeves-server"
-  ],
+  "skills": ["dist/skills/jeeves-server"],
   "configSchema": {
     "type": "object",
     "additionalProperties": false,

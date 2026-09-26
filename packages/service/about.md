@@ -44,7 +44,7 @@ Outsider links are path-specific and can optionally expire. With outsider access
 ## Header Controls
 
 | Button | Description |
-|--------|-------------|
+| --- | --- |
 | 🎩 | Home — return to drive list (insider only) |
 | ? | About — this page |
 | 🔑 | Rotate API Key — generates a new key, invalidating all existing links |
@@ -55,4 +55,4 @@ Outsider links are path-specific and can optionally expire. With outsider access
 
 ---
 
-*Jeeves Server — [GitHub](https://github.com/karmaniverous/jeeves-server)*
+_Jeeves Server — [GitHub](https://github.com/karmaniverous/jeeves-server)_

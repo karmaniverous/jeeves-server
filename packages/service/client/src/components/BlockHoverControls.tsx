@@ -3,7 +3,13 @@
  * Attaches to MarkdownView rendered content via event delegation.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowDownToLine, ArrowUpToLine, Copy, Pencil, Trash2 } from 'lucide-react';
+import {
+  ArrowDownToLine,
+  ArrowUpToLine,
+  Copy,
+  Pencil,
+  Trash2,
+} from 'lucide-react';
 
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { BlockEditPopup } from '@/components/BlockEditPopup';
@@ -54,7 +60,11 @@ function getTableColumnCount(table: Element): number {
 }
 
 /** Extract raw lines from file content by source line range. */
-function extractSourceLines(content: string, startLine: number, endLine: number): string {
+function extractSourceLines(
+  content: string,
+  startLine: number,
+  endLine: number,
+): string {
   const lines = content.split(/\r?\n/);
   return lines.slice(startLine - 1, endLine).join('\n');
 }
@@ -119,7 +129,10 @@ export function BlockHoverControls({
   const [hoverRect, setHoverRect] = useState<OverlayRect | null>(null);
   const [editMode, setEditMode] = useState<BlockEditMode | null>(null);
   const [editBlockLabel, setEditBlockLabel] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState<{ startLine: number; endLine: number } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    startLine: number;
+    endLine: number;
+  } | null>(null);
   const [loadingRect, setLoadingRect] = useState<OverlayRect | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
@@ -138,7 +151,9 @@ export function BlockHoverControls({
   const isPopupOpen = editMode !== null || deleteTarget !== null;
   useEffect(() => {
     popupOpenRef.current = isPopupOpen;
-    return () => { popupOpenRef.current = false; };
+    return () => {
+      popupOpenRef.current = false;
+    };
   }, [isPopupOpen, popupOpenRef]);
 
   // Clear hover when content re-renders (adjusting state during render pattern)
@@ -150,30 +165,33 @@ export function BlockHoverControls({
   }
 
   // Debounced hover setter — computes rect in the timer callback (not during render)
-  const setHoveredDebounced = useCallback((el: Element | null) => {
-    if (hoverTimerRef.current !== null) {
-      clearTimeout(hoverTimerRef.current);
-      hoverTimerRef.current = null;
-    }
-    pendingElRef.current = el;
-    hoverTimerRef.current = setTimeout(() => {
-      hoverTimerRef.current = null;
-      const pending = pendingElRef.current;
-      if (!pending) {
-        setHoveredEl(null);
-        setHoverRect(null);
-        return;
+  const setHoveredDebounced = useCallback(
+    (el: Element | null) => {
+      if (hoverTimerRef.current !== null) {
+        clearTimeout(hoverTimerRef.current);
+        hoverTimerRef.current = null;
       }
-      const container = containerRef.current;
-      if (!container) {
-        setHoveredEl(null);
-        setHoverRect(null);
-        return;
-      }
-      setHoveredEl(pending);
-      setHoverRect(computeOverlayRect(pending, container));
-    }, HOVER_DEBOUNCE_MS);
-  }, [containerRef]);
+      pendingElRef.current = el;
+      hoverTimerRef.current = setTimeout(() => {
+        hoverTimerRef.current = null;
+        const pending = pendingElRef.current;
+        if (!pending) {
+          setHoveredEl(null);
+          setHoverRect(null);
+          return;
+        }
+        const container = containerRef.current;
+        if (!container) {
+          setHoveredEl(null);
+          setHoverRect(null);
+          return;
+        }
+        setHoveredEl(pending);
+        setHoverRect(computeOverlayRect(pending, container));
+      }, HOVER_DEBOUNCE_MS);
+    },
+    [containerRef],
+  );
 
   // Hover detection via event delegation
   useEffect(() => {
@@ -189,10 +207,16 @@ export function BlockHoverControls({
 
     function handleMouseOut(e: MouseEvent) {
       const related = e.relatedTarget as Element | null;
-      if (!related) { setHoveredDebounced(null); return; }
+      if (!related) {
+        setHoveredDebounced(null);
+        return;
+      }
       if (controlsRef.current?.contains(related)) return;
       const container_ = containerRef.current;
-      if (!container_?.contains(related)) { setHoveredDebounced(null); return; }
+      if (!container_?.contains(related)) {
+        setHoveredDebounced(null);
+        return;
+      }
       const block = findHoverTarget(related, e.clientY);
       if (!block) setHoveredDebounced(null);
     }
@@ -214,7 +238,10 @@ export function BlockHoverControls({
     if (tag === 'td' || tag === 'th') {
       const table = el.closest('table[data-source-start]');
       if (table) {
-        const start = parseInt(table.getAttribute('data-source-start') ?? '0', 10);
+        const start = parseInt(
+          table.getAttribute('data-source-start') ?? '0',
+          10,
+        );
         const end = parseInt(table.getAttribute('data-source-end') ?? '0', 10);
         return { startLine: start, endLine: end };
       }
@@ -238,7 +265,8 @@ export function BlockHoverControls({
       const { startLine, endLine } = getSourceRange(el);
       if (!startLine || !endLine) return;
       const text = extractSourceLines(rawContent, startLine, endLine);
-      if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
+      if (navigator.clipboard)
+        navigator.clipboard.writeText(text).catch(() => {});
     },
     [rawContent, getSourceRange],
   );
@@ -251,7 +279,10 @@ export function BlockHoverControls({
         const row = el.closest('tr');
         const table = el.closest('table');
         if (!row || !table) return;
-        const tableStart = parseInt(table.getAttribute('data-source-start') ?? '0', 10);
+        const tableStart = parseInt(
+          table.getAttribute('data-source-start') ?? '0',
+          10,
+        );
         if (!tableStart) return;
 
         const isHeader = row.closest('thead') !== null;
@@ -479,7 +510,8 @@ export function BlockHoverControls({
                   <button
                     onClick={() => {
                       const range = getSourceRange(hoveredEl);
-                      if (range.startLine && range.endLine) setDeleteTarget(range);
+                      if (range.startLine && range.endLine)
+                        setDeleteTarget(range);
                     }}
                     className="p-0.5 bg-popover border border-border rounded hover:bg-destructive/10 transition-colors"
                     title="Delete"
@@ -496,7 +528,9 @@ export function BlockHoverControls({
       {/* Delete confirmation */}
       <ConfirmDialog
         open={deleteTarget !== null}
-        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
         title="Delete Block"
         description="Are you sure you want to delete this block? This cannot be undone."
         confirmLabel="Delete"

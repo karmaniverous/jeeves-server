@@ -31,10 +31,10 @@ npm install
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|---|---|---|
-| `JEEVES_WORKSPACE_PATH` | Path to jeeves workspace | `J:\jeeves` |
-| `JEEVES_CONFIG_ROOT` | Path to jeeves-core config | `J:\config` |
+| Variable                | Description                | Default     |
+| ----------------------- | -------------------------- | ----------- |
+| `JEEVES_WORKSPACE_PATH` | Path to jeeves workspace   | `J:\jeeves` |
+| `JEEVES_CONFIG_ROOT`    | Path to jeeves-core config | `J:\config` |
 
 Set these before running the dev server if your paths differ from the defaults.
 
@@ -90,8 +90,8 @@ kill -9 <pid>
 
 ## Dev vs Prod
 
-| | Dev | Prod |
-|---|---|---|
+|  | Dev | Prod |
+| --- | --- | --- |
 | **Port** | 19340 | 1934 |
 | **Entry** | `npx tsx watch packages/service/src/dev-server.ts` | NSSM service (global npm install) |
 | **Config** | `<configDir>/jeeves-server/config.json` | Global install `config.json` |

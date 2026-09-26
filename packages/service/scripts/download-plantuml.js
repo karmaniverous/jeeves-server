@@ -25,7 +25,9 @@ const versionFile = path.join(vendorDir, '.plantuml-version');
 if (fs.existsSync(jarPath) && fs.existsSync(versionFile)) {
   const currentVersion = fs.readFileSync(versionFile, 'utf8').trim();
   if (currentVersion === PLANTUML_VERSION) {
-    console.log(`PlantUML ${PLANTUML_VERSION} already present, skipping download.`);
+    console.log(
+      `PlantUML ${PLANTUML_VERSION} already present, skipping download.`,
+    );
     process.exit(0);
   }
 }
@@ -37,20 +39,31 @@ console.log(`Downloading PlantUML ${PLANTUML_VERSION}...`);
 function download(url, dest) {
   return new Promise((resolve, reject) => {
     const follow = (url) => {
-      https.get(url, (res) => {
-        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          follow(res.headers.location);
-          return;
-        }
-        if (res.statusCode !== 200) {
-          reject(new Error(`HTTP ${String(res.statusCode)} downloading PlantUML`));
-          return;
-        }
-        const file = fs.createWriteStream(dest);
-        res.pipe(file);
-        file.on('finish', () => { file.close(); resolve(); });
-        file.on('error', reject);
-      }).on('error', reject);
+      https
+        .get(url, (res) => {
+          if (
+            res.statusCode >= 300 &&
+            res.statusCode < 400 &&
+            res.headers.location
+          ) {
+            follow(res.headers.location);
+            return;
+          }
+          if (res.statusCode !== 200) {
+            reject(
+              new Error(`HTTP ${String(res.statusCode)} downloading PlantUML`),
+            );
+            return;
+          }
+          const file = fs.createWriteStream(dest);
+          res.pipe(file);
+          file.on('finish', () => {
+            file.close();
+            resolve();
+          });
+          file.on('error', reject);
+        })
+        .on('error', reject);
     };
     follow(url);
   });
@@ -60,10 +73,14 @@ try {
   await download(PLANTUML_URL, jarPath);
   fs.writeFileSync(versionFile, PLANTUML_VERSION);
   const stats = fs.statSync(jarPath);
-  console.log(`PlantUML ${PLANTUML_VERSION} downloaded (${(stats.size / 1024 / 1024).toFixed(1)} MB)`);
+  console.log(
+    `PlantUML ${PLANTUML_VERSION} downloaded (${(stats.size / 1024 / 1024).toFixed(1)} MB)`,
+  );
 } catch (err) {
   console.warn(`Warning: Failed to download PlantUML: ${err.message}`);
-  console.warn('PlantUML local rendering will fall back to server-based rendering.');
+  console.warn(
+    'PlantUML local rendering will fall back to server-based rendering.',
+  );
   // Don't fail the install — PlantUML is optional
   process.exit(0);
 }

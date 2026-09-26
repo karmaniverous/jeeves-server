@@ -4,10 +4,7 @@
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
     "isolatedModules": true,
-    "lib": [
-      "ES2022",
-      "DOM"
-    ],
+    "lib": ["ES2022", "DOM"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "outDir": "dist",
@@ -16,10 +13,7 @@
     "strict": true,
     "target": "ES2022",
     "tsBuildInfoFile": "./.tsbuildinfo",
-    "types": [
-      "node",
-      "vitest/globals"
-    ],
+    "types": ["node", "vitest/globals"],
     "rootDir": "."
   },
   "exclude": [
@@ -30,9 +24,5 @@
     "server.js",
     "jeeves.config.template.ts"
   ],
-  "include": [
-    "src/**/*",
-    "*.config.ts",
-    "rollup.config.ts"
-  ]
+  "include": ["src/**/*", "*.config.ts", "rollup.config.ts"]
 }

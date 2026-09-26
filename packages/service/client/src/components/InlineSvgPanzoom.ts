@@ -9,21 +9,27 @@ import { createPanzoomWrapper } from './panzoom';
 
 export function initInlineSvgPanzoom(article: HTMLElement): () => void {
   const cleanups: (() => void)[] = [];
-  const imgs = Array.from(article.querySelectorAll<HTMLImageElement>('img')).filter(
-    (img) => /\.svg(\?|&|$)/i.test(img.getAttribute('src') ?? ''),
-  );
+  const imgs = Array.from(
+    article.querySelectorAll<HTMLImageElement>('img'),
+  ).filter((img) => /\.svg(\?|&|$)/i.test(img.getAttribute('src') ?? ''));
 
   for (const img of imgs) {
     const src = img.getAttribute('src');
     if (!src) continue;
 
-    const rawSrc = src.includes('raw=1') ? src : (src.includes('?') ? `${src}&raw=1` : `${src}?raw=1`);
+    const rawSrc = src.includes('raw=1')
+      ? src
+      : src.includes('?')
+        ? `${src}&raw=1`
+        : `${src}?raw=1`;
 
     // Create a temporary placeholder
     const placeholder = document.createElement('div');
-    placeholder.className = 'inline-svg-panzoom relative bg-white rounded-lg border border-border overflow-hidden my-4';
+    placeholder.className =
+      'inline-svg-panzoom relative bg-white rounded-lg border border-border overflow-hidden my-4';
     placeholder.style.cursor = 'grab';
-    placeholder.innerHTML = '<div class="overflow-hidden w-full min-h-[200px]"><div class="flex items-center justify-center p-4">Loading SVG…</div></div>';
+    placeholder.innerHTML =
+      '<div class="overflow-hidden w-full min-h-[200px]"><div class="flex items-center justify-center p-4">Loading SVG…</div></div>';
 
     img.parentElement?.replaceChild(placeholder, img);
 
@@ -39,10 +45,14 @@ export function initInlineSvgPanzoom(article: HTMLElement): () => void {
         const svg = tempDiv.querySelector('svg');
         if (!svg) throw new Error('No SVG element found');
 
-        const { wrapper, initPanzoom, cleanup } = createPanzoomWrapper(svg, placeholder, {
-          wrapperExtraClass: 'inline-svg-panzoom',
-          viewportMinHeight: '200px',
-        });
+        const { wrapper, initPanzoom, cleanup } = createPanzoomWrapper(
+          svg,
+          placeholder,
+          {
+            wrapperExtraClass: 'inline-svg-panzoom',
+            viewportMinHeight: '200px',
+          },
+        );
 
         placeholder.replaceWith(wrapper);
         initPanzoom();

@@ -1,5 +1,5 @@
 ---
-title: "Setup & Configuration"
+title: 'Setup & Configuration'
 ---
 
 # Setup & Configuration
@@ -93,7 +93,7 @@ Optional logging configuration. Matches the pattern used by jeeves-watcher and j
 ```
 
 | Field | Type | Default | Description |
-|-------|------|---------|-------------|
+| --- | --- | --- | --- |
 | `level` | string | `info` | Pino log level: `trace`, `debug`, `info`, `warn`, `error`, `fatal` |
 | `file` | string | — | Log file path. When set, logs are written to this file via pino file transport. When omitted, logs go to stdout. |
 
@@ -125,7 +125,7 @@ By default the event queue is stored inside the npm install directory, which is 
 ```
 
 | Field | Type | Default | Description |
-|-------|------|---------|-------------|
+| --- | --- | --- | --- |
 | `eventQueue` | string | `{installDir}/logs/event-queue.jsonl` | Absolute path to the durable event queue file. The cursor file is created alongside as `eventQueue + '.cursor'`. |
 | `eventQueueConcurrency` | number | `3` | Maximum concurrent event queue entries per batch. |
 
@@ -163,11 +163,13 @@ jeeves-server config '$.auth.modes'         # Nested query
 ### Platform-specific settings
 
 **Windows** — drives are auto-discovered; no `roots` config needed:
+
 ```json
 { "chromePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" }
 ```
 
 **Linux** — configure filesystem roots for the file browser:
+
 ```json
 {
   "chromePath": "/usr/bin/chromium-browser",
@@ -207,11 +209,13 @@ You can enable any combination. The order matters — modes are checked in the o
 Users authenticate with their Google account. The server checks their email against the `insiders` map to determine access.
 
 **Requirements when enabled:**
+
 - `auth.google.clientId` and `auth.google.clientSecret` — from [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
 - `auth.sessionSecret` — a random string for signing session cookies
 - At least one entry in `insiders`
 
 **Google Cloud setup:**
+
 1. Create a project (or use an existing one)
 2. Go to **APIs & Services → Credentials → Create Credentials → OAuth client ID**
 3. Application type: **Web application**
@@ -225,6 +229,7 @@ Users authenticate with their Google account. The server checks their email agai
 Users authenticate by appending `?key=<value>` to any URL. The server derives keys from configured seeds using HMAC-SHA256.
 
 **Requirements when enabled:**
+
 - At least one entry in `keys`
 
 **How keys work:** You configure a **seed** (a random secret string). The server derives the actual key from it via HMAC. You never put the derived key in the config — only the seed. To get the derived key:
@@ -240,12 +245,14 @@ curl -H "X-API-Key: <seed>" https://your-domain.com/insider-key
 Users enter their email on the sign-in page. If the email matches a configured insider, the server sends a login link via SMTP. Clicking the link sets a session cookie — identical to Google OAuth sessions.
 
 **Requirements when enabled:**
+
 - `auth.email.smtpUrl` — SMTP connection string (e.g. `smtps://user:pass@smtp.example.com:465`)
 - `auth.email.fromAddress` — Sender email address (e.g. `login@jeeves.id`)
 - `auth.sessionSecret` — a random string for signing session cookies (shared with Google auth)
 - At least one entry in `insiders`
 
 **How it works:**
+
 1. User enters their email on the sign-in page.
 2. If the email matches a configured insider, the server generates a self-validating signed token (HMAC-SHA256, stateless) and an 8-character OTP code.
 3. The signed token is encrypted with AES-256-GCM using the OTP as the key.
@@ -254,6 +261,7 @@ Users enter their email on the sign-in page. If the email matches a configured i
 6. The user either enters the OTP code on the verification page (which decrypts the token client-side) or clicks the magic link directly.
 
 **Security notes:**
+
 - The `POST /api/auth/magic` endpoint always returns 200 OK with a `verifyUrl` regardless of whether the email matches an insider (prevents email enumeration — invalid emails receive a fake encrypted blob)
 - Tokens are fully stateless (self-validating signed tokens with HMAC-SHA256) — no server-side storage
 - Tokens expire after 10 minutes
@@ -264,7 +272,7 @@ Users enter their email on the sign-in page. If the email matches a configured i
 When multiple modes are active, browser users log in with Google or email magic link, and bots/scripts use `?key=` for stateless access. All methods work on every endpoint.
 
 | Scenario | Recommended |
-|----------|-------------|
+| --- | --- |
 | Team of humans with Google Workspace | `["google"]` |
 | Team without Google Workspace | `["email"]` |
 | Bot/script access only | `["keys"]` |
@@ -349,6 +357,7 @@ The `keys` map defines **named API keys** for machine and human access:
 ```
 
 **Generate seeds with:**
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
@@ -356,7 +365,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ### Reserved keys
 
 | Key | Purpose | Scopes |
-|-----|---------|--------|
+| --- | --- | --- |
 | `_internal` | Puppeteer uses this to authenticate when rendering PDFs/DOCX. **Required for export.** | Must be unscoped |
 | `_plugin` | OpenClaw plugin authentication. See [OpenClaw Integration](../../openclaw/guides/openclaw-integration.md). | Must be unscoped |
 
@@ -439,7 +448,7 @@ Customize the server's appearance and email communications:
 ```
 
 | Field | Type | Default | Description |
-|-------|------|---------|-------------|
+| --- | --- | --- | --- |
 | `name` | string | `"Jeeves Server"` | Instance display name — used in page title, navbar, and login emails |
 | `emoji` | string | `"🎩"` | Home icon in the navbar |
 | `theme` | object | — | CSS variable overrides under `light` and `dark` keys |
@@ -454,10 +463,10 @@ Branding is surfaced via the `/status` endpoint (no auth required) so the React 
 ## Config Reference
 
 | Field | Type | Default | Description |
-|-------|------|---------|-------------|
+| --- | --- | --- | --- |
 | `port` | number | `1934` | Server port |
-| `chromePath` | string | *required* | Path to Chrome/Chromium executable |
-| `auth` | object | *required* | Authentication configuration |
+| `chromePath` | string | _required_ | Path to Chrome/Chromium executable |
+| `auth` | object | _required_ | Authentication configuration |
 | `scopes` | object | `{}` | Named scope definitions |
 | `insiders` | object | `{}` | Email → insider entry map |
 | `keys` | object | `{}` | Named key entries |

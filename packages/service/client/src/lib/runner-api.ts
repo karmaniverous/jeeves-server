@@ -148,10 +148,7 @@ export async function getRunnerJob(id: string): Promise<RunnerJob> {
   return mapJob(raw.job);
 }
 
-export async function getJobRuns(
-  id: string,
-  limit = 20,
-): Promise<RunEntry[]> {
+export async function getJobRuns(id: string, limit = 20): Promise<RunEntry[]> {
   const raw = await runnerFetch<{ runs: RawRun[] }>(
     `/jobs/${encodeURIComponent(id)}/runs?limit=${String(limit)}`,
   );
@@ -159,10 +156,9 @@ export async function getJobRuns(
 }
 
 export async function triggerJobRun(id: string): Promise<{ ok: boolean }> {
-  return runnerFetch<{ ok: boolean }>(
-    `/jobs/${encodeURIComponent(id)}/run`,
-    { method: 'POST' },
-  );
+  return runnerFetch<{ ok: boolean }>(`/jobs/${encodeURIComponent(id)}/run`, {
+    method: 'POST',
+  });
 }
 
 export async function enableJob(id: string): Promise<{ ok: boolean }> {

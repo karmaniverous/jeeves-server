@@ -122,11 +122,11 @@ const config: JeevesConfig = {
     sessionSecret: '...',
   },
   insiders: {
-    'user@example.com': {},           // No scope restrictions
+    'user@example.com': {}, // No scope restrictions
     'limited@example.com': { scopes: ['/d/docs/**'] },
   },
   keys: {
-    _internal: 'some-seed-string',    // Reserved: unscoped, for Puppeteer
+    _internal: 'some-seed-string', // Reserved: unscoped, for Puppeteer
     'webhook-notion': {
       key: 'webhook-key-seed',
       scopes: ['/event'],
@@ -134,9 +134,17 @@ const config: JeevesConfig = {
   },
   events: {
     'notion-page-update': {
-      schema: { type: 'object', properties: { type: { const: 'page.content_updated' } }, required: ['type'] },
+      schema: {
+        type: 'object',
+        properties: { type: { const: 'page.content_updated' } },
+        required: ['type'],
+      },
       cmd: 'node dispatcher.js',
-      map: { pageId: { '$': { method: '$.lib._.get', params: ['$.input', 'data.page_id'] } } },
+      map: {
+        pageId: {
+          $: { method: '$.lib._.get', params: ['$.input', 'data.page_id'] },
+        },
+      },
       timeoutMs: 60000,
     },
   },
@@ -169,8 +177,8 @@ Separate from config. Stores insider keys and rotation timestamps. Written by th
 React SPA served at `/browse/*` with the following pages:
 
 | Route | Component | Description |
-|-------|-----------|-------------|
-| `/` | Redirects to `/browse` | |
+| --- | --- | --- |
+| `/` | Redirects to `/browse` |  |
 | `/browse` | `FileBrowser` | Drive listing |
 | `/browse/:path` | `FileBrowser` | Directory listing or file view |
 | `/browse` (header) | `Header` | 📖 README share link + GitHub link |
@@ -178,6 +186,7 @@ React SPA served at `/browse/*` with the following pages:
 **Layout pattern**: Each page manages its own fixed top bar container with `topBarRef` + resize observer for dynamic height measurement. Header component (`flex-wrap py-2`) wraps naturally on mobile — no fixed height.
 
 **Key components**:
+
 - `Header` — Breadcrumbs, dropdowns, theme toggle, account menu
 - `DownloadDropdown` / `LinkDropdown` — Radix dropdown menus with `variant` prop
 - `CodeBlock` — Syntax-highlighted code with copy buttons
@@ -192,6 +201,7 @@ Legacy `/path/*` routes have been decommissioned. All page views are served by t
 ### Dark Mode
 
 Tailwind v4 with `@theme inline` requires CSS variable indirection:
+
 - `@theme inline` → CSS variable refs
 - `@layer base` → actual values for light/dark
 - `.dark` class on `<html>` (required for Radix portal components outside React tree)
@@ -200,7 +210,7 @@ Tailwind v4 with `@theme inline` requires CSS variable indirection:
 ## Endpoints
 
 | Method | Path | Auth | Description |
-|--------|------|------|-------------|
+| --- | --- | --- | --- |
 | GET | `/browse/*` | Cookie or `?key=` | React SPA (file browser, viewer) |
 | GET | `/api/auth/status` | Cookie or `?key=` | Auth status check (accepts `path` param for outsider key verification) |
 | GET | `/api/auth/google` | None | Google OAuth initiation |
@@ -226,6 +236,7 @@ Programmatic endpoints for access decisions and server introspection. Used by th
 Determines the appropriate link type for sharing a resource with a specific audience. The sharer is identified from the request's auth context.
 
 **Request:**
+
 ```json
 {
   "path": "/d/projects/foo/spec.md",
@@ -237,6 +248,7 @@ Determines the appropriate link type for sharing a resource with a specific audi
 ```
 
 **Decision tree:**
+
 1. Can the sharer access this path? No → `null`
 2. Can all insider participants access this path? No → `null` (returns `blocked` list)
 3. Are there non-insider participants?
@@ -266,12 +278,12 @@ When a logged-in insider lands on an outsider share link, the SPA detects inside
 
 ### Future Utility Endpoints (planned)
 
-| Path | Description |
-|------|-------------|
+| Path               | Description                                   |
+| ------------------ | --------------------------------------------- |
 | `/api/util/access` | Raw access check for a single identity + path |
-| `/api/util/keys` | Key derivation and rotation status |
-| `/api/util/config` | Sanitized config introspection |
-| `/api/util/health` | Extended health check |
+| `/api/util/keys`   | Key derivation and rotation status            |
+| `/api/util/config` | Sanitized config introspection                |
+| `/api/util/health` | Extended health check                         |
 
 ## Build & Development
 
@@ -314,54 +326,56 @@ Feature branches named `feature/GH-{N}-description`. Lefthook pre-commit hooks w
 
 All JS/CSS libraries are served locally:
 
-| Route | Library |
-|-------|---------|
-| `/static/lucide.min.js` | Lucide icons |
+| Route                    | Library              |
+| ------------------------ | -------------------- |
+| `/static/lucide.min.js`  | Lucide icons         |
 | `/static/panzoom.min.js` | Panzoom (SVG viewer) |
-| `/static/hljs/:theme` | highlight.js themes |
+| `/static/hljs/:theme`    | highlight.js themes  |
 
 ## Dependencies
 
-| Package | Purpose |
-|---------|---------|
-| `fastify` | HTTP server |
-| `@fastify/cookie` | Cookie management (Google auth sessions) |
-| `@fastify/static` | Static file serving (React SPA) |
-| `puppeteer-core` | PDF export (uses installed Chrome) |
-| `@turbodocx/html-to-docx` | DOCX export |
-| `highlight.js` | Syntax highlighting |
-| `marked` | Markdown → HTML |
-| `ajv` | JSON Schema validation (event gateway) |
-| `@karmaniverous/jsonmap` | JSON body mapping (event gateway) |
-| `lodash` | Utility functions (jsonmap lib) |
-| `@panzoom/panzoom` | SVG pan/zoom |
-| `jiti` | Runtime TypeScript config loading |
-| `zod` | Schema validation (v4) |
-| `archiver` | ZIP export |
+| Package                   | Purpose                                  |
+| ------------------------- | ---------------------------------------- |
+| `fastify`                 | HTTP server                              |
+| `@fastify/cookie`         | Cookie management (Google auth sessions) |
+| `@fastify/static`         | Static file serving (React SPA)          |
+| `puppeteer-core`          | PDF export (uses installed Chrome)       |
+| `@turbodocx/html-to-docx` | DOCX export                              |
+| `highlight.js`            | Syntax highlighting                      |
+| `marked`                  | Markdown → HTML                          |
+| `ajv`                     | JSON Schema validation (event gateway)   |
+| `@karmaniverous/jsonmap`  | JSON body mapping (event gateway)        |
+| `lodash`                  | Utility functions (jsonmap lib)          |
+| `@panzoom/panzoom`        | SVG pan/zoom                             |
+| `jiti`                    | Runtime TypeScript config loading        |
+| `zod`                     | Schema validation (v4)                   |
+| `archiver`                | ZIP export                               |
 
 ### Client Dependencies
 
-| Package | Purpose |
-|---------|---------|
-| `react` / `react-dom` | UI framework |
-| `react-router-dom` | Client-side routing |
-| `@radix-ui/react-dropdown-menu` | Dropdown primitives |
-| `lucide-react` | Icons |
-| `tailwindcss` | Styling (v4) |
-| `@tailwindcss/typography` | Prose styling |
-| `tailwind-merge` | Class merging utility |
-| `clsx` | Conditional classes |
+| Package                         | Purpose               |
+| ------------------------------- | --------------------- |
+| `react` / `react-dom`           | UI framework          |
+| `react-router-dom`              | Client-side routing   |
+| `@radix-ui/react-dropdown-menu` | Dropdown primitives   |
+| `lucide-react`                  | Icons                 |
+| `tailwindcss`                   | Styling (v4)          |
+| `@tailwindcss/typography`       | Prose styling         |
+| `tailwind-merge`                | Class merging utility |
+| `clsx`                          | Conditional classes   |
 
 ## Platform Support
 
 **Supported:** Windows and Linux. Both tested in CI (GitHub Actions, Ubuntu, Node 20 + 22).
 
 **Platform abstraction layer** (`src/util/platform.ts`):
+
 - `getRoots()` — Windows: auto-discovers drive letters A-Z. Linux: uses configurable `roots` from config.
 - `urlPathToFs()` / `fsPathToUrl()` — bidirectional URL ↔ filesystem path conversion.
 - `breadcrumbParts()` — platform-aware breadcrumb generation.
 
 **Platform-specific config:**
+
 - `chromePath` — path to Chrome/Chromium binary (platform-dependent)
 - `roots` — filesystem root map for Linux file browser (ignored on Windows)
 - `mermaidCliPath` — path to mermaid-cli installation (optional, replaces hardcoded path)
@@ -375,12 +389,14 @@ All JS/CSS libraries are served locally:
 ## Running as a Service
 
 **Windows (NSSM):**
+
 ```bash
 nssm install JeevesServer "node" "E:\jeeves-server\dist\server.js"
 nssm start JeevesServer
 ```
 
 **Linux (systemd):**
+
 ```bash
 sudo systemctl enable jeeves-server
 sudo systemctl start jeeves-server

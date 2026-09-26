@@ -69,7 +69,8 @@ export function SvgViewer({ content }: SvgViewerProps) {
       pz.zoomWithWheel(e);
     };
     container.addEventListener('wheel', wheelHandler, { passive: false });
-    wheelCleanupRef.current = () => container.removeEventListener('wheel', wheelHandler);
+    wheelCleanupRef.current = () =>
+      container.removeEventListener('wheel', wheelHandler);
 
     setReady(true);
   }, []);

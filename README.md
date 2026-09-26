@@ -9,7 +9,7 @@ A self-hosted file browser, document viewer, and webhook gateway. Author documen
 This is a monorepo with three packages:
 
 | Package | Description |
-|---------|-------------|
+| --- | --- |
 | [`@karmaniverous/jeeves-server`](packages/service/) | The server — file browser, document renderer, export engine, event gateway |
 | [`@karmaniverous/jeeves-server-openclaw`](packages/openclaw/) | OpenClaw plugin — gives AI agents tools for browsing, sharing, and exporting |
 | [`@karmaniverous/jeeves-server-core`](packages/core/) | Shared crypto utilities and API types consumed by service and plugin |
@@ -41,6 +41,7 @@ jeeves-server start
 ```
 
 Generate key seeds with:
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
@@ -152,4 +153,3 @@ BSD-3-Clause
 ---
 
 Built for you with ❤️ on Bali by [Jason Williscroft](https://github.com/karmaniverous) & [Jeeves](https://github.com/jgs-jeeves).
-
