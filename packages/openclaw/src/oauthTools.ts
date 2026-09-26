@@ -16,13 +16,14 @@ import type { OAuthStartResponse } from '@karmaniverous/jeeves-server-core';
 
 import { PLUGIN_ID } from './constants.js';
 import { withAuth } from './helpers.js';
+import type { PublicUrlResolver } from './toolUtils.js';
 
 /** Register all OAuth tools with the plugin API. */
 export function registerOAuthTools(
   api: PluginApi,
   baseUrl: string,
   keySeed: string | undefined,
-  publicUrl: string | undefined,
+  getPublicUrl: PublicUrlResolver,
 ): void {
   // oauth_authorize — Initiate OAuth2 authorization for a provider/account.
   api.registerTool(
@@ -70,6 +71,7 @@ export function registerOAuthTools(
           clientSecret,
         };
         if (scopes) body.scopes = scopes;
+        const publicUrl = getPublicUrl();
         if (publicUrl) body.origin = publicUrl;
 
         try {

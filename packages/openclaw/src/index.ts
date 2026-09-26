@@ -1,8 +1,13 @@
 /**
- * OpenClaw plugin entry point for jeeves-server.
+ * OpenClaw plugin entry point for jeeves-server: registers the standard and server_* tools.
+ * No config is read at registration; `configRoot` resolves lazily when a tool runs.
  *
- * Registers server_* tools, initializes the jeeves-core library,
- * and starts a ComponentWriter to manage the Server section in TOOLS.md.
+ * @remarks
+ * A standard OpenClaw plugin on the static-content jeeves core: no runtime
+ * workspace-content writing, no timers, no plugin-specific installer.
+ * `jeeves install` installs it and writes its plugin config.
+ *
+ * @packageDocumentation
  */
 
 import { readFileSync } from 'node:fs';
@@ -11,24 +16,20 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 import {
-  type ComponentWriter,
-  createAsyncContentCache,
-  createComponentWriter,
   createPluginToolset,
-  init,
   jeevesComponentDescriptorSchema,
-  loadWorkspaceConfig,
   type PluginApi,
-  resolveOptionalPluginSetting,
   resolvePluginSetting,
-  resolveWorkspacePath,
   SERVER_PORT,
-  WORKSPACE_CONFIG_DEFAULTS,
 } from '@karmaniverous/jeeves';
 import { z } from 'zod';
 
+import {
+  type ConfigRootResolver,
+  createConfigRootResolver,
+  createGuardedApi,
+} from './configRoot.js';
 import { PLUGIN_ID } from './constants.js';
-import { generateServerMenu } from './promptInjection.js';
 import { registerServerTools } from './serverTools.js';
 
 /** Plugin version derived from package.json at runtime. */
@@ -36,12 +37,6 @@ const require = createRequire(import.meta.url);
 const { version: PLUGIN_VERSION } = require('../package.json') as {
   version: string;
 };
-
-/** Refresh interval in seconds (must be prime). */
-const REFRESH_INTERVAL_SECONDS = 61;
-
-/** Active writer instance — stopped on re-registration to prevent leaks. */
-let activeWriter: ComponentWriter | null = null;
 
 /** Resolve the server API base URL from plugin config or environment. */
 function getServiceUrl(api: PluginApi): string {
@@ -77,22 +72,6 @@ function getPublicUrl(configRoot: string): string | undefined {
   }
 }
 
-/** Resolve the platform config root from plugin config or environment. */
-function getConfigRoot(api: PluginApi): string {
-  const value = resolveOptionalPluginSetting(
-    api,
-    PLUGIN_ID,
-    'configRoot',
-    'JEEVES_CONFIG_ROOT',
-  );
-  if (!value) {
-    throw new Error(
-      'configRoot not configured — set it in plugin config or via JEEVES_CONFIG_ROOT env var',
-    );
-  }
-  return value;
-}
-
 /** Resolve the globally installed service CLI entry point on Windows. */
 function getGlobalServiceCliEntry(): string {
   const appData =
@@ -125,11 +104,8 @@ function getServiceStartCommand(configPath: string): string[] {
   return ['jeeves-server', 'start', '--config', configPath];
 }
 
-/**
- * Build the plugin-side descriptor used by the ComponentWriter and standard
- * plugin toolset.
- */
-function createPluginDescriptor(generateToolsContent: () => string) {
+/** Build the plugin-side descriptor used by the standard plugin toolset. */
+function createPluginDescriptor() {
   return jeevesComponentDescriptorSchema.parse({
     name: 'server',
     version: PLUGIN_VERSION,
@@ -144,53 +120,37 @@ function createPluginDescriptor(generateToolsContent: () => string) {
         new Error('Plugin-side descriptor does not support run()'),
       ),
     startCommand: getServiceStartCommand,
-    sectionId: 'Server',
-    refreshIntervalSeconds: REFRESH_INTERVAL_SECONDS,
-    generateToolsContent,
-    dependencies: { hard: [], soft: ['watcher', 'runner', 'meta'] },
   });
 }
 
-/** Register all jeeves-server tools and start the TOOLS.md writer. */
+/** Resolve the public URL lazily: `undefined` while `configRoot` is unset. */
+function createPublicUrlResolver(
+  configRoot: ConfigRootResolver,
+): () => string | undefined {
+  return () => {
+    const root = configRoot.resolve();
+    return root ? getPublicUrl(root) : undefined;
+  };
+}
+
+/**
+ * Register all jeeves-server tools. Always succeeds, even with no plugin
+ * config: a missing `configRoot` logs one warning, and each tool returns a
+ * clear error until it is set.
+ */
 export default function register(api: PluginApi): void {
-  // Stop any previous writer to prevent timer leaks on re-registration.
-  if (activeWriter) {
-    activeWriter.stop();
-    activeWriter = null;
+  const configRoot = createConfigRootResolver(api);
+  configRoot.warnIfUnset();
+
+  const guardedApi = createGuardedApi(api, configRoot);
+
+  for (const tool of createPluginToolset(createPluginDescriptor())) {
+    guardedApi.registerTool(tool, { optional: true });
   }
 
-  const baseUrl = getServiceUrl(api);
-
-  // Initialize jeeves-core before creating descriptors/writers.
-  const workspacePath = resolveWorkspacePath(api);
-  const configRoot = getConfigRoot(api);
-  init({ workspacePath, configRoot });
-
-  // Create async content cache: fetches server status on each writer cycle,
-  // returns cached content synchronously for generateToolsContent().
-  const getContent = createAsyncContentCache({
-    fetch: async () => generateServerMenu(baseUrl),
-    placeholder: '> Initializing jeeves-server…',
-    onError: (err: unknown) => {
-      const message = err instanceof Error ? err.message : String(err);
-      console.warn(`[jeeves-server] Menu cache refresh failed: ${message}`);
-    },
-  });
-
-  const descriptor = createPluginDescriptor(getContent);
-
-  for (const tool of createPluginToolset(descriptor)) {
-    api.registerTool(tool, { optional: true });
-  }
-
-  const publicUrl = getPublicUrl(configRoot);
-  registerServerTools(api, baseUrl, publicUrl);
-
-  // Resolve gatewayUrl for cleanup escalation
-  const wsConfig = loadWorkspaceConfig(workspacePath);
-  const gatewayUrl =
-    wsConfig?.core?.gatewayUrl ?? WORKSPACE_CONFIG_DEFAULTS.core.gatewayUrl;
-
-  activeWriter = createComponentWriter(descriptor, { gatewayUrl });
-  activeWriter.start();
+  registerServerTools(
+    guardedApi,
+    getServiceUrl(api),
+    createPublicUrlResolver(configRoot),
+  );
 }

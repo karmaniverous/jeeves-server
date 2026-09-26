@@ -1,3 +1,8 @@
+---
+name: jeeves-server
+description: Operate and interact with a jeeves-server deployment. Use for file browsing, document sharing, export, link generation, event gateway queries, and server diagnostics.
+---
+
 # Jeeves Server Skill
 
 Operate and interact with a jeeves-server deployment. Use for file browsing, document sharing, export, link generation, event gateway queries, and server diagnostics.
@@ -5,7 +10,7 @@ Operate and interact with a jeeves-server deployment. Use for file browsing, doc
 ## Tools
 
 | Tool | Purpose |
-|------|---------|
+| --- | --- |
 | `server_status` | Server health: version, uptime, port, Chrome availability, export formats, auth info |
 | `server_browse` | Get file/directory metadata and listings for a browse path |
 | `server_link_info` | Query available link types for a path (page URL, raw URL, export links) |
@@ -31,6 +36,7 @@ Operate and interact with a jeeves-server deployment. Use for file browsing, doc
 All paths use the jeeves-server browse path format: `{drive}/{path}` (e.g., `j/domains/projects/readme.md`).
 
 To convert a Windows file path to a browse path:
+
 - `J:\domains\projects\readme.md` → `j/domains/projects/readme.md`
 - Strip the colon, lowercase the drive letter, use forward slashes
 
@@ -41,6 +47,7 @@ When `publicUrl` is configured in the server's own config (`{configRoot}/jeeves-
 ## Inline Editing
 
 Insiders can edit rendered Markdown pages via the web UI:
+
 - **Block editing:** Hover controls on rendered blocks (paragraphs, headings, lists, tables, code, diagrams) for edit, copy, insert, and delete
 - **Cell editing:** Direct table cell editing
 - **Checkbox toggling:** Interactive task-list checkboxes via `POST /api/file/*` with `action: 'toggle-checkbox'` (fire-and-forget, last-write-wins)
@@ -70,6 +77,7 @@ Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) ret
 ## Export
 
 Available formats depend on file type and server capabilities:
+
 - **Markdown files:** PDF (requires Chrome), DOCX
 - **CSV files:** rendered as HTML tables (no additional export formats)
 - **Mermaid diagrams:** SVG, PNG, PDF (Mermaid CLI is bundled)
@@ -81,6 +89,7 @@ Use `server_link_info` first to check which formats are available for a path.
 ## Diagnostics
 
 Run `server_status` to check:
+
 - Server version and uptime
 - Chrome availability (required for PDF export)
 - Available export formats and diagram languages
@@ -148,6 +157,7 @@ Or create `jeeves-server/config.json` manually (JSON only):
 ```
 
 **Key fields:**
+
 - `chromePath` — **required**, path to Chrome/Chromium executable
 - `auth.modes` — **required**, array of `"keys"`, `"google"`, and/or `"email"`
 - `scopes` — named scope definitions (allow/deny), referenced by name from insiders and keys
@@ -161,6 +171,7 @@ Or create `jeeves-server/config.json` manually (JSON only):
 Environment variable substitution is supported: `${VAR_NAME}` in string values.
 
 Generate key seeds with:
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
@@ -177,12 +188,14 @@ jeeves-server config [jsonpath] [--config <path>]
 Service commands execute directly (no more printing instructions):
 
 **Windows (NSSM):**
+
 ```bash
 jeeves-server service install [--config <path>]
 jeeves-server service start
 ```
 
 **Linux (systemd):**
+
 ```bash
 jeeves-server service install [--config <path>]
 jeeves-server service start
@@ -203,16 +216,20 @@ Caddy handles TLS certificate provisioning automatically. Ensure DNS A/AAAA reco
 ### 6. Install OpenClaw plugin
 
 ```bash
-npx @karmaniverous/jeeves-server-openclaw install
+npm install -g @karmaniverous/jeeves
+jeeves install server --config-root <config-root>
 ```
 
-Configure the plugin in `openclaw.json` with `apiUrl` and `pluginKey` (matching the `_plugin` key seed from server config).
+`jeeves install` installs the plugin with `openclaw plugins install` and writes its plugin config (`configRoot`, `apiUrl`, and a `pluginKey` kept equal to the server's `keys._plugin`).
 
-Restart the gateway to load the plugin.
+Restart the gateway (and jeeves-server, if its `keys._plugin` changed) to load the plugin.
 
 ## Troubleshooting
 
+If a tool reports `configRoot not configured`: set `plugins.entries.jeeves-server-openclaw.config.configRoot` (e.g. `jeeves install server --config-root <config-root>`) or the `JEEVES_CONFIG_ROOT` environment variable, then restart the gateway.
+
 If the server is unreachable:
+
 1. Is the service running? → `jeeves-server service status`
 2. Is the apiUrl correct? → Default: `http://127.0.0.1:1934`
 3. Is the `_plugin` key configured in both server config and plugin config?

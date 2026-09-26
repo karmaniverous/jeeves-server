@@ -23,6 +23,7 @@ import { registerExtraServerTools } from './serverToolsExtra.js';
 import {
   type ApiToolConfig,
   normalizePath,
+  type PublicUrlResolver,
   registerApiTool,
   rewriteUrl,
   rewriteUrlsInData,
@@ -39,7 +40,7 @@ const MS_PER_DAY = 86_400_000;
 export function registerServerTools(
   api: PluginApi,
   baseUrl: string,
-  publicUrl?: string,
+  getPublicUrl: PublicUrlResolver,
 ): void {
   const keySeed = getPluginKey(api);
 
@@ -193,7 +194,7 @@ export function registerServerTools(
   ];
 
   for (const tool of tools) {
-    registerApiTool(api, baseUrl, keySeed, publicUrl, tool);
+    registerApiTool(api, baseUrl, keySeed, getPublicUrl, tool);
   }
 
   api.registerTool(
@@ -238,7 +239,7 @@ export function registerServerTools(
             recentEvents: recent,
             recentCount: recent.length,
           };
-          return ok(rewriteUrlsInData(result, baseUrl, publicUrl));
+          return ok(rewriteUrlsInData(result, baseUrl, getPublicUrl()));
         } catch (error) {
           return connectionFail(error, baseUrl, PLUGIN_ID);
         }
@@ -247,6 +248,6 @@ export function registerServerTools(
     { optional: true },
   );
 
-  registerOAuthTools(api, baseUrl, keySeed, publicUrl);
-  registerExtraServerTools(api, baseUrl, keySeed, publicUrl);
+  registerOAuthTools(api, baseUrl, keySeed, getPublicUrl);
+  registerExtraServerTools(api, baseUrl, keySeed, getPublicUrl);
 }

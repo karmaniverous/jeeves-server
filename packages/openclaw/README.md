@@ -1,6 +1,6 @@
 # @karmaniverous/jeeves-server-openclaw
 
-OpenClaw plugin for Jeeves Server. Integrates with `@karmaniverous/jeeves` core for managed TOOLS.md writing, service lifecycle commands, and platform content maintenance.
+OpenClaw plugin for Jeeves Server. A standard OpenClaw plugin built on the `@karmaniverous/jeeves` core: it registers tools and ships a skill, and writes no workspace content at runtime.
 
 Provides agents with tools for:
 
@@ -16,9 +16,12 @@ Provides agents with tools for:
 ## Install
 
 ```bash
-npx @karmaniverous/jeeves-server-openclaw install
-# Restart OpenClaw gateway after installing
+npm install -g @karmaniverous/jeeves
+jeeves install server --config-root /path/to/config
+# Restart the OpenClaw gateway after installing
 ```
+
+`jeeves install` runs `openclaw plugins install npm:@karmaniverous/jeeves-server-openclaw@<version> --pin --accept-capabilities` and writes the plugin config below. There is no plugin-specific installer.
 
 ## Configuration
 
@@ -41,8 +44,7 @@ Add an unscoped `_plugin` key to your Jeeves Server config:
         "config": {
           "apiUrl": "http://127.0.0.1:1934",
           "pluginKey": "<same-seed-as-server-_plugin>",
-          "configRoot": "j:/config",
-          "publicUrl": "https://jeeves.example.com"
+          "configRoot": "j:/config"
         }
       }
     }
@@ -51,13 +53,15 @@ Add an unscoped `_plugin` key to your Jeeves Server config:
 ```
 
 | Config | Default | Description |
-|--------|---------|-------------|
+| --- | --- | --- |
 | `apiUrl` | `http://127.0.0.1:1934` | Server API base URL |
 | `pluginKey` | — | Server `_plugin` key seed |
-| `configRoot` | `j:/config` | Platform config root (core derives component config dirs) |
-| `publicUrl` | — | Public base URL for shareable links. When set, URLs returned by tools are rewritten to this host. |
+| `configRoot` | — | Platform config root (core derives component config dirs). Falls back to the `JEEVES_CONFIG_ROOT` env var. |
+
+The plugin always loads, even before `configRoot` is set: it logs one warning, and its tools return a `configRoot not configured` error until you set `configRoot` in the plugin config or `JEEVES_CONFIG_ROOT`. The root is read when a tool runs, not at registration.
+
+URLs returned by tools are rewritten to the server's `publicUrl`, read from `{configRoot}/jeeves-server/config.json` (or the `JEEVES_SERVER_PUBLIC_URL` env var).
 
 ## Docs
 
 - [OpenClaw Integration](./guides/openclaw-integration.md) — Full configuration, tool reference, architecture
-

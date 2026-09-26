@@ -17,11 +17,11 @@
       },
       "pluginKey": {
         "type": "string",
-        "description": "Server _plugin key seed (for authenticated API calls)"
+        "description": "Server _plugin key seed (for authenticated API calls). Written by `jeeves install`."
       },
       "configRoot": {
         "type": "string",
-        "description": "Platform config root directory. Core derives component config dirs from this path."
+        "description": "Platform config root directory; core derives component config dirs from it. Written by `jeeves install`. Falls back to the JEEVES_CONFIG_ROOT environment variable. Until one is set, the plugin loads but its tools return an error."
       }
     }
   },
