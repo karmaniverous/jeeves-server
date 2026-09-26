@@ -45,7 +45,7 @@ function getServiceUrl(api: PluginApi): string {
     PLUGIN_ID,
     'apiUrl',
     'JEEVES_SERVER_URL',
-    'http://127.0.0.1:1934',
+    `http://127.0.0.1:${String(SERVER_PORT)}`,
   );
 }
 
@@ -145,7 +145,11 @@ export default function register(api: PluginApi): void {
 
   const guardedApi = createGuardedApi(api, configRoot);
 
-  for (const tool of createPluginToolset(createPluginDescriptor())) {
+  // Standard tools resolve apiUrl per call, from the same setting as server_*.
+  const toolset = createPluginToolset(createPluginDescriptor(), {
+    apiUrl: () => getServiceUrl(api),
+  });
+  for (const tool of toolset) {
     guardedApi.registerTool(tool, { optional: true });
   }
 
