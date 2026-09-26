@@ -2,7 +2,7 @@
  * Domain-specific server tool registrations for the OpenClaw plugin.
  *
  * Standard tools (`server_status`, `server_config`, `server_config_apply`,
- * `server_service`) come from `createPluginToolset(descriptor)` in core.
+ * `server_service`) come from `createPluginToolset(descriptor, { apiUrl })` in core.
  *
  * @packageDocumentation
  */
