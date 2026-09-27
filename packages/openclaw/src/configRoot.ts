@@ -35,6 +35,12 @@ const CONFIG_ROOT_ENV_VAR = 'JEEVES_CONFIG_ROOT';
 /** Error returned by tools (and logged once) while `configRoot` is unset. */
 export const CONFIG_ROOT_MISSING_MESSAGE = `configRoot not configured — set it in plugin config (plugins.entries.${PLUGIN_ID}.config.configRoot) or via ${CONFIG_ROOT_ENV_VAR}`;
 
+/**
+ * One-time startup warning while `configRoot` is unset. Names only the call
+ * {@link CONFIG_ROOT_GATES} refuses; every other tool keeps working.
+ */
+export const CONFIG_ROOT_UNSET_WARNING = `[${PLUGIN_ID}] configRoot not configured yet — server_service install will be unavailable until it is set in plugin config (plugins.entries.${PLUGIN_ID}.config.configRoot) or ${CONFIG_ROOT_ENV_VAR} (other tools are unaffected; links are not rewritten to publicUrl)`;
+
 /** Decides, per call, whether a tool invocation reads `configRoot`. */
 export type ConfigRootGate = (params: Record<string, unknown>) => boolean;
 
@@ -97,10 +103,7 @@ export function createConfigRootResolver(api: PluginApi): ConfigRootResolver {
   const warnOnce = (): void => {
     if (warned) return;
     warned = true;
-    logWarning(
-      api,
-      `[${PLUGIN_ID}] ${CONFIG_ROOT_MISSING_MESSAGE}. Tools return an error until it is set.`,
-    );
+    logWarning(api, CONFIG_ROOT_UNSET_WARNING);
   };
 
   return {

@@ -19,7 +19,10 @@ import {
 } from '@karmaniverous/jeeves';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CONFIG_ROOT_MISSING_MESSAGE } from './configRoot.js';
+import {
+  CONFIG_ROOT_MISSING_MESSAGE,
+  CONFIG_ROOT_UNSET_WARNING,
+} from './configRoot.js';
 import { PLUGIN_ID } from './constants.js';
 import register from './index.js';
 
@@ -99,7 +102,7 @@ describe('register', () => {
     }).not.toThrow();
 
     expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn.mock.calls[0]?.[0]).toContain(CONFIG_ROOT_MISSING_MESSAGE);
+    expect(warn.mock.calls[0]?.[0]).toBe(CONFIG_ROOT_UNSET_WARNING);
     expect([...tools.keys()].sort()).toEqual(
       [...manifest.contracts.tools].sort(),
     );

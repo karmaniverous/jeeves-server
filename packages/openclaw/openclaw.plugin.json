@@ -3,9 +3,7 @@
   "name": "Jeeves Server",
   "description": "File browsing, document sharing, export, and event gateway tools for jeeves-server.",
   "version": "0.14.0-0",
-  "skills": [
-    "dist/skills/jeeves-server"
-  ],
+  "skills": ["dist/skills/jeeves-server"],
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
@@ -21,7 +19,7 @@
       },
       "configRoot": {
         "type": "string",
-        "description": "Platform config root directory; core derives component config dirs from it. Written by `jeeves install`. Falls back to the JEEVES_CONFIG_ROOT environment variable. Until one is set, the plugin loads but its tools return an error."
+        "description": "Platform config root directory; core derives component config dirs from it. Written by `jeeves install`. Falls back to the JEEVES_CONFIG_ROOT environment variable. Until one is set, the plugin loads and its tools work, except server_service install, which is unavailable."
       }
     }
   },

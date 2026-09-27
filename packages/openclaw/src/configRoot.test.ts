@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   CONFIG_ROOT_GATES,
   CONFIG_ROOT_MISSING_MESSAGE,
+  CONFIG_ROOT_UNSET_WARNING,
   createConfigRootResolver,
   createGuardedApi,
   guardTool,
@@ -55,9 +56,23 @@ describe('createConfigRootResolver', () => {
     const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     createConfigRootResolver({ registerTool: vi.fn() }).warnIfUnset();
 
-    expect(consoleWarn).toHaveBeenCalledWith(
-      expect.stringContaining(CONFIG_ROOT_MISSING_MESSAGE),
-    );
+    expect(consoleWarn).toHaveBeenCalledWith(CONFIG_ROOT_UNSET_WARNING);
+  });
+
+  it('warns that only server_service install is unavailable', () => {
+    const warn = vi.fn();
+    createConfigRootResolver({
+      registerTool: vi.fn(),
+      logger: { warn },
+    }).warnIfUnset();
+
+    const message = String(warn.mock.calls[0]?.[0]);
+    expect(message).toBe(CONFIG_ROOT_UNSET_WARNING);
+    expect(message).toContain('configRoot not configured yet');
+    expect(message).toContain('server_service install will be unavailable');
+    expect(message).toContain('other tools are unaffected');
+    expect(message).toContain('JEEVES_CONFIG_ROOT');
+    expect(message).not.toMatch(/tools return an error/i);
   });
 
   it('does not warn when configRoot is set', () => {

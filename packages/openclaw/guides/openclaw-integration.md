@@ -61,7 +61,7 @@ In `openclaw.json`, configure the plugin entry:
 | --- | --- | --- | --- |
 | `apiUrl` | No | `http://127.0.0.1:1934` | jeeves-server API base URL |
 | `pluginKey` | No | — | Server `_plugin` key seed (for authenticated API calls) |
-| `configRoot` | For tools | — | Platform config root directory. Core derives component config dirs from this path. Set via plugin config or `JEEVES_CONFIG_ROOT` env var. |
+| `configRoot` | For `server_service install` | — | Platform config root directory. Core derives component config dirs from this path. Set via plugin config or `JEEVES_CONFIG_ROOT` env var. While unset, `server_service install` is unavailable, other tools work, and links are not rewritten to `publicUrl`. |
 
 ### Lazy `configRoot`
 
