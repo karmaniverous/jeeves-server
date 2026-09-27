@@ -127,7 +127,7 @@
     "postinstall": "node scripts/download-plantuml.js",
     "prebuild": "npx rimraf dist .tsbuildinfo",
     "release": "dotenvx run -f .env.local -- release-it",
-    "release:pre": "dotenvx run -f .env.local -- release-it --no-git.requireBranch --github.prerelease --preRelease",
+    "release:pre": "dotenvx run -f .env.local -- release-it --no-git.requireBranch --github.preRelease --preRelease",
     "start": "node dist/src/server.js",
     "test": "vitest run",
     "typecheck": "cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc --noEmit"
