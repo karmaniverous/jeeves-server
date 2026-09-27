@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-8
+- [261] updated core
+## [0.14.0-1] - 2026-09-27
+
+### 💼 Other
+
 - [261] fix(openclaw): accurate configRoot-unset startup warning (#266)
 - [261] chore(release): prettier-format openclaw.plugin.json after bump
 - [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-7
@@ -26,6 +32,7 @@ field is no longer copied into RuntimeConfig.
 
 Closes #267
 - [261] fix: update root package-lock.json in release-it after:bump hook
+- [261] chore: release @karmaniverous/jeeves-server-openclaw v0.14.0-1
 ## [0.14.0-0] - 2026-09-27
 
 ### 💼 Other
