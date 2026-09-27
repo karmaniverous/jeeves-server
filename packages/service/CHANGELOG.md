@@ -4,9 +4,29 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 💼 Other
+
+- [261] chore(deps): ncu -u --peer across all packages
+- [261] fix: adapt to puppeteer 25, archiver 8, markdown-it 15 and TypeScript 6 majors
+- [261] chore: resolve knip findings and audit advisories (lodash-es override)
+- [261] chore: apply prettier across the repo; ignore generated CHANGELOGs
+- [261] fix(build): clear vite native-config, chunk-size and rollup outputToFilesystem warnings
+- [261] chore: move every package to @karmaniverous/jeeves 0.6.0-4; allow install scripts by name
+- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-6
+- [261] fix(release): use --github.preRelease for release-it 21
+- [261] updated core
+- [261] fix(service): merge server_config_apply patches into the runtime config file (#265)
+- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-7
+- [261] updated core
+## [3.13.1] - 2026-07-04
+
 ### 🐛 Bug Fixes
 
 - SPA auth gate path prefix for share keys
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.13.1
 ## [3.13.0] - 2026-07-02
 
 ### 🚀 Features
@@ -273,6 +293,10 @@ Fixes #239. Also resolves lingering knip errors for unlisted and unused dependen
 - Release @karmaniverous/jeeves-server v3.10.9
 ## [3.10.8] - 2026-05-12
 
+### 🐛 Bug Fixes
+
+- Include scripts/ in service package files for postinstall
+
 ### 💼 Other
 
 - Merge remote-tracking branch 'origin/main' into chore/git-cliff-changelogs
@@ -288,7 +312,6 @@ Fixes #239. Also resolves lingering knip errors for unlisted and unused dependen
 ### 🐛 Bug Fixes
 
 - Edit-cell line offset — resolve td/th to table, not tr
-- Include scripts/ in service package files for postinstall
 
 ### ⚙️ Miscellaneous Tasks
 
