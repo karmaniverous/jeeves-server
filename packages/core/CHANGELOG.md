@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-7
+## [0.2.1-0] - 2026-09-27
+
+### 💼 Other
+
 - [261] feat(openclaw)!: standard OpenClaw plugin on jeeves core 0.6.0 with lazy configRoot
 
 Move the plugin (and jeeves-server-core) to @karmaniverous/jeeves@0.6.0-3,
@@ -38,6 +43,7 @@ Closes #260
 - [261] feat(openclaw): pass lazy apiUrl to createPluginToolset; pin core 0.6.0-4
 - [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-6
 - [261] fix(release): use --github.preRelease for release-it 21
+- [261] chore: release @karmaniverous/jeeves-server-core v0.2.1-0
 ## [0.2.0] - 2026-06-25
 
 ### 💼 Other
