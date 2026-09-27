@@ -1,7 +1,13 @@
 /**
  * GET /config — query service configuration with optional JSONPath.
+ * POST /config/apply — deep-merge a patch into the runtime config file.
  *
- * Uses the core SDK's `createConfigQueryHandler()` for JSONPath support.
+ * Uses the core SDK's `createConfigQueryHandler()` for JSONPath support and
+ * `createConfigApplyHandler()` for merge/validate/write. The apply handler is
+ * bound to the config file the service actually loaded
+ * (`getConfig().configPath`, from `--config`); core's derived path
+ * (`{configRoot}/jeeves-server/config.json`) generally differs from it, which
+ * made partial patches validate against an empty config.
  *
  * @packageDocumentation
  */
@@ -57,9 +63,13 @@ export function registerConfigRoute(app: FastifyInstance): void {
     return reply.status(result.status).send(result.body);
   });
 
-  const applyHandler = createConfigApplyHandler(serverDescriptor);
-
   app.post('/config/apply', async (request, reply) => {
+    // Resolve per request: the runtime path is fixed at startup, but binding
+    // lazily keeps route registration independent of config initialization.
+    const applyHandler = createConfigApplyHandler(
+      serverDescriptor,
+      getConfig().configPath,
+    );
     const result = await applyHandler(
       request.body as { patch: Record<string, unknown>; replace?: boolean },
     );
