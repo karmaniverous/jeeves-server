@@ -55,7 +55,6 @@ export interface RuntimeConfig {
   maxZipSizeMb: number;
   chromePath: string;
   roots?: Record<string, string>;
-  mermaidCliPath?: string;
   plantuml: {
     jarPath?: string;
     javaPath?: string;

@@ -24,7 +24,6 @@ const mockConfig = {
     deploy: { cmd: 'deploy.sh', schema: {} },
     notify: { cmd: 'notify.sh', schema: {} },
   },
-  mermaidCliPath: '/tools/mermaid',
   plantuml: {
     jarPath: '/tools/plantuml.jar',
     servers: ['https://plantuml.com/plantuml'],

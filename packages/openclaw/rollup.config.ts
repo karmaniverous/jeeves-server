@@ -45,6 +45,9 @@ const pluginConfig: RollupOptions = {
       declarationDir: 'dist',
       declarationMap: false,
       incremental: false,
+      // Type against the built core package, not the source path mapping
+      // used by typecheck/tests (see tsconfig.json).
+      paths: {},
     }),
   ],
 };

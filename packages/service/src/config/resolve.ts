@@ -256,7 +256,6 @@ export function buildRuntimeConfig(
     chromePath: config.chromePath,
     roots: config.roots,
 
-    mermaidCliPath: config.mermaidCliPath,
     plantuml: resolvePlantuml(config.plantuml, rootDir),
     outsiderPolicy:
       resolveNamedScopes(

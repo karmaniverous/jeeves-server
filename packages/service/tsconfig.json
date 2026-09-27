@@ -6,13 +6,14 @@
     "lib": ["ES2022", "DOM"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "outDir": "dist",
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
     "target": "ES2022",
     "types": ["node", "vitest/globals"],
-    "rootDir": "."
+    "paths": {
+      "@karmaniverous/jeeves-server-core": ["../core/src/index.ts"]
+    }
   },
   "exclude": [
     "coverage",
