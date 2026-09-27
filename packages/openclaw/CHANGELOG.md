@@ -6,6 +6,30 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [261] fix(openclaw): accurate configRoot-unset startup warning (#266)
+- [261] chore(release): prettier-format openclaw.plugin.json after bump
+- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-7
+- [261] updated core
+- [261] [267] fix: tests and typecheck read core and CLI from source, not dist
+
+Service and openclaw vitest configs alias @karmaniverous/jeeves-server-core
+to packages/core/src, and their tsconfigs map it with paths, so typecheck
+and tests pass on a clean checkout with no dist/. The rollup builds override
+paths: {} and still build against the built core package. Service rootDir and
+outDir move to tsconfig.build.json (TS 6 rejects source outside rootDir).
+
+The config CLI test runs src/cli/index.ts through tsx instead of
+dist/src/cli/index.js.
+
+Source resolution exposes core's @deprecated mermaidCliPath, so the ignored
+field is no longer copied into RuntimeConfig.
+
+Closes #267
+- [261] fix: update root package-lock.json in release-it after:bump hook
+## [0.14.0-0] - 2026-09-27
+
+### 💼 Other
+
 - [261] feat(openclaw)!: standard OpenClaw plugin on jeeves core 0.6.0 with lazy configRoot
 
 Move the plugin (and jeeves-server-core) to @karmaniverous/jeeves@0.6.0-3,
@@ -43,6 +67,7 @@ Closes #260
 - [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-6
 - [261] fix(release): use --github.preRelease for release-it 21
 - [261] updated core
+- [261] chore: release @karmaniverous/jeeves-server-openclaw v0.14.0-0
 ## [0.13.0] - 2026-07-02
 
 ### 📚 Documentation
