@@ -6,8 +6,14 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-9
+## [0.2.1-2] - 2026-09-27
+
+### 💼 Other
+
 - [261] fix: update root package-lock.json in release-it after:bump hook
 - [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-8
+- [261] chore: release @karmaniverous/jeeves-server-core v0.2.1-2
 ## [0.2.1-1] - 2026-09-27
 
 ### 💼 Other
