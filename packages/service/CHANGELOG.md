@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-9
+- [261] updated core
+## [3.14.0-1] - 2026-09-27
+
+### 💼 Other
+
 - [261] [267] fix: tests and typecheck read core and CLI from source, not dist
 
 Service and openclaw vitest configs alias @karmaniverous/jeeves-server-core
@@ -24,6 +30,7 @@ Closes #267
 - [261] fix: update root package-lock.json in release-it after:bump hook
 - [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-8
 - [261] updated core
+- [261] chore: release @karmaniverous/jeeves-server v3.14.0-1
 ## [3.14.0-0] - 2026-09-27
 
 ### 💼 Other
