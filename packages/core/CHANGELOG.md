@@ -6,7 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [261] updated jeeves-core
+## [0.2.1-3] - 2026-09-28
+
+### 💼 Other
+
 - [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-9
+- [261] chore: release @karmaniverous/jeeves-server-core v0.2.1-3
 ## [0.2.1-2] - 2026-09-27
 
 ### 💼 Other
