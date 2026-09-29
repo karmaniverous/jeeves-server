@@ -12,19 +12,38 @@ function langClassToExt(className: string): string | null {
   const lang = match[1];
   // Map hljs language names to file extensions
   const map: Record<string, string> = {
-    javascript: 'js', typescript: 'ts', python: 'py',
-    json: 'json', yaml: 'yaml', yml: 'yaml',
-    html: 'html', css: 'css', xml: 'xml',
-    java: 'java', rust: 'rs', sql: 'sql', php: 'php',
-    cpp: 'cpp', c: 'c', markdown: 'md',
-    jsx: 'jsx', tsx: 'tsx', scss: 'scss',
-    bash: 'sh', shell: 'sh', sh: 'sh',
-    plaintext: '', text: '',
+    javascript: 'js',
+    typescript: 'ts',
+    python: 'py',
+    json: 'json',
+    yaml: 'yaml',
+    yml: 'yaml',
+    html: 'html',
+    css: 'css',
+    xml: 'xml',
+    java: 'java',
+    rust: 'rs',
+    sql: 'sql',
+    php: 'php',
+    cpp: 'cpp',
+    c: 'c',
+    markdown: 'md',
+    jsx: 'jsx',
+    tsx: 'tsx',
+    scss: 'scss',
+    bash: 'sh',
+    shell: 'sh',
+    sh: 'sh',
+    plaintext: '',
+    text: '',
   };
   return map[lang] ?? lang;
 }
 
-export function initCodeBlockCm6(container: HTMLElement, theme: 'light' | 'dark' = 'dark'): () => void {
+export function initCodeBlockCm6(
+  container: HTMLElement,
+  theme: 'light' | 'dark' = 'dark',
+): () => void {
   const cleanups: (() => void)[] = [];
   const pres = container.querySelectorAll('pre');
   const mounts: Promise<void>[] = [];
@@ -49,9 +68,11 @@ export function initCodeBlockCm6(container: HTMLElement, theme: 'light' | 'dark'
 
     // Mount CM6 and collect cleanup
     mounts.push(
-      mountCm6(wrapper, text, ext, { defaultWrap: false, theme }).then((cleanup) => {
-        cleanups.push(cleanup);
-      }),
+      mountCm6(wrapper, text, ext, { defaultWrap: false, theme }).then(
+        (cleanup) => {
+          cleanups.push(cleanup);
+        },
+      ),
     );
   }
 
@@ -60,5 +81,7 @@ export function initCodeBlockCm6(container: HTMLElement, theme: 'light' | 'dark'
     container.setAttribute('data-cm6-ready', 'true');
   });
 
-  return () => { for (const fn of cleanups) fn(); };
+  return () => {
+    for (const fn of cleanups) fn();
+  };
 }

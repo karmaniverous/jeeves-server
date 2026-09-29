@@ -67,15 +67,29 @@ export function ActionDropdown({
   const iconSize = compact ? 'h-3.5 w-3.5' : 'h-4 w-4';
   const btnSize = compact ? 'h-7 w-7' : 'h-8 w-8';
 
-  const Icon = state === 'done' ? Check : state === 'error' ? X : state === 'loading' ? Loader2 : IdleIcon;
-  const iconColor = state === 'done' ? 'text-green-500' : state === 'error' ? 'text-red-500' : '';
+  const Icon =
+    state === 'done'
+      ? Check
+      : state === 'error'
+        ? X
+        : state === 'loading'
+          ? Loader2
+          : IdleIcon;
+  const iconColor =
+    state === 'done'
+      ? 'text-green-500'
+      : state === 'error'
+        ? 'text-red-500'
+        : '';
 
   const trigger = isMenuItem ? (
     <button
       className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors w-full text-left"
       disabled={disabled || state === 'loading'}
     >
-      <Icon className={`h-4 w-4 shrink-0 ${iconColor} ${state === 'loading' ? 'animate-spin' : ''}`} />
+      <Icon
+        className={`h-4 w-4 shrink-0 ${iconColor} ${state === 'loading' ? 'animate-spin' : ''}`}
+      />
       {label}
     </button>
   ) : (
@@ -86,15 +100,15 @@ export function ActionDropdown({
       disabled={disabled || state === 'loading'}
       title={title}
     >
-      <Icon className={`${iconSize} ${state === 'loading' ? 'animate-spin' : ''}`} />
+      <Icon
+        className={`${iconSize} ${state === 'loading' ? 'animate-spin' : ''}`}
+      />
     </Button>
   );
 
   return (
     <DropdownMenu onOpenChange={onOpenChange}>
-      <DropdownMenuTrigger asChild>
-        {trigger}
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
       <DropdownMenuContent align={align} className={contentClass}>
         {errorSlot && (
           <>
@@ -117,4 +131,3 @@ export function DropdownErrorBanner({ message }: { message: string | null }) {
     </div>
   );
 }
-

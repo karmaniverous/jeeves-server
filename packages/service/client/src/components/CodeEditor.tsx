@@ -25,7 +25,10 @@ interface CodeEditorProps {
 }
 
 export function CodeEditor({
-  content, fileName, onSave, onCancel,
+  content,
+  fileName,
+  onSave,
+  onCancel,
   saveShortcut = 'ctrl-s',
   showToolbar = true,
   autoFocus = false,
@@ -58,21 +61,30 @@ export function CodeEditor({
     let destroyed = false;
 
     (async () => {
-      const { EditorView, EditorState, Prec, basicSetup, keymap, oneDark } = await loadCodeMirror();
+      const { EditorView, EditorState, Prec, basicSetup, keymap, oneDark } =
+        await loadCodeMirror();
       if (destroyed) return;
 
       const ext = fileName.split('.').pop() ?? '';
       const langExt = await getLanguageExtension(ext);
       if (destroyed) return;
 
-      const keybindings: { key: string; run: () => boolean }[] = [{
-        key: saveShortcut === 'ctrl-enter' ? 'Mod-Enter' : 'Mod-s',
-        run: () => { handleSave(); return true; },
-      }];
+      const keybindings: { key: string; run: () => boolean }[] = [
+        {
+          key: saveShortcut === 'ctrl-enter' ? 'Mod-Enter' : 'Mod-s',
+          run: () => {
+            handleSave();
+            return true;
+          },
+        },
+      ];
       if (onCancel) {
         keybindings.push({
           key: 'Escape',
-          run: () => { onCancel(); return true; },
+          run: () => {
+            onCancel();
+            return true;
+          },
         });
       }
 
@@ -88,8 +100,12 @@ export function CodeEditor({
         EditorView.theme({
           '&': { fontSize: '14px', flex: '1 1 0%', minHeight: '0' },
           '.cm-scroller': { overflow: 'auto' },
-          '.cm-content': { fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace" },
-          '.cm-gutters': { fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace" },
+          '.cm-content': {
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
+          },
+          '.cm-gutters': {
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
+          },
         }),
       ];
 
@@ -127,11 +143,13 @@ export function CodeEditor({
         viewRef.current = null;
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div className={`flex flex-col overflow-hidden ${contained ? 'flex-1 min-h-0' : 'h-full'}`}>
+    <div
+      className={`flex flex-col overflow-hidden ${contained ? 'flex-1 min-h-0' : 'h-full'}`}
+    >
       {/* Toolbar */}
       {showToolbar && (
         <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/50">
@@ -164,7 +182,10 @@ export function CodeEditor({
       )}
 
       {/* Editor */}
-      <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden flex flex-col">
+      <div
+        ref={containerRef}
+        className="flex-1 min-h-0 overflow-hidden flex flex-col"
+      >
         {loading && (
           <div className="flex items-center justify-center h-32 text-muted-foreground">
             Loading editor…

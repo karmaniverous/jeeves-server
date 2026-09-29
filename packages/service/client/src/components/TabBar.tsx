@@ -25,15 +25,26 @@ interface TabBarProps {
 }
 
 export function TabBar({
-  reqPath, file, fileRendered, viewTab, setViewTab,
-  proseWidth, toggleProseWidth,
-  isInsider, editing, setEditing,
-  mobileTocOpen, setMobileTocOpen, loading,
+  reqPath,
+  file,
+  fileRendered,
+  viewTab,
+  setViewTab,
+  proseWidth,
+  toggleProseWidth,
+  isInsider,
+  editing,
+  setEditing,
+  mobileTocOpen,
+  setMobileTocOpen,
+  loading,
   undoRedoControls,
 }: TabBarProps) {
   if (!file && !loading) return null;
 
-  const renderable = (fileRendered ? isRenderable(fileRendered) : false) || (file ? isRenderable(file) : isRenderableExt(reqPath));
+  const renderable =
+    (fileRendered ? isRenderable(fileRendered) : false) ||
+    (file ? isRenderable(file) : isRenderableExt(reqPath));
   const activeTab = renderable ? viewTab : 'raw';
 
   return (
@@ -44,7 +55,11 @@ export function TabBar({
           className="lg:hidden p-1.5 mr-1 text-muted-foreground hover:text-foreground transition-colors"
           title="Table of contents"
         >
-          {mobileTocOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          {mobileTocOpen ? (
+            <X className="h-4 w-4" />
+          ) : (
+            <Menu className="h-4 w-4" />
+          )}
         </button>
       )}
       {renderable && (
@@ -76,11 +91,19 @@ export function TabBar({
               key={w}
               onClick={() => toggleProseWidth(w)}
               className={`p-1.5 transition-colors ${
-                proseWidth === w ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'
+                proseWidth === w
+                  ? 'bg-muted text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
               title={`${w.charAt(0).toUpperCase() + w.slice(1)} width`}
             >
-              {w === 'narrow' ? <Minimize2 className="h-3.5 w-3.5" /> : w === 'medium' ? <Minus className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              {w === 'narrow' ? (
+                <Minimize2 className="h-3.5 w-3.5" />
+              ) : w === 'medium' ? (
+                <Minus className="h-3.5 w-3.5" />
+              ) : (
+                <Maximize2 className="h-3.5 w-3.5" />
+              )}
             </button>
           ))}
         </div>
@@ -88,7 +111,10 @@ export function TabBar({
       {undoRedoControls}
       {isInsider && file?.content != null && !editing && (
         <button
-          onClick={() => { if (activeTab !== 'raw') setViewTab('raw'); setEditing(true); }}
+          onClick={() => {
+            if (activeTab !== 'raw') setViewTab('raw');
+            setEditing(true);
+          }}
           className="ml-2 flex items-center gap-1 px-2 py-1 text-sm text-muted-foreground hover:text-foreground border border-border rounded transition-colors"
           title="Edit file"
         >

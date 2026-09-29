@@ -1,5 +1,5 @@
 ---
-title: "Deployment"
+title: 'Deployment'
 ---
 
 # Deployment
@@ -171,6 +171,7 @@ jeeves-server service restart    # or: nssm restart JeevesServer / systemctl res
 ## File Permissions
 
 The server needs:
+
 - **Read access** to any files you want to serve
 - **Write access** to the config directory (for persisting auto-generated seeds to `config.json`) and the working directory for logs
 - **Execute access** to Chrome/Chromium for PDF export
@@ -179,5 +180,6 @@ The server needs:
 ## Backups
 
 Key files to back up:
+
 - Your config file (`config.json`) — contains secrets, insider seeds, and key seeds
 - Event queue files — `logs/event-queue.jsonl` + `logs/event-queue.cursor`

@@ -59,11 +59,21 @@ export function RunHistory({ runs }: RunHistoryProps) {
         <thead>
           <tr className="border-b border-border text-left">
             <th className="px-3 py-2 w-8" />
-            <th className="px-3 py-2 font-medium text-muted-foreground">Status</th>
-            <th className="px-3 py-2 font-medium text-muted-foreground">Trigger</th>
-            <th className="px-3 py-2 font-medium text-muted-foreground">Started</th>
-            <th className="px-3 py-2 font-medium text-muted-foreground">Duration</th>
-            <th className="px-3 py-2 font-medium text-muted-foreground">Exit</th>
+            <th className="px-3 py-2 font-medium text-muted-foreground">
+              Status
+            </th>
+            <th className="px-3 py-2 font-medium text-muted-foreground">
+              Trigger
+            </th>
+            <th className="px-3 py-2 font-medium text-muted-foreground">
+              Started
+            </th>
+            <th className="px-3 py-2 font-medium text-muted-foreground">
+              Duration
+            </th>
+            <th className="px-3 py-2 font-medium text-muted-foreground">
+              Exit
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -97,13 +107,16 @@ function RunRow({ run, isExpanded, onToggle }: RunRowProps) {
         onClick={hasOutput ? onToggle : undefined}
       >
         <td className="px-3 py-2">
-          {hasOutput && (
-            isExpanded
-              ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              : <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          )}
+          {hasOutput &&
+            (isExpanded ? (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            ))}
         </td>
-        <td className="px-3 py-2"><StatusPill status={run.status} /></td>
+        <td className="px-3 py-2">
+          <StatusPill status={run.status} />
+        </td>
         <td className="px-3 py-2 text-muted-foreground">{run.trigger}</td>
         <td className="px-3 py-2 text-muted-foreground text-xs">
           {formatTime(run.startedAt)}
@@ -131,7 +144,9 @@ function OutputBlock({ label, content }: { label: string; content: string }) {
   if (!content) return null;
   return (
     <div className="mb-2 last:mb-0">
-      <div className="text-xs font-medium text-muted-foreground mb-1">{label}</div>
+      <div className="text-xs font-medium text-muted-foreground mb-1">
+        {label}
+      </div>
       <pre className="text-xs bg-zinc-900 text-zinc-200 p-2 rounded overflow-x-auto max-h-48 whitespace-pre-wrap">
         {content}
       </pre>

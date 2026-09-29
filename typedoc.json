@@ -1,7 +1,5 @@
 {
-  "entryPoints": [
-    "./packages/service/src/config/schema.ts"
-  ],
+  "entryPoints": ["./packages/service/src/config/schema.ts"],
   "highlightLanguages": [
     "bash",
     "console",
@@ -27,10 +25,7 @@
     "GitHub": "https://github.com/karmaniverous/jeeves-server"
   },
   "out": "./docs/",
-  "plugin": [
-    "typedoc-plugin-mdn-links",
-    "typedoc-plugin-replace-text"
-  ],
+  "plugin": ["typedoc-plugin-mdn-links", "typedoc-plugin-replace-text"],
   "projectDocuments": [
     "./packages/service/guides/index.md",
     "./packages/openclaw/guides/index.md"

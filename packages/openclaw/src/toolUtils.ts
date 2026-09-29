@@ -25,6 +25,9 @@ function isOriginBoundary(url: string, originLength: number): boolean {
   return next === '/' || next === '?' || next === '#';
 }
 
+/** Lazily resolves the server's public URL (`undefined` when unknown). */
+export type PublicUrlResolver = () => string | undefined;
+
 /**
  * Rewrite a single URL string: replace the baseUrl origin with publicUrl origin.
  * Only rewrites URLs that start with the baseUrl origin.
@@ -109,7 +112,7 @@ export function registerApiTool(
   api: PluginApi,
   baseUrl: string,
   keySeed: string | undefined,
-  publicUrl: string | undefined,
+  getPublicUrl: PublicUrlResolver,
   config: ApiToolConfig,
 ): void {
   api.registerTool(
@@ -138,7 +141,7 @@ export function registerApiTool(
           const transformed = config.transformResponse
             ? config.transformResponse(rawData, baseUrl, params)
             : rawData;
-          const data = rewriteUrlsInData(transformed, baseUrl, publicUrl);
+          const data = rewriteUrlsInData(transformed, baseUrl, getPublicUrl());
           return ok(data);
         } catch (error) {
           return connectionFail(error, baseUrl, PLUGIN_ID);

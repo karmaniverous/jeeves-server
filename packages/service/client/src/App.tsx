@@ -16,9 +16,18 @@ export default function App() {
         <BrowserRouter>
           <UndoProvider>
             <Routes>
-              <Route path="/readme" element={<PublicContent key="readme" slug="readme" />} />
-              <Route path="/privacy" element={<PublicContent key="privacy" slug="privacy" />} />
-              <Route path="/terms" element={<PublicContent key="terms" slug="terms" />} />
+              <Route
+                path="/readme"
+                element={<PublicContent key="readme" slug="readme" />}
+              />
+              <Route
+                path="/privacy"
+                element={<PublicContent key="privacy" slug="privacy" />}
+              />
+              <Route
+                path="/terms"
+                element={<PublicContent key="terms" slug="terms" />}
+              />
               <Route path="/runner/:jobId" element={<RunnerJob />} />
               <Route path="/runner" element={<Runner />} />
               <Route path="/browse/*" element={<FileBrowser />} />

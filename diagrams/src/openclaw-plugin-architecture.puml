@@ -5,49 +5,43 @@ skinparam defaultFontName "Segoe UI"
 skinparam componentStyle rectangle
 skinparam packageStyle rectangle
 
+actor "jeeves install" as installer
+
 package "OpenClaw Gateway" {
+  [openclaw plugins install] as ocinstall
   [Plugin: register(api)] as register
+  [Tool call] as call
 }
 
 package "jeeves-server-openclaw" {
-  [registerServerTools()] as tools
-  [init(workspacePath, configRoot)] as init
-  [createAsyncContentCache()] as cache
-  [createComponentWriter()] as writer
-
-  package "ServiceCommands" {
-    [stop / uninstall / status\n(NSSM JeevesServer)] as svc
-  }
-
-  package "PluginCommands" {
-    [uninstall\n(removePlugin)] as plg
-  }
+  [createGuardedApi()] as guard
+  [createPluginToolset()\nserver_status / _config /\n_config_apply / _service] as toolset
+  [registerServerTools()\nserver_* / oauth_*] as tools
+  [ConfigRootResolver\nplugin config → JEEVES_CONFIG_ROOT] as resolver
+  file "skills/jeeves-server\nSKILL.md" as skill
 }
 
 package "@karmaniverous/jeeves (core)" {
-  [ComponentWriter] as cw
-  [updateManagedSection()] as ums
-  [refreshPlatformContent()] as rpc
+  [init(workspacePath, configRoot)] as init
 }
 
 cloud "jeeves-server API" as api
+file "plugins.entries.<id>.config\n(configRoot, apiUrl, pluginKey)" as cfg
 
-file "TOOLS.md\n## Server" as tools_md
-file "SOUL.md / AGENTS.md\nPlatform section" as platform_md
+installer --> ocinstall : npm:<pkg>@<ver> --pin
+installer --> cfg : write plugin config
+ocinstall --> register : activate (config may be absent)
+ocinstall ..> skill : manifest skills
 
-register --> tools : Register server_* tools
-register --> init : Initialize core paths
-register --> cache : Async fetch → sync accessor
-register --> writer : Start writer (61s prime)
+register --> guard : wrap registerTool
+guard --> toolset : register
+guard --> tools : register
+register ..> resolver : warn once if unset
 
-cache ..> api : GET /api/status
-writer --> cw : Delegates to core
-cw --> ums : Write ## Server section
-cw --> rpc : Maintain platform content
-ums --> tools_md
-rpc --> platform_md
-
-writer --> svc : serviceCommands
-writer --> plg : pluginCommands
+call --> resolver : resolve configRoot
+resolver ..> cfg : read
+resolver --> init : first use
+call --> api : when resolved
+resolver ..> call : else "configRoot not configured" error
 
 @enduml

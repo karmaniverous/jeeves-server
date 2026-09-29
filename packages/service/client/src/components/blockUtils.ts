@@ -6,7 +6,9 @@ export function blockLanguage(el: Element): string {
   if (tag === 'pre') {
     const code = el.querySelector('code[class*="language-"]');
     if (code) {
-      const cls = Array.from(code.classList).find((c) => c.startsWith('language-'));
+      const cls = Array.from(code.classList).find((c) =>
+        c.startsWith('language-'),
+      );
       if (cls) return cls.replace('language-', '');
     }
     return 'md';
@@ -25,23 +27,41 @@ export function blockLanguage(el: Element): string {
 export function blockLabel(el: Element): string {
   const tag = el.tagName.toLowerCase();
   switch (tag) {
-    case 'p': return 'paragraph';
-    case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6': return 'heading';
-    case 'li': return 'list item';
-    case 'blockquote': return 'blockquote';
-    case 'table': return 'table';
-    case 'tr': return 'row';
-    case 'td': case 'th': return 'cell';
+    case 'p':
+      return 'paragraph';
+    case 'h1':
+    case 'h2':
+    case 'h3':
+    case 'h4':
+    case 'h5':
+    case 'h6':
+      return 'heading';
+    case 'li':
+      return 'list item';
+    case 'blockquote':
+      return 'blockquote';
+    case 'table':
+      return 'table';
+    case 'tr':
+      return 'row';
+    case 'td':
+    case 'th':
+      return 'cell';
     case 'pre': {
       const code = el.querySelector('code[class*="language-"]');
       if (code) {
-        const cls = Array.from(code.classList).find((c) => c.startsWith('language-'));
+        const cls = Array.from(code.classList).find((c) =>
+          c.startsWith('language-'),
+        );
         if (cls) return `code block (${cls.replace('language-', '')})`;
       }
       return 'code block';
     }
-    case 'hr': return 'hr';
-    case 'ul': case 'ol': return 'list';
+    case 'hr':
+      return 'hr';
+    case 'ul':
+    case 'ol':
+      return 'list';
     default:
       if (el.classList.contains('embedded-diagram-lazy')) return 'diagram';
       if (el.classList.contains('embedded-diagram-panzoom')) return 'diagram';

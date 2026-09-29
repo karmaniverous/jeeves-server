@@ -40,7 +40,14 @@ export function AuthStatusProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthStatusContext.Provider
-      value={{ email, picture, isInsider, searchEnabled, keyCreatedAt, rotateKey }}
+      value={{
+        email,
+        picture,
+        isInsider,
+        searchEnabled,
+        keyCreatedAt,
+        rotateKey,
+      }}
     >
       {children}
     </AuthStatusContext.Provider>

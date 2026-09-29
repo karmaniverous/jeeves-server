@@ -7,7 +7,7 @@ Shared workspace package providing cryptographic utilities and API types consume
 ### Crypto Functions
 
 | Function | Description |
-|----------|-------------|
+| --- | --- |
 | `computePathKey(seed, path)` | HMAC-SHA256 outsider key for a normalized path (32 hex chars) |
 | `computeInsiderKey(seed)` | HMAC-SHA256 insider key derived from a seed (32 hex chars) |
 | `computeOutsiderKeyWithExpiry(seed, path, expiry)` | HMAC-SHA256 outsider key with embedded expiration |
@@ -17,7 +17,7 @@ Shared workspace package providing cryptographic utilities and API types consume
 ### Config Schema
 
 | Export | Description |
-|--------|-------------|
+| --- | --- |
 | `loggingConfigSchema` | Zod schema for `logging` config block (`level`, `file`, both optional) |
 | `LoggingConfig` | Inferred TypeScript type from `loggingConfigSchema` |
 | `jeevesConfigSchema` | Full server config Zod schema (includes `logging`, `oauth`, all other fields) |
@@ -25,14 +25,14 @@ Shared workspace package providing cryptographic utilities and API types consume
 ### Endpoint Catalog
 
 | Export | Description |
-|--------|-------------|
+| --- | --- |
 | `EndpointEntry` | Interface describing a single API operation (method, path, description, auth flags) |
 | `serverEndpoints` | Complete declarative catalog of all jeeves-server API endpoints (38 entries) |
 
 ### API Types
 
 | Type | Description |
-|------|-------------|
+| --- | --- |
 | `ShareRequest` / `ShareResponse` | `POST /api/share` payloads |
 | `ShareForRequest` / `ShareForResponse` | `POST /api/util/share-for` payloads (audience-based sharing) |
 | `AuthStatusResponse` | `GET /api/auth/status` response |

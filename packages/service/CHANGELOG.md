@@ -4,9 +4,59 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 💼 Other
+
+- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-9
+- [261] updated core
+## [3.14.0-1] - 2026-09-27
+
+### 💼 Other
+
+- [261] [267] fix: tests and typecheck read core and CLI from source, not dist
+
+Service and openclaw vitest configs alias @karmaniverous/jeeves-server-core
+to packages/core/src, and their tsconfigs map it with paths, so typecheck
+and tests pass on a clean checkout with no dist/. The rollup builds override
+paths: {} and still build against the built core package. Service rootDir and
+outDir move to tsconfig.build.json (TS 6 rejects source outside rootDir).
+
+The config CLI test runs src/cli/index.ts through tsx instead of
+dist/src/cli/index.js.
+
+Source resolution exposes core's @deprecated mermaidCliPath, so the ignored
+field is no longer copied into RuntimeConfig.
+
+Closes #267
+- [261] fix: update root package-lock.json in release-it after:bump hook
+- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-8
+- [261] updated core
+- [261] chore: release @karmaniverous/jeeves-server v3.14.0-1
+## [3.14.0-0] - 2026-09-27
+
+### 💼 Other
+
+- [261] chore(deps): ncu -u --peer across all packages
+- [261] fix: adapt to puppeteer 25, archiver 8, markdown-it 15 and TypeScript 6 majors
+- [261] chore: resolve knip findings and audit advisories (lodash-es override)
+- [261] chore: apply prettier across the repo; ignore generated CHANGELOGs
+- [261] fix(build): clear vite native-config, chunk-size and rollup outputToFilesystem warnings
+- [261] chore: move every package to @karmaniverous/jeeves 0.6.0-4; allow install scripts by name
+- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-6
+- [261] fix(release): use --github.preRelease for release-it 21
+- [261] updated core
+- [261] fix(service): merge server_config_apply patches into the runtime config file (#265)
+- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-7
+- [261] updated core
+- [261] chore: release @karmaniverous/jeeves-server v3.14.0-0
+## [3.13.1] - 2026-07-04
+
 ### 🐛 Bug Fixes
 
 - SPA auth gate path prefix for share keys
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.13.1
 ## [3.13.0] - 2026-07-02
 
 ### 🚀 Features
@@ -273,6 +323,10 @@ Fixes #239. Also resolves lingering knip errors for unlisted and unused dependen
 - Release @karmaniverous/jeeves-server v3.10.9
 ## [3.10.8] - 2026-05-12
 
+### 🐛 Bug Fixes
+
+- Include scripts/ in service package files for postinstall
+
 ### 💼 Other
 
 - Merge remote-tracking branch 'origin/main' into chore/git-cliff-changelogs
@@ -288,7 +342,6 @@ Fixes #239. Also resolves lingering knip errors for unlisted and unused dependen
 ### 🐛 Bug Fixes
 
 - Edit-cell line offset — resolve td/th to table, not tr
-- Include scripts/ in service package files for postinstall
 
 ### ⚙️ Miscellaneous Tasks
 

@@ -1,23 +1,23 @@
 ---
-title: "OpenClaw Integration Guide"
+title: 'OpenClaw Integration Guide'
 ---
 
 # OpenClaw Integration Guide
 
 ## Architecture
 
-The plugin integrates with the Jeeves platform via `@karmaniverous/jeeves` (the shared core library). On startup it initializes the core, registers server tools, and starts a `ComponentWriter` that manages the `## Server` section in TOOLS.md.
+The plugin is a standard OpenClaw plugin built on `@karmaniverous/jeeves` (the shared core library). `register()` only registers tools: it reads no config, starts no timers and writes no workspace files. It ships its guidance as a skill (`openclaw.plugin.json` `skills`). Live server state comes from `server_status`.
 
 ![Plugin Architecture](../../../diagrams/out/openclaw-plugin-architecture.png)
 
 ## Installation
 
 ```bash
-npx @karmaniverous/jeeves-server-openclaw install
+npm install -g @karmaniverous/jeeves
+jeeves install server --config-root /path/to/config
 ```
 
-This copies the plugin to `~/.openclaw/extensions/` and patches `openclaw.json`.
-Restart the OpenClaw gateway after installing.
+`jeeves install` runs `openclaw plugins install npm:@karmaniverous/jeeves-server-openclaw@<version> --pin --accept-capabilities --force`, writes `plugins.entries.jeeves-server-openclaw.config` (`configRoot`, `apiUrl`, and a `pluginKey` kept equal to the server's `keys._plugin`) and removes any legacy `extensions/jeeves-server-openclaw` copy. Restart the OpenClaw gateway afterwards. `jeeves update server` upgrades the plugin.
 
 ## Configuration
 
@@ -58,10 +58,18 @@ In `openclaw.json`, configure the plugin entry:
 ```
 
 | Config field | Required | Default | Description |
-|-------------|----------|---------|-------------|
+| --- | --- | --- | --- |
 | `apiUrl` | No | `http://127.0.0.1:1934` | jeeves-server API base URL |
 | `pluginKey` | No | — | Server `_plugin` key seed (for authenticated API calls) |
-| `configRoot` | Yes | — | Platform config root directory. Core derives component config dirs from this path. Set via plugin config or `JEEVES_CONFIG_ROOT` env var. |
+| `configRoot` | For `server_service install` | — | Platform config root directory. Core derives component config dirs from this path. Set via plugin config or `JEEVES_CONFIG_ROOT` env var. While unset, `server_service install` is unavailable, other tools work, and links are not rewritten to `publicUrl`. |
+
+### Lazy `configRoot`
+
+With a running gateway, `openclaw plugins install` activates the plugin before `jeeves install` writes its config, so the plugin never needs `configRoot` to load:
+
+- Registration always succeeds. When neither the plugin config nor `JEEVES_CONFIG_ROOT` provides `configRoot`, the plugin logs one warning.
+- `configRoot` is resolved (plugin config, then `JEEVES_CONFIG_ROOT`) each time a tool runs, and core `init()` runs on first use.
+- Until it is set, every tool returns: `configRoot not configured — set plugins.entries.jeeves-server-openclaw.config.configRoot in the plugin config or the JEEVES_CONFIG_ROOT environment variable`.
 
 The plugin reads `publicUrl` from the server’s own config at `{configRoot}/jeeves-server/config.json`. See the [Setup guide](../../service/guides/setup.md#public-url) for details.
 
@@ -70,7 +78,7 @@ The plugin reads `publicUrl` from the server’s own config at `{configRoot}/jee
 ### Server Tools
 
 | Tool | Purpose |
-|------|---------|
+| --- | --- |
 | `server_status` | Server health: version, uptime, port, Chrome availability, export formats, auth info |
 | `server_browse` | Get file/directory metadata and listings |
 | `server_link_info` | Query available link types for a path |
@@ -91,21 +99,21 @@ The plugin reads `publicUrl` from the server’s own config at `{configRoot}/jee
 ### OAuth Tools
 
 | Tool | Purpose |
-|------|---------|
+| --- | --- |
 | `oauth_authorize` | Initiate OAuth2 authorization flow (returns auth URL for user to open) |
 | `oauth_status` | Check credential existence and expiry for a provider/account |
 | `oauth_token` | Retrieve a valid access token (auto-refreshes if expired) |
 
-## TOOLS.md Injection
+## Skill and Live State
 
-The plugin uses `@karmaniverous/jeeves` core's `ComponentWriter` to manage the `## Server` section in TOOLS.md. The writer runs on a 61-second prime interval. Core handles file locking, version stamps, section ordering, and platform content maintenance (SOUL.md, AGENTS.md).
+The plugin writes nothing to TOOLS.md or any other workspace file. Guidance ships in the `jeeves-server` skill (declared in `openclaw.plugin.json`, with `name`/`description` frontmatter checked by a test). For live capabilities (export formats, diagram support, event schemas, insider count), call `server_status`.
 
-The server menu content (export formats, diagrams, event schemas, insider count) is fetched asynchronously from the server's `/status` endpoint via `createAsyncContentCache()`, bridging the sync `generateToolsContent()` interface. Per plugin isolation (#128), the plugin queries only the server — never watcher or runner directly.
+The plugin registers no conversation hooks, so it needs no `hooks.allowConversationAccess` grant.
 
 ## Uninstalling
 
 ```bash
-npx @karmaniverous/jeeves-server-openclaw uninstall
+jeeves uninstall
 ```
 
-This removes the plugin from extensions, cleans up `openclaw.json`, and removes the `## Server` section from `TOOLS.md`.
+`jeeves uninstall` removes the Jeeves plugins (use `--dry-run` to preview the `openclaw` commands). To remove only this plugin, run `openclaw plugins uninstall jeeves-server-openclaw`. A `## Server` section left in TOOLS.md by an older version is no longer maintained; `jeeves uninstall` strips the legacy TOOLS.md block.

@@ -1,5 +1,5 @@
 ---
-title: "API & Integration Guide"
+title: 'API & Integration Guide'
 ---
 
 # API & Integration Guide
@@ -39,7 +39,11 @@ Or compute it yourself:
 ```javascript
 const crypto = require('crypto');
 function insiderKey(seed) {
-  return crypto.createHmac('sha256', seed).update('insider').digest('hex').substring(0, 32);
+  return crypto
+    .createHmac('sha256', seed)
+    .update('insider')
+    .digest('hex')
+    .substring(0, 32);
 }
 ```
 
@@ -48,14 +52,14 @@ function insiderKey(seed) {
 ### Public (no auth required)
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `GET` | `/health` | Simple health check (200 OK) |
 | `GET` | `/api/status` | Server metadata: version, uptime, services, capabilities. Add `?events=N` for recent event log entries |
 
 ### File Access (auth required)
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `GET` | `/api/file/<path>` | File content (rendered HTML for markdown, raw for others) |
 | `GET` | `/api/raw/<path>` | Raw file bytes with appropriate Content-Type |
 | `GET` | `/api/link-info/<path>` | Query available views and export formats for a path |
@@ -63,14 +67,14 @@ function insiderKey(seed) {
 ### Directory Access
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `GET` | `/api/drives` | List available drives (Windows) or roots (Linux) |
 | `GET` | `/api/directory/<path>` | List directory contents |
 
 ### Export
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `GET` | `/api/export/<path>?format=pdf\|docx\|zip\|tar` | Export file or directory |
 | `GET` | `/api/mermaid-export/<path>?format=svg\|png\|pdf` | Export Mermaid diagram |
 | `GET` | `/api/plantuml-export/<path>?format=svg\|png\|pdf\|eps` | Export PlantUML diagram |
@@ -78,7 +82,7 @@ function insiderKey(seed) {
 ### Sharing
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `GET` | `/insider-key` | Get derived insider key (requires `X-API-Key` header with seed) |
 | `GET` | `/key?path=<path>` | Compute outsider key for a path |
 | `POST` | `/api/share` | Generate share link (path, expiryDays, depth, dirs) |
@@ -88,20 +92,20 @@ function insiderKey(seed) {
 ### File Mutation (insider auth required)
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `PUT` | `/api/file/<path>` | Overwrite file content |
 | `POST` | `/api/file/<path>` | Apply structured mutations to `.md` files (edit-block, delete-block, insert-block, edit-cell, toggle-checkbox) |
 
 ### Export Cache
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `DELETE` | `/api/export-cache/<path>` | Clear export and diagram caches for a path |
 
 ### Authentication
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `GET` | `/api/auth/status` | Check authentication status and mode (no auth required) |
 | `POST` | `/api/auth/magic` | Request a magic login link (no auth required, always returns 200 with `{ verifyUrl }`) |
 | `GET` | `/auth/magic/verify` | OTP verification page — server-rendered page where users enter the emailed code (top-level route, no auth required) |
@@ -110,23 +114,23 @@ function insiderKey(seed) {
 ### OAuth2 Credential Management (insider auth required)
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `POST` | `/api/oauth/start` | Initiate OAuth2 authorization flow (returns auth URL) |
 | `GET` | `/api/oauth/status?provider=&account=` | Check credential existence and expiry |
 | `GET` | `/api/oauth/token?provider=&account=` | Retrieve valid access token (auto-refreshes if expired) |
 
 ### Event Gateway
 
-| Method | Path | Description |
-|--------|------|-------------|
+| Method | Path     | Description                                         |
+| ------ | -------- | --------------------------------------------------- |
 | `POST` | `/event` | Send a webhook (matched against configured schemas) |
 
 ### Search (requires watcher integration)
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/search` | Semantic search (proxied to jeeves-watcher) |
-| `GET` | `/api/search/facets` | Get filter facets for search UI (cached) |
+| Method | Path                 | Description                                 |
+| ------ | -------------------- | ------------------------------------------- |
+| `POST` | `/api/search`        | Semantic search (proxied to jeeves-watcher) |
+| `GET`  | `/api/search/facets` | Get filter facets for search UI (cached)    |
 
 ## Converting Windows Paths to URLs
 
@@ -136,13 +140,19 @@ E:\\projects\\foo    →  /e/projects/foo
 ```
 
 **Conversion formula:**
+
 1. Replace backslashes with forward slashes
 2. Replace the drive letter + colon with lowercase letter
 3. Prepend the route prefix (`/browse/` for SPA, `/api/file/` for API, `/path/` for legacy)
 
 ```javascript
 function winPathToUrl(winPath, prefix = '/browse/') {
-  return prefix + winPath.replace(/\\\\/g, '/').replace(/^([A-Z]):/, (_, d) => d.toLowerCase());
+  return (
+    prefix +
+    winPath
+      .replace(/\\\\/g, '/')
+      .replace(/^([A-Z]):/, (_, d) => d.toLowerCase())
+  );
 }
 ```
 
@@ -162,7 +172,11 @@ const crypto = require('crypto');
 
 function outsiderKey(seed, path) {
   const normalized = path.toLowerCase().replace(/^\/+|\/+$/g, '');
-  return crypto.createHmac('sha256', seed).update(normalized).digest('hex').substring(0, 32);
+  return crypto
+    .createHmac('sha256', seed)
+    .update(normalized)
+    .digest('hex')
+    .substring(0, 32);
 }
 ```
 

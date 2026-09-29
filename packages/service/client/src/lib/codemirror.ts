@@ -16,7 +16,15 @@ export async function loadCodeMirror() {
     import('@codemirror/view'),
     import('@codemirror/theme-one-dark'),
   ]);
-  return { EditorView, EditorState, Prec, Compartment, basicSetup, keymap, oneDark };
+  return {
+    EditorView,
+    EditorState,
+    Prec,
+    Compartment,
+    basicSetup,
+    keymap,
+    oneDark,
+  };
 }
 
 /** Map file extensions to CodeMirror language support (lazy-loaded) */
@@ -26,12 +34,17 @@ export async function getLanguageExtension(ext: string) {
     case 'jsx':
     case 'mjs':
     case 'cjs':
-      return (await import('@codemirror/lang-javascript')).javascript({ jsx: ext.includes('x') });
+      return (await import('@codemirror/lang-javascript')).javascript({
+        jsx: ext.includes('x'),
+      });
     case 'ts':
     case 'tsx':
     case 'mts':
     case 'cts':
-      return (await import('@codemirror/lang-javascript')).javascript({ jsx: ext.includes('x'), typescript: true });
+      return (await import('@codemirror/lang-javascript')).javascript({
+        jsx: ext.includes('x'),
+        typescript: true,
+      });
     case 'html':
     case 'htm':
       return (await import('@codemirror/lang-html')).html();

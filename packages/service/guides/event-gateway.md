@@ -1,5 +1,5 @@
 ---
-title: "Event Gateway"
+title: 'Event Gateway'
 ---
 
 # Event Gateway
@@ -28,7 +28,10 @@ Events are defined in your config file:
       "cmd": "node /path/to/handler.js",
       "map": {
         "pageId": {
-          "$": { "method": "$.lib._.get", "params": ["$.input", "data.page_id"] }
+          "$": {
+            "method": "$.lib._.get",
+            "params": ["$.input", "data.page_id"]
+          }
         },
         "type": {
           "$": { "method": "$.lib._.get", "params": ["$.input", "type"] }
@@ -78,8 +81,7 @@ When `map` is omitted, the full webhook body is passed as-is.
 }
 ```
 
-Input: `{ type: "page.content_updated", data: { page_id: "abc123", ... } }`
-Output to command: `{ pageId: "abc123", type: "page.content_updated" }`
+Input: `{ type: "page.content_updated", data: { page_id: "abc123", ... } }` Output to command: `{ pageId: "abc123", type: "page.content_updated" }`
 
 ## Authentication
 
@@ -129,14 +131,22 @@ Events are processed through a **durable JSONL queue**:
 ### Queue configuration
 
 | Key | Type | Default | Description |
-|-----|------|---------|-------------|
+| --- | --- | --- | --- |
 | `eventQueue` | `string` | `{installDir}/logs/event-queue.jsonl` | Absolute path to the durable queue JSONL file. Cursor file is derived as `eventQueue + '.cursor'`. Set this to a stable location outside `node_modules`. |
 | `eventQueueConcurrency` | `number` | `3` | Maximum number of queue entries processed concurrently within a single batch. |
 
 ### Queue entry format
 
 ```jsonl
-{"ts":"2026-02-15T05:00:00Z","event":"notion-page-update","cmd":"node handler.js","body":{"pageId":"abc123"},"timeoutMs":60000}
+{
+  "ts": "2026-02-15T05:00:00Z",
+  "event": "notion-page-update",
+  "cmd": "node handler.js",
+  "body": {
+    "pageId": "abc123"
+  },
+  "timeoutMs": 60000
+}
 ```
 
 ### Durability
@@ -172,6 +182,7 @@ process.stdin.on('end', () => {
 ```
 
 **Key points:**
+
 - The command runs in the server's working directory
 - stdout/stderr are captured for logging
 - Exit code 0 = success, anything else = failure (logged but not retried)

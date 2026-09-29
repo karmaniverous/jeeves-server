@@ -4,9 +4,93 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 💼 Other
+
+- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-9
+- [261] updated core
+## [0.14.0-2] - 2026-09-27
+
+### 💼 Other
+
+- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-8
+- [261] updated core
+- [261] chore: release @karmaniverous/jeeves-server-openclaw v0.14.0-2
+## [0.14.0-1] - 2026-09-27
+
+### 💼 Other
+
+- [261] fix(openclaw): accurate configRoot-unset startup warning (#266)
+- [261] chore(release): prettier-format openclaw.plugin.json after bump
+- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-7
+- [261] updated core
+- [261] [267] fix: tests and typecheck read core and CLI from source, not dist
+
+Service and openclaw vitest configs alias @karmaniverous/jeeves-server-core
+to packages/core/src, and their tsconfigs map it with paths, so typecheck
+and tests pass on a clean checkout with no dist/. The rollup builds override
+paths: {} and still build against the built core package. Service rootDir and
+outDir move to tsconfig.build.json (TS 6 rejects source outside rootDir).
+
+The config CLI test runs src/cli/index.ts through tsx instead of
+dist/src/cli/index.js.
+
+Source resolution exposes core's @deprecated mermaidCliPath, so the ignored
+field is no longer copied into RuntimeConfig.
+
+Closes #267
+- [261] fix: update root package-lock.json in release-it after:bump hook
+- [261] chore: release @karmaniverous/jeeves-server-openclaw v0.14.0-1
+## [0.14.0-0] - 2026-09-27
+
+### 💼 Other
+
+- [261] feat(openclaw)!: standard OpenClaw plugin on jeeves core 0.6.0 with lazy configRoot
+
+Move the plugin (and jeeves-server-core) to @karmaniverous/jeeves@0.6.0-3,
+the static-content core (karmaniverous/jeeves#109).
+
+- Remove the ComponentWriter / TOOLS.md "## Server" section, the async
+  status-menu cache (promptInjection) and the createPluginCli-based
+  install/uninstall bin. `jeeves install` installs the plugin with
+  `openclaw plugins install` and writes its config.
+- Resolve configRoot lazily (plugin config, then JEEVES_CONFIG_ROOT) when a
+  tool runs. register() always succeeds, logs one warning when configRoot is
+  unset, and defers core init() to first use. Tools invoked without it return
+  a clear error naming both ways to set it. publicUrl is read per call.
+- Manifest: configRoot/pluginKey descriptions; configRoot has no default and
+  is not required. SKILL.md gains name/description frontmatter (#260) and
+  jeeves install instructions.
+- Tests: registration without config, tool error, plugin config / OpenClaw
+  config entry / env var, late config, lazy publicUrl, no conversation hooks,
+  manifest and skill frontmatter checks.
+
+BREAKING CHANGE: the `jeeves-server-openclaw install|uninstall` CLI is gone;
+install with `jeeves install server` (or `openclaw plugins install`). The
+plugin no longer writes TOOLS.md; use `server_status` and the skill.
+
+Closes #261
+Closes #263
+Closes #260
+- [261] chore(openclaw): update rollup, @rollup/plugin-commonjs and zod minors
+- [261] chore(deps): ncu -u --peer across all packages
+- [261] chore: resolve knip findings and audit advisories (lodash-es override)
+- [261] chore: apply prettier across the repo; ignore generated CHANGELOGs
+- [261] fix(openclaw): gate only tools that read configRoot
+- [261] feat(openclaw): pass lazy apiUrl to createPluginToolset; pin core 0.6.0-4
+- [261] test(openclaw): merge duplicate HTTP-tool configRoot tests
+- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-6
+- [261] fix(release): use --github.preRelease for release-it 21
+- [261] updated core
+- [261] chore: release @karmaniverous/jeeves-server-openclaw v0.14.0-0
+## [0.13.0] - 2026-07-02
+
 ### 📚 Documentation
 
 - Sync guides, skill, and API reference with #241 tar format, #252 OTP flow, #253 auth gate
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-openclaw v0.13.0
 ## [0.12.0] - 2026-06-25
 
 ### 💼 Other

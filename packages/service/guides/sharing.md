@@ -1,5 +1,5 @@
 ---
-title: "Insiders, Outsiders & Sharing"
+title: 'Insiders, Outsiders & Sharing'
 ---
 
 # Insiders, Outsiders & Sharing
@@ -44,6 +44,7 @@ Depends on which auth modes are active:
 Scopes restrict which paths an insider can access. Three formats are supported:
 
 **Allow-only** (string array — backward compatible):
+
 ```json
 {
   "contractor@example.com": {
@@ -53,6 +54,7 @@ Scopes restrict which paths an insider can access. Three formats are supported:
 ```
 
 **Allow with deny** (broad access with cutouts):
+
 ```json
 {
   "team-member@example.com": {
@@ -65,6 +67,7 @@ Scopes restrict which paths an insider can access. Three formats are supported:
 ```
 
 **Deny-only** (everything except exclusions):
+
 ```json
 {
   "almost-full@example.com": {
@@ -76,6 +79,7 @@ Scopes restrict which paths an insider can access. Three formats are supported:
 ```
 
 **Semantics:**
+
 - A path must match at least one allow rule **and** not match any deny rule
 - Omitting `allow` = implicit `['/**']` (allow everything)
 - Omitting `deny` = no exclusions
@@ -109,7 +113,7 @@ An outsider is someone viewing a **specific file or directory** via a share link
 Every insider has a **seed** — a secret string (either configured manually or auto-generated on Google login). From this seed, the server derives two types of keys:
 
 | Key type | Derivation | Grants |
-|----------|-----------|--------|
+| --- | --- | --- |
 | **Insider key** | `HMAC-SHA256(seed, "insider")` | Full browsing access (within scopes) |
 | **Outsider key** | `HMAC-SHA256(seed, normalized_path)` | Access to one specific path |
 | **Expiring outsider key** | `HMAC-SHA256(seed, path + "\|" + expiry)` | Access to one path, until expiry |
@@ -126,11 +130,13 @@ In the header of any file or directory view, insiders see sharing controls:
 The generated URL includes the outsider key as a `?key=` parameter and (if expiring) an `&exp=` parameter with the expiration timestamp.
 
 **Example insider link:**
+
 ```
 https://jeeves.example.com/browse/d/docs/design.md?key=a1b2c3d4...
 ```
 
 **Example outsider link (expiring):**
+
 ```
 https://jeeves.example.com/browse/d/docs/design.md?key=e5f6a7b8...&exp=1771340000000
 ```
@@ -138,6 +144,7 @@ https://jeeves.example.com/browse/d/docs/design.md?key=e5f6a7b8...&exp=177134000
 ### Directory sharing
 
 When you share a directory link, the outsider can:
+
 - See the directory listing
 - Navigate into subdirectories
 - View any file within that directory tree
@@ -177,6 +184,7 @@ In addition to insider-generated keys, the server supports **named machine keys*
 ```
 
 Machine keys follow the same derivation model:
+
 - The **insider key** derived from an unscoped machine seed grants full access
 - Machine seeds can also generate **outsider keys** for specific paths
 - **Scoped** machine keys (like `webhook-notion` above) can only access matching paths
@@ -197,14 +205,14 @@ When a request arrives, the server determines access as follows:
 
 The server renders different UI based on access mode:
 
-| Feature | Insider | Outsider |
-|---------|---------|----------|
-| Drive/directory browsing | ✅ | Only shared path |
-| File viewing | ✅ | ✅ |
-| PDF/DOCX export | ✅ | ✅ |
-| Share link generation | ✅ | ❌ |
-| Key rotation | ✅ | ❌ |
-| Download dropdown | Full options | File download only |
+| Feature                  | Insider      | Outsider           |
+| ------------------------ | ------------ | ------------------ |
+| Drive/directory browsing | ✅           | Only shared path   |
+| File viewing             | ✅           | ✅                 |
+| PDF/DOCX export          | ✅           | ✅                 |
+| Share link generation    | ✅           | ❌                 |
+| Key rotation             | ✅           | ❌                 |
+| Download dropdown        | Full options | File download only |
 
 ---
 

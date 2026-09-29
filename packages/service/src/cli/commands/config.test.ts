@@ -8,10 +8,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const execFileAsync = promisify(execFile);
 
-const CLI_PATH = path.resolve(
-  import.meta.dirname,
-  '../../../dist/src/cli/index.js',
-);
+/** Package root; tsx picks up its tsconfig paths (core → packages/core/src). */
+const PACKAGE_ROOT = path.resolve(import.meta.dirname, '../../..');
+
+/** CLI entry in source: tests exercise src, never build output (dist/). */
+const CLI_PATH = path.join(PACKAGE_ROOT, 'src', 'cli', 'index.ts');
 
 const VALID_CONFIG = {
   port: 8765,
@@ -36,10 +37,17 @@ function writeConfig(dir: string, config: unknown): string {
 async function runCli(
   args: string[],
 ): Promise<{ stdout: string; stderr: string }> {
-  return execFileAsync('node', [CLI_PATH, ...args], { timeout: 10_000 });
+  return execFileAsync(
+    process.execPath,
+    ['--import', 'tsx', CLI_PATH, ...args],
+    {
+      cwd: PACKAGE_ROOT,
+      timeout: 30_000,
+    },
+  );
 }
 
-describe('jeeves-server config validate', () => {
+describe('jeeves-server config validate', { timeout: 60_000 }, () => {
   let tmpDir: string;
 
   beforeEach(() => {

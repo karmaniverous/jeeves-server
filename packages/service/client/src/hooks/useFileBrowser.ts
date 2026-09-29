@@ -38,21 +38,33 @@ export function useFileBrowser() {
 
   // Data
   const {
-    drives, directory, fileRaw, fileRendered, file,
-    loading, error, editing, setEditing,
-    viewTab, setViewTab: setViewTabInternal,
-    handleSave, refetch,
+    drives,
+    directory,
+    fileRaw,
+    fileRendered,
+    file,
+    loading,
+    error,
+    editing,
+    setEditing,
+    viewTab,
+    setViewTab: setViewTabInternal,
+    handleSave,
+    refetch,
   } = useFileData(reqPath, searchParams);
 
   // Sync tab to URL
   const setViewTab = (tab: 'rendered' | 'raw') => {
     setViewTabInternal(tab);
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      if (tab === 'rendered') next.delete('tab');
-      else next.set('tab', tab);
-      return next;
-    }, { replace: true });
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (tab === 'rendered') next.delete('tab');
+        else next.set('tab', tab);
+        return next;
+      },
+      { replace: true },
+    );
   };
 
   // Sharing
@@ -61,7 +73,9 @@ export function useFileBrowser() {
   // UI state
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const [proseWidth, setProseWidth] = useState<'narrow' | 'medium' | 'wide'>(
-    () => (localStorage.getItem('jeeves-prose-width') as 'narrow' | 'medium' | 'wide') ?? 'medium',
+    () =>
+      (localStorage.getItem('jeeves-prose-width') as
+        'narrow' | 'medium' | 'wide') ?? 'medium',
   );
   const toggleProseWidth = (w: 'narrow' | 'medium' | 'wide') => {
     setProseWidth(w);
@@ -69,8 +83,14 @@ export function useFileBrowser() {
   };
 
   // Auth
-  const { isInsider: authInsider, searchEnabled, keyCreatedAt, rotateKey } = useAuthStatus();
-  const breadcrumbs: BreadcrumbItem[] = directory?.breadcrumbs ?? file?.breadcrumbs ?? [];
+  const {
+    isInsider: authInsider,
+    searchEnabled,
+    keyCreatedAt,
+    rotateKey,
+  } = useAuthStatus();
+  const breadcrumbs: BreadcrumbItem[] =
+    directory?.breadcrumbs ?? file?.breadcrumbs ?? [];
   const isInsider = directory?.isInsider ?? file?.isInsider ?? authInsider;
   const keyAge = keyCreatedAt ? formatRelativeTime(keyCreatedAt) : null;
 
@@ -83,20 +103,43 @@ export function useFileBrowser() {
   };
 
   // Layout
-  const { topBarRef, mainRef, topBarHeight } = useTopBar(JSON.stringify([file, directory, drives]));
+  const { topBarRef, mainRef, topBarHeight } = useTopBar(
+    JSON.stringify([file, directory, drives]),
+  );
 
   return {
-    reqPath, theme, toggleTheme,
-    shareSettings, setShareSettings,
-    mobileTocOpen, setMobileTocOpen,
-    proseWidth, toggleProseWidth,
-    drives, directory, fileRaw, fileRendered, file,
-    loading, error, editing, setEditing,
-    viewTab, setViewTab,
-    breadcrumbs, isInsider, searchEnabled, keyAge,
-    rotateKeyDialogOpen, setRotateKeyDialogOpen,
-    handleRotateKey, confirmRotateKey,
-    topBarRef, mainRef, topBarHeight,
-    handleSave, refetch,
+    reqPath,
+    theme,
+    toggleTheme,
+    shareSettings,
+    setShareSettings,
+    mobileTocOpen,
+    setMobileTocOpen,
+    proseWidth,
+    toggleProseWidth,
+    drives,
+    directory,
+    fileRaw,
+    fileRendered,
+    file,
+    loading,
+    error,
+    editing,
+    setEditing,
+    viewTab,
+    setViewTab,
+    breadcrumbs,
+    isInsider,
+    searchEnabled,
+    keyAge,
+    rotateKeyDialogOpen,
+    setRotateKeyDialogOpen,
+    handleRotateKey,
+    confirmRotateKey,
+    topBarRef,
+    mainRef,
+    topBarHeight,
+    handleSave,
+    refetch,
   };
 }

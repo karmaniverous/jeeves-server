@@ -16,11 +16,15 @@ export function normalizeSvg(svgText: string): string {
   if (!svg) return svgText;
 
   // Extract intrinsic dimensions for viewBox if missing
-  let w = 0, h = 0;
+  let w = 0,
+    h = 0;
   const viewBox = svg.getAttribute('viewBox');
   if (viewBox) {
     const parts = viewBox.split(/[\s,]+/).map(Number);
-    if (parts.length === 4) { w = parts[2]; h = parts[3]; }
+    if (parts.length === 4) {
+      w = parts[2];
+      h = parts[3];
+    }
   }
   if (w <= 0 || h <= 0) {
     w = parseFloat(svg.getAttribute('width') ?? '0');

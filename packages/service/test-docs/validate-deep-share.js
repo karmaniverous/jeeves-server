@@ -28,7 +28,11 @@ function assert(condition, label) {
 
 async function fetchJson(url) {
   const res = await fetch(url, { redirect: 'manual' });
-  return { status: res.status, data: res.ok ? await res.json() : null, headers: res.headers };
+  return {
+    status: res.status,
+    data: res.ok ? await res.json() : null,
+    headers: res.headers,
+  };
 }
 
 async function getShareLink(path, depth, dirs) {
@@ -110,7 +114,11 @@ async function runTests() {
   // ================================================================
   console.log('━━━ Test 1: Depth 0 (no link following) ━━━');
   {
-    const share = await getShareLink('/e/dev/karmaniverous/jeeves-server/test-docs/page-a.md', 0, false);
+    const share = await getShareLink(
+      '/e/dev/karmaniverous/jeeves-server/test-docs/page-a.md',
+      0,
+      false,
+    );
     const params = parseShareUrl(share.url);
 
     // Page A should load
@@ -121,12 +129,21 @@ async function runTests() {
     // HTML should have NO internal links (all stripped)
     const html = fileRes.data?.html || '';
     const internalLinks = extractInternalLinks(html);
-    assert(internalLinks.length === 0, `No internal links at depth 0 (found ${internalLinks.length})`);
+    assert(
+      internalLinks.length === 0,
+      `No internal links at depth 0 (found ${internalLinks.length})`,
+    );
 
     // External links should still be present
     const externalLinks = extractExternalLinks(html);
-    assert(externalLinks.length > 0, `External links preserved (found ${externalLinks.length})`);
-    assert(externalLinks.some(l => l.url.includes('google.com')), 'Google link preserved');
+    assert(
+      externalLinks.length > 0,
+      `External links preserved (found ${externalLinks.length})`,
+    );
+    assert(
+      externalLinks.some((l) => l.url.includes('google.com')),
+      'Google link preserved',
+    );
   }
 
   // ================================================================
@@ -134,7 +151,11 @@ async function runTests() {
   // ================================================================
   console.log('\n━━━ Test 2: Depth 1 (one hop) ━━━');
   {
-    const share = await getShareLink('/e/dev/karmaniverous/jeeves-server/test-docs/page-a.md', 1, false);
+    const share = await getShareLink(
+      '/e/dev/karmaniverous/jeeves-server/test-docs/page-a.md',
+      1,
+      false,
+    );
     const params = parseShareUrl(share.url);
 
     // Page A should load
@@ -145,11 +166,11 @@ async function runTests() {
     const internalLinks = extractInternalLinks(html);
 
     // Page B link should be live (depth 1)
-    const pageBLink = internalLinks.find(l => l.text.includes('Page B'));
+    const pageBLink = internalLinks.find((l) => l.text.includes('Page B'));
     assert(!!pageBLink, 'Page B link is live at depth 1');
 
     // Sub Page (page-d in subdirectory) should be dead if dirs=false
-    const subPageLink = internalLinks.find(l => l.text.includes('Sub Page'));
+    const subPageLink = internalLinks.find((l) => l.text.includes('Sub Page'));
     // Actually sub/page-d.md is a file, not a directory — it should be live
     // The dirs flag controls directory listings, not files in subdirectories
     // Let's check what we get
@@ -157,7 +178,10 @@ async function runTests() {
 
     // External links always present
     const externalLinks = extractExternalLinks(html);
-    assert(externalLinks.some(l => l.url.includes('google.com')), 'External links preserved');
+    assert(
+      externalLinks.some((l) => l.url.includes('google.com')),
+      'External links preserved',
+    );
 
     // Follow Page B link — should work
     if (pageBLink) {
@@ -168,11 +192,17 @@ async function runTests() {
       // Page B's internal links should be dead (depth exhausted)
       const pageBHtml = pageBRes.data?.html || '';
       const pageBInternalLinks = extractInternalLinks(pageBHtml);
-      assert(pageBInternalLinks.length === 0, `Page B has no live internal links (depth exhausted, found ${pageBInternalLinks.length})`);
+      assert(
+        pageBInternalLinks.length === 0,
+        `Page B has no live internal links (depth exhausted, found ${pageBInternalLinks.length})`,
+      );
 
       // Page B's external links should still work
       const pageBExternalLinks = extractExternalLinks(pageBHtml);
-      assert(pageBExternalLinks.some(l => l.url.includes('github.com')), 'Page B external links preserved');
+      assert(
+        pageBExternalLinks.some((l) => l.url.includes('github.com')),
+        'Page B external links preserved',
+      );
     }
   }
 
@@ -181,7 +211,11 @@ async function runTests() {
   // ================================================================
   console.log('\n━━━ Test 3: Depth 2 (two hops) ━━━');
   {
-    const share = await getShareLink('/e/dev/karmaniverous/jeeves-server/test-docs/page-a.md', 2, false);
+    const share = await getShareLink(
+      '/e/dev/karmaniverous/jeeves-server/test-docs/page-a.md',
+      2,
+      false,
+    );
     const params = parseShareUrl(share.url);
 
     const fileRes = await fetchJson(apiFileUrl(params));
@@ -189,7 +223,7 @@ async function runTests() {
 
     const html = fileRes.data?.html || '';
     const internalLinks = extractInternalLinks(html);
-    const pageBLink = internalLinks.find(l => l.text.includes('Page B'));
+    const pageBLink = internalLinks.find((l) => l.text.includes('Page B'));
     assert(!!pageBLink, 'Page B link is live at depth 2');
 
     // Follow to Page B
@@ -200,7 +234,7 @@ async function runTests() {
 
       const pageBHtml = pageBRes.data?.html || '';
       const pageBLinks = extractInternalLinks(pageBHtml);
-      const pageCLink = pageBLinks.find(l => l.text.includes('Page C'));
+      const pageCLink = pageBLinks.find((l) => l.text.includes('Page C'));
       assert(!!pageCLink, 'Page C link is live from Page B (hop 2)');
 
       // Follow to Page C
@@ -212,11 +246,17 @@ async function runTests() {
         // Page C's internal links should be dead (depth exhausted)
         const pageCHtml = pageCRes.data?.html || '';
         const pageCLinks = extractInternalLinks(pageCHtml);
-        assert(pageCLinks.length === 0, `Page C has no live internal links (depth exhausted, found ${pageCLinks.length})`);
+        assert(
+          pageCLinks.length === 0,
+          `Page C has no live internal links (depth exhausted, found ${pageCLinks.length})`,
+        );
 
         // External links on Page C
         const pageCExternalLinks = extractExternalLinks(pageCHtml);
-        assert(pageCExternalLinks.some(l => l.url.includes('wikipedia.org')), 'Page C external links preserved');
+        assert(
+          pageCExternalLinks.some((l) => l.url.includes('wikipedia.org')),
+          'Page C external links preserved',
+        );
       }
     }
   }
@@ -224,14 +264,25 @@ async function runTests() {
   // ================================================================
   // TEST 4: Depth 1, dirs=false — directory listing blocked
   // ================================================================
-  console.log('\n━━━ Test 4: Depth 1, dirs=false (directory access blocked) ━━━');
+  console.log(
+    '\n━━━ Test 4: Depth 1, dirs=false (directory access blocked) ━━━',
+  );
   {
-    const share = await getShareLink('/e/dev/karmaniverous/jeeves-server/test-docs/page-a.md', 1, false);
+    const share = await getShareLink(
+      '/e/dev/karmaniverous/jeeves-server/test-docs/page-a.md',
+      1,
+      false,
+    );
     const params = parseShareUrl(share.url);
 
     // Try to access the directory listing
-    const dirRes = await fetchJson(apiDirUrl('/e/dev/karmaniverous/jeeves-server/test-docs/', params));
-    assert(dirRes.status === 401, `Directory listing blocked with dirs=false (got ${dirRes.status})`);
+    const dirRes = await fetchJson(
+      apiDirUrl('/e/dev/karmaniverous/jeeves-server/test-docs/', params),
+    );
+    assert(
+      dirRes.status === 401,
+      `Directory listing blocked with dirs=false (got ${dirRes.status})`,
+    );
   }
 
   // ================================================================
@@ -239,7 +290,11 @@ async function runTests() {
   // ================================================================
   console.log('\n━━━ Test 5: Depth 1, dirs=true (directory access) ━━━');
   {
-    const share = await getShareLink('/e/dev/karmaniverous/jeeves-server/test-docs/page-a.md', 1, true);
+    const share = await getShareLink(
+      '/e/dev/karmaniverous/jeeves-server/test-docs/page-a.md',
+      1,
+      true,
+    );
     const params = parseShareUrl(share.url);
 
     // Page A should load
@@ -249,24 +304,42 @@ async function runTests() {
     // Internal file links should still be live
     const html = fileRes.data?.html || '';
     const internalLinks = extractInternalLinks(html);
-    const pageBLink = internalLinks.find(l => l.text.includes('Page B'));
+    const pageBLink = internalLinks.find((l) => l.text.includes('Page B'));
     assert(!!pageBLink, 'Page B link is live with dirs=true');
 
     // Parent directory listing should work
-    const parentDirRes = await fetchJson(apiDirUrl('/e/dev/karmaniverous/jeeves-server/test-docs', params));
-    assert(parentDirRes.status === 200, 'Parent directory listing works with dirs=true');
+    const parentDirRes = await fetchJson(
+      apiDirUrl('/e/dev/karmaniverous/jeeves-server/test-docs', params),
+    );
+    assert(
+      parentDirRes.status === 200,
+      'Parent directory listing works with dirs=true',
+    );
 
     // Subdirectory listing should work
-    const subDirRes = await fetchJson(apiDirUrl('/e/dev/karmaniverous/jeeves-server/test-docs/sub', params));
-    assert(subDirRes.status === 200, 'Subdirectory listing works with dirs=true');
+    const subDirRes = await fetchJson(
+      apiDirUrl('/e/dev/karmaniverous/jeeves-server/test-docs/sub', params),
+    );
+    assert(
+      subDirRes.status === 200,
+      'Subdirectory listing works with dirs=true',
+    );
 
     // Any directory accessible (scoped only by sharer's access)
     const ancestorDirRes = await fetchJson(apiDirUrl('/e/dev', params));
-    assert(ancestorDirRes.status === 200, `Ancestor dir accessible with dirs=true (got ${ancestorDirRes.status})`);
+    assert(
+      ancestorDirRes.status === 200,
+      `Ancestor dir accessible with dirs=true (got ${ancestorDirRes.status})`,
+    );
 
     // Sibling directory accessible too
-    const siblingDirRes = await fetchJson(apiDirUrl('/e/dev/karmaniverous/jeeves-server/src', params));
-    assert(siblingDirRes.status === 200, `Sibling dir accessible with dirs=true (got ${siblingDirRes.status})`);
+    const siblingDirRes = await fetchJson(
+      apiDirUrl('/e/dev/karmaniverous/jeeves-server/src', params),
+    );
+    assert(
+      siblingDirRes.status === 200,
+      `Sibling dir accessible with dirs=true (got ${siblingDirRes.status})`,
+    );
   }
 
   // ================================================================
@@ -274,7 +347,11 @@ async function runTests() {
   // ================================================================
   console.log('\n━━━ Test 6: Backward compat (no depth/dirs) ━━━');
   {
-    const share = await getShareLink('/e/dev/karmaniverous/jeeves-server/test-docs/page-a.md', 0, false);
+    const share = await getShareLink(
+      '/e/dev/karmaniverous/jeeves-server/test-docs/page-a.md',
+      0,
+      false,
+    );
     const params = parseShareUrl(share.url);
 
     // Should be a legacy share link (no d/dirs/s params)
@@ -288,22 +365,33 @@ async function runTests() {
   // ================================================================
   // TEST 7: Cross-page key isolation — key from Page A can't access Page B directly
   // ================================================================
-  console.log('\n━━━ Test 7: Key isolation (depth-0 key can\'t access other pages) ━━━');
+  console.log(
+    "\n━━━ Test 7: Key isolation (depth-0 key can't access other pages) ━━━",
+  );
   {
-    const share = await getShareLink('/e/dev/karmaniverous/jeeves-server/test-docs/page-a.md', 0, false);
+    const share = await getShareLink(
+      '/e/dev/karmaniverous/jeeves-server/test-docs/page-a.md',
+      0,
+      false,
+    );
     const params = parseShareUrl(share.url);
 
     // Try to use Page A's key to access Page B directly
     const pageBUrl = `${BASE}/api/file/e/dev/karmaniverous/jeeves-server/test-docs/page-b.md?key=${params.key}`;
     const pageBRes = await fetchJson(pageBUrl);
-    assert(pageBRes.status === 401, `Page A's depth-0 key can't access Page B (got ${pageBRes.status})`);
+    assert(
+      pageBRes.status === 401,
+      `Page A's depth-0 key can't access Page B (got ${pageBRes.status})`,
+    );
   }
 
   // ================================================================
   // Summary
   // ================================================================
   console.log(`\n${'━'.repeat(50)}`);
-  console.log(`Results: ${pass} passed, ${fail} failed out of ${pass + fail} total`);
+  console.log(
+    `Results: ${pass} passed, ${fail} failed out of ${pass + fail} total`,
+  );
   if (fail > 0) {
     console.log('⚠️  Some tests failed!');
     process.exit(1);

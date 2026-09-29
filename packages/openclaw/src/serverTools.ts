@@ -2,7 +2,7 @@
  * Domain-specific server tool registrations for the OpenClaw plugin.
  *
  * Standard tools (`server_status`, `server_config`, `server_config_apply`,
- * `server_service`) come from `createPluginToolset(descriptor)` in core.
+ * `server_service`) come from `createPluginToolset(descriptor, { apiUrl })` in core.
  *
  * @packageDocumentation
  */
@@ -23,14 +23,11 @@ import { registerExtraServerTools } from './serverToolsExtra.js';
 import {
   type ApiToolConfig,
   normalizePath,
+  type PublicUrlResolver,
   registerApiTool,
-  rewriteUrl,
   rewriteUrlsInData,
   toAbsoluteUrl,
 } from './toolUtils.js';
-
-// Re-export for tests and consumers that import from serverTools.
-export { rewriteUrl, rewriteUrlsInData };
 
 /** Milliseconds in one day. */
 const MS_PER_DAY = 86_400_000;
@@ -39,7 +36,7 @@ const MS_PER_DAY = 86_400_000;
 export function registerServerTools(
   api: PluginApi,
   baseUrl: string,
-  publicUrl?: string,
+  getPublicUrl: PublicUrlResolver,
 ): void {
   const keySeed = getPluginKey(api);
 
@@ -193,7 +190,7 @@ export function registerServerTools(
   ];
 
   for (const tool of tools) {
-    registerApiTool(api, baseUrl, keySeed, publicUrl, tool);
+    registerApiTool(api, baseUrl, keySeed, getPublicUrl, tool);
   }
 
   api.registerTool(
@@ -238,7 +235,7 @@ export function registerServerTools(
             recentEvents: recent,
             recentCount: recent.length,
           };
-          return ok(rewriteUrlsInData(result, baseUrl, publicUrl));
+          return ok(rewriteUrlsInData(result, baseUrl, getPublicUrl()));
         } catch (error) {
           return connectionFail(error, baseUrl, PLUGIN_ID);
         }
@@ -247,6 +244,6 @@ export function registerServerTools(
     { optional: true },
   );
 
-  registerOAuthTools(api, baseUrl, keySeed, publicUrl);
-  registerExtraServerTools(api, baseUrl, keySeed, publicUrl);
+  registerOAuthTools(api, baseUrl, keySeed, getPublicUrl);
+  registerExtraServerTools(api, baseUrl, keySeed, getPublicUrl);
 }

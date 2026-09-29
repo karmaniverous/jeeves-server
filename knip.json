@@ -9,12 +9,8 @@
       "includeEntryExports": true
     },
     "packages/service/client": {
-      "project": [
-        "src/**/*.{ts,tsx}"
-      ],
-      "ignore": [
-        "src/components/ui/**"
-      ],
+      "project": ["src/**/*.{ts,tsx,css}"],
+      "ignore": ["src/components/ui/**"],
       "includeEntryExports": true
     },
     "packages/openclaw": {},

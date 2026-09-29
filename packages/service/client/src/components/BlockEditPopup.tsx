@@ -12,8 +12,21 @@ const CodeEditor = lazy(() =>
 );
 
 export type BlockEditMode =
-  | { kind: 'edit-block'; startLine: number; endLine: number; content: string; language: string }
-  | { kind: 'insert-block'; atLine: number; position: 'before' | 'after'; language: string; content?: string; context?: 'table-row' }
+  | {
+      kind: 'edit-block';
+      startLine: number;
+      endLine: number;
+      content: string;
+      language: string;
+    }
+  | {
+      kind: 'insert-block';
+      atLine: number;
+      position: 'before' | 'after';
+      language: string;
+      content?: string;
+      context?: 'table-row';
+    }
   | { kind: 'edit-cell'; line: number; col: number; content: string };
 
 interface BlockEditPopupProps {
@@ -31,7 +44,15 @@ function capitalize(s: string): string {
   return s.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export function BlockEditPopup({ mode, reqPath, blockLabel, fileContent, onClose, onSaved, onError }: BlockEditPopupProps) {
+export function BlockEditPopup({
+  mode,
+  reqPath,
+  blockLabel,
+  fileContent,
+  onClose,
+  onSaved,
+  onError,
+}: BlockEditPopupProps) {
   const { pushUndo } = useUndo();
 
   /** Unified save handler for all edit modes. */
@@ -72,18 +93,22 @@ export function BlockEditPopup({ mode, reqPath, blockLabel, fileContent, onClose
 
   const initialContent = mode.content ?? '';
   const language = mode.kind === 'edit-cell' ? 'md' : mode.language;
-  const title = mode.kind === 'edit-block'
-    ? `Edit ${capitalize(blockLabel)}`
-    : mode.kind === 'edit-cell'
-      ? 'Edit Cell'
-      : `Insert ${capitalize(mode.position)} ${capitalize(blockLabel)}`;
-
+  const title =
+    mode.kind === 'edit-block'
+      ? `Edit ${capitalize(blockLabel)}`
+      : mode.kind === 'edit-cell'
+        ? 'Edit Cell'
+        : `Insert ${capitalize(mode.position)} ${capitalize(blockLabel)}`;
 
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
     >
       <div className="bg-popover border border-border rounded-lg shadow-lg w-full max-w-3xl max-h-[80vh] flex flex-col overflow-hidden">
         <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/50">

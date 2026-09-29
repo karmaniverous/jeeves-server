@@ -19,7 +19,12 @@ function collectTools(): ToolDef[] {
     },
   } as unknown as PluginApi;
 
-  registerOAuthTools(mockApi, 'http://localhost:1934', undefined, undefined);
+  registerOAuthTools(
+    mockApi,
+    'http://localhost:1934',
+    undefined,
+    () => undefined,
+  );
   return tools;
 }
 

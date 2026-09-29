@@ -1,5 +1,5 @@
 ---
-title: "Exporting & Downloads"
+title: 'Exporting & Downloads'
 ---
 
 # Exporting & Downloads
@@ -9,7 +9,7 @@ Jeeves Server can export files as PDF, DOCX, ZIP, or tar — turning Markdown in
 ## Export Types
 
 | Format | Available For | How It Works |
-|--------|--------------|--------------|
+| --- | --- | --- |
 | **PDF** | Markdown, Mermaid, PlantUML | Puppeteer (Markdown) or diagram renderer (Mermaid/PlantUML) |
 | **DOCX** | Markdown files | HTML converted via `@turbodocx/html-to-docx` |
 | **SVG** | Mermaid (`.mmd`), PlantUML (`.puml`, `.pu`, `.plantuml`) | Rendered via Mermaid CLI or PlantUML jar/server |
@@ -82,6 +82,7 @@ PDF generation uses [**Puppeteer**](https://github.com/puppeteer/puppeteer) with
 ### What you see is what you get
 
 PDFs render from the same HTML as the browser view, but:
+
 - **Prose width setting is ignored** — exports always use full width
 - **Dark mode is ignored** — exports always render in light mode
 - **TOC sidebar is excluded** — the document stands alone
@@ -90,15 +91,18 @@ PDFs render from the same HTML as the browser view, but:
 ### Troubleshooting
 
 **"Export failed" error:**
+
 - Verify `chromePath` points to a valid Chrome/Chromium executable
 - Ensure the `_internal` key is configured in `keys`
 - Check server logs for Puppeteer errors
 
 **Blank or login page in PDF:**
+
 - The `_internal` key's derived insider key must be valid
 - Verify with: `curl -s "http://localhost:<port>/insider-key" -H "X-API-Key: <_internal-seed>"`
 
 **Timeout on large documents:**
+
 - Large markdown files with many code blocks or diagrams take longer to render
 - The server has a default timeout; very large documents may need optimization
 
@@ -107,6 +111,7 @@ PDFs render from the same HTML as the browser view, but:
 DOCX generation converts the rendered HTML to a Word document using [`@turbodocx/html-to-docx`](https://github.com/nickmessing/turbodocx). This happens server-side without Chrome.
 
 DOCX exports:
+
 - Preserve headings, tables, lists, and basic formatting
 - Include code blocks (without syntax highlighting colors)
 - Embed images as inline content
@@ -155,11 +160,11 @@ If `plantuml` is omitted entirely, only the public community server is used.
 ### Export formats
 
 | Format | Jar | Server |
-|--------|-----|--------|
-| SVG | ✅ | ✅ |
-| PNG | ✅ | ✅ |
-| PDF | ✅ | ❌ |
-| EPS | ✅ | ❌ |
+| ------ | --- | ------ |
+| SVG    | ✅  | ✅     |
+| PNG    | ✅  | ✅     |
+| PDF    | ✅  | ❌     |
+| EPS    | ✅  | ❌     |
 
 ### Export endpoint
 
@@ -194,6 +199,7 @@ Bob --> Alice: Hi!
 ### How it works
 
 Diagram blocks are detected during markdown parsing, replaced with placeholders, and rendered server-side after HTML generation:
+
 - **Mermaid** — rendered via Mermaid CLI (`mmdc`) to SVG
 - **PlantUML** — rendered via the same fallback pipeline as `.puml` files (jar → servers → community)
 
@@ -235,6 +241,7 @@ The archive contains the entire directory tree — all files and subdirectories.
 ## Export for Outsiders
 
 Outsiders (people using share links) can also export files:
+
 - **PDF and DOCX** exports work on shared markdown files
 - **Raw download** works on any shared file
 - **ZIP/Tar** is not available — directory archive exports require insider access

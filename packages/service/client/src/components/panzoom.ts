@@ -8,15 +8,19 @@ import { createElement, Maximize, Minimize } from 'lucide';
 
 // ── CSS class constants ──────────────────────────────────────────────
 
-const WRAPPER_CLASS = 'relative bg-white rounded-lg border border-border overflow-hidden my-4';
+const WRAPPER_CLASS =
+  'relative bg-white rounded-lg border border-border overflow-hidden my-4';
 const WRAPPER_FULLSCREEN_CLASS = 'fixed inset-0 z-[100] bg-white flex flex-col';
 const VIEWPORT_CLASS = 'overflow-hidden w-full';
 const VIEWPORT_FULLSCREEN_CLASS = 'overflow-hidden w-full h-full flex-1';
-const INNER_CLASS = 'flex items-center justify-center p-4 [&>svg]:max-w-full [&>svg]:h-auto';
+const INNER_CLASS =
+  'flex items-center justify-center p-4 [&>svg]:max-w-full [&>svg]:h-auto';
 const INNER_FULLSCREEN_CLASS = 'p-4';
-const FS_BTN_CLASS = 'absolute top-2 right-2 z-10 p-1.5 bg-zinc-800/70 hover:bg-zinc-700 text-white rounded transition-colors';
+const FS_BTN_CLASS =
+  'absolute top-2 right-2 z-10 p-1.5 bg-zinc-800/70 hover:bg-zinc-700 text-white rounded transition-colors';
 const HINT_CLASS = 'text-xs text-muted-foreground text-center py-1 opacity-60';
-const HINT_FULLSCREEN_CLASS = 'text-muted-foreground text-xs text-center py-2 pointer-events-none';
+const HINT_FULLSCREEN_CLASS =
+  'text-muted-foreground text-xs text-center py-2 pointer-events-none';
 
 const HINT_TEXT = 'Scroll to zoom · Drag to pan';
 const HINT_FULLSCREEN_TEXT = 'Scroll to zoom · Drag to pan · Esc to close';
@@ -27,7 +31,10 @@ function createIcon(iconData: typeof Maximize): SVGSVGElement {
   return createElement(iconData, { size: 16 }) as unknown as SVGSVGElement;
 }
 
-function setButtonIcon(btn: HTMLButtonElement, iconData: typeof Maximize): void {
+function setButtonIcon(
+  btn: HTMLButtonElement,
+  iconData: typeof Maximize,
+): void {
   btn.innerHTML = '';
   btn.appendChild(createIcon(iconData));
 }
@@ -40,16 +47,34 @@ function parseSvgDimensions(svg: SVGElement): { w: number; h: number } {
     const parts = vb.split(/[\s,]+/).map(Number);
     if (parts[2] && parts[3]) return { w: parts[2], h: parts[3] };
   }
-  return { w: (svg as SVGSVGElement).clientWidth || 1000, h: (svg as SVGSVGElement).clientHeight || 800 };
+  return {
+    w: (svg as SVGSVGElement).clientWidth || 1000,
+    h: (svg as SVGSVGElement).clientHeight || 800,
+  };
 }
 
 function computeZoomToFit(
-  svgW: number, svgH: number, viewportW: number, viewportH: number,
-): { fitScale: number; fittedW: number; fittedH: number; startX: number; startY: number } {
+  svgW: number,
+  svgH: number,
+  viewportW: number,
+  viewportH: number,
+): {
+  fitScale: number;
+  fittedW: number;
+  fittedH: number;
+  startX: number;
+  startY: number;
+} {
   const fitScale = Math.min(viewportW / svgW, viewportH / svgH, 1);
   const fittedW = svgW * fitScale;
   const fittedH = svgH * fitScale;
-  return { fitScale, fittedW, fittedH, startX: (viewportW - fittedW) / 2, startY: (viewportH - fittedH) / 2 };
+  return {
+    fitScale,
+    fittedW,
+    fittedH,
+    startX: (viewportW - fittedW) / 2,
+    startY: (viewportH - fittedH) / 2,
+  };
 }
 
 // ── Core factory ─────────────────────────────────────────────────────
@@ -91,7 +116,8 @@ export function createPanzoomWrapper(
 
   const viewport = document.createElement('div');
   viewport.className = VIEWPORT_CLASS;
-  if (options?.viewportMinHeight) viewport.style.minHeight = options.viewportMinHeight;
+  if (options?.viewportMinHeight)
+    viewport.style.minHeight = options.viewportMinHeight;
 
   const inner = document.createElement('div');
   inner.className = INNER_CLASS;
@@ -118,7 +144,9 @@ export function createPanzoomWrapper(
   // Callers must invoke initPanzoom() after attaching the wrapper.
   let pz: ReturnType<typeof Panzoom> | null = null;
 
-  const wheelHandler = (e: WheelEvent) => { pz?.zoomWithWheel(e); };
+  const wheelHandler = (e: WheelEvent) => {
+    pz?.zoomWithWheel(e);
+  };
   viewport.addEventListener('wheel', wheelHandler, { passive: false });
 
   const initPanzoom = () => {
@@ -143,23 +171,38 @@ export function createPanzoomWrapper(
     pz?.destroy();
     pz = null;
 
-    requestAnimationFrame(() => { requestAnimationFrame(() => { setTimeout(() => {
-      const s = inner.querySelector('svg');
-      if (s && viewport.clientWidth && viewport.clientHeight) {
-        const { w: svgW, h: svgH } = parseSvgDimensions(s);
-        const { fitScale, fittedW, fittedH, startX, startY } =
-          computeZoomToFit(svgW, svgH, viewport.clientWidth, viewport.clientHeight);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          const s = inner.querySelector('svg');
+          if (s && viewport.clientWidth && viewport.clientHeight) {
+            const { w: svgW, h: svgH } = parseSvgDimensions(s);
+            const { fitScale, fittedW, fittedH, startX, startY } =
+              computeZoomToFit(
+                svgW,
+                svgH,
+                viewport.clientWidth,
+                viewport.clientHeight,
+              );
 
-        s.setAttribute('width', String(Math.round(fittedW)));
-        s.setAttribute('height', String(Math.round(fittedH)));
-        s.style.width = `${String(Math.round(fittedW))}px`;
-        s.style.height = `${String(Math.round(fittedH))}px`;
+            s.setAttribute('width', String(Math.round(fittedW)));
+            s.setAttribute('height', String(Math.round(fittedH)));
+            s.style.width = `${String(Math.round(fittedW))}px`;
+            s.style.height = `${String(Math.round(fittedH))}px`;
 
-        pz = Panzoom(inner, { maxScale: 20 / fitScale, minScale: 0.5, startScale: 1, startX, startY });
-      } else {
-        pz = Panzoom(inner, { maxScale: 20, minScale: 0.1 });
-      }
-    }, 50); }); });
+            pz = Panzoom(inner, {
+              maxScale: 20 / fitScale,
+              minScale: 0.5,
+              startScale: 1,
+              startX,
+              startY,
+            });
+          } else {
+            pz = Panzoom(inner, { maxScale: 20, minScale: 0.1 });
+          }
+        }, 50);
+      });
+    });
   };
 
   const exitFullscreen = () => {
@@ -174,7 +217,8 @@ export function createPanzoomWrapper(
     wrapper.className = wrapper.dataset.origClass ?? wrapperClass;
     wrapper.style.cursor = 'grab';
     viewport.className = VIEWPORT_CLASS;
-    if (options?.viewportMinHeight) viewport.style.minHeight = options.viewportMinHeight;
+    if (options?.viewportMinHeight)
+      viewport.style.minHeight = options.viewportMinHeight;
     inner.className = INNER_CLASS;
     hint.textContent = HINT_TEXT;
     hint.className = HINT_CLASS;
@@ -185,7 +229,8 @@ export function createPanzoomWrapper(
   };
 
   fsBtn.addEventListener('click', () => {
-    if (isFullscreen) exitFullscreen(); else enterFullscreen();
+    if (isFullscreen) exitFullscreen();
+    else enterFullscreen();
   });
 
   const escHandler = (e: KeyboardEvent) => {

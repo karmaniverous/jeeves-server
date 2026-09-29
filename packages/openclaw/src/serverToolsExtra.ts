@@ -21,6 +21,7 @@ import {
   type ApiToolConfig,
   encodePath,
   normalizePath,
+  type PublicUrlResolver,
   registerApiTool,
   rewriteUrlsInData,
 } from './toolUtils.js';
@@ -39,7 +40,7 @@ export function registerExtraServerTools(
   api: PluginApi,
   baseUrl: string,
   keySeed: string | undefined,
-  publicUrl: string | undefined,
+  getPublicUrl: PublicUrlResolver,
 ): void {
   const tools: ApiToolConfig[] = [
     {
@@ -236,7 +237,7 @@ export function registerExtraServerTools(
             try {
               const [endpoint] = tool.buildRequest(params);
               const rawData = await fetchJson(baseUrl + endpoint);
-              const data = rewriteUrlsInData(rawData, baseUrl, publicUrl);
+              const data = rewriteUrlsInData(rawData, baseUrl, getPublicUrl());
               return ok(data);
             } catch (error) {
               return connectionFail(error, baseUrl, PLUGIN_ID);
@@ -246,7 +247,7 @@ export function registerExtraServerTools(
         { optional: true },
       );
     } else {
-      registerApiTool(api, baseUrl, keySeed, publicUrl, tool);
+      registerApiTool(api, baseUrl, keySeed, getPublicUrl, tool);
     }
   }
 }

@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { getBindAddress } from '@karmaniverous/jeeves';
-import archiver from 'archiver';
+import { TarArchive, ZipArchive } from 'archiver';
 import type { FastifyPluginCallback } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
@@ -72,8 +72,8 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
         const contentType = isTar ? 'application/x-tar' : 'application/zip';
         const fileExt = isTar ? 'tar' : 'zip';
         const archive = isTar
-          ? archiver('tar')
-          : archiver('zip', { zlib: { level: 6 } });
+          ? new TarArchive()
+          : new ZipArchive({ zlib: { level: 6 } });
 
         reply.hijack();
         const res = reply.raw;
