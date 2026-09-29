@@ -6,8 +6,15 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [261] updated jeeves-core
+- Updated core
+## [0.14.0-3] - 2026-09-28
+
+### 💼 Other
+
 - [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-9
 - [261] updated core
+- [261] chore: release @karmaniverous/jeeves-server-openclaw v0.14.0-3
 ## [0.14.0-2] - 2026-09-27
 
 ### 💼 Other
