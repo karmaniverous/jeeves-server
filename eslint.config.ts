@@ -37,7 +37,6 @@ const vitestRecommendedRules: Linter.RulesRecord =
 export default [
   {
     ignores: [
-      '**/.stan/**/*',
       '**/coverage/**/*',
       '**/dist/**/*',
       '**/docs/**/*',
