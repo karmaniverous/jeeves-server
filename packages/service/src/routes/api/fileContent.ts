@@ -10,6 +10,7 @@ import path from 'node:path';
 import { getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 
+import { canAccessPath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
 import { csvToHtmlTable } from '../../services/csv.js';
 import {
@@ -228,6 +229,12 @@ export const fileContentRoutes: FastifyPluginAsync = (fastify) => {
       }
 
       const reqPath = (request.params as { '*': string })['*'];
+      // Defence in depth: the auth middleware also enforces scopes.
+      if (!canAccessPath(`/${reqPath}`, request.insiderScopes)) {
+        return reply
+          .code(403)
+          .send({ error: 'Path is outside your access scope' });
+      }
       const fsPath = urlPathToFs(reqPath, roots);
       if (!fsPath) return reply.code(404).send({ error: 'Invalid path' });
       const resolved = path.resolve(fsPath);

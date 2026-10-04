@@ -2,6 +2,8 @@
  * Drive listing API route.
  *
  * Handles: GET /api/drives
+ *
+ * Scoped insiders only see roots they can navigate into.
  */
 
 import type {
@@ -10,6 +12,7 @@ import type {
   FastifyRequest,
 } from 'fastify';
 
+import { canNavigatePath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
 import { getRoots } from '../../util/platform.js';
 
@@ -18,8 +21,11 @@ export const drivesRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
 
   fastify.get(
     '/api/drives',
-    async (_request: FastifyRequest, reply: FastifyReply) => {
-      const drives = roots.map((r) => ({ letter: r.id, label: r.label }));
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const scopes = request.insiderScopes ?? null;
+      const drives = roots
+        .filter((r) => canNavigatePath(`/${r.id}`, scopes))
+        .map((r) => ({ letter: r.id, label: r.label }));
       return reply.send(drives);
     },
   );

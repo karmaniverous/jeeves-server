@@ -8,6 +8,7 @@ import path from 'node:path';
 
 import type { FastifyPluginAsync } from 'fastify';
 
+import { canAccessPath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
 import { withFileLock } from '../../util/fileMutex.js';
 import { getRoots, urlPathToFs } from '../../util/platform.js';
@@ -119,6 +120,13 @@ export const fileMutationRoutes: FastifyPluginAsync = (fastify) => {
 
     const reqPath = request.params['*'];
     if (!reqPath) return reply.code(400).send({ error: 'Path required' });
+
+    // Defence in depth: the auth middleware also enforces scopes.
+    if (!canAccessPath(`/${reqPath}`, request.insiderScopes)) {
+      return reply
+        .code(403)
+        .send({ error: 'Path is outside your access scope' });
+    }
 
     // Validate .md extension
     if (!reqPath.endsWith('.md')) {

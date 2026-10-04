@@ -10,11 +10,7 @@ import path from 'node:path';
 
 import type { FastifyPluginCallback } from 'fastify';
 
-import {
-  _directoryVisibleUnderScopes,
-  _pathMatchesPatterns,
-  _pathMatchesScopes,
-} from '../../auth/keys.js';
+import { canAccessPath, canNavigatePath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
 import { filterBreadcrumbsForOutsider } from '../../util/breadcrumbs.js';
 import {
@@ -96,8 +92,16 @@ export const directoryRoutes: FastifyPluginCallback = (
         return reply.code(404).send({ error: 'Not found', path: resolved });
       }
 
+      const insiderScopes = request.insiderScopes ?? null;
       const stats = await fsp.stat(resolved);
       if (!stats.isDirectory()) {
+        // Navigation access (ancestor of an allowed path) is not enough
+        // for file metadata: the file itself must be in scope.
+        if (!canAccessPath(`/${reqPath}`, insiderScopes)) {
+          return reply
+            .code(403)
+            .send({ error: 'Path is outside your access scope' });
+        }
         const ext = path.extname(resolved).toLowerCase();
         return reply.send({
           type: 'file',
@@ -109,7 +113,6 @@ export const directoryRoutes: FastifyPluginCallback = (
       }
 
       const isInsider = request.accessMode === 'insider';
-      const insiderScopes = request.insiderScopes ?? null;
 
       const allEntries = await fsp.readdir(resolved, {
         withFileTypes: true,
@@ -119,17 +122,9 @@ export const directoryRoutes: FastifyPluginCallback = (
         ? allEntries.filter((entry) => {
             const entryPath = path.join(resolved, entry.name);
             const entryUrlPath = fsPathToUrl(entryPath, roots);
-            if (insiderScopes.deny.length > 0) {
-              if (_pathMatchesPatterns(entryUrlPath, insiderScopes.deny))
-                return false;
-            }
-            if (entry.isDirectory()) {
-              return _directoryVisibleUnderScopes(
-                entryUrlPath,
-                insiderScopes.allow,
-              );
-            }
-            return _pathMatchesScopes(entryUrlPath, insiderScopes);
+            return entry.isDirectory()
+              ? canNavigatePath(entryUrlPath, insiderScopes)
+              : canAccessPath(entryUrlPath, insiderScopes);
           })
         : allEntries;
 

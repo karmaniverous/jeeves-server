@@ -113,6 +113,13 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
     const { path: targetPath, expiry, depth, dirs } = request.body;
     if (!targetPath) return reply.code(400).send({ error: 'path is required' });
 
+    const sharerScopes = request.insiderScopes ?? null;
+    if (sharerScopes && !_pathMatchesScopes(targetPath, sharerScopes)) {
+      return reply
+        .code(403)
+        .send({ error: 'Path is outside your access scope' });
+    }
+
     let outsiderKey: string;
     let shareUrl: string;
 

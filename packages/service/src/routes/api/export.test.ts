@@ -1,3 +1,4 @@
+import type * as JeevesModule from '@karmaniverous/jeeves';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock dependencies
@@ -8,7 +9,8 @@ vi.mock('node:fs', () => ({
   },
 }));
 
-vi.mock('@karmaniverous/jeeves', () => ({
+vi.mock('@karmaniverous/jeeves', async (importOriginal) => ({
+  ...(await importOriginal<typeof JeevesModule>()),
   getBindAddress: vi.fn().mockReturnValue('127.0.0.1'),
 }));
 

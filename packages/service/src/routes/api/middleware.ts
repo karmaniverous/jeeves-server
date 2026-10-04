@@ -11,6 +11,11 @@ import {
   resolveKeyAuth,
   resolveSessionAuth,
 } from '../../auth/resolve.js';
+import {
+  hasTraversalSegment,
+  parseContentRoute,
+  scopesAllowRoute,
+} from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
 import { decodeStack } from '../../services/deepShareLinks.js';
 
@@ -78,6 +83,15 @@ export function addAuthMiddleware(fastify: FastifyInstance): void {
     const query = request.query as AuthQuery;
     const deepParams = extractDeepParams(query);
 
+    // Content path addressed by this request (null for non-content routes).
+    // Reject `..` segments outright: they can resolve outside the path that
+    // scope and key checks evaluate.
+    const contentRoute = parseContentRoute(request.url);
+    if (contentRoute && hasTraversalSegment(contentRoute.path)) {
+      reply.code(400).send({ error: 'Invalid path' });
+      return;
+    }
+
     let urlPath: string;
     try {
       urlPath = decodeURIComponent(
@@ -134,8 +148,11 @@ export function addAuthMiddleware(fastify: FastifyInstance): void {
     // Try session cookie (always check — insiders visiting outsider links
     // should be upgraded to insider access)
     const sessionResult = resolveSessionAuth(config, request);
+    const sessionInScope =
+      sessionResult.valid &&
+      scopesAllowRoute(contentRoute, sessionResult.scopes ?? null);
 
-    if (authResult.valid && sessionResult.valid) {
+    if (authResult.valid && sessionInScope) {
       // Both key and session are valid — prefer insider session
       request.accessMode = 'insider';
       request.authSeed = sessionResult.seed;
@@ -153,12 +170,17 @@ export function addAuthMiddleware(fastify: FastifyInstance): void {
       return;
     }
 
-    if (sessionResult.valid) {
+    if (sessionInScope) {
       request.accessMode = 'insider';
       request.authSeed = sessionResult.seed;
       request.insiderEmail = sessionResult.email;
       request.insiderScopes = sessionResult.scopes ?? null;
       request.keyAge = sessionResult.keyAge;
+      return;
+    }
+
+    if (sessionResult.valid) {
+      reply.code(403).send({ error: 'Path is outside your access scope' });
       return;
     }
 

@@ -8,6 +8,7 @@ import path from 'node:path';
 
 import type { FastifyPluginCallback } from 'fastify';
 
+import { canAccessPath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
 import { getPlantUmlFormats } from '../../services/plantuml.js';
 import { getRoots, urlPathToFs } from '../../util/platform.js';
@@ -32,6 +33,15 @@ export const linkInfoRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
         return reply.send({ exists: false });
       }
       const isDirectory = stats.isDirectory();
+      // Navigation access covers directories; files must be in scope.
+      if (
+        !isDirectory &&
+        !canAccessPath(`/${reqPath}`, request.insiderScopes)
+      ) {
+        return reply
+          .code(403)
+          .send({ error: 'Path is outside your access scope' });
+      }
       const ext = path.extname(resolved).toLowerCase();
 
       const pageUrl = `/browse/${reqPath}`;

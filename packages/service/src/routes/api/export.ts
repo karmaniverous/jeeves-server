@@ -14,6 +14,7 @@ import { getBindAddress } from '@karmaniverous/jeeves';
 import { TarArchive, ZipArchive } from 'archiver';
 import type { FastifyPluginCallback } from 'fastify';
 
+import { archiveEntryFilter } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
 import { appendEvent } from '../../services/eventQueue.js';
 import { exportPage } from '../../services/export.js';
@@ -93,7 +94,16 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
         });
 
         archive.pipe(res);
-        archive.directory(resolved, dirName);
+        // Scoped insiders: omit entries their scopes deny.
+        const allowEntry = archiveEntryFilter(
+          `/${reqPath}`,
+          request.insiderScopes ?? null,
+        );
+        archive.directory(resolved, dirName, (entry) =>
+          allowEntry(entry.name, entry.stats?.isDirectory() ?? false)
+            ? entry
+            : false,
+        );
         await archive.finalize();
         return;
       }
