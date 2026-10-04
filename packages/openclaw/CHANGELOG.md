@@ -6,8 +6,50 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [271] fix(service): address review on insider scope enforcement (#271)
+
+Copilot review:
+- Propagate key scopes: verifyKey/resolveKeyAuth now return the matched
+  key's (or issuing insider's) scopes and the middleware sets
+  request.insiderScopes on key auth, so scoped machine insider keys get
+  filtered archives and listings, and outsider directory shares hide
+  entries outside the issuer's scopes.
+- Directory archive size limit counts only in-scope files (getDirSize
+  takes an optional file filter), so denied content can neither block an
+  export with 413 nor leak its size.
+- Split fileContent.ts (430 lines) into fileContent (GET), fileWrite
+  (PUT) and fileRender (watcher proxy + Markdown pipeline).
+
+SOLID/DRY:
+- contentRoute.ts owns URL -> content path mapping; the middleware's
+  string replace chain is gone. Key auth for /api/mermaid-export,
+  /api/plantuml-export and /api/link-info is now verified against the
+  content path, so share keys work there as documented (previously
+  rejected).
+- scopeAccess.ts holds pure scope decisions; scopeGuard.ts the shared
+  403 response used by every route-level check.
+- archiveExport.ts owns directory archive export.
+- Middleware split into authenticateUtility / resolveUrlKey helpers.
+
+Tests: 494 -> 568 service tests. New route tests for archive export,
+file write, file content, file render, link info scope, share route,
+getDirSize, key scope propagation. Removed sharing tests that exercised
+an inline copy of the code; merged duplicate export format tests.
+
+Docs: scope enforcement in sharing/api-integration/exports guides,
+access decision flow diagram, plugin skill; fix scope examples that
+used /* (direct children only) where /** was meant; fix /api/path and
+/api/share body in the API reference.
+## [0.14.0] - 2026-09-29
+
+### 💼 Other
+
 - [261] updated jeeves-core
 - Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-openclaw v0.14.0
 ## [0.14.0-3] - 2026-09-28
 
 ### 💼 Other
