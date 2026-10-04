@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractDeepParams, sanitizeReturnTo } from './resolve.js';
+import type { NormalizedScopes, RuntimeConfig } from '../config/types.js';
+import { computeInsiderKey } from '../util/crypto.js';
+import {
+  extractDeepParams,
+  resolveKeyAuth,
+  sanitizeReturnTo,
+} from './resolve.js';
 
 describe('extractDeepParams', () => {
   it('returns undefined when d is absent', () => {
@@ -82,5 +88,51 @@ describe('sanitizeReturnTo', () => {
 
   it('uses custom fallback when provided', () => {
     expect(sanitizeReturnTo('https://evil.com', '/home')).toBe('/home');
+  });
+});
+
+describe('resolveKeyAuth', () => {
+  const scoped: NormalizedScopes = {
+    allow: ['/j/content/**'],
+    deny: [],
+    explicitAllow: [],
+    explicitDeny: [],
+  };
+  const config = {
+    resolvedKeys: [{ name: 'scoped', seed: 'machine-seed', scopes: scoped }],
+    resolvedInsiders: [],
+  } as unknown as RuntimeConfig;
+
+  it('fails without a key', () => {
+    expect(
+      resolveKeyAuth(config, '/j/content/a.md', undefined, undefined),
+    ).toEqual({ valid: false });
+  });
+
+  it('passes the verified key scopes through', () => {
+    const result = resolveKeyAuth(
+      config,
+      '/j/content/a.md',
+      computeInsiderKey('machine-seed'),
+      undefined,
+    );
+    expect(result).toMatchObject({
+      valid: true,
+      mode: 'insider',
+      seed: 'machine-seed',
+      keyName: 'scoped',
+      scopes: scoped,
+    });
+  });
+
+  it('fails for a key outside its scopes', () => {
+    expect(
+      resolveKeyAuth(
+        config,
+        '/j/config/x.json',
+        computeInsiderKey('machine-seed'),
+        undefined,
+      ),
+    ).toEqual({ valid: false });
   });
 });

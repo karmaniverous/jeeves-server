@@ -62,6 +62,7 @@ export function resolveKeyAuth(
       seed: result.seed ?? undefined,
       keyName: result.keyName,
       matchedPath: result.matchedPath,
+      scopes: result.scopes,
       deepShareParams: deepParams,
     };
   }

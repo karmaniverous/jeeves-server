@@ -26,6 +26,7 @@ import {
   type DeepShareParams,
 } from '../../util/crypto.js';
 import { fsPathToUrl, getRoots } from '../../util/platform.js';
+import { rejectOutOfScope } from './scopeGuard.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -112,6 +113,8 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
 
     const { path: targetPath, expiry, depth, dirs } = request.body;
     if (!targetPath) return reply.code(400).send({ error: 'path is required' });
+
+    if (rejectOutOfScope(request, reply, targetPath)) return reply;
 
     let outsiderKey: string;
     let shareUrl: string;

@@ -167,6 +167,7 @@ export function verifyKey(
     keyName: null,
     seed: null,
     matchedPath: null,
+    scopes: null,
   };
 
   if (!providedKey) return fail;
@@ -185,6 +186,7 @@ export function verifyKey(
         keyName: rk.name,
         seed: rk.seed,
         matchedPath: null,
+        scopes: rk.scopes,
       };
     }
 
@@ -206,6 +208,7 @@ export function verifyKey(
         keyName: rk.name,
         seed: rk.seed,
         matchedPath: machineMatch,
+        scopes: rk.scopes,
       };
     }
   }
@@ -231,6 +234,7 @@ export function verifyKey(
         keyName: ri.email,
         seed: ri.seed,
         matchedPath: insiderMatch,
+        scopes: ri.scopes,
       };
     }
   }
@@ -238,32 +242,7 @@ export function verifyKey(
   return fail;
 }
 
-/**
- * Check whether a directory should be visible given allow scope patterns.
- * A directory is visible if any allowed scope is under it OR above it.
- * This enables navigating toward allowed paths through parent directories.
- */
-function directoryVisibleUnderScopes(
-  dirUrlPath: string,
-  allowPatterns: string[],
-): boolean {
-  const normalized = dirUrlPath.toLowerCase().replace(/\/+$/, '');
-  for (const pattern of allowPatterns) {
-    const p = pattern.toLowerCase().replace(/\/+$/, '');
-    // Strip trailing glob parts to get the "prefix" of the pattern
-    const prefix = p.replace(/\/\*\*$/, '').replace(/\/\*$/, '');
-    // Directory is above a scope (navigate toward it)
-    if (prefix.startsWith(normalized + '/') || prefix === normalized)
-      return true;
-    // Directory is under a scope (already inside an allowed area)
-    if (normalized.startsWith(prefix + '/') || normalized === prefix)
-      return true;
-  }
-  return false;
-}
-
 export {
-  directoryVisibleUnderScopes as _directoryVisibleUnderScopes,
   pathMatchesPatterns as _pathMatchesPatterns,
   pathMatchesScopes as _pathMatchesScopes,
 };

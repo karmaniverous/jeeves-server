@@ -168,17 +168,25 @@ export function breadcrumbParts(
 
 /**
  * Recursively calculate total size of a directory in bytes.
+ *
+ * When `includeFile` is given, only files for which it returns true count;
+ * it receives each file's `/`-separated path relative to `dirPath`.
  */
-export function getDirSize(dirPath: string): number {
+export function getDirSize(
+  dirPath: string,
+  includeFile?: (relativePath: string) => boolean,
+  relativeDir = '',
+): number {
   let totalSize = 0;
   try {
     const entries = fs.readdirSync(dirPath, { withFileTypes: true });
     for (const entry of entries) {
       const entryPath = path.join(dirPath, entry.name);
+      const relativePath = relativeDir + entry.name;
       try {
         if (entry.isDirectory()) {
-          totalSize += getDirSize(entryPath);
-        } else {
+          totalSize += getDirSize(entryPath, includeFile, relativePath + '/');
+        } else if (!includeFile || includeFile(relativePath)) {
           const s = fs.statSync(entryPath);
           totalSize += s.size;
         }

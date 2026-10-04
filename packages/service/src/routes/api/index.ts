@@ -13,6 +13,7 @@ import { eventsRoutes } from './events.js';
 import { exportRoutes } from './export.js';
 import { fileContentRoutes } from './fileContent.js';
 import { fileMutationRoutes } from './fileMutations.js';
+import { fileWriteRoutes } from './fileWrite.js';
 import { linkInfoRoutes } from './linkInfo.js';
 import { magicLinkApiRoute } from './magicLink.js';
 import { addAuthMiddleware } from './middleware.js';
@@ -31,6 +32,7 @@ export const apiRoute: FastifyPluginAsync = async (fastify) => {
   await fastify.register(drivesRoutes);
   await fastify.register(directoryRoutes);
   await fastify.register(fileContentRoutes);
+  await fastify.register(fileWriteRoutes);
   await fastify.register(linkInfoRoutes);
   await fastify.register(rawRoutes);
   await fastify.register(exportRoutes);

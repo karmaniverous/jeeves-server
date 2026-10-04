@@ -4,6 +4,8 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { NormalizedScopes } from '../../config/types.js';
+
 // Must set tmpDir before mocks reference it
 let tmpDir: string;
 
@@ -39,6 +41,7 @@ describe('GET /api/link-info', () => {
   async function callHandler(
     urlPath: string,
     accessMode = 'insider',
+    insiderScopes: NormalizedScopes | null = null,
   ): Promise<Record<string, unknown>> {
     const routes: Record<
       string,
@@ -57,9 +60,9 @@ describe('GET /api/link-info', () => {
 
     let result: unknown;
     const fakeReply = {
-      code: () => ({
+      code: (status: number) => ({
         send: (d: unknown) => {
-          result = d;
+          result = { status, ...(d as object) };
           return d;
         },
       }),
@@ -71,10 +74,46 @@ describe('GET /api/link-info', () => {
     const fakeRequest = {
       params: { '*': urlPath },
       accessMode,
+      insiderScopes,
     };
     await handler(fakeRequest, fakeReply);
     return result as Record<string, unknown>;
   }
+
+  describe('scoped insider', () => {
+    // Allowed: test/content/**, so `test` is navigable but its files are not.
+    const scopes: NormalizedScopes = {
+      allow: ['/test/content/**'],
+      deny: [],
+      explicitAllow: [],
+      explicitDeny: [],
+    };
+
+    it('refuses a file inside a navigable ancestor with 403', async () => {
+      fs.writeFileSync(path.join(tmpDir, 'secret.md'), 'x');
+      const res = await callHandler('test/secret.md', 'insider', scopes);
+      expect(res).toEqual({
+        status: 403,
+        error: 'Path is outside your access scope',
+      });
+    });
+
+    it('still describes the navigable ancestor directory', async () => {
+      fs.mkdirSync(path.join(tmpDir, 'content'));
+      const res = await callHandler('test', 'insider', scopes);
+      expect(res).toMatchObject({ exists: true, isDirectory: true });
+    });
+
+    it('describes an in-scope file', async () => {
+      fs.mkdirSync(path.join(tmpDir, 'content'));
+      fs.writeFileSync(path.join(tmpDir, 'content', 'a.md'), 'x');
+      const res = await callHandler('test/content/a.md', 'insider', scopes);
+      expect(res).toMatchObject({
+        exists: true,
+        rawUrl: '/api/raw/test/content/a.md',
+      });
+    });
+  });
 
   it('returns exists: false for non-existent path', async () => {
     const res = await callHandler('test/doesnotexist.md');

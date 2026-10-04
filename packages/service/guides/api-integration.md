@@ -69,7 +69,7 @@ function insiderKey(seed) {
 | Method | Path | Description |
 | --- | --- | --- |
 | `GET` | `/api/drives` | List available drives (Windows) or roots (Linux) |
-| `GET` | `/api/directory/<path>` | List directory contents |
+| `GET` | `/api/path/<path>` | List directory contents (or file metadata for a file path) |
 
 ### Export
 
@@ -85,9 +85,21 @@ function insiderKey(seed) {
 | --- | --- | --- |
 | `GET` | `/insider-key` | Get derived insider key (requires `X-API-Key` header with seed) |
 | `GET` | `/key?path=<path>` | Compute outsider key for a path |
-| `POST` | `/api/share` | Generate share link (path, expiryDays, depth, dirs) |
+| `POST` | `/api/share` | Generate share link (`path`, `expiry` as epoch ms, `depth`, `dirs`) |
 | `POST` | `/api/util/share-for` | Generate share link for a specific audience (insiders, enforceOutsiderPolicy) |
 | `POST` | `/api/rotate-key` | Rotate an insider's key (invalidates all their outsider links) |
+
+### Scopes and errors
+
+Content routes (`/api/path`, `/api/file`, `/api/raw`, `/api/export`, `/api/export-cache`, `/api/mermaid-export`, `/api/plantuml-export`, `/api/link-info`) verify `?key=` against the content path after the route prefix, so share keys work on all of them. For scoped identities:
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{ "error": "Invalid path" }` | The content path contains a `..` segment |
+| `401` | `{ "error": "Unauthorized" }` | No valid session or key |
+| `403` | `{ "error": "Path is outside your access scope" }` | Authenticated, but the path is outside the identity's scopes |
+
+Directory listings and link info admit ancestors of in-scope paths (for navigation) and only list reachable entries; every other content route requires the path itself to be in scope. See [Sharing → How scopes are enforced](sharing.md#how-scopes-are-enforced).
 
 ### File Mutation (insider auth required)
 

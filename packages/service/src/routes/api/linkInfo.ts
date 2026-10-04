@@ -11,6 +11,7 @@ import type { FastifyPluginCallback } from 'fastify';
 import { getConfig } from '../../config/index.js';
 import { getPlantUmlFormats } from '../../services/plantuml.js';
 import { getRoots, urlPathToFs } from '../../util/platform.js';
+import { rejectOutOfScope } from './scopeGuard.js';
 
 export const linkInfoRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   const roots = getRoots(getConfig().roots);
@@ -32,6 +33,9 @@ export const linkInfoRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
         return reply.send({ exists: false });
       }
       const isDirectory = stats.isDirectory();
+      // Navigation access covers directories; files must be in scope.
+      if (!isDirectory && rejectOutOfScope(request, reply, reqPath))
+        return reply;
       const ext = path.extname(resolved).toLowerCase();
 
       const pageUrl = `/browse/${reqPath}`;

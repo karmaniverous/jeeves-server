@@ -11,37 +11,38 @@ start
 
 :Request arrives;
 
-if (Has session cookie?\n(Google OAuth)) then (Yes)
-  if (Email in insiders map?) then (Yes)
+if (Path contains a ".." segment?) then (Yes)
+  :REJECTED (400);<<#ef4444>>
+  stop
+endif
+
+if (Valid session cookie\n(Google OAuth insider)?) then (Yes)
+  if (Path within the\ninsider's scopes?) then (Yes)
     :INSIDER access\n(within scopes);<<#22c55e>>
     stop
-  else (No)
-    :DENIED;<<#ef4444>>
-    stop
   endif
-else (No)
-  if (Has ?key= parameter?) then (Yes)
-    if (Matches machine\ninsider key?) then (Yes)
+endif
+
+if (Has ?key=*** parameter?) then (Yes)
+  if (Matches machine\ninsider key?) then (Yes)
+    if (Path within\nkey scopes?) then (Yes)
       :INSIDER access\n(within scopes);<<#22c55e>>
       stop
-    else (No)
-      if (Matches outsider key?\n(machine or insider seed)) then (Yes)
-        if (Path matches key\npath or ancestor?) then (Yes)
-          :OUTSIDER access;<<#22c55e>>
-          stop
-        else (No)
-          :DENIED;<<#ef4444>>
-          stop
-        endif
-      else (No)
-        :DENIED;<<#ef4444>>
-        stop
-      endif
     endif
-  else (No)
-    :DENIED\n(or redirect to Google login);<<#f59e0b>>
-    stop
+  elseif (Matches outsider key?\n(machine or insider seed)) then (Yes)
+    if (Path matches key path or ancestor,\nwithin issuer scopes?) then (Yes)
+      :OUTSIDER access;<<#22c55e>>
+      stop
+    endif
   endif
+endif
+
+if (Valid session cookie?) then (Yes)
+  :DENIED (403)\npath outside scope;<<#ef4444>>
+  stop
+else (No)
+  :DENIED (401)\n(or redirect to Google login);<<#f59e0b>>
+  stop
 endif
 
 @enduml

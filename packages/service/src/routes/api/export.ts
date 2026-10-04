@@ -11,7 +11,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { getBindAddress } from '@karmaniverous/jeeves';
-import { TarArchive, ZipArchive } from 'archiver';
 import type { FastifyPluginCallback } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
@@ -24,7 +23,8 @@ import {
   clearStandaloneDiagramCache,
   getCachedExport,
 } from '../../services/exportCache.js';
-import { getDirSize, getRoots, urlPathToFs } from '../../util/platform.js';
+import { getRoots, urlPathToFs } from '../../util/platform.js';
+import { isArchiveFormat, sendDirectoryArchive } from './archiveExport.js';
 
 export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   const roots = getRoots(getConfig().roots);
@@ -48,54 +48,11 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
 
       // ZIP/tar export for directories
       if (stats.isDirectory()) {
-        if (format !== 'zip' && format !== 'tar')
+        if (!isArchiveFormat(format))
           return reply
             .code(400)
             .send({ error: 'Directories only support zip or tar export' });
-        const isInsider = request.accessMode === 'insider';
-        if (!isInsider)
-          return reply
-            .code(403)
-            .send({ error: 'Archive export requires insider access' });
-
-        const config = getConfig();
-        const totalSize = getDirSize(resolved);
-        const maxSizeBytes = config.maxZipSizeMb * 1024 * 1024;
-        if (totalSize > maxSizeBytes) {
-          return reply.code(413).send({
-            error: `Directory too large for archive export (${String(Math.round(totalSize / 1024 / 1024))}MB, max ${String(config.maxZipSizeMb)}MB)`,
-          });
-        }
-
-        const dirName = path.basename(resolved);
-        const isTar = format === 'tar';
-        const contentType = isTar ? 'application/x-tar' : 'application/zip';
-        const fileExt = isTar ? 'tar' : 'zip';
-        const archive = isTar
-          ? new TarArchive()
-          : new ZipArchive({ zlib: { level: 6 } });
-
-        reply.hijack();
-        const res = reply.raw;
-        res.setHeader('Content-Type', contentType);
-        res.setHeader(
-          'Content-Disposition',
-          `attachment; filename="${dirName}.${fileExt}"`,
-        );
-        res.statusCode = 200;
-
-        archive.on('error', (err: unknown) => {
-          fastify.log.error(
-            { err, path: resolved, format },
-            'Archive export failed',
-          );
-          res.destroy();
-        });
-
-        archive.pipe(res);
-        archive.directory(resolved, dirName);
-        await archive.finalize();
-        return;
+        return sendDirectoryArchive(request, reply, resolved, reqPath, format);
       }
 
       // PDF/DOCX export for files

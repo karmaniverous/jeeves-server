@@ -11,6 +11,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { getConfig } from '../../config/index.js';
 import { withFileLock } from '../../util/fileMutex.js';
 import { getRoots, urlPathToFs } from '../../util/platform.js';
+import { rejectOutOfScope } from './scopeGuard.js';
 
 /**
  * Regex matching a GFM task-list checkbox: a list marker followed by `[ ]`, `[x]`, or `[X]`.
@@ -119,6 +120,9 @@ export const fileMutationRoutes: FastifyPluginAsync = (fastify) => {
 
     const reqPath = request.params['*'];
     if (!reqPath) return reply.code(400).send({ error: 'Path required' });
+
+    // Defence in depth: the auth middleware also enforces scopes.
+    if (rejectOutOfScope(request, reply, reqPath)) return reply;
 
     // Validate .md extension
     if (!reqPath.endsWith('.md')) {
