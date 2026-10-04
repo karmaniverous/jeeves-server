@@ -17,7 +17,7 @@ Anyone listed in the `insiders` map in your config:
 ```json
 {
   "alice@example.com": {},
-  "bob@example.com": { "scopes": ["/d/projects/*"] }
+  "bob@example.com": { "scopes": ["/d/projects/**"] }
 }
 ```
 
@@ -48,7 +48,7 @@ Scopes restrict which paths an insider can access. Three formats are supported:
 ```json
 {
   "contractor@example.com": {
-    "scopes": ["/d/projects/client-x/*"]
+    "scopes": ["/d/projects/client-x/**"]
   }
 }
 ```
@@ -59,8 +59,8 @@ Scopes restrict which paths an insider can access. Three formats are supported:
 {
   "team-member@example.com": {
     "scopes": {
-      "allow": ["/d/*"],
-      "deny": ["/d/secrets/*", "/d/.private/*"]
+      "allow": ["/d/**"],
+      "deny": ["/d/secrets/**", "/d/.private/**"]
     }
   }
 }
@@ -72,7 +72,7 @@ Scopes restrict which paths an insider can access. Three formats are supported:
 {
   "almost-full@example.com": {
     "scopes": {
-      "deny": ["/d/hr/*", "/d/finance/*"]
+      "deny": ["/d/hr/**", "/d/finance/**"]
     }
   }
 }
@@ -83,7 +83,19 @@ Scopes restrict which paths an insider can access. Three formats are supported:
 - A path must match at least one allow rule **and** not match any deny rule
 - Omitting `allow` = implicit `['/**']` (allow everything)
 - Omitting `deny` = no exclusions
+- Patterns are [picomatch](https://github.com/micromatch/picomatch) globs: `*` matches within one path segment, `**` across segments. Use `/d/projects/client-x/**` to grant a whole tree; wildcard segments such as `/d/projects/client-*/**` are supported
 - Omitting scopes entirely = **full access** (unchanged)
+
+### How scopes are enforced
+
+Scopes apply to every authenticated identity: Google-session insiders, insider keys, scoped machine keys, and share links minted by a scoped insider (which carry the issuer's scopes).
+
+- **Navigation** — directory listings (`/api/path/...`) and link info (`/api/link-info/...`) for a directory are allowed when the directory is in scope **or** is an ancestor of an allowed path, so a scoped insider can browse down to their scope from the root. Listings only show entries the insider can reach.
+- **Content** — viewing, raw download, export, export-cache, diagram export, file writes (`PUT`/`POST /api/file/...`) and file metadata require the path itself to be in scope. Out-of-scope requests return **403** (`Path is outside your access scope`).
+- **Drives** — `/api/drives` lists only roots the insider can navigate into.
+- **Directory archives** — ZIP/tar export omits out-of-scope entries, and the `maxZipSizeMb` limit counts only in-scope content.
+- **Share links** — `POST /api/share` refuses targets outside the sharer's scopes (403).
+- **Session vs key** — a session insider requesting an out-of-scope path still gets access if the URL carries a valid share key for it (the key's access then applies); otherwise 403.
 
 ---
 
@@ -221,5 +233,6 @@ The server renders different UI based on access mode:
 - **All keys are derived** — seeds are never exposed in URLs. Even if someone captures an outsider key, they can't derive the insider key or access other paths.
 - **Timing-safe comparison** — key verification uses constant-time comparison to prevent timing attacks.
 - **No server-side link storage** — outsider keys are computed on-the-fly from the seed + path (+ optional expiry). There's no database of active links to breach.
+- **Path traversal is rejected** — content paths containing a `..` segment (either `/` or `\` separated) are refused with 400 before any key or scope check.
 - **Scopes are enforced at verification time** — even if a valid key is presented, it's rejected if the path doesn't match the key's scopes.
 - **HTTPS recommended** — keys are in URL parameters. Use HTTPS in production to prevent interception.

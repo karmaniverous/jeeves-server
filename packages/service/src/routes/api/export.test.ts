@@ -17,7 +17,6 @@ vi.mock('@karmaniverous/jeeves', async (importOriginal) => ({
 vi.mock('../../config/index.js', () => ({
   getConfig: vi.fn().mockReturnValue({
     roots: { j: '/data/j' },
-    maxZipSizeMb: 100,
     port: 1934,
     sessionSecret: 'test-secret',
   }),
@@ -40,7 +39,6 @@ vi.mock('../../services/exportCache.js', () => ({
 }));
 
 vi.mock('../../util/platform.js', () => ({
-  getDirSize: vi.fn(),
   getRoots: vi.fn().mockReturnValue({ j: '/data/j' }),
   urlPathToFs: vi.fn(),
 }));
@@ -89,44 +87,29 @@ describe('exportRoutes — directory archive format validation', () => {
     exportRoutes(mockFastify as never, {}, () => {});
   });
 
-  it('rejects unsupported format for directories with 400', async () => {
-    mockedUrlPathToFs.mockReturnValue('/data/j/docs');
-    mockedFs.existsSync.mockReturnValue(true);
-    mockedFs.statSync.mockReturnValue({ isDirectory: () => true } as never);
+  it.each(['pdf', 'docx'])(
+    'rejects %s format for directories with 400',
+    async (format) => {
+      mockedUrlPathToFs.mockReturnValue('/data/j/docs');
+      mockedFs.existsSync.mockReturnValue(true);
+      mockedFs.statSync.mockReturnValue({ isDirectory: () => true } as never);
 
-    const reply = mockReply();
-    await registeredRoutes['GET /api/export/*'](
-      {
-        params: { '*': 'j/docs' },
-        query: { format: 'pdf' },
-        accessMode: 'insider',
-      },
-      reply,
-    );
+      const reply = mockReply();
+      await registeredRoutes['GET /api/export/*'](
+        {
+          params: { '*': 'j/docs' },
+          query: { format },
+          accessMode: 'insider',
+        },
+        reply,
+      );
 
-    expect(reply.code).toHaveBeenCalledWith(400);
-    const sendArg = vi.mocked(reply.send as ReturnType<typeof vi.fn>).mock
-      .calls[0]?.[0] as { error?: string } | undefined;
-    expect(sendArg?.error).toContain('zip or tar');
-  });
-
-  it('rejects docx format for directories with 400', async () => {
-    mockedUrlPathToFs.mockReturnValue('/data/j/docs');
-    mockedFs.existsSync.mockReturnValue(true);
-    mockedFs.statSync.mockReturnValue({ isDirectory: () => true } as never);
-
-    const reply = mockReply();
-    await registeredRoutes['GET /api/export/*'](
-      {
-        params: { '*': 'j/docs' },
-        query: { format: 'docx' },
-        accessMode: 'insider',
-      },
-      reply,
-    );
-
-    expect(reply.code).toHaveBeenCalledWith(400);
-  });
+      expect(reply.code).toHaveBeenCalledWith(400);
+      const sendArg = vi.mocked(reply.send as ReturnType<typeof vi.fn>).mock
+        .calls[0]?.[0] as { error?: string } | undefined;
+      expect(sendArg?.error).toContain('zip or tar');
+    },
+  );
 
   it('requires insider access for archive export', async () => {
     mockedUrlPathToFs.mockReturnValue('/data/j/docs');

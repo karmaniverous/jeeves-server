@@ -73,6 +73,7 @@ Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) ret
 - Share links have configurable expiry (default 30 days)
 - Directory shares support depth control for recursive access
 - An `outsiderPolicy` can constrain which paths are eligible for outsider sharing
+- **Scoped insiders** (sessions, insider keys, scoped machine keys) only reach paths within their scopes: directories above an allowed path can be browsed for navigation, but viewing, exporting, writing or sharing anything outside scope returns 403, and directory archives omit out-of-scope entries. Scope globs follow picomatch: use `/**` to grant a whole tree (`/*` matches direct children only)
 
 ## Export
 
@@ -138,7 +139,7 @@ Or create `jeeves-server/config.json` manually (JSON only):
   },
   "scopes": {
     "public-docs": {
-      "allow": ["/d/docs/*"]
+      "allow": ["/d/docs/**"]
     }
   },
   "insiders": {

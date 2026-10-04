@@ -19,6 +19,7 @@ import {
   getRoots,
   urlPathToFs,
 } from '../../util/platform.js';
+import { rejectOutOfScope } from './scopeGuard.js';
 
 /** Result shape returned by {@link mapDirectoryEntry}. */
 export interface DirectoryEntryInfo {
@@ -97,11 +98,7 @@ export const directoryRoutes: FastifyPluginCallback = (
       if (!stats.isDirectory()) {
         // Navigation access (ancestor of an allowed path) is not enough
         // for file metadata: the file itself must be in scope.
-        if (!canAccessPath(`/${reqPath}`, insiderScopes)) {
-          return reply
-            .code(403)
-            .send({ error: 'Path is outside your access scope' });
-        }
+        if (rejectOutOfScope(request, reply, reqPath)) return reply;
         const ext = path.extname(resolved).toLowerCase();
         return reply.send({
           type: 'file',

@@ -232,11 +232,11 @@ The `maxZipSizeMb` config setting (default: 100 MB) prevents accidentally archiv
 maxZipSizeMb: 100,  // Refuse archive for directories larger than this
 ```
 
-When the total directory size exceeds this limit, the archive options are disabled with a message explaining why.
+When the total directory size exceeds this limit, the archive options are disabled with a message explaining why, and the export endpoint returns 413. For scoped insiders, only in-scope files count towards the limit.
 
 ### What's included
 
-The archive contains the entire directory tree — all files and subdirectories. No files are excluded.
+For unscoped insiders, the archive contains the entire directory tree — all files and subdirectories. For scoped insiders (sessions or scoped machine keys), entries outside their scopes are omitted, names included. See [Sharing → How scopes are enforced](sharing.md#how-scopes-are-enforced).
 
 ## Export for Outsiders
 

@@ -1,34 +1,26 @@
 /**
- * File content API routes.
+ * File content API route: returns a file's content and, where supported,
+ * its rendered form (Markdown, Mermaid, PlantUML, CSV, watcher-rendered text).
  *
- * Handles: GET /api/file/*, PUT /api/file/*
+ * Handles: GET /api/file/* (writes: fileWrite.ts, mutations: fileMutations.ts)
+ *
+ * @packageDocumentation
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { getServiceUrl } from '@karmaniverous/jeeves';
-import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyPluginAsync } from 'fastify';
 
-import { canAccessPath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
 import { csvToHtmlTable } from '../../services/csv.js';
-import {
-  rewriteLinksForDeepShare,
-  rewriteSimpleImageAuth,
-} from '../../services/deepShareLinks.js';
 import { getOrRenderDiagram } from '../../services/diagramCache.js';
-import {
-  renderEmbeddedDiagrams,
-  setDiagramContext,
-} from '../../services/embeddedDiagrams.js';
-import { registerDiagramHashes } from '../../services/exportCache.js';
-import { parseMarkdown } from '../../services/markdown.js';
 import { renderMermaidSvg } from '../../services/mermaid.js';
 import { renderPlantUmlSvg } from '../../services/plantuml.js';
 import { filterBreadcrumbsForOutsider } from '../../util/breadcrumbs.js';
 import { looksLikeText } from '../../util/fileDetection.js';
 import { breadcrumbParts, getRoots, urlPathToFs } from '../../util/platform.js';
+import { renderMarkdownContent, tryWatcherRender } from './fileRender.js';
 
 /** Image extensions recognized for type detection. */
 const IMAGE_EXTS = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.ico'];
@@ -39,7 +31,6 @@ const PLANTUML_EXTS = ['.puml', '.plantuml', '.pu'];
 export const fileContentRoutes: FastifyPluginAsync = (fastify) => {
   const roots = getRoots(getConfig().roots);
 
-  // GET /api/file/*
   fastify.get<{ Params: { '*': string }; Querystring: { raw?: string } }>(
     '/api/file/*',
     async (request, reply) => {
@@ -61,380 +52,106 @@ export const fileContentRoutes: FastifyPluginAsync = (fastify) => {
           .send({ error: 'Use /api/path/ for directories' });
 
       const ext = path.extname(resolved).toLowerCase();
-      const fileName = path.basename(resolved);
       const isInsider = request.accessMode === 'insider';
-      const matchedPath = request.authMatchedPath ?? null;
-      const breadcrumbs = filterBreadcrumbsForOutsider(
-        breadcrumbParts(resolved, roots),
+      // Fields common to every response shape.
+      const base = {
+        fileName: path.basename(resolved),
+        breadcrumbs: filterBreadcrumbsForOutsider(
+          breadcrumbParts(resolved, roots),
+          isInsider,
+          request.authMatchedPath ?? null,
+          false,
+        ),
         isInsider,
-        matchedPath,
-        false,
-      );
+      };
 
       // Markdown
       if (ext === '.md') {
-        return handleMarkdown(
+        const content = fs.readFileSync(resolved, 'utf8');
+        if (rawOnly) return reply.send({ type: 'markdown', content, ...base });
+        const rendered = await renderMarkdownContent(
+          content,
           request,
-          reply,
           resolved,
           reqPath,
-          rawOnly,
-          fileName,
-          breadcrumbs,
           isInsider,
-          stats.mtimeMs,
-        );
-      }
-
-      // Mermaid
-      if (ext === '.mmd') {
-        const content = fs.readFileSync(resolved, 'utf8');
-        if (rawOnly)
-          return reply.send({
-            type: 'mermaid',
-            content,
-            fileName,
-            breadcrumbs,
-            isInsider,
-          });
-        const renderedMermaid = await getOrRenderDiagram(
-          'mermaid',
-          content,
-          () => renderMermaidSvg(resolved),
         );
         return reply.send({
-          type: 'mermaid',
+          type: 'markdown',
           content,
-          html: renderedMermaid,
-          fileName,
-          breadcrumbs,
-          isInsider,
+          ...rendered,
+          ...base,
+          mtime: stats.mtimeMs,
         });
       }
 
-      // PlantUML
-      if (PLANTUML_EXTS.includes(ext)) {
+      // Diagrams
+      const diagramType =
+        ext === '.mmd'
+          ? 'mermaid'
+          : PLANTUML_EXTS.includes(ext)
+            ? 'plantuml'
+            : null;
+      if (diagramType) {
         const content = fs.readFileSync(resolved, 'utf8');
-        if (rawOnly)
-          return reply.send({
-            type: 'plantuml',
-            content,
-            fileName,
-            breadcrumbs,
-            isInsider,
-          });
-        const renderedPuml = await getOrRenderDiagram('plantuml', content, () =>
-          renderPlantUmlSvg(resolved),
+        if (rawOnly) return reply.send({ type: diagramType, content, ...base });
+        const html = await getOrRenderDiagram(diagramType, content, () =>
+          diagramType === 'mermaid'
+            ? renderMermaidSvg(resolved)
+            : renderPlantUmlSvg(resolved),
         );
-        return reply.send({
-          type: 'plantuml',
-          content,
-          html: renderedPuml,
-          fileName,
-          breadcrumbs,
-          isInsider,
-        });
+        return reply.send({ type: diagramType, content, html, ...base });
       }
 
       // SVG
       if (ext === '.svg') {
         const content = fs.readFileSync(resolved, 'utf8');
-        return reply.send({
-          type: 'svg',
-          content,
-          fileName,
-          breadcrumbs,
-          isInsider,
-        });
+        return reply.send({ type: 'svg', content, ...base });
       }
 
       // CSV
       if (ext === '.csv') {
         const content = fs.readFileSync(resolved, 'utf8');
-        if (rawOnly) {
-          return reply.send({
-            type: 'text',
-            content,
-            fileName,
-            breadcrumbs,
-            isInsider,
-          });
-        }
+        if (rawOnly) return reply.send({ type: 'text', content, ...base });
         const html = csvToHtmlTable(content);
-        return reply.send({
-          type: 'csv',
-          content,
-          html,
-          fileName,
-          breadcrumbs,
-          isInsider,
-        });
+        return reply.send({ type: 'csv', content, html, ...base });
       }
 
-      // Text files
+      // Text files (optionally rendered by jeeves-watcher)
       const buffer = fs.readFileSync(resolved);
       if (looksLikeText(buffer)) {
-        // Try watcher render for non-natively-renderable text files
-        if (!rawOnly) {
-          const renderResult = await tryWatcherRender(resolved);
-          if (renderResult && renderResult.renderAs === 'md') {
-            const { html, headings } = await renderMarkdownContent(
-              renderResult.content,
-              request,
-              resolved,
-              reqPath,
-              isInsider,
-            );
-
-            return await reply.send({
-              type: 'markdown',
-              content: buffer.toString('utf8'),
-              html,
-              headings,
-              fileName,
-              breadcrumbs,
-              isInsider,
-              mtime: stats.mtimeMs,
-              renderAs: renderResult.renderAs,
-              matchedRules: renderResult.rules,
-            });
-          }
+        const content = buffer.toString('utf8');
+        const renderResult = rawOnly ? null : await tryWatcherRender(resolved);
+        if (renderResult?.renderAs === 'md') {
+          const rendered = await renderMarkdownContent(
+            renderResult.content,
+            request,
+            resolved,
+            reqPath,
+            isInsider,
+          );
+          return reply.send({
+            type: 'markdown',
+            content,
+            ...rendered,
+            ...base,
+            mtime: stats.mtimeMs,
+            renderAs: renderResult.renderAs,
+            matchedRules: renderResult.rules,
+          });
         }
-
-        return handleText(reply, buffer, fileName, breadcrumbs, isInsider);
+        return reply.send({ type: 'text', content, ...base });
       }
 
       // Images
       if (IMAGE_EXTS.includes(ext)) {
-        return reply.send({ type: 'image', fileName, breadcrumbs, isInsider });
+        return reply.send({ type: 'image', ...base });
       }
 
       // Binary
-      return reply.send({
-        type: 'binary',
-        fileName,
-        size: stats.size,
-        breadcrumbs,
-        isInsider,
-      });
-    },
-  );
-
-  // PUT /api/file/*
-  fastify.put(
-    '/api/file/*',
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      if (request.accessMode !== 'insider') {
-        return reply.code(403).send({ error: 'Insider access required' });
-      }
-
-      const reqPath = (request.params as { '*': string })['*'];
-      // Defence in depth: the auth middleware also enforces scopes.
-      if (!canAccessPath(`/${reqPath}`, request.insiderScopes)) {
-        return reply
-          .code(403)
-          .send({ error: 'Path is outside your access scope' });
-      }
-      const fsPath = urlPathToFs(reqPath, roots);
-      if (!fsPath) return reply.code(404).send({ error: 'Invalid path' });
-      const resolved = path.resolve(fsPath);
-
-      try {
-        const stat = await fs.promises.stat(resolved);
-        if (!stat.isFile())
-          return await reply
-            .code(400)
-            .send({ error: 'Can only write to files' });
-      } catch {
-        return reply.code(404).send({ error: 'File not found' });
-      }
-
-      const body = request.body as { content?: string } | null;
-      if (!body || typeof body.content !== 'string') {
-        return reply
-          .code(400)
-          .send({ error: 'Request body must include "content" string' });
-      }
-
-      try {
-        await fs.promises.writeFile(resolved, body.content, 'utf8');
-        return await reply.send({
-          ok: true,
-          path: resolved,
-          size: Buffer.byteLength(body.content, 'utf8'),
-        });
-      } catch (err) {
-        return reply
-          .code(500)
-          .send({ error: `Write failed: ${(err as Error).message}` });
-      }
+      return reply.send({ type: 'binary', size: stats.size, ...base });
     },
   );
 
   return Promise.resolve();
 };
-
-/** Watcher render response shape. */
-interface WatcherRenderResponse {
-  renderAs: string;
-  content: string;
-  rules: string[];
-  metadata: Record<string, unknown>;
-}
-
-/**
- * Try to render a file via the watcher's render endpoint.
- * Returns null if watcher is not configured, unreachable, or no rules match.
- */
-async function tryWatcherRender(
-  fsPath: string,
-): Promise<WatcherRenderResponse | null> {
-  const watcherUrl = getServiceUrl('watcher');
-
-  try {
-    const res = await fetch(`${watcherUrl}/render`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        path: fsPath
-          .replace(/\\/g, '/')
-          .replace(
-            /^([A-Z]):/,
-            (_: string, d: string) => d.toLowerCase() + ':',
-          ),
-      }),
-      signal: AbortSignal.timeout(5000),
-    });
-
-    if (!res.ok) return null;
-
-    const data = (await res.json()) as WatcherRenderResponse;
-    if (data.rules.length === 0) return null;
-
-    return data;
-  } catch (err) {
-    console.warn('Watcher render failed for ' + fsPath + ':', err);
-    return null;
-  }
-}
-
-/**
- * Shared markdown rendering pipeline: parse → diagram hashes → optional
- * diagram rendering → optional deep share link rewriting.
- */
-async function renderMarkdownContent(
-  markdownSource: string,
-  request: FastifyRequest,
-  resolved: string,
-  reqPath: string,
-  isInsider: boolean,
-): Promise<{
-  html: string;
-  headings: { level: number; text: string; slug: string }[];
-}> {
-  const urlDir = reqPath.includes('/')
-    ? reqPath.substring(0, reqPath.lastIndexOf('/'))
-    : '';
-  const fsDir = path.dirname(resolved);
-  setDiagramContext(fsDir);
-  const { headings, html: parsedHtml } = parseMarkdown(markdownSource, {
-    linkWindowsPaths: true,
-    basePath: urlDir,
-  });
-  let html = parsedHtml;
-
-  // Register diagram hashes for cache-clear reverse index
-  const diagramHashMatches = [
-    ...html.matchAll(/data-diagram-hash="([a-f0-9]{64})"/g),
-  ];
-  if (diagramHashMatches.length > 0) {
-    registerDiagramHashes(
-      resolved,
-      diagramHashMatches.map((m) => m[1]),
-    );
-  }
-
-  if ((request.query as { render_diagrams?: string }).render_diagrams === '1') {
-    html = await renderEmbeddedDiagrams(html, fsDir);
-  }
-
-  const deepShare = request.deepShareParams;
-  const seed = request.authSeed;
-  if (!isInsider && seed) {
-    if (deepShare) {
-      const maxDepth = parseInt(deepShare.d, 10);
-      html = rewriteLinksForDeepShare(
-        html,
-        seed,
-        `/${reqPath}`,
-        isNaN(maxDepth) ? 0 : maxDepth,
-        deepShare.dirs === '1',
-        deepShare.s,
-        (request.query as { exp?: string }).exp,
-      );
-    } else {
-      html = rewriteSimpleImageAuth(html, seed);
-    }
-  }
-
-  return { html, headings };
-}
-
-/** Handle markdown file content. */
-async function handleMarkdown(
-  request: FastifyRequest,
-  reply: FastifyReply,
-  resolved: string,
-  reqPath: string,
-  rawOnly: boolean,
-  fileName: string,
-  breadcrumbs: { label: string; path: string }[],
-  isInsider: boolean,
-  mtime: number,
-) {
-  const markdown = fs.readFileSync(resolved, 'utf8');
-  if (rawOnly)
-    return reply.send({
-      type: 'markdown',
-      content: markdown,
-      fileName,
-      breadcrumbs,
-      isInsider,
-    });
-
-  const { html, headings } = await renderMarkdownContent(
-    markdown,
-    request,
-    resolved,
-    reqPath,
-    isInsider,
-  );
-
-  return reply.send({
-    type: 'markdown',
-    content: markdown,
-    html,
-    headings,
-    fileName,
-    breadcrumbs,
-    isInsider,
-    mtime,
-  });
-}
-
-/** Handle text file content. */
-function handleText(
-  reply: FastifyReply,
-  buffer: Buffer,
-  fileName: string,
-  breadcrumbs: { label: string; path: string }[],
-  isInsider: boolean,
-) {
-  return reply.send({
-    type: 'text',
-    content: buffer.toString('utf8'),
-    fileName,
-    breadcrumbs,
-    isInsider,
-  });
-}

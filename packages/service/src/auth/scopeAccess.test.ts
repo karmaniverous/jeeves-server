@@ -1,5 +1,5 @@
 /**
- * Tests for path-level insider scope enforcement helpers.
+ * Tests for path-level insider scope decisions.
  *
  * @packageDocumentation
  */
@@ -8,13 +8,10 @@ import { describe, expect, it } from 'vitest';
 
 import type { NormalizedScopes } from '../config/types.js';
 import {
-  archiveEntryFilter,
   canAccessPath,
   canNavigatePath,
-  hasTraversalSegment,
   isAncestorOfPattern,
-  parseContentRoute,
-  scopesAllowRoute,
+  scopedEntryFilter,
 } from './scopeAccess.js';
 
 const scopes = (s: Partial<NormalizedScopes>): NormalizedScopes => ({
@@ -28,59 +25,15 @@ const scopes = (s: Partial<NormalizedScopes>): NormalizedScopes => ({
 const content = scopes({ allow: ['/jeeves/content/**'] });
 const jeeves = scopes({ allow: ['/j/domains/projects/jeeves-*/**'] });
 
-describe('parseContentRoute', () => {
-  it.each([
-    ['/api/path/j/a', '/api/path', '/j/a'],
-    ['/api/file/j/a.md?raw=1', '/api/file', '/j/a.md'],
-    ['/api/raw/j/a.png', '/api/raw', '/j/a.png'],
-    ['/api/export/j/a.md?format=pdf', '/api/export', '/j/a.md'],
-    ['/api/export-cache/j/a.md', '/api/export-cache', '/j/a.md'],
-    ['/api/mermaid-export/j/a.mmd', '/api/mermaid-export', '/j/a.mmd'],
-    ['/api/plantuml-export/j/a.puml', '/api/plantuml-export', '/j/a.puml'],
-    ['/api/link-info/j/a', '/api/link-info', '/j/a'],
-    ['/api/path', '/api/path', '/'],
-    ['/api/file/j/my%20doc.md', '/api/file', '/j/my doc.md'],
-  ])('%s → %s %s', (url, prefix, path) => {
-    expect(parseContentRoute(url)).toEqual({ prefix, path });
-  });
-
-  it.each(['/api/drives', '/api/search', '/api/share', '/api/paths/x'])(
-    'returns null for non-content route %s',
-    (url) => {
-      expect(parseContentRoute(url)).toBeNull();
-    },
-  );
-
-  it('falls back to the raw path on malformed encoding', () => {
-    expect(parseContentRoute('/api/raw/j/%E0%A4%A')?.path).toBe('/j/%E0%A4%A');
-  });
-});
-
-describe('hasTraversalSegment', () => {
-  it.each([
-    ['/j/a/../b', true],
-    ['/j/a\\..\\b', true],
-    ['..', true],
-    ['/j/a..b/c', false],
-    ['/j/.hidden/x', false],
-    ['/j/a/b', false],
-  ])('%s → %s', (p, expected) => {
-    expect(hasTraversalSegment(p)).toBe(expected);
-  });
-});
-
 describe('canAccessPath', () => {
-  it('allows everything when unscoped', () => {
+  it('treats null/undefined scopes as unrestricted', () => {
     expect(canAccessPath('/jeeves/config/secret.json', null)).toBe(true);
     expect(canAccessPath('/jeeves/config/secret.json', undefined)).toBe(true);
   });
 
-  it('allows in-scope paths and denies others', () => {
+  it('allows in-scope paths and denies others, including ancestors', () => {
     expect(canAccessPath('/jeeves/content/a/b.md', content)).toBe(true);
     expect(canAccessPath('/jeeves/config/x.json', content)).toBe(false);
-  });
-
-  it('does not grant ancestors', () => {
     expect(canAccessPath('/jeeves', content)).toBe(false);
   });
 });
@@ -91,8 +44,12 @@ describe('isAncestorOfPattern', () => {
     ['/jeeves', '/jeeves/content/**', true],
     ['/jeeves/content', '/jeeves/content/**', true],
     ['/jeeves/config', '/jeeves/content/**', false],
-    ['/j/domains/projects/jeeves-server', jeeves.allow[0], true],
-    ['/j/domains/projects/other', jeeves.allow[0], false],
+    [
+      '/j/domains/projects/jeeves-server',
+      '/j/domains/projects/jeeves-*/**',
+      true,
+    ],
+    ['/j/domains/projects/other', '/j/domains/projects/jeeves-*/**', false],
     ['/j/anything/deep', '/j/**/x.md', true],
     ['/j/a/b/c', '/j/a', false],
     ['/J/Domains', '/j/domains/**', true],
@@ -102,6 +59,10 @@ describe('isAncestorOfPattern', () => {
 });
 
 describe('canNavigatePath', () => {
+  it('treats null scopes as unrestricted', () => {
+    expect(canNavigatePath('/anything', null)).toBe(true);
+  });
+
   it('allows ancestors of allowed paths', () => {
     expect(canNavigatePath('/jeeves', content)).toBe(true);
     expect(canNavigatePath('/j/domains/projects', jeeves)).toBe(true);
@@ -118,10 +79,10 @@ describe('canNavigatePath', () => {
     expect(canNavigatePath('/j/domains/projects/vc', jeeves)).toBe(false);
   });
 
-  it('denies directories matched by deny', () => {
-    const s = scopes({ allow: ['/j/**'], deny: ['/j/secrets/**'] });
-    expect(canNavigatePath('/j/secrets', s)).toBe(false);
-    expect(canNavigatePath('/j/other', s)).toBe(true);
+  it('denies ancestors matched by deny', () => {
+    const s = scopes({ allow: ['/j/x/y/**'], deny: ['/j/x/**'] });
+    expect(canNavigatePath('/j/x', s)).toBe(false);
+    expect(canNavigatePath('/j', s)).toBe(true);
   });
 
   it('explicit allow re-opens navigation through a named deny', () => {
@@ -136,65 +97,32 @@ describe('canNavigatePath', () => {
   });
 
   it('explicit deny wins over ancestry', () => {
-    const s = scopes({
-      allow: ['/j/p/x/**'],
-      explicitDeny: ['/j/p/**'],
-    });
+    const s = scopes({ allow: ['/j/p/x/**'], explicitDeny: ['/j/p/**'] });
     expect(canNavigatePath('/j/p', s)).toBe(false);
   });
 });
 
-describe('archiveEntryFilter', () => {
+describe('scopedEntryFilter', () => {
   it('includes everything when unscoped', () => {
-    expect(archiveEntryFilter('/j', null)('config/secret.json', false)).toBe(
+    expect(scopedEntryFilter('/j', null)('config/secret.json', false)).toBe(
       true,
     );
   });
 
-  it('omits denied entries inside an allowed directory', () => {
-    const allow = archiveEntryFilter(
+  it('omits denied files and directories inside an allowed directory', () => {
+    const include = scopedEntryFilter(
       '/j/',
       scopes({ allow: ['/j/**'], deny: ['/j/secrets/**'] }),
     );
-    expect(allow('notes/a.md', false)).toBe(true);
-    expect(allow('secrets', true)).toBe(false);
-    expect(allow('secrets/key.pem', false)).toBe(false);
-    expect(allow('notes\\b.md', false)).toBe(true);
-  });
-});
-
-describe('scopesAllowRoute', () => {
-  it('ignores non-content routes', () => {
-    expect(scopesAllowRoute(null, content)).toBe(true);
+    expect(include('notes/a.md', false)).toBe(true);
+    expect(include('notes\\b.md', false)).toBe(true);
+    expect(include('secrets', true)).toBe(false);
+    expect(include('secrets/key.pem', false)).toBe(false);
   });
 
-  it('lets navigation routes reach ancestors', () => {
-    expect(
-      scopesAllowRoute({ prefix: '/api/path', path: '/jeeves' }, content),
-    ).toBe(true);
-    expect(
-      scopesAllowRoute({ prefix: '/api/link-info', path: '/jeeves' }, content),
-    ).toBe(true);
-  });
-
-  it('requires content routes to be strictly in scope', () => {
-    for (const prefix of [
-      '/api/file',
-      '/api/raw',
-      '/api/export',
-      '/api/export-cache',
-      '/api/mermaid-export',
-      '/api/plantuml-export',
-    ] as const) {
-      expect(scopesAllowRoute({ prefix, path: '/jeeves' }, content)).toBe(
-        false,
-      );
-      expect(
-        scopesAllowRoute({ prefix, path: '/jeeves/config/x.json' }, content),
-      ).toBe(false);
-      expect(
-        scopesAllowRoute({ prefix, path: '/jeeves/content/x.md' }, content),
-      ).toBe(true);
-    }
+  it('keeps navigable directories that lead to allowed content', () => {
+    const include = scopedEntryFilter('/j', jeeves);
+    expect(include('domains/projects', true)).toBe(true);
+    expect(include('domains/top.md', false)).toBe(false);
   });
 });

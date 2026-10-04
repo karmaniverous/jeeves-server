@@ -126,6 +126,8 @@ export interface KeyVerificationResult {
   seed: string | null;
   /** For directory outsider links, the ancestor path the key matched against */
   matchedPath: string | null;
+  /** Scopes of the matched key or issuing insider (null = unrestricted) */
+  scopes: NormalizedScopes | null;
 }
 
 /**

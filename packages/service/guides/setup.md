@@ -55,8 +55,8 @@ Legacy paths (`jeeves-server.config.json`) are auto-migrated to the new conventi
   },
   "scopes": {
     "restricted": {
-      "allow": ["/d/projects/*"],
-      "deny": ["/d/projects/secret/*"]
+      "allow": ["/d/projects/**"],
+      "deny": ["/d/projects/secret/**"]
     }
   },
   "insiders": {
@@ -290,18 +290,18 @@ Define reusable scope policies at the top level, then reference them by name fro
 {
   "scopes": {
     "engineering": {
-      "allow": ["/d/repos/*", "/d/docs/*"],
-      "deny": ["/d/docs/hr/*"]
+      "allow": ["/d/repos/**", "/d/docs/**"],
+      "deny": ["/d/docs/hr/**"]
     },
     "readonly-projects": {
-      "allow": ["/d/projects/*"]
+      "allow": ["/d/projects/**"]
     }
   },
   "insiders": {
     "dev@example.com": { "scopes": "engineering" },
     "contractor@example.com": {
       "scopes": "readonly-projects",
-      "deny": ["/d/projects/secret/*"]
+      "deny": ["/d/projects/secret/**"]
     }
   }
 }
@@ -312,8 +312,8 @@ Named scopes are **atomic** — composition happens at the point of use. An insi
 Scopes can also be specified inline (without named references) using the same formats as before:
 
 ```json
-{ "scopes": ["/d/projects/*"] }
-{ "scopes": { "allow": ["/d/*"], "deny": ["/d/secrets/*"] } }
+{ "scopes": ["/d/projects/**"] }
+{ "scopes": { "allow": ["/d/**"], "deny": ["/d/secrets/**"] } }
 ```
 
 ---
@@ -328,7 +328,7 @@ The `insiders` map defines **who** has full browsing access:
     "alice@example.com": {},
     "contractor@example.com": { "scopes": "restricted" },
     "team@example.com": {
-      "scopes": { "allow": ["/d/*"], "deny": ["/d/secrets/*"] }
+      "scopes": { "allow": ["/d/**"], "deny": ["/d/secrets/**"] }
     }
   }
 }

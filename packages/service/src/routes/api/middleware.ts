@@ -1,8 +1,12 @@
 /**
- * API authentication middleware (preHandler hook).
+ * API authentication middleware (preHandler hook): resolves URL keys and
+ * session cookies to an access mode, and enforces the authenticated
+ * identity's scopes on content routes.
+ *
+ * @packageDocumentation
  */
 
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import {
   type AuthQuery,
@@ -11,13 +15,120 @@ import {
   resolveKeyAuth,
   resolveSessionAuth,
 } from '../../auth/resolve.js';
-import {
-  hasTraversalSegment,
-  parseContentRoute,
-  scopesAllowRoute,
-} from '../../auth/scopeAccess.js';
+import { canAccessPath, canNavigatePath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
+import type { NormalizedScopes, RuntimeConfig } from '../../config/types.js';
 import { decodeStack } from '../../services/deepShareLinks.js';
+import {
+  type ContentRoute,
+  hasTraversalSegment,
+  isNavigationRoute,
+  keyAuthPath,
+  parseContentRoute,
+} from './contentRoute.js';
+import { OUT_OF_SCOPE_ERROR } from './scopeGuard.js';
+
+/** API prefixes that authenticate themselves or are public. */
+const UNAUTHENTICATED_PREFIXES = [
+  '/api/readme-link',
+  '/api/content-link/',
+  '/api/auth/status',
+  '/api/auth/magic',
+  '/api/public-content/',
+  '/api/diagram/',
+  '/api/status',
+  '/api/resolve-path',
+];
+
+/**
+ * True when `scopes` permit the request addressed by `route`. Navigation
+ * routes admit ancestors of in-scope paths; other content routes require the
+ * path itself. Non-content routes (`null`) are scoped by their handlers.
+ */
+export function scopesAllowRoute(
+  route: ContentRoute | null,
+  scopes: NormalizedScopes | null | undefined,
+): boolean {
+  if (!route) return true;
+  return isNavigationRoute(route)
+    ? canNavigatePath(route.path, scopes)
+    : canAccessPath(route.path, scopes);
+}
+
+/**
+ * Authenticate `/api/util/*`: insider keys or session only. Utility
+ * endpoints address paths in their bodies and check scopes themselves.
+ */
+function authenticateUtility(
+  config: RuntimeConfig,
+  request: FastifyRequest,
+  reply: FastifyReply,
+): void {
+  const { key, exp } = request.query as { key?: string; exp?: string };
+
+  if (key) {
+    const keyResult = resolveKeyAuth(config, '/', key, exp);
+    if (keyResult.valid && keyResult.mode === 'insider') {
+      request.accessMode = 'insider';
+      request.authSeed = keyResult.seed;
+      request.insiderScopes = keyResult.scopes ?? null;
+      return;
+    }
+
+    const insiderResult = resolveInsiderKeyAuth(config, key);
+    if (insiderResult.valid) {
+      request.accessMode = 'insider';
+      request.authSeed = insiderResult.seed;
+      request.insiderScopes = insiderResult.scopes ?? null;
+      request.insiderEmail = insiderResult.email;
+      return;
+    }
+  }
+
+  const sessionResult = resolveSessionAuth(config, request);
+  if (sessionResult.valid) {
+    request.accessMode = 'insider';
+    request.authSeed = sessionResult.seed;
+    request.insiderScopes = sessionResult.scopes ?? null;
+    request.insiderEmail = sessionResult.email;
+    return;
+  }
+
+  void reply
+    .code(401)
+    .send({ error: 'Insider auth required for utility endpoints' });
+}
+
+/**
+ * Verify the URL key for `urlPath`, retrying against the last deep-share
+ * stack entry for directory shares (`dirs=1`).
+ */
+function resolveUrlKey(
+  config: RuntimeConfig,
+  urlPath: string,
+  query: AuthQuery,
+) {
+  const deepParams = extractDeepParams(query);
+  const result = resolveKeyAuth(
+    config,
+    urlPath,
+    query.key,
+    query.exp,
+    deepParams,
+  );
+  if (result.valid || deepParams?.dirs !== '1' || !query.key) return result;
+
+  const stack = decodeStack(deepParams.s);
+  const lastStackEntry = stack[stack.length - 1];
+  if (!lastStackEntry || lastStackEntry === urlPath) return result;
+  return resolveKeyAuth(
+    config,
+    lastStackEntry,
+    query.key,
+    query.exp,
+    deepParams,
+  );
+}
 
 /**
  * Add the API auth preHandler hook directly to a Fastify instance.
@@ -27,133 +138,37 @@ import { decodeStack } from '../../services/deepShareLinks.js';
 export function addAuthMiddleware(fastify: FastifyInstance): void {
   fastify.addHook('preHandler', async (request, reply) => {
     if (!request.url.startsWith('/api')) return;
-    if (request.url.startsWith('/api/readme-link')) return;
-    if (request.url.startsWith('/api/content-link/')) return;
-    if (request.url.startsWith('/api/auth/status')) return;
-    if (request.url.startsWith('/api/auth/magic')) return;
-    if (request.url.startsWith('/api/public-content/')) return;
-    if (request.url.startsWith('/api/diagram/')) return;
-    if (request.url.startsWith('/api/status')) return;
-    if (request.url.startsWith('/api/resolve-path')) return;
+    if (UNAUTHENTICATED_PREFIXES.some((p) => request.url.startsWith(p))) return;
 
     const config = getConfig();
 
-    // Utility endpoints handle their own scope checking
     if (request.url.startsWith('/api/util/')) {
-      const query = request.query as { key?: string; exp?: string };
-
-      // Try key-based auth
-      if (query.key) {
-        const keyResult = resolveKeyAuth(config, '/', query.key, query.exp);
-        if (keyResult.valid && keyResult.mode === 'insider') {
-          request.accessMode = 'insider';
-          request.authSeed = keyResult.seed;
-          request.insiderScopes = keyResult.scopes ?? null;
-          return;
-        }
-
-        // Try as a direct insider key
-        const insiderResult = resolveInsiderKeyAuth(config, query.key);
-        if (insiderResult.valid) {
-          request.accessMode = 'insider';
-          request.authSeed = insiderResult.seed;
-          request.insiderScopes = insiderResult.scopes ?? null;
-          request.insiderEmail = insiderResult.email;
-          return;
-        }
-      }
-
-      // Try session cookie
-      const sessionResult = resolveSessionAuth(config, request);
-      if (sessionResult.valid) {
-        request.accessMode = 'insider';
-        request.authSeed = sessionResult.seed;
-        request.insiderScopes = sessionResult.scopes ?? null;
-        request.insiderEmail = sessionResult.email;
-        return;
-      }
-
-      reply
-        .code(401)
-        .send({ error: 'Insider auth required for utility endpoints' });
+      authenticateUtility(config, request, reply);
       return;
     }
 
-    // General API auth
-    const query = request.query as AuthQuery;
-    const deepParams = extractDeepParams(query);
-
-    // Content path addressed by this request (null for non-content routes).
     // Reject `..` segments outright: they can resolve outside the path that
     // scope and key checks evaluate.
     const contentRoute = parseContentRoute(request.url);
     if (contentRoute && hasTraversalSegment(contentRoute.path)) {
-      reply.code(400).send({ error: 'Invalid path' });
+      void reply.code(400).send({ error: 'Invalid path' });
       return;
     }
 
-    let urlPath: string;
-    try {
-      urlPath = decodeURIComponent(
-        request.url
-          .split('?')[0]
-          .replace('/api/path', '')
-          .replace('/api/drives', '/')
-          .replace('/api/file', '')
-          .replace('/api/raw', '')
-          .replace('/api/export-cache', '')
-          .replace('/api/export', ''),
-      );
-    } catch {
-      // Malformed percent-encoding — use the raw path
-      urlPath = request.url
-        .split('?')[0]
-        .replace('/api/path', '')
-        .replace('/api/drives', '/')
-        .replace('/api/file', '')
-        .replace('/api/raw', '')
-        .replace('/api/export-cache', '')
-        .replace('/api/export', '');
-    }
-
-    // Try key-based auth
-    let authResult = resolveKeyAuth(
+    const urlPath = keyAuthPath(request.url, contentRoute);
+    const keyResult = resolveUrlKey(
       config,
-      urlPath || '/',
-      query.key,
-      query.exp,
-      deepParams,
+      urlPath,
+      request.query as AuthQuery,
     );
 
-    // Retry with dirs fallback (directory shares)
-    if (
-      !authResult.valid &&
-      deepParams &&
-      deepParams.dirs === '1' &&
-      query.key
-    ) {
-      const stack = decodeStack(deepParams.s);
-      const lastStackEntry = stack[stack.length - 1];
-      if (lastStackEntry && lastStackEntry !== urlPath) {
-        authResult = resolveKeyAuth(
-          config,
-          lastStackEntry,
-          query.key,
-          query.exp,
-          deepParams,
-        );
-      }
-    }
-
-    // Try session cookie (always check — insiders visiting outsider links
-    // should be upgraded to insider access)
+    // Always check the session: insiders visiting outsider links are upgraded
+    // to insider access, provided the path is within their own scopes.
     const sessionResult = resolveSessionAuth(config, request);
-    const sessionInScope =
+    if (
       sessionResult.valid &&
-      scopesAllowRoute(contentRoute, sessionResult.scopes ?? null);
-
-    if (authResult.valid && sessionInScope) {
-      // Both key and session are valid — prefer insider session
+      scopesAllowRoute(contentRoute, sessionResult.scopes)
+    ) {
       request.accessMode = 'insider';
       request.authSeed = sessionResult.seed;
       request.insiderEmail = sessionResult.email;
@@ -162,29 +177,20 @@ export function addAuthMiddleware(fastify: FastifyInstance): void {
       return;
     }
 
-    if (authResult.valid) {
-      request.accessMode = authResult.mode;
-      request.authSeed = authResult.seed;
-      request.deepShareParams = authResult.deepShareParams;
-      request.authMatchedPath = authResult.matchedPath;
-      return;
-    }
-
-    if (sessionInScope) {
-      request.accessMode = 'insider';
-      request.authSeed = sessionResult.seed;
-      request.insiderEmail = sessionResult.email;
-      request.insiderScopes = sessionResult.scopes ?? null;
-      request.keyAge = sessionResult.keyAge;
+    if (keyResult.valid) {
+      request.accessMode = keyResult.mode;
+      request.authSeed = keyResult.seed;
+      request.insiderScopes = keyResult.scopes ?? null;
+      request.deepShareParams = keyResult.deepShareParams;
+      request.authMatchedPath = keyResult.matchedPath;
       return;
     }
 
     if (sessionResult.valid) {
-      reply.code(403).send({ error: 'Path is outside your access scope' });
+      void reply.code(403).send({ error: OUT_OF_SCOPE_ERROR });
       return;
     }
 
-    reply.code(401).send({ error: 'Unauthorized' });
-    return;
+    void reply.code(401).send({ error: 'Unauthorized' });
   });
 }

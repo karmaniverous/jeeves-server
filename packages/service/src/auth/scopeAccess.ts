@@ -1,7 +1,7 @@
 /**
- * Path-level scope enforcement for insiders: strict content access checks,
- * directory navigation checks (ancestors of allowed paths), and API URL to
- * content path mapping. Pure functions; no I/O.
+ * Path-level scope decisions: strict content access, directory navigation
+ * (ancestors of allowed paths), and archive entry filtering. Pure
+ * functions over NormalizedScopes; no I/O.
  *
  * @packageDocumentation
  */
@@ -14,69 +14,7 @@ import {
   _pathMatchesScopes as pathMatchesScopes,
 } from './keys.js';
 
-/**
- * API route prefixes whose remaining URL path addresses filesystem content.
- * The content path is the URL path with the prefix removed.
- */
-const CONTENT_ROUTE_PREFIXES = [
-  '/api/path',
-  '/api/file',
-  '/api/raw',
-  '/api/export-cache',
-  '/api/export',
-  '/api/mermaid-export',
-  '/api/plantuml-export',
-  '/api/link-info',
-] as const;
-
-/** A content-addressing API route prefix. */
-export type ContentRoutePrefix = (typeof CONTENT_ROUTE_PREFIXES)[number];
-
-/**
- * Prefixes that only expose directory listings or metadata (no file content),
- * so ancestors of allowed paths may be navigated through them.
- */
-const NAVIGATION_PREFIXES: ReadonlySet<ContentRoutePrefix> = new Set([
-  '/api/path',
-  '/api/link-info',
-]);
-
-/** Parsed content route: the matched prefix and the decoded content path. */
-export interface ContentRoute {
-  prefix: ContentRoutePrefix;
-  path: string;
-}
-
-/**
- * Map an API request URL to the content path it addresses.
- * Returns null for API routes that do not address filesystem content.
- */
-export function parseContentRoute(url: string): ContentRoute | null {
-  const pathname = url.split('?')[0];
-  for (const prefix of CONTENT_ROUTE_PREFIXES) {
-    if (pathname !== prefix && !pathname.startsWith(prefix + '/')) continue;
-    const rest = pathname.slice(prefix.length);
-    let decoded: string;
-    try {
-      decoded = decodeURIComponent(rest);
-    } catch {
-      // Malformed percent-encoding: use the raw path
-      decoded = rest;
-    }
-    return { prefix, path: decoded || '/' };
-  }
-  return null;
-}
-
-/**
- * True when a content path contains a `..` segment (either separator).
- * Such paths can resolve outside the location they appear to address.
- */
-export function hasTraversalSegment(contentPath: string): boolean {
-  return contentPath.split(/[\\/]/).some((segment) => segment === '..');
-}
-
-/** True when `scopes` grant access to the content at `urlPath`. */
+/** True when `scopes` grant access to the content at `urlPath` (null = unrestricted). */
 export function canAccessPath(
   urlPath: string,
   scopes: NormalizedScopes | null | undefined,
@@ -128,36 +66,28 @@ export function canNavigatePath(
 }
 
 /**
- * Build a predicate deciding whether an archive entry (path relative to the
- * archived directory at `dirUrlPath`) may be included for `scopes`.
- * Files must be in scope; directories must be navigable.
+ * Predicate over entries below a directory: given an entry's `/`- or
+ * `\`-separated path relative to that directory, decides inclusion.
  */
-export function archiveEntryFilter(
+export type EntryFilter = (
+  relativePath: string,
+  isDirectory: boolean,
+) => boolean;
+
+/**
+ * Build the {@link EntryFilter} for archiving the directory at `dirUrlPath`
+ * under `scopes`: files must be in scope, directories navigable. Directory
+ * archive export and its size limit both use it, so they always agree.
+ */
+export function scopedEntryFilter(
   dirUrlPath: string,
   scopes: NormalizedScopes | null | undefined,
-): (relativeName: string, isDirectory: boolean) => boolean {
+): EntryFilter {
   const base = dirUrlPath.replace(/\/+$/, '');
-  return (relativeName, isDirectory) => {
-    if (!scopes) return true;
-    const entryUrlPath = `${base}/${relativeName.replace(/\\/g, '/')}`;
+  return (relativePath, isDirectory) => {
+    const entryUrlPath = `${base}/${relativePath.replace(/\\/g, '/')}`;
     return isDirectory
       ? canNavigatePath(entryUrlPath, scopes)
       : canAccessPath(entryUrlPath, scopes);
   };
-}
-
-/**
- * True when `scopes` permit the request addressed by `route`.
- * Navigation routes allow ancestors of in-scope paths; all other content
- * routes require the path itself to be in scope. Non-content routes
- * (`route === null`) are not path-scoped here.
- */
-export function scopesAllowRoute(
-  route: ContentRoute | null,
-  scopes: NormalizedScopes | null | undefined,
-): boolean {
-  if (!route || !scopes) return true;
-  return NAVIGATION_PREFIXES.has(route.prefix)
-    ? canNavigatePath(route.path, scopes)
-    : canAccessPath(route.path, scopes);
 }

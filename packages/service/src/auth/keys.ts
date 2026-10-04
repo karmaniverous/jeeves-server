@@ -167,6 +167,7 @@ export function verifyKey(
     keyName: null,
     seed: null,
     matchedPath: null,
+    scopes: null,
   };
 
   if (!providedKey) return fail;
@@ -185,6 +186,7 @@ export function verifyKey(
         keyName: rk.name,
         seed: rk.seed,
         matchedPath: null,
+        scopes: rk.scopes,
       };
     }
 
@@ -206,6 +208,7 @@ export function verifyKey(
         keyName: rk.name,
         seed: rk.seed,
         matchedPath: machineMatch,
+        scopes: rk.scopes,
       };
     }
   }
@@ -231,6 +234,7 @@ export function verifyKey(
         keyName: ri.email,
         seed: ri.seed,
         matchedPath: insiderMatch,
+        scopes: ri.scopes,
       };
     }
   }

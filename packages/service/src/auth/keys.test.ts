@@ -9,7 +9,13 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { _pathMatchesScopes as pathMatchesScopes } from './keys.js';
+import type {
+  NormalizedScopes,
+  ResolvedInsider,
+  ResolvedKey,
+} from '../config/types.js';
+import { computeInsiderKey, computePathKey } from '../util/crypto.js';
+import { _pathMatchesScopes as pathMatchesScopes, verifyKey } from './keys.js';
 
 describe('pathMatchesScopes', () => {
   it('allows a path matching allow and not deny', () => {
@@ -111,5 +117,86 @@ describe('pathMatchesScopes', () => {
 
     // Other private projects (if they existed) would still be denied
     // (only jill is explicitly allowed)
+  });
+});
+
+describe('verifyKey scope propagation', () => {
+  const scoped: NormalizedScopes = {
+    allow: ['/j/content/**'],
+    deny: [],
+    explicitAllow: [],
+    explicitDeny: [],
+  };
+  const keys: ResolvedKey[] = [
+    { name: 'scoped', seed: 'machine-seed', scopes: scoped },
+  ];
+  const insiders: ResolvedInsider[] = [
+    {
+      email: 'a@example.com',
+      seed: 'insider-seed',
+      scopes: scoped,
+      keyCreatedAt: null,
+    },
+  ];
+
+  it('returns the machine key scopes for insider access', () => {
+    const result = verifyKey(
+      keys,
+      '/j/content/a.md',
+      computeInsiderKey('machine-seed'),
+      undefined,
+    );
+    expect(result).toMatchObject({
+      valid: true,
+      mode: 'insider',
+      scopes: scoped,
+    });
+  });
+
+  it('returns the machine key scopes for outsider access', () => {
+    const result = verifyKey(
+      keys,
+      '/j/content/a.md',
+      computePathKey('machine-seed', '/j/content/a.md'),
+      undefined,
+    );
+    expect(result).toMatchObject({
+      valid: true,
+      mode: 'outsider',
+      scopes: scoped,
+    });
+  });
+
+  it("returns the issuing insider's scopes for their share links", () => {
+    const result = verifyKey(
+      [],
+      '/j/content/a.md',
+      computePathKey('insider-seed', '/j/content/a.md'),
+      undefined,
+      insiders,
+    );
+    expect(result).toMatchObject({
+      valid: true,
+      mode: 'outsider',
+      keyName: 'a@example.com',
+      scopes: scoped,
+    });
+  });
+
+  it('rejects keys outside their scopes', () => {
+    const result = verifyKey(
+      keys,
+      '/j/config/x.json',
+      computeInsiderKey('machine-seed'),
+      undefined,
+    );
+    expect(result).toEqual({
+      valid: false,
+      mode: null,
+      keyName: null,
+      seed: null,
+      matchedPath: null,
+      scopes: null,
+    });
   });
 });
