@@ -1,3 +1,4 @@
+import Fastify from 'fastify';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@karmaniverous/jeeves', async (importOriginal) => {
@@ -93,5 +94,18 @@ describe('GET /status', () => {
 
     // Clean up background interval
     await Promise.all(closeHooks.map((hook) => hook()));
+  });
+});
+
+describe('GET /health (#259)', () => {
+  it('returns { ok: true } without any credentials', async () => {
+    const app = Fastify();
+    await app.register(statusRoutes);
+
+    const res = await app.inject('/health');
+    await app.close();
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ ok: true });
   });
 });
