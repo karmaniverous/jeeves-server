@@ -11,7 +11,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { getBindAddress } from '@karmaniverous/jeeves';
-import { getUrlKey } from '@karmaniverous/jeeves-server-core';
 import type { FastifyPluginCallback } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
@@ -24,6 +23,7 @@ import {
   clearStandaloneDiagramCache,
   getCachedExport,
 } from '../../services/exportCache.js';
+import { RenderFailedError } from '../../services/puppeteer.js';
 import { getRoots, urlPathToFs } from '../../util/platform.js';
 import { isArchiveFormat, sendDirectoryArchive } from './archiveExport.js';
 
@@ -82,10 +82,12 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
           .code(400)
           .send({ error: 'Only markdown files support PDF/DOCX export' });
 
+      // The middleware has already authorised the caller for this path, so
+      // render with the server's _internal key whatever link the caller
+      // used (expiring and deep keys don't verify on the render URL; #295).
       const config = getConfig();
-      const internalKey = config.internalInsiderKey;
       const { port } = config;
-      const exportKey = getUrlKey(request.query) ?? internalKey;
+      const exportKey = config.internalInsiderKey;
       if (!exportKey)
         return reply
           .code(500)
@@ -138,6 +140,13 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
           .send(buffer);
       } catch (err) {
         appendEvent({ kind: `${format}_export_error`, error: String(err) });
+        if (err instanceof RenderFailedError) {
+          // Sign-in, error or timed-out render: nothing was cached.
+          return reply.code(502).send({
+            error: `${format.toUpperCase()} export failed: document did not render`,
+            renderState: err.renderState,
+          });
+        }
         return reply.code(500).send({
           error: `${format.toUpperCase()} export failed`,
           details: String(err),

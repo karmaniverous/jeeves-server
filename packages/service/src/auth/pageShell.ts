@@ -22,6 +22,11 @@ export interface PageShellOptions {
   bodyContent: string;
   /** Additional &lt;script&gt; content appended before &lt;/body&gt;. */
   footerScript?: string;
+  /**
+   * Value for `data-render-state` on the document root. The export renderer
+   * treats anything but `ready` as a failed render (#295).
+   */
+  renderState?: 'auth-required' | 'error';
 }
 
 /**
@@ -36,8 +41,12 @@ export function renderPageShell(options: PageShellOptions): string {
   const safeName = escapeHtml(brandName);
   const safeEmoji = escapeHtml(brandEmoji);
 
+  const renderStateAttr = options.renderState
+    ? ` data-render-state="${options.renderState}"`
+    : '';
+
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en"${renderStateAttr}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

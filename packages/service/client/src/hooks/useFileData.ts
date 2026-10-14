@@ -19,6 +19,8 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
   const [fileRendered, setFileRendered] = useState<FileContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  /** Failure of the rendered-view request (drives the export render state). */
+  const [renderError, setRenderError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
 
   const initialTab = searchParams.get('tab') === 'raw' ? 'raw' : 'rendered';
@@ -32,6 +34,7 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
     async (path: string, params: URLSearchParams) => {
       setLoading(true);
       setError(null);
+      setRenderError(null);
       setDrives(null);
       setDirectory(null);
       setFileRaw(null);
@@ -63,7 +66,9 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
               .catch(() => {});
             getFile(path)
               .then(setFileRendered)
-              .catch(() => {});
+              .catch((e: unknown) => {
+                setRenderError((e as Error).message);
+              });
           }
         } catch {
           getFileRaw(path)
@@ -77,7 +82,9 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
             });
           getFile(path)
             .then(setFileRendered)
-            .catch(() => {});
+            .catch((e: unknown) => {
+              setRenderError((e as Error).message);
+            });
         }
       }
     },
@@ -130,6 +137,7 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
     file,
     loading,
     error,
+    renderError,
     editing,
     setEditing,
     viewTab,

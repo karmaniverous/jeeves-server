@@ -156,5 +156,6 @@ ${emailFormHtml}${dividerHtml}
     extraCss: SIGN_IN_CSS,
     bodyContent,
     footerScript: hasEmail ? MAGIC_FORM_SCRIPT : undefined,
+    renderState: 'auth-required',
   });
 }

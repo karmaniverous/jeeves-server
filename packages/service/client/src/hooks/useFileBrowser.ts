@@ -6,6 +6,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 
 import type { BreadcrumbItem } from '@/lib/api';
 import { useAuthStatus } from '@/lib/AuthStatusContext';
+import { applyRenderState, computeRenderState } from '@/lib/renderState';
 import { useTheme } from '@/lib/theme';
 import { useFileData } from './useFileData';
 import { useShareSettings } from './useShareSettings';
@@ -45,6 +46,7 @@ export function useFileBrowser() {
     file,
     loading,
     error,
+    renderError,
     editing,
     setEditing,
     viewTab,
@@ -52,6 +54,23 @@ export function useFileBrowser() {
     handleSave,
     refetch,
   } = useFileData(reqPath, searchParams);
+
+  // Export render-state signal (#295): set after React commits the view.
+  const renderState = computeRenderState({
+    reqPath,
+    loading,
+    error,
+    hasDrives: drives !== null,
+    hasDirectory: directory !== null,
+    hasFileRaw: fileRaw !== null,
+    hasFileRendered: fileRendered !== null,
+    fileType: file?.type,
+    renderError,
+    viewTab,
+  });
+  useEffect(() => {
+    applyRenderState(renderState);
+  }, [renderState]);
 
   // Sync tab to URL
   const setViewTab = (tab: 'rendered' | 'raw') => {

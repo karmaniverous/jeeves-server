@@ -10,6 +10,46 @@ import puppeteer from 'puppeteer-core';
 
 import { getConfig } from '../config/index.js';
 
+/** Budget for each wait while a render page settles. */
+export const RENDER_TIMEOUT_MS = 15_000;
+
+/** Values the render page sets on `<html data-render-state>` (#295). */
+export type RenderState = 'ready' | 'auth-required' | 'error';
+
+/**
+ * Thrown when the render page did not reach `data-render-state="ready"`
+ * (sign-in page, SPA error, or timeout). The output must not be cached.
+ */
+export class RenderFailedError extends Error {
+  constructor(
+    /** The state the page reported, or `timeout` when it reported none. */
+    readonly renderState: RenderState | 'timeout',
+  ) {
+    super(`Render did not complete (render state: ${renderState})`);
+    this.name = 'RenderFailedError';
+  }
+}
+
+/**
+ * Wait for the page to set `data-render-state` on its document root and
+ * throw {@link RenderFailedError} unless it is `ready`.
+ */
+export async function assertRenderReady(page: Page): Promise<void> {
+  let state: string | null;
+  try {
+    await page.waitForSelector('html[data-render-state]', {
+      timeout: RENDER_TIMEOUT_MS,
+    });
+    state = await page.evaluate(() =>
+      document.documentElement.getAttribute('data-render-state'),
+    );
+  } catch {
+    throw new RenderFailedError('timeout');
+  }
+  if (state === 'ready') return;
+  throw new RenderFailedError(state === 'auth-required' ? state : 'error');
+}
+
 /**
  * Launch Puppeteer browser with configured Chrome path.
  */
@@ -123,7 +163,7 @@ export async function addPrintStyles(page: Page): Promise<void> {
  */
 export async function waitForSpaContent(page: Page): Promise<void> {
   await page
-    .waitForSelector('article.prose', { timeout: 15_000 })
+    .waitForSelector('article.prose', { timeout: RENDER_TIMEOUT_MS })
     .catch(() => {});
   await page
     .waitForFunction(
@@ -134,7 +174,7 @@ export async function waitForSpaContent(page: Page): Promise<void> {
           (c) => !c.textContent.includes('Loading SVG'),
         );
       },
-      { timeout: 15_000 },
+      { timeout: RENDER_TIMEOUT_MS },
     )
     .catch(() => {});
   // Wait for CM6 code blocks to mount
@@ -148,7 +188,7 @@ export async function waitForSpaContent(page: Page): Promise<void> {
         if (codeBlocks.length === 0) return true;
         return article.getAttribute('data-cm6-ready') === 'true';
       },
-      { timeout: 15_000 },
+      { timeout: RENDER_TIMEOUT_MS },
     )
     .catch(() => {});
   await new Promise((r) => setTimeout(r, 1000));

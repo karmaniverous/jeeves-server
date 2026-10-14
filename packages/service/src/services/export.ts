@@ -9,6 +9,7 @@ import HtmlToDocx from '@turbodocx/html-to-docx';
 
 import {
   addPrintStyles,
+  assertRenderReady,
   captureSvgsAsPng,
   launchBrowser,
   setupAuthInterception,
@@ -41,6 +42,7 @@ async function exportPDF(options: ExportOptions): Promise<Buffer> {
       await setupAuthInterception(page, options.authKey, options.url);
     }
     await page.goto(options.url, { waitUntil: 'networkidle0' });
+    await assertRenderReady(page);
     await waitForSpaContent(page);
     await addPrintStyles(page);
 
@@ -68,6 +70,7 @@ async function exportDOCX(options: ExportOptions): Promise<Buffer> {
     }
     await page.setViewport({ width: 1200, height: 800 });
     await page.goto(options.url, { waitUntil: 'networkidle0' });
+    await assertRenderReady(page);
     await waitForSpaContent(page);
     await addPrintStyles(page);
 

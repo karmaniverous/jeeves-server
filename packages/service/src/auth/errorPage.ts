@@ -8,7 +8,7 @@
  */
 export function renderErrorPage(title: string, message: string): string {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-render-state="error">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
