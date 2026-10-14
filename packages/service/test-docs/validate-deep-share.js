@@ -3,7 +3,9 @@
  *
  * Tests:
  * 1. Internal links work up to depth limit and not beyond
- * 2. Directory option limits directory access and includes dirs in depth
+ * 2. Directory option limits directory access and includes dirs in depth:
+ *    a deep key opens only its own path, and a directory reached through a
+ *    link lists its immediate entries, each with its own depth-consuming link
  * 3. External links always work (never rewritten)
  *
  * Usage: node test-docs/validate-deep-share.js
@@ -49,7 +51,8 @@ function parseShareUrl(url) {
   const u = new URL(url, BASE);
   return {
     path: u.pathname.replace('/browse', ''),
-    key: u.searchParams.get('key'),
+    // Generated links carry `k`; `key` is the legacy name.
+    key: u.searchParams.get('k') ?? u.searchParams.get('key'),
     d: u.searchParams.get('d'),
     dirs: u.searchParams.get('dirs'),
     s: u.searchParams.get('s'),
@@ -83,7 +86,7 @@ function extractInternalLinks(html) {
   const re = /<a\s+[^>]*?href="(\/browse\/[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi;
   let m;
   while ((m = re.exec(html)) !== null) {
-    links.push({ url: m[1], text: m[2] });
+    links.push({ url: m[1].replace(/&amp;/g, '&'), text: m[2] });
   }
   return links;
 }
@@ -286,15 +289,14 @@ async function runTests() {
   }
 
   // ================================================================
-  // TEST 5: Depth 1, dirs=true — directory listing allowed
+  // TEST 5: dirs=true — a deep key opens only its own path; a directory
+  // reached through a link lists its immediate entries, and each step
+  // consumes depth
   // ================================================================
-  console.log('\n━━━ Test 5: Depth 1, dirs=true (directory access) ━━━');
+  console.log('\n━━━ Test 5: dirs=true (directory hops consume depth) ━━━');
   {
-    const share = await getShareLink(
-      '/e/dev/karmaniverous/jeeves-server/test-docs/page-a.md',
-      1,
-      true,
-    );
+    const docs = '/e/dev/karmaniverous/jeeves-server/test-docs';
+    const share = await getShareLink(`${docs}/page-a.md`, 2, true);
     const params = parseShareUrl(share.url);
 
     // Page A should load
@@ -307,39 +309,72 @@ async function runTests() {
     const pageBLink = internalLinks.find((l) => l.text.includes('Page B'));
     assert(!!pageBLink, 'Page B link is live with dirs=true');
 
-    // Parent directory listing should work
-    const parentDirRes = await fetchJson(
-      apiDirUrl('/e/dev/karmaniverous/jeeves-server/test-docs', params),
-    );
-    assert(
-      parentDirRes.status === 200,
-      'Parent directory listing works with dirs=true',
-    );
+    // Page A's key opens no directory: not the parent, an ancestor, a
+    // sibling, or even the linked subdirectory
+    for (const [label, dir] of [
+      ['Parent directory', docs],
+      ['Ancestor directory', '/e/dev'],
+      ['Sibling directory', '/e/dev/karmaniverous/jeeves-server/src'],
+      ['Linked subdirectory (with the page key)', `${docs}/sub`],
+    ]) {
+      const res = await fetchJson(apiDirUrl(dir, params));
+      assert(
+        res.status === 401,
+        `${label} refused with Page A's key (got ${res.status})`,
+      );
+    }
 
-    // Subdirectory listing should work
-    const subDirRes = await fetchJson(
-      apiDirUrl('/e/dev/karmaniverous/jeeves-server/test-docs/sub', params),
-    );
-    assert(
-      subDirRes.status === 200,
-      'Subdirectory listing works with dirs=true',
-    );
+    // Follow the link-rendered directory link (hop 1)
+    const dirLink = internalLinks.find((l) => l.text.includes('Sub Directory'));
+    assert(!!dirLink, 'Directory link is live with dirs=true');
+    if (dirLink) {
+      const dirParams = parseShareUrl(dirLink.url);
+      const dirRes = await fetchJson(apiDirUrl(dirParams.path, dirParams));
+      assert(dirRes.status === 200, 'Linked directory lists (hop 1)');
 
-    // Any directory accessible (scoped only by sharer's access)
-    const ancestorDirRes = await fetchJson(apiDirUrl('/e/dev', params));
-    assert(
-      ancestorDirRes.status === 200,
-      `Ancestor dir accessible with dirs=true (got ${ancestorDirRes.status})`,
-    );
+      const entries = dirRes.data?.entries || [];
+      const pageD = entries.find((e) => e.name === 'page-d.md');
+      assert(
+        typeof pageD?.shareUrl === 'string',
+        'Entry carries its own share link',
+      );
 
-    // Sibling directory accessible too
-    const siblingDirRes = await fetchJson(
-      apiDirUrl('/e/dev/karmaniverous/jeeves-server/src', params),
-    );
-    assert(
-      siblingDirRes.status === 200,
-      `Sibling dir accessible with dirs=true (got ${siblingDirRes.status})`,
-    );
+      // The directory's key does not open its entries
+      const entryWithDirKey = await fetchJson(
+        apiFileUrl({ ...dirParams, path: `${docs}/sub/page-d.md` }),
+      );
+      assert(
+        entryWithDirKey.status === 401,
+        `Directory key refused on an entry (got ${entryWithDirKey.status})`,
+      );
+
+      // Follow the entry's own link (hop 2)
+      if (pageD?.shareUrl) {
+        const entryRes = await fetchJson(
+          apiFileUrl(parseShareUrl(pageD.shareUrl)),
+        );
+        assert(entryRes.status === 200, 'Entry opens via its link (hop 2)');
+      }
+    }
+
+    // With depth 1, the directory hop uses the whole depth: its entries
+    // are listed as plain text, with no links
+    const shallow = await getShareLink(`${docs}/page-a.md`, 1, true);
+    const shallowRes = await fetchJson(apiFileUrl(parseShareUrl(shallow.url)));
+    const shallowDirLink = extractInternalLinks(
+      shallowRes.data?.html || '',
+    ).find((l) => l.text.includes('Sub Directory'));
+    assert(!!shallowDirLink, 'Directory link is live at depth 1');
+    if (shallowDirLink) {
+      const p = parseShareUrl(shallowDirLink.url);
+      const res = await fetchJson(apiDirUrl(p.path, p));
+      assert(res.status === 200, 'Linked directory lists at depth 1');
+      const entries = res.data?.entries || [];
+      assert(
+        entries.length > 0 && entries.every((e) => e.shareUrl === null),
+        'Entries have no links once depth is used up',
+      );
+    }
   }
 
   // ================================================================
