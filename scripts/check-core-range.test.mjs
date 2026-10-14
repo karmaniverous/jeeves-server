@@ -33,7 +33,11 @@ function manifest(name, json) {
   return file;
 }
 
-/** Run the CLI against fixture manifests. */
+/**
+ * Run the CLI against fixture manifests: from the dependent package's
+ * directory, or (with `cwdManifest` false) from a directory without a
+ * manifest, passing the dependent's manifest as `--package`.
+ */
 function run(coreVersion, deps, cwdManifest = true) {
   const id = `${coreVersion}-${String(Math.random()).slice(2)}`;
   const core = manifest(`core-${id}`, { name: CORE, version: coreVersion });
@@ -46,7 +50,7 @@ function run(coreVersion, deps, cwdManifest = true) {
     ? [script, '--core', core]
     : [script, '--core', core, '--package', pkg];
   return spawnSync(process.execPath, args, {
-    cwd: path.dirname(pkg),
+    cwd: cwdManifest ? path.dirname(pkg) : tmp,
     encoding: 'utf8',
   });
 }
@@ -69,8 +73,15 @@ describe('check-core-range CLI', () => {
   });
 
   it('reads --package instead of the working directory', () => {
+    const admitted = run(
+      '0.4.0',
+      { dependencies: { [CORE]: '^0.4.0' } },
+      false,
+    );
+    assert.equal(admitted.status, 0, admitted.stderr);
     const res = run('0.4.0', { dependencies: { [CORE]: '^0.3.0' } }, false);
     assert.equal(res.status, 1);
+    assert.match(res.stderr, /\^0\.3\.0.*does not admit.*0\.4\.0/u);
   });
 
   it('exits 1 when the package does not depend on core', () => {
