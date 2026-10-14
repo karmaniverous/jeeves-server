@@ -105,9 +105,11 @@ Insiders can create links to share files or directories with [outsiders](#outsid
 1. Click the **link** icon in the header bar.
 2. Configure sharing options:
    - **Expiry** — How long the link remains valid.
-   - **Depth** — For directories, how many levels deep the share extends.
-   - **Include directories** — Whether subdirectory listings are accessible.
+   - **Depth** (documents only) — How many links the outsider may follow from the shared document (each link, or each entry opened in a directory reached that way, uses one level). With no depth, a shared document opens on its own.
+   - **Include directories** (`dirs`, documents only) — Whether links to directories may be followed.
 3. Copy the generated link.
+
+For a directory, the menu offers only the expiry: a directory shared from the UI is a plain tree share, covering every file below it. Deep directory shares (with a depth or `dirs`) are available through the API (`POST /api/share`) and the OpenClaw plugin (`server_share`); see [Sharing](sharing.md#deep-shares-depth-and-dirs).
 
 Share links are cryptographically signed and cannot be guessed. Each link is scoped to the specific path and sharing options you selected.
 

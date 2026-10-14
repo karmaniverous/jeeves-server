@@ -267,6 +267,12 @@ export const jeevesConfigSchema = z
     eventQueueConcurrency: z.number().int().positive().default(3),
     /** Public base URL (e.g. https://jeeves.johngalt.id). When set, API responses include full public URLs. */
     publicUrl: z.url().optional(),
+    /**
+     * Trust `X-Forwarded-Proto` / `X-Forwarded-Host` / `Host` to build the
+     * public origin when `publicUrl` is unset. Enable only behind a proxy
+     * that sets or strips these headers itself. Default: false.
+     */
+    trustProxyHeaders: z.boolean().default(false),
   })
   .superRefine((config, ctx) => {
     // Google auth mode requires google config + sessionSecret
@@ -305,6 +311,25 @@ export const jeevesConfigSchema = z
           path: ['auth', 'sessionSecret'],
         });
       }
+    }
+
+    // Login links and OAuth redirects are absolute URLs on a trusted public
+    // origin: publicUrl, or forwarding headers only when explicitly trusted.
+    const loginFlows = [
+      config.auth.modes.includes('email') ? 'email login' : null,
+      config.auth.modes.includes('google') ? 'Google login' : null,
+      config.oauth ? 'OAuth (oauth)' : null,
+    ].filter((flow): flow is string => flow !== null);
+    if (
+      loginFlows.length > 0 &&
+      !config.publicUrl &&
+      !config.trustProxyHeaders
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `publicUrl is required when ${loginFlows.join(', ')} is configured (or set trustProxyHeaders: true behind a proxy that sets X-Forwarded-* headers)`,
+        path: ['publicUrl'],
+      });
     }
 
     // Keys auth mode requires at least one key

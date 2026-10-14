@@ -1,21 +1,21 @@
 {
   "author": "Jeeves",
   "dependencies": {
-    "@karmaniverous/jeeves": "0.6.0",
-    "zod": "^4.6.5"
+    "@karmaniverous/jeeves": "0.7.0",
+    "zod": "^4.6.7"
   },
   "description": "Shared cryptographic utilities and API types for jeeves-server packages.",
   "devDependencies": {
-    "@dotenvx/dotenvx": "^2.30.0",
+    "@dotenvx/dotenvx": "^2.35.0",
     "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-typescript": "^12.3.0",
     "cross-env": "^10.1.0",
-    "release-it": "^21.1.0",
-    "rollup": "^4.63.5",
+    "release-it": "^21.1.1",
+    "rollup": "^4.64.6",
     "tslib": "^2.8.1",
-    "vitest": "^5.0.2"
+    "vitest": "^5.0.4"
   },
   "engines": {
     "node": ">=22"
@@ -44,10 +44,13 @@
       "tagName": "core/${version}"
     },
     "github": {
-      "release": true
+      "release": true,
+      "releaseName": "${name.split('/').pop()}@${version}",
+      "releaseNotes": "npx git-cliff --tag core/${version} --unreleased --strip header"
     },
     "hooks": {
       "after:bump": [
+        "npx git-cliff --tag core/${version} -o CHANGELOG.md",
         "npm install --package-lock-only --ignore-scripts",
         "git add ../../package-lock.json"
       ],
@@ -63,7 +66,6 @@
         "git switch ${branchName}"
       ],
       "before:npm:release": [
-        "npx git-cliff -o CHANGELOG.md",
         "git add -A"
       ]
     },

@@ -9,8 +9,12 @@
 import type { FastifyRequest } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@karmaniverous/jeeves', () => ({
+vi.mock('@karmaniverous/jeeves', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   getServiceUrl: () => 'http://watcher:1936',
+}));
+vi.mock('../../config/index.js', () => ({
+  getConfig: () => ({ roots: {} }),
 }));
 
 const HASH = 'a'.repeat(64);
@@ -39,7 +43,8 @@ vi.mock('../../services/embeddedDiagrams.js', () => ({
 
 const rewriteLinksForDeepShare = vi.fn();
 const rewriteSimpleImageAuth = vi.fn();
-vi.mock('../../services/deepShareLinks.js', () => ({
+vi.mock('../../services/deepShareLinks.js', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   rewriteLinksForDeepShare: (...a: unknown[]): unknown =>
     rewriteLinksForDeepShare(...a),
   rewriteSimpleImageAuth: (...a: unknown[]): unknown =>
@@ -48,6 +53,7 @@ vi.mock('../../services/deepShareLinks.js', () => ({
 
 const { renderMarkdownContent, tryWatcherRender } =
   await import('./fileRender.js');
+const { isDirectoryUrlPath } = await import('../../services/contentPath.js');
 
 describe('tryWatcherRender', () => {
   const fetchMock = vi.fn();
@@ -183,6 +189,7 @@ describe('renderMarkdownContent', () => {
       true,
       'stk',
       '9',
+      isDirectoryUrlPath,
     );
   });
 });

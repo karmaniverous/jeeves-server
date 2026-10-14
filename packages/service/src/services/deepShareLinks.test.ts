@@ -1,12 +1,76 @@
 /**
- * Tests for deep share link rewriting — fragment handling.
+ * Tests for deep share link rewriting (fragment handling) and the deep
+ * share context helpers.
  */
 
 import { describe, expect, it } from 'vitest';
 
-import { rewriteLinksForDeepShare } from './deepShareLinks.js';
+import {
+  canListDirectory,
+  encodeStack,
+  rewriteLinksForDeepShare,
+  toDeepShareContext,
+} from './deepShareLinks.js';
 
 const seed = 'test-seed-12345';
+
+describe('toDeepShareContext', () => {
+  it('parses depth and dirs and carries the stack and exp', () => {
+    expect(toDeepShareContext({ d: '3', dirs: '1', s: 'STK' }, '9')).toEqual({
+      maxDepth: 3,
+      dirs: true,
+      stackCompressed: 'STK',
+      exp: '9',
+    });
+  });
+
+  it.each(['', 'x'])('treats depth %j as 0', (d) => {
+    expect(toDeepShareContext({ d, dirs: '0', s: '' }, undefined)).toEqual({
+      maxDepth: 0,
+      dirs: false,
+      stackCompressed: '',
+      exp: undefined,
+    });
+  });
+
+  it('accepts only dirs=1 as dirs', () => {
+    expect(
+      toDeepShareContext({ d: '1', dirs: 'true', s: '' }, undefined).dirs,
+    ).toBe(false);
+  });
+});
+
+describe('canListDirectory', () => {
+  const context = (dirs: boolean, stack: string[]) => ({
+    maxDepth: 2,
+    dirs,
+    stackCompressed: encodeStack(stack),
+    exp: undefined,
+  });
+
+  it('lets a dirs share list any directory it reaches', () => {
+    expect(
+      canListDirectory(context(true, ['/r/a.md', '/r/sub']), '/r/sub'),
+    ).toBe(true);
+  });
+
+  it('without dirs, lists only the shared directory itself (any case)', () => {
+    expect(canListDirectory(context(false, ['/r/Docs']), '/r/docs')).toBe(true);
+  });
+
+  it('without dirs, refuses a directory reached by a hop', () => {
+    expect(
+      canListDirectory(context(false, ['/r/a.md', '/r/sub']), '/r/sub'),
+    ).toBe(false);
+  });
+
+  it('without dirs, refuses another directory and an empty stack', () => {
+    expect(canListDirectory(context(false, ['/r/docs']), '/r/other')).toBe(
+      false,
+    );
+    expect(canListDirectory(context(false, []), '/r/docs')).toBe(false);
+  });
+});
 
 describe('rewriteLinksForDeepShare', () => {
   describe('fragment handling', () => {
@@ -22,7 +86,7 @@ describe('rewriteLinksForDeepShare', () => {
         undefined,
       );
       // Fragment must come after all query params (cheerio encodes & as &amp;)
-      expect(result).toMatch(/\?key=.*&amp;d=.*&amp;s=.*#p01-fix/);
+      expect(result).toMatch(/\?k=.*&amp;d=.*&amp;s=.*#p01-fix/);
       // Must NOT have #fragment before ?
       expect(result).not.toMatch(/#p01-fix\?/);
     });
@@ -38,7 +102,7 @@ describe('rewriteLinksForDeepShare', () => {
         '',
         undefined,
       );
-      expect(result).toMatch(/\?key=.*#section2/);
+      expect(result).toMatch(/\?k=.*#section2/);
       expect(result).not.toMatch(/#section2\?/);
     });
 
@@ -53,7 +117,7 @@ describe('rewriteLinksForDeepShare', () => {
         '',
         undefined,
       );
-      expect(result).toMatch(/\?key=.*#heading/);
+      expect(result).toMatch(/\?k=.*#heading/);
       expect(result).not.toMatch(/#heading\?/);
     });
 
@@ -81,8 +145,8 @@ describe('rewriteLinksForDeepShare', () => {
       );
 
       // Extract key from both — should be identical since fragment is not part of path
-      const keyWith = resultWith.match(/key=([a-f0-9]+)/)?.[1];
-      const keyWithout = resultWithout.match(/key=([a-f0-9]+)/)?.[1];
+      const keyWith = resultWith.match(/[?&]k=([a-f0-9]+)/)?.[1];
+      const keyWithout = resultWithout.match(/[?&]k=([a-f0-9]+)/)?.[1];
       expect(keyWith).toBe(keyWithout);
     });
 
@@ -97,7 +161,7 @@ describe('rewriteLinksForDeepShare', () => {
         '',
         undefined,
       );
-      expect(result).toMatch(/\?key=/);
+      expect(result).toMatch(/\?k=/);
       expect(result).not.toContain('#');
     });
 

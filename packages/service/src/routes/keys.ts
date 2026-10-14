@@ -7,6 +7,7 @@
 
 import crypto from 'node:crypto';
 
+import { getUrlKey } from '@karmaniverous/jeeves-server-core';
 import type { FastifyPluginCallback } from 'fastify';
 
 import {
@@ -16,10 +17,10 @@ import {
 } from '../auth/resolve.js';
 import { getConfig, resetConfig } from '../config/index.js';
 import { appendEvent } from '../services/eventQueue.js';
+import { createPathShare } from '../services/shareLinks.js';
 import { writeInsiderSeedToConfig } from '../util/configPersist.js';
 import {
   computeInsiderKey,
-  computeOutsiderKeyWithExpiry,
   computePathKey,
   timingSafeEqual,
 } from '../util/crypto.js';
@@ -74,10 +75,10 @@ export const keysRoute: FastifyPluginCallback = (fastify, _opts, done) => {
   });
 
   // POST /rotate-key - Rotate key (insider key or session cookie)
-  fastify.post<{ Querystring: { key?: string } }>(
+  fastify.post<{ Querystring: { k?: string; key?: string } }>(
     '/rotate-key',
     async (request, reply) => {
-      const provided = request.query.key;
+      const provided = getUrlKey(request.query);
       const config = getConfig();
 
       if (provided) {
@@ -112,40 +113,40 @@ export const keysRoute: FastifyPluginCallback = (fastify, _opts, done) => {
   );
 
   // GET /share - Generate outsider link (insider key or session cookie)
-  fastify.get<{ Querystring: { key?: string; path?: string; exp?: string } }>(
-    '/share',
-    async (request, reply) => {
-      const config = getConfig();
-      const targetPath = request.query.path;
-      if (!targetPath) {
-        return reply.code(400).send({ error: 'path query param required' });
-      }
+  fastify.get<{
+    Querystring: { k?: string; key?: string; path?: string; exp?: string };
+  }>('/share', async (request, reply) => {
+    const config = getConfig();
+    const targetPath = request.query.path;
+    if (!targetPath) {
+      return reply.code(400).send({ error: 'path query param required' });
+    }
 
-      // Try provided key
-      if (request.query.key) {
-        const insiderResult = resolveInsiderKeyAuth(config, request.query.key);
-        if (insiderResult.valid && insiderResult.seed) {
-          return buildShareResponse(
-            insiderResult.seed,
-            targetPath,
-            request.query.exp,
-          );
-        }
-      }
-
-      // Try session cookie
-      const sessionResult = resolveSessionAuth(config, request);
-      if (sessionResult.valid && sessionResult.seed) {
+    // Try provided key
+    const providedKey = getUrlKey(request.query);
+    if (providedKey) {
+      const insiderResult = resolveInsiderKeyAuth(config, providedKey);
+      if (insiderResult.valid && insiderResult.seed) {
         return buildShareResponse(
-          sessionResult.seed,
+          insiderResult.seed,
           targetPath,
           request.query.exp,
         );
       }
+    }
 
-      return reply.code(401).send({ error: 'Invalid insider key' });
-    },
-  );
+    // Try session cookie
+    const sessionResult = resolveSessionAuth(config, request);
+    if (sessionResult.valid && sessionResult.seed) {
+      return buildShareResponse(
+        sessionResult.seed,
+        targetPath,
+        request.query.exp,
+      );
+    }
+
+    return reply.code(401).send({ error: 'Invalid insider key' });
+  });
   done();
 };
 
@@ -171,21 +172,6 @@ async function rotateInsiderSeed(
 }
 
 function buildShareResponse(seed: string, targetPath: string, expiry?: string) {
-  let outsiderKey: string;
-  let shareUrl: string;
-
-  if (expiry) {
-    outsiderKey = computeOutsiderKeyWithExpiry(seed, targetPath, expiry);
-    shareUrl = `/browse${targetPath}?key=${outsiderKey}&exp=${expiry}`;
-  } else {
-    outsiderKey = computePathKey(seed, targetPath);
-    shareUrl = `/browse${targetPath}?key=${outsiderKey}`;
-  }
-
-  return {
-    path: targetPath,
-    key: outsiderKey,
-    exp: expiry ?? null,
-    url: shareUrl,
-  };
+  const { key, url } = createPathShare(seed, targetPath, expiry);
+  return { path: targetPath, key, exp: expiry ?? null, url };
 }

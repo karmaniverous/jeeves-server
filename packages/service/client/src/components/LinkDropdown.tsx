@@ -11,6 +11,11 @@ import {
 } from '@/components/ActionDropdown';
 import { useActionState } from '@/components/useActionState';
 import { getShareLink, type ShareSettings } from '@/lib/api';
+import {
+  deriveShareLink,
+  type LinkType,
+  shareDepthOptions,
+} from '@/lib/shareLinks';
 
 interface LinkDropdownProps {
   path: string;
@@ -24,8 +29,6 @@ interface LinkDropdownProps {
   onError?: (error: string) => void;
   onStateChange?: (state: ActionState) => void;
 }
-
-type LinkType = 'page' | 'raw' | 'event';
 
 async function copyShareLink(
   path: string,
@@ -48,21 +51,12 @@ async function copyShareLink(
     }
   }
 
-  const depth = !isDirectory && settings.depth > 0 ? settings.depth : undefined;
-  const dirs = !isDirectory && settings.dirs ? true : undefined;
+  const { depth, dirs } = shareDepthOptions(settings, isDirectory);
 
   const data = await getShareLink(path, expiryParam, depth, dirs);
   if (!data.url) throw new Error('No URL returned');
 
-  let fullUrl = window.location.origin + data.url;
-  if (type === 'raw') {
-    const shareUrl = new URL(fullUrl);
-    shareUrl.pathname = shareUrl.pathname.replace('/browse/', '/api/raw/');
-    fullUrl = shareUrl.toString();
-  } else if (type === 'event') {
-    fullUrl =
-      window.location.origin + '/event?key=' + data.url.split('key=')[1];
-  }
+  const fullUrl = deriveShareLink(window.location.origin, data.url, type);
   await navigator.clipboard.writeText(fullUrl);
 }
 

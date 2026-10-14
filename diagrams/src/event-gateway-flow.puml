@@ -14,7 +14,7 @@ participant "Queue Processor" as processor
 participant "Command\n(stdin JSON)" as cmd
 database "event-log.jsonl" as log
 
-caller -> endpoint : POST body + ?key=
+caller -> endpoint : POST body + ?k=
 endpoint -> auth : Verify key\n(scope: /event)
 auth --> endpoint : ✅ Authorized
 

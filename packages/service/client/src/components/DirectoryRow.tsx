@@ -1,9 +1,10 @@
 import { FileText, FolderOpen } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import { DownloadDropdown } from '@/components/DownloadDropdown';
 import { LinkDropdown } from '@/components/LinkDropdown';
 import type { DirectoryEntry, ShareSettings } from '@/lib/api';
+import { entryLinkTarget } from '@/lib/directoryEntryLink';
 
 function formatSize(bytes: number | null): string {
   if (bytes === null) return '-';
@@ -33,6 +34,21 @@ export function DirectoryRow({
   const isDir = entry.type === 'directory';
   const hasRaw = !isDir;
   const urlPath = `/${entryPath}`;
+  const { search } = useLocation();
+  const target = entryLinkTarget(entryPath, entry.shareUrl, search);
+  // Deep-share listings: entry downloads need the entry's own key, so they
+  // are offered on the entry's page instead.
+  const showDownloads = entry.shareUrl === undefined;
+  const label = (
+    <>
+      {isDir ? (
+        <FolderOpen className="h-4 w-4 text-yellow-500 shrink-0" />
+      ) : (
+        <FileText className="h-4 w-4 text-zinc-400 shrink-0" />
+      )}
+      <span className="truncate">{entry.name}</span>
+    </>
+  );
   const typeLabel = isDir
     ? 'Directory'
     : entry.ext
@@ -43,17 +59,27 @@ export function DirectoryRow({
     <tr className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors">
       <td className="px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <Link
-            to={`/browse/${entryPath}`}
-            className="text-blue-500 hover:underline flex items-center gap-2 min-w-0"
-          >
-            {isDir ? (
-              <FolderOpen className="h-4 w-4 text-yellow-500 shrink-0" />
-            ) : (
-              <FileText className="h-4 w-4 text-zinc-400 shrink-0" />
-            )}
-            <span className="truncate">{entry.name}</span>
-          </Link>
+          {target.kind === 'route' && (
+            <Link
+              to={target.to}
+              className="text-blue-500 hover:underline flex items-center gap-2 min-w-0"
+            >
+              {label}
+            </Link>
+          )}
+          {target.kind === 'share' && (
+            <a
+              href={target.href}
+              className="text-blue-500 hover:underline flex items-center gap-2 min-w-0"
+            >
+              {label}
+            </a>
+          )}
+          {target.kind === 'none' && (
+            <span className="flex items-center gap-2 min-w-0 text-muted-foreground">
+              {label}
+            </span>
+          )}
           <div className="ml-auto flex items-center gap-0.5 shrink-0">
             {isInsider && (
               <LinkDropdown
@@ -65,12 +91,14 @@ export function DirectoryRow({
                 isDirectory={isDir}
               />
             )}
-            <DownloadDropdown
-              reqPath={entryPath}
-              file={isDir ? null : { fileName: entry.name, type: entry.ext }}
-              isDirectory={isDir}
-              compact
-            />
+            {showDownloads && (
+              <DownloadDropdown
+                reqPath={entryPath}
+                file={isDir ? null : { fileName: entry.name, type: entry.ext }}
+                isDirectory={isDir}
+                compact
+              />
+            )}
           </div>
         </div>
       </td>

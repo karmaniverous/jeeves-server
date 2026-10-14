@@ -30,6 +30,11 @@ render_always = true
 
 [git]
 conventional_commits = true
+# Strip the branch prefix the prepare-commit-msg hook adds (e.g. `[271] `)
+# so the commit still parses as conventional and lands in its group.
+commit_preprocessors = [
+  { pattern = '^\[[^\]]+\]\s+', replace = "" },
+]
 filter_unconventional = false
 split_commits = false
 commit_parsers = [

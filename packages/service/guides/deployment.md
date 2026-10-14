@@ -140,6 +140,8 @@ server {
 }
 ```
 
+Behind a proxy, set `publicUrl` in the server config (e.g. `https://jeeves.example.com`); it's required whenever email, Google or OAuth login is configured, unless `trustProxyHeaders` is `true`. Login links, OAuth redirects, `share-for` links and the session cookie's `secure` flag use it; forwarding headers are ignored unless `trustProxyHeaders` is enabled. See [Public URL](./setup.md#public-url).
+
 ## HTTPS
 
 **HTTPS is required** when using Google OAuth — Google will not redirect to an HTTP callback URL (except `localhost`).
@@ -153,10 +155,10 @@ server {
 curl http://localhost:1934/health
 
 # Detailed server status (no auth required)
-curl http://localhost:1934/api/status
+curl http://localhost:1934/status
 ```
 
-The `/api/status` endpoint returns version, uptime, connected services, export capabilities, and event schemas. Add `?events=N` to include the N most recent event log entries. Use `/health` for simple load balancer checks and `/api/status` for monitoring dashboards.
+The `/status` endpoint returns version, uptime, connected services, export capabilities, and event schemas. It does not include event log entries: those come from `GET /api/events?limit=N`, which is only for insiders with no scopes configured (a machine key or insider session without `scopes`). Use `/health` for simple load balancer checks and `/status` for monitoring dashboards.
 
 ## Updating
 

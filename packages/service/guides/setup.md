@@ -113,6 +113,23 @@ When the server is behind a reverse proxy (Caddy, nginx), set `publicUrl` so API
 
 The OpenClaw plugin reads this value from the server config to rewrite tool response URLs. If not set, URLs use the local API address.
 
+`publicUrl` is also the origin for every absolute URL the server builds itself: emailed login links, `share-for` links, the Google and generic OAuth `redirect_uri`, and the session cookie's `secure` flag (secure when `publicUrl` is https). Request headers (`Host`, `X-Forwarded-Host`, `X-Forwarded-Proto`) are **not** trusted for this by default, because anyone who can reach the server directly can set them.
+
+**`publicUrl` is required** when email login (`auth.modes` includes `"email"`), Google login (`"google"`) or OAuth credential management (`oauth`) is configured, unless `trustProxyHeaders` is `true`. Without it the config fails validation and the server won't start; the error names `publicUrl`.
+
+Without `publicUrl` in a config that doesn't need it (key-only access):
+
+- `share-for` returns relative URLs;
+- the session cookie is not marked secure.
+
+**`trustProxyHeaders`** (default `false`): when `publicUrl` is unset, derive the origin from `X-Forwarded-Proto` / `X-Forwarded-Host` / `Host` instead. Enable it only when every request reaches the server through a reverse proxy that sets or overwrites those headers. Setting `publicUrl` is preferred.
+
+```json
+{
+  "trustProxyHeaders": true
+}
+```
+
 ### Event queue storage
 
 By default the event queue is stored inside the npm install directory, which is fragile across upgrades. Set `eventQueue` to a stable path:
@@ -226,7 +243,7 @@ Users authenticate with their Google account. The server checks their email agai
 
 **Best for:** Headless access, bot integrations, simple setups without Google.
 
-Users authenticate by appending `?key=<value>` to any URL. The server derives keys from configured seeds using HMAC-SHA256.
+Users authenticate by appending `?k=<value>` to any URL. The server derives keys from configured seeds using HMAC-SHA256.
 
 **Requirements when enabled:**
 
@@ -269,7 +286,7 @@ Users enter their email on the sign-in page. If the email matches a configured i
 
 ### Both Modes Together
 
-When multiple modes are active, browser users log in with Google or email magic link, and bots/scripts use `?key=` for stateless access. All methods work on every endpoint.
+When multiple modes are active, browser users log in with Google or email magic link, and bots/scripts use `?k=` for stateless access. All methods work on every endpoint.
 
 | Scenario | Recommended |
 | --- | --- |
@@ -483,7 +500,8 @@ Branding is surfaced via the `/status` endpoint (no auth required) so the React 
 | `auth.email` | object | — | Email magic link config (required when modes includes `"email"`) |
 | `plantuml` | object | — | PlantUML rendering config |
 | `diagramCachePath` | string | `.diagram-cache` | Cached rendered diagram directory |
-| `publicUrl` | string | — | Public base URL (e.g. `https://docs.example.com`). When set, API responses include full public URLs. |
+| `publicUrl` | string | — | Public base URL (e.g. `https://docs.example.com`). Origin for login links, share-for links, OAuth redirects and the cookie `secure` flag; API responses include full public URLs. **Required** with email, Google or OAuth login unless `trustProxyHeaders` is `true`. |
+| `trustProxyHeaders` | boolean | `false` | Derive the public origin from forwarding/`Host` headers when `publicUrl` is unset. Only behind a proxy that sets those headers. |
 | `eventQueue` | string | `{installDir}/logs/event-queue.jsonl` | Absolute path to the durable event queue file. Cursor file is `eventQueue + '.cursor'`. |
 | `eventQueueConcurrency` | number | `3` | Maximum concurrent event queue entries per batch. |
 | `outsiderPolicy` | scopes | — | Global outsider sharing constraints |

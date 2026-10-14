@@ -4,6 +4,7 @@
  * Handles: /api/auth/status
  */
 
+import { getUrlKey } from '@karmaniverous/jeeves-server-core';
 import type {
   FastifyPluginCallback,
   FastifyReply,
@@ -72,7 +73,7 @@ export const authStatusRoutes: FastifyPluginCallback = (
         const keyResult = resolveKeyAuth(
           config,
           query.path ?? '/',
-          query.key,
+          getUrlKey(query),
           query.exp,
           deepParams,
         );

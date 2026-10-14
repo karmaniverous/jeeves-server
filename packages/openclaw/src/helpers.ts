@@ -32,5 +32,5 @@ export function withAuth(url: string, keySeed: string | undefined): string {
   if (!keySeed) return url;
   const derived = computeInsiderKey(keySeed);
   const sep = url.includes('?') ? '&' : '?';
-  return url + sep + 'key=' + derived;
+  return url + sep + 'k=' + derived;
 }

@@ -19,6 +19,11 @@ export interface ShareResponse {
   exp: string | null;
   depth?: number;
   dirs?: boolean;
+  /**
+   * Whether the shared path is an existing directory. Sent by servers from
+   * 3.15.0; absent from older servers.
+   */
+  isDirectory?: boolean;
 }
 
 /** POST /api/util/share-for request body. */

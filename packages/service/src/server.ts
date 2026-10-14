@@ -159,6 +159,7 @@ async function start() {
     console.log(`  POST /event    - Event Gateway (key auth)`);
     console.log(`  GET  /key      - Compute path key (X-API-Key auth)`);
     console.log(`  GET  /status   - Server status (no auth)`);
+    console.log(`  GET  /health   - Liveness check (no auth)`);
   } catch (err) {
     console.error('Fatal startup error:', err);
     process.exit(1);

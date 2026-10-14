@@ -1,0 +1,227 @@
+import type * as Jeeves from '@karmaniverous/jeeves';
+import type {
+  PluginApi,
+  ToolDescriptor,
+  ToolResult,
+} from '@karmaniverous/jeeves';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+const fetchJsonMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@karmaniverous/jeeves', async (importOriginal) => {
+  const actual = await importOriginal<typeof Jeeves>();
+  return { ...actual, fetchJson: fetchJsonMock };
+});
+
+const { registerServerTools, toRawUrl } = await import('./serverTools.js');
+
+const BASE_URL = 'http://127.0.0.1:1934';
+
+/**
+ * Register the server_* tools against a stub API and return them by name.
+ * With `pluginKey`, the plugin is configured with that key seed.
+ */
+function collectTools(pluginKey?: string): Map<string, ToolDescriptor> {
+  const tools = new Map<string, ToolDescriptor>();
+  const api: PluginApi = {
+    registerTool: (tool: ToolDescriptor) => {
+      tools.set(tool.name, tool);
+    },
+    logger: { warn: vi.fn() },
+    ...(pluginKey ? { pluginConfig: { pluginKey } } : {}),
+  };
+  if (pluginKey) vi.stubEnv('JEEVES_SERVER_PLUGIN_KEY', pluginKey);
+  registerServerTools(api, BASE_URL, () => undefined);
+  return tools;
+}
+
+/** Run a registered tool by name, answering its request with `response`. */
+function run(
+  name: string,
+  params: Record<string, unknown>,
+  response: unknown = {},
+  pluginKey?: string,
+): Promise<ToolResult> {
+  fetchJsonMock.mockResolvedValueOnce(response);
+  const tool = collectTools(pluginKey).get(name);
+  if (!tool) throw new Error(`tool not registered: ${name}`);
+  return tool.execute('call-1', params);
+}
+
+/** The URL and fetch options of the first request sent. */
+function firstRequest(): { url: URL; options: unknown } {
+  const [url, , options] = fetchJsonMock.mock.calls[0] as [
+    string,
+    unknown,
+    unknown,
+  ];
+  return { url: new URL(url), options };
+}
+
+afterEach(() => {
+  fetchJsonMock.mockReset();
+  vi.unstubAllEnvs();
+});
+
+describe('server_share rawUrl (#278)', () => {
+  it('maps a depth-0 file share onto /api/raw/ and keeps the key', async () => {
+    const result = await run(
+      'server_share',
+      { path: 'j/docs/a.md' },
+      { url: '/browse/j/docs/a.md?k=abc', path: '/j/docs/a.md', exp: null },
+    );
+    const text = JSON.stringify(result);
+    expect(text).toContain(`${BASE_URL}/api/raw/j/docs/a.md?k=abc`);
+    expect(text).not.toContain(`${BASE_URL}/raw/`);
+  });
+
+  /** The parsed JSON result of a tool run. */
+  async function shareResult(
+    response: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    const result = await run('server_share', { path: 'j/docs' }, response);
+    const text = (result.content[0] as { text: string }).text;
+    return JSON.parse(text) as Record<string, unknown>;
+  }
+
+  it('gives a plain file share a raw URL carrying k', async () => {
+    const out = await shareResult({
+      url: '/browse/j/docs/a.md?k=abc',
+      path: '/j/docs/a.md',
+      exp: null,
+      depth: 0,
+      dirs: false,
+      isDirectory: false,
+    });
+    expect(out.rawUrl).toBe(`${BASE_URL}/api/raw/j/docs/a.md?k=abc`);
+  });
+
+  it('gives a deep file share a raw URL with the whole deep query', async () => {
+    const out = await shareResult({
+      url: '/browse/j/docs/a.md?k=abc&d=2&dirs=1&s=stk&exp=9',
+      path: '/j/docs/a.md',
+      exp: '9',
+      depth: 2,
+      dirs: true,
+      isDirectory: false,
+    });
+    expect(out.rawUrl).toBe(
+      `${BASE_URL}/api/raw/j/docs/a.md?k=abc&d=2&dirs=1&s=stk&exp=9`,
+    );
+  });
+
+  it.each([
+    ['plain', { depth: 0, dirs: false, url: '/browse/j/docs?k=abc' }],
+    [
+      'deep',
+      { depth: 1, dirs: true, url: '/browse/j/docs?k=abc&d=1&dirs=1&s=x' },
+    ],
+  ])('omits rawUrl for a %s directory share', async (_label, share) => {
+    const out = await shareResult({
+      ...share,
+      path: '/j/docs',
+      exp: null,
+      isDirectory: true,
+    });
+    expect(out).not.toHaveProperty('rawUrl');
+    expect(out.pageUrl).toBe(`${BASE_URL}${share.url}`);
+  });
+
+  it('keeps the old rule when the server does not report isDirectory', async () => {
+    const deep = await shareResult({
+      url: '/browse/j/docs/a.md?k=abc&d=2&dirs=0&s=stk',
+      path: '/j/docs/a.md',
+      exp: null,
+      depth: 2,
+      dirs: false,
+    });
+    expect(deep.rawUrl).toBeNull();
+  });
+
+  it('only rewrites the leading /browse/ segment', () => {
+    expect(toRawUrl(`${BASE_URL}/browse/j/browse/a.md?k=abc`)).toBe(
+      `${BASE_URL}/api/raw/j/browse/a.md?k=abc`,
+    );
+  });
+});
+
+describe('server_share expiry', () => {
+  /** The JSON body of the first request sent. */
+  function firstBody(): Record<string, unknown> {
+    const [, init] = fetchJsonMock.mock.calls[0] as [
+      string,
+      { body?: string } | undefined,
+    ];
+    return JSON.parse(init?.body ?? '{}') as Record<string, unknown>;
+  }
+
+  const response = {
+    url: '/browse/j/docs/a.md?k=abc',
+    path: '/j/docs/a.md',
+    exp: null,
+  };
+
+  it('sends no expiry when expiryDays is omitted (the link never expires)', async () => {
+    await run('server_share', { path: 'j/docs/a.md' }, response);
+    expect(firstRequest().url.pathname).toBe('/api/share');
+    expect(firstBody()).toEqual({ path: '/j/docs/a.md' });
+  });
+
+  it('sends an epoch-ms expiry when expiryDays is set', async () => {
+    const before = Date.now();
+    await run('server_share', { path: 'j/docs/a.md', expiryDays: 2 }, response);
+    const expiry = Number(firstBody().expiry);
+    expect(expiry).toBeGreaterThanOrEqual(before + 2 * 86_400_000);
+    expect(expiry).toBeLessThanOrEqual(Date.now() + 2 * 86_400_000);
+  });
+
+  it('does not describe a default expiry', () => {
+    const tool = collectTools().get('server_share');
+    const schema = tool?.parameters as {
+      properties: Record<string, { description: string }>;
+    };
+    const description = schema.properties.expiryDays.description;
+    expect(description).not.toMatch(/default/i);
+    expect(description).toMatch(/never expires/i);
+  });
+});
+
+describe('plugin key (#279)', () => {
+  it('is sent as k, never as key', async () => {
+    await run('server_browse', { path: 'j' }, {}, 'seed');
+    const { searchParams } = firstRequest().url;
+    expect(searchParams.get('k')).toMatch(/^[0-9a-f]+$/u);
+    expect(searchParams.has('key')).toBe(false);
+  });
+
+  it('is sent by server_resolve_path (authenticated since 3.15.0)', async () => {
+    await run(
+      'server_resolve_path',
+      { fsPath: 'J:\\a.md' },
+      { browsePath: 'j/a.md' },
+      'seed',
+    );
+    const { url } = firstRequest();
+    expect(url.pathname).toBe('/api/resolve-path');
+    expect(url.searchParams.get('fsPath')).toBe('J:\\a.md');
+    expect(url.searchParams.get('k')).toMatch(/^[0-9a-f]+$/u);
+  });
+});
+
+describe('server_export timeout', () => {
+  it('passes a 10-minute timeoutMs to fetchJson', async () => {
+    await run('server_export', { path: 'j/docs/a.md', format: 'pdf' });
+
+    expect(fetchJsonMock).toHaveBeenCalledTimes(1);
+    const { url, options } = firstRequest();
+    expect(`${url.pathname}${url.search}`).toBe(
+      '/api/export/j/docs/a.md?format=pdf',
+    );
+    expect(options).toEqual({ timeoutMs: 600_000 });
+  });
+
+  it('leaves other tools on the core default timeout', async () => {
+    await run('server_browse', { path: 'j/docs' });
+    expect(firstRequest().options).toBeUndefined();
+  });
+});

@@ -48,6 +48,7 @@ function makeConfig(overrides: Partial<RuntimeConfig> = {}): RuntimeConfig {
     eventQueueCursorPath: '/var/cursor.json',
     eventLogPath: '/var/event-log.jsonl',
     eventQueueConcurrency: 3,
+    trustProxyHeaders: false,
     ...overrides,
   };
 }

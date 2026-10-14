@@ -12,9 +12,11 @@ import path from 'node:path';
 import { getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyRequest } from 'fastify';
 
+import { isDirectoryUrlPath } from '../../services/contentPath.js';
 import {
   rewriteLinksForDeepShare,
   rewriteSimpleImageAuth,
+  toDeepShareContext,
 } from '../../services/deepShareLinks.js';
 import {
   renderEmbeddedDiagrams,
@@ -114,15 +116,19 @@ export async function renderMarkdownContent(
   const seed = request.authSeed;
   if (!isInsider && seed) {
     if (deepShare) {
-      const maxDepth = parseInt(deepShare.d, 10);
+      const context = toDeepShareContext(
+        deepShare,
+        (request.query as { exp?: string }).exp,
+      );
       html = rewriteLinksForDeepShare(
         html,
         seed,
         `/${reqPath}`,
-        isNaN(maxDepth) ? 0 : maxDepth,
-        deepShare.dirs === '1',
-        deepShare.s,
-        (request.query as { exp?: string }).exp,
+        context.maxDepth,
+        context.dirs,
+        context.stackCompressed,
+        context.exp,
+        isDirectoryUrlPath,
       );
     } else {
       html = rewriteSimpleImageAuth(html, seed);

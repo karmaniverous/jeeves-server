@@ -30,6 +30,10 @@ import {
   generateOtp,
   signToken,
 } from '../../util/magicToken.js';
+import {
+  getPublicOrigin,
+  sendPublicOriginConfigError,
+} from '../../util/publicOrigin.js';
 
 export const magicLinkApiRoute: FastifyPluginCallback = (
   fastify,
@@ -40,6 +44,16 @@ export const magicLinkApiRoute: FastifyPluginCallback = (
     '/api/auth/magic',
     async (request, reply) => {
       const config = getConfig();
+
+      // Never build login links from request headers unless trusted. With
+      // email login configured, refuse for every request (not only
+      // insiders) so the response doesn't reveal which emails are insiders.
+      const emailLoginConfigured =
+        config.authModes.includes('email') && !!config.emailAuth;
+      const origin = getPublicOrigin(config, request);
+      if (emailLoginConfigured && !origin) {
+        return sendPublicOriginConfigError(reply);
+      }
 
       const email = request.body.email?.toLowerCase().trim();
       const returnTo = request.body.returnTo
@@ -54,6 +68,7 @@ export const magicLinkApiRoute: FastifyPluginCallback = (
       const sessionSecret = config.sessionSecret;
 
       if (
+        origin &&
         email &&
         insider &&
         sessionSecret &&
@@ -68,15 +83,8 @@ export const magicLinkApiRoute: FastifyPluginCallback = (
         const enc = encryptToken(token, otp);
         const verifyUrl = `/auth/magic/verify?enc=${enc}`;
 
-        // Build clickable magic link
-        const proto =
-          (request.headers['x-forwarded-proto'] as string | undefined) ??
-          'http';
-        const host =
-          (request.headers['x-forwarded-host'] as string | undefined) ??
-          request.headers['host'] ??
-          request.hostname;
-        const magicLink = `${proto}://${host}/auth/magic/callback?token=${token}`;
+        // Build clickable magic link on the configured public origin
+        const magicLink = `${origin}/auth/magic/callback?token=${token}`;
 
         // Send email (fire-and-forget — don't block the response)
         const branding = config.branding ?? DEFAULT_BRANDING;

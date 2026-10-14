@@ -166,6 +166,7 @@ describe('OAuth API routes', () => {
     });
 
     it('starts flow with named provider', async () => {
+      mockConfig = { ...mockConfig, publicUrl: 'https://jeeves.example.com' };
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
       await routes['/api/oauth/start'].handler(
@@ -177,7 +178,12 @@ describe('OAuth API routes', () => {
             clientSecret: 'csecret',
           },
           accessMode: 'insider',
-          headers: { host: 'jeeves.example.com', 'x-forwarded-proto': 'https' },
+          // Forged headers are ignored: publicUrl decides the origin.
+          headers: {
+            host: 'evil.example',
+            'x-forwarded-host': 'evil.example',
+            'x-forwarded-proto': 'http',
+          },
         },
         reply,
       );
@@ -200,6 +206,7 @@ describe('OAuth API routes', () => {
     });
 
     it('starts flow with ad-hoc provider', async () => {
+      mockConfig = { ...mockConfig, publicUrl: 'http://localhost:1934' };
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
       await routes['/api/oauth/start'].handler(
@@ -225,6 +232,7 @@ describe('OAuth API routes', () => {
     });
 
     it('includes PKCE params when pkce is true', async () => {
+      mockConfig = { ...mockConfig, publicUrl: 'http://localhost:1934' };
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
       await routes['/api/oauth/start'].handler(
@@ -273,6 +281,103 @@ describe('OAuth API routes', () => {
       const body = capture.body as { authUrl: string; state: string };
       expect(body.authUrl).toContain(
         encodeURIComponent('https://public.example.com/oauth/callback'),
+      );
+    });
+
+    const startBody = {
+      provider: 'github',
+      account: 'me',
+      clientId: 'cid',
+      clientSecret: 'csecret',
+    };
+
+    it.each([
+      ['not a url', 'origin must be a valid URL'],
+      [
+        'http://public.example.com',
+        'origin scheme must be https (or http for localhost)',
+      ],
+      ['https://public.example.com/app', 'origin must not have a pathname'],
+      [
+        'https://public.example.com/?a=1',
+        'origin must not have query parameters',
+      ],
+      ['https://public.example.com/?', 'origin must not have query parameters'],
+      [
+        'https://user:pass@public.example.com',
+        'origin must not contain credentials',
+      ],
+      [
+        'https://user@public.example.com',
+        'origin must not contain credentials',
+      ],
+      ['https://@public.example.com', 'origin must not contain credentials'],
+      ['https://public.example.com/#x', 'origin must not have a fragment'],
+      ['https://public.example.com#x', 'origin must not have a fragment'],
+      ['https://public.example.com/#', 'origin must not have a fragment'],
+    ])('rejects origin %s', async (origin, error) => {
+      const routes = await getHandlers();
+      const { reply, capture } = buildReply();
+      await routes['/api/oauth/start'].handler(
+        { body: { ...startBody, origin }, accessMode: 'insider', headers: {} },
+        reply,
+      );
+      expect(capture.statusCode).toBe(400);
+      expect(capture.body).toEqual({ error });
+    });
+
+    it.each([
+      ['http://localhost:5173', 'http://localhost:5173/oauth/callback'],
+      [
+        'https://public.example.com/',
+        'https://public.example.com/oauth/callback',
+      ],
+    ])('accepts origin %s', async (origin, redirectUri) => {
+      const routes = await getHandlers();
+      const { reply, capture } = buildReply();
+      await routes['/api/oauth/start'].handler(
+        { body: { ...startBody, origin }, accessMode: 'insider', headers: {} },
+        reply,
+      );
+      expect(capture.statusCode).toBe(200);
+      const pending = consumePending((capture.body as { state: string }).state);
+      expect(pending?.redirectUri).toBe(redirectUri);
+    });
+
+    it('refuses without publicUrl or trustProxyHeaders (no header origin)', async () => {
+      const routes = await getHandlers();
+      const { reply, capture } = buildReply();
+      await routes['/api/oauth/start'].handler(
+        {
+          body: startBody,
+          accessMode: 'insider',
+          headers: { host: 'evil.example', 'x-forwarded-proto': 'https' },
+        },
+        reply,
+      );
+      expect(capture.statusCode).toBe(500);
+      expect((capture.body as { error: string }).error).toMatch(/publicUrl/);
+    });
+
+    it('uses forwarding headers only with trustProxyHeaders', async () => {
+      mockConfig = { ...mockConfig, trustProxyHeaders: true };
+      const routes = await getHandlers();
+      const { reply, capture } = buildReply();
+      await routes['/api/oauth/start'].handler(
+        {
+          body: startBody,
+          accessMode: 'insider',
+          headers: {
+            host: 'internal:1934',
+            'x-forwarded-host': 'proxy.example.com',
+            'x-forwarded-proto': 'https',
+          },
+        },
+        reply,
+      );
+      const pending = consumePending((capture.body as { state: string }).state);
+      expect(pending?.redirectUri).toBe(
+        'https://proxy.example.com/oauth/callback',
       );
     });
   });

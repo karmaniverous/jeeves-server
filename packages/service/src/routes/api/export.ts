@@ -23,8 +23,24 @@ import {
   clearStandaloneDiagramCache,
   getCachedExport,
 } from '../../services/exportCache.js';
+import { RenderFailedError } from '../../services/puppeteer.js';
 import { getRoots, urlPathToFs } from '../../util/platform.js';
+import { pathKeyQuery } from '../../util/shareQuery.js';
 import { isArchiveFormat, sendDirectoryArchive } from './archiveExport.js';
+import { rejectNonInsider } from './scopeGuard.js';
+
+/**
+ * Build the loopback URL Puppeteer renders for a document export. The key
+ * travels as `k` (#279).
+ */
+export function buildRenderUrl(
+  host: string,
+  port: number,
+  reqPath: string,
+  key: string,
+): string {
+  return `http://${host}:${String(port)}/browse/${reqPath}?${pathKeyQuery(key)}&render_diagrams=1&plain_code=1`;
+}
 
 export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   const roots = getRoots(getConfig().roots);
@@ -68,10 +84,12 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
           .code(400)
           .send({ error: 'Only markdown files support PDF/DOCX export' });
 
+      // The middleware has already authorised the caller for this path, so
+      // render with the server's _internal key whatever link the caller
+      // used (expiring and deep keys don't verify on the render URL; #295).
       const config = getConfig();
-      const internalKey = config.internalInsiderKey;
       const { port } = config;
-      const exportKey = (request.query as { key?: string }).key || internalKey;
+      const exportKey = config.internalInsiderKey;
       if (!exportKey)
         return reply
           .code(500)
@@ -80,7 +98,7 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       const bindAddr = getBindAddress('server');
       // Use loopback if bound to all interfaces (0.0.0.0 is not a valid request target)
       const renderHost = bindAddr === '0.0.0.0' ? '127.0.0.1' : bindAddr;
-      const exportUrl = `http://${renderHost}:${String(port)}/browse/${reqPath}?key=${exportKey}&render_diagrams=1&plain_code=1`;
+      const exportUrl = buildRenderUrl(renderHost, port, reqPath, exportKey);
       const fileName = path.basename(resolved);
       const baseName = fileName.replace(/\.md$/i, '');
 
@@ -124,6 +142,13 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
           .send(buffer);
       } catch (err) {
         appendEvent({ kind: `${format}_export_error`, error: String(err) });
+        if (err instanceof RenderFailedError) {
+          // Sign-in, error or timed-out render: nothing was cached.
+          return reply.code(502).send({
+            error: `${format.toUpperCase()} export failed: document did not render`,
+            renderState: err.renderState,
+          });
+        }
         return reply.code(500).send({
           error: `${format.toUpperCase()} export failed`,
           details: String(err),
@@ -136,6 +161,8 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   fastify.delete<{ Params: { '*': string } }>(
     '/api/export-cache/*',
     async (request, reply) => {
+      // Insider only: clearing caches is not something a share link grants.
+      if (rejectNonInsider(request, reply)) return reply;
       const reqPath = request.params['*'];
       if (!reqPath) return reply.code(400).send({ error: 'Path required' });
 

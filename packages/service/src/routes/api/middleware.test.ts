@@ -85,6 +85,7 @@ async function buildApp(): Promise<FastifyInstance> {
   app.post('/api/search', echo);
   app.post('/api/util/share-for', echo);
   app.get('/api/status', echo);
+  app.get('/api/auth/status', echo);
   await app.ready();
   return app;
 }
@@ -239,7 +240,7 @@ describe('auth middleware', () => {
       expect(resolveKeyAuth.mock.calls[0][1]).toBe('/');
     });
 
-    it('retries a directory share against the last stack entry', async () => {
+    it('never retries a directory share against a stack entry', async () => {
       resolveKeyAuth.mockImplementation((_c: unknown, urlPath: string) =>
         urlPath === '/j/shared'
           ? {
@@ -254,10 +255,9 @@ describe('auth middleware', () => {
       const res = await app.inject({
         url: '/api/path/j/shared/sub?key=k&d=1&dirs=1&s=/j,/j/shared',
       });
-      expect(res.statusCode).toBe(200);
+      expect(res.statusCode).toBe(401);
       expect(resolveKeyAuth.mock.calls.map((c) => c[1] as string)).toEqual([
         '/j/shared/sub',
-        '/j/shared',
       ]);
     });
 
@@ -277,9 +277,15 @@ describe('auth middleware', () => {
 
   it('skips auth for unauthenticated prefixes', async () => {
     resolveSessionAuth.mockReturnValue(FAIL);
-    const res = await app.inject({ url: '/api/status' });
+    const res = await app.inject({ url: '/api/auth/status' });
     expect(res.statusCode).toBe(200);
     expect(resolveSessionAuth).not.toHaveBeenCalled();
+  });
+
+  it('authenticates /api/status (no longer a public prefix)', async () => {
+    resolveSessionAuth.mockReturnValue(FAIL);
+    const res = await app.inject({ url: '/api/status' });
+    expect(res.statusCode).toBe(401);
   });
 
   describe('/api/util/*', () => {

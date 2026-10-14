@@ -146,6 +146,15 @@ npm run knip
 
 The monorepo uses npm workspaces. The dev server runs on port 19340 by default.
 
+## Releasing
+
+Each package is released separately with release-it (`npm run release` in its directory), in this order:
+
+1. **Core** (`packages/core`) first, whenever it has changed.
+2. **Server** (`packages/service`) and **plugin** (`packages/openclaw`) together, after core is published. If core's version changed, raise their `@karmaniverous/jeeves-server-core` range to the new version (e.g. `^0.4.0`) in the release commit.
+
+The server and plugin bundles import core at runtime, so a range that excludes the new core would install an older core without the exports they need. A `before:init` hook (`scripts/check-core-range.mjs`) stops the server or plugin release when its declared core range doesn't admit the version in `packages/core`.
+
 ## License
 
 BSD-3-Clause

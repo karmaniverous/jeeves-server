@@ -7,13 +7,67 @@ import path from 'node:path';
 
 import { createTtlStateMap } from './ttlStateMap.js';
 
-/** Build the credential file path for a provider/account pair. */
+/**
+ * Allowed characters for OAuth provider and account names: letters, digits,
+ * `.`, `_`, `-`, `@` and `+` (so email-style accounts work). Path separators,
+ * NUL and other control characters, and empty values never match.
+ */
+const CREDENTIAL_NAME_RE = /^[A-Za-z0-9._@+-]+$/u;
+
+/** Error returned when a provider or account name is rejected. */
+export const INVALID_CREDENTIAL_NAME_ERROR =
+  'provider and account may only contain letters, digits, ".", "_", "-", "@" and "+", and may not be "." or ".."';
+
+/**
+ * True when `value` is safe in a credential file name: only the allowed
+ * characters, and not `.` or `..`. With separators excluded, a whole-value
+ * `..` is the only way to form a `..` path segment.
+ */
+export function isValidCredentialName(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    CREDENTIAL_NAME_RE.test(value) &&
+    value !== '.' &&
+    value !== '..'
+  );
+}
+
+/** True when both the provider and the account name are valid. */
+export function areValidCredentialNames(
+  provider: unknown,
+  account: unknown,
+): boolean {
+  return isValidCredentialName(provider) && isValidCredentialName(account);
+}
+
+/**
+ * True when a `path.relative` result climbs out of its base: it is `..` or
+ * starts with a `..` segment. A file name merely starting with `..` (e.g.
+ * `..github-me-oauth2.json`) stays inside.
+ */
+function escapesBase(rel: string): boolean {
+  return /^\.\.(?:[\\/]|$)/u.test(rel) || path.isAbsolute(rel);
+}
+
+/**
+ * Build the credential file path for a provider/account pair. Throws when
+ * either name is invalid or the path would leave `credentialDir`.
+ */
 export function credentialPath(
   credentialDir: string,
   provider: string,
   account: string,
 ): string {
-  return path.join(credentialDir, `${provider}-${account}-oauth2.json`);
+  if (!areValidCredentialNames(provider, account)) {
+    throw new Error(INVALID_CREDENTIAL_NAME_ERROR);
+  }
+  const dir = path.resolve(credentialDir);
+  const file = path.resolve(dir, `${provider}-${account}-oauth2.json`);
+  const rel = path.relative(dir, file);
+  if (!rel || escapesBase(rel)) {
+    throw new Error('Credential path escapes the credential directory');
+  }
+  return file;
 }
 
 /** Data stored for a pending OAuth2 authorization flow. */

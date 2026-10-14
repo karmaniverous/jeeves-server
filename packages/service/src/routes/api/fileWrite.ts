@@ -13,7 +13,7 @@ import type { FastifyPluginAsync } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
 import { getRoots, urlPathToFs } from '../../util/platform.js';
-import { rejectOutOfScope } from './scopeGuard.js';
+import { rejectNonInsider, rejectOutOfScope } from './scopeGuard.js';
 
 export const fileWriteRoutes: FastifyPluginAsync = (fastify) => {
   const roots = getRoots(getConfig().roots);
@@ -21,9 +21,7 @@ export const fileWriteRoutes: FastifyPluginAsync = (fastify) => {
   fastify.put<{ Params: { '*': string }; Body: { content?: unknown } | null }>(
     '/api/file/*',
     async (request, reply) => {
-      if (request.accessMode !== 'insider') {
-        return reply.code(403).send({ error: 'Insider access required' });
-      }
+      if (rejectNonInsider(request, reply)) return reply;
 
       const reqPath = request.params['*'];
       // Defence in depth: the auth middleware also enforces scopes.

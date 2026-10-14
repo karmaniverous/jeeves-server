@@ -1,9 +1,12 @@
+import type { FastifyRequest } from 'fastify';
 import { describe, expect, it } from 'vitest';
 
 import type { NormalizedScopes, RuntimeConfig } from '../config/types.js';
-import { computeInsiderKey } from '../util/crypto.js';
+import { INSIDER_SEED, makeRuntimeConfig } from '../testing/authFixture.js';
+import { computeInsiderKey, computePathKey } from '../util/crypto.js';
 import {
   extractDeepParams,
+  resolveAuth,
   resolveKeyAuth,
   sanitizeReturnTo,
 } from './resolve.js';
@@ -134,5 +137,22 @@ describe('resolveKeyAuth', () => {
         undefined,
       ),
     ).toEqual({ valid: false });
+  });
+});
+
+describe('resolveAuth (SPA gate)', () => {
+  const config = makeRuntimeConfig();
+  const doc = '/r/docs/a.md';
+  const outsiderKey = computePathKey(INSIDER_SEED, doc);
+  const request = (query: Record<string, string>) =>
+    ({ url: `/browse${doc}`, query, cookies: {} }) as unknown as FastifyRequest;
+
+  it.each([
+    ['k', { k: outsiderKey }, 'outsider'],
+    ['legacy key', { key: outsiderKey }, 'outsider'],
+    ['both (k wins)', { k: 'bogus', key: outsiderKey }, 'none'],
+    ['neither', {}, 'none'],
+  ] as const)('%s', (_label, query, type) => {
+    expect(resolveAuth(config, request(query))).toEqual({ type });
   });
 });

@@ -167,5 +167,8 @@ export const statusRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
     const result = await handleStatus();
     return result.body;
   });
+
+  // Unauthenticated liveness probe (#259): cheap, no downstream checks.
+  fastify.get('/health', () => ({ ok: true }));
   done();
 };

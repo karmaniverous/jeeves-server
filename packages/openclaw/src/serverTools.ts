@@ -32,6 +32,23 @@ import {
 /** Milliseconds in one day. */
 const MS_PER_DAY = 86_400_000;
 
+/**
+ * Timeout for `server_export` (10 minutes, the server's render budget):
+ * cold Puppeteer starts, large PDF/DOCX renders and ZIP archives can exceed
+ * the core library's 120 s `fetchJson` default.
+ */
+export const EXPORT_TIMEOUT_MS = 600_000;
+
+/**
+ * Map an absolute share page URL (`/browse/...`) onto the raw-content route
+ * (`/api/raw/...`), keeping the auth query (#278: `/raw/` is a 404).
+ */
+export function toRawUrl(pageUrl: string): string {
+  const url = new URL(pageUrl);
+  url.pathname = url.pathname.replace(/^\/browse\//, '/api/raw/');
+  return url.toString();
+}
+
 /** Register all domain-specific server_* tools with the OpenClaw plugin API. */
 export function registerServerTools(
   api: PluginApi,
@@ -82,7 +99,7 @@ export function registerServerTools(
     {
       name: 'server_share',
       description:
-        'Generate a share link for a path. Returns an HMAC-signed page URL and raw URL (when applicable), with optional expiry and directory depth. When insiders are specified, uses the share-for endpoint to target specific audience members.',
+        'Generate a share link for a path. Returns an HMAC-signed page URL, plus a raw URL (rawUrl) for file shares, plain or deep; directory shares have no rawUrl. Takes optional expiry, link-following depth and dirs. A plain directory share (no depth, no dirs) covers the whole tree below it. When insiders are specified, uses the share-for endpoint to target specific audience members.',
       parameters: {
         type: 'object',
         properties: {
@@ -92,11 +109,13 @@ export function registerServerTools(
           },
           expiryDays: {
             type: 'number',
-            description: 'Link expiry in days (default: 30)',
+            description:
+              'Link expiry in days. Omitted: no expiry is sent and the link never expires',
           },
           depth: {
             type: 'number',
-            description: 'Directory depth for deep shares (0 = file only)',
+            description:
+              'Links the outsider may follow from the shared page, making a deep share (0 or omitted: a document opens on its own; a directory covers its whole tree)',
           },
           dirs: {
             type: 'boolean',
@@ -149,16 +168,20 @@ export function registerServerTools(
 
         const result = data as ShareResponse;
         const pageUrl = result.url ? toAbsoluteUrl(baseUrl, result.url) : null;
-        const rawUrl =
-          pageUrl && !result.dirs && (result.depth ?? 0) === 0
-            ? pageUrl.replace('/browse/', '/raw/')
-            : null;
+        const shared = { ...result, url: pageUrl, pageUrl };
 
+        // Directory shares (plain or deep) have no raw URL at all.
+        if (result.isDirectory === true) return shared;
+
+        // A file share's key, plain or deep, is bound to the file's path and
+        // verifies on /api/raw/ with the same query. Servers before 3.15.0
+        // do not report isDirectory: keep the old rule (plain shares only).
+        const rawEligible =
+          result.isDirectory === false ||
+          (!result.dirs && (result.depth ?? 0) === 0);
         return {
-          ...result,
-          url: pageUrl,
-          pageUrl,
-          rawUrl,
+          ...shared,
+          rawUrl: pageUrl && rawEligible ? toRawUrl(pageUrl) : null,
         };
       },
     },
@@ -186,6 +209,7 @@ export function registerServerTools(
         const fmt = String(params.format);
         return ['/api/export/' + p + '?format=' + fmt];
       },
+      timeoutMs: EXPORT_TIMEOUT_MS,
     },
   ];
 

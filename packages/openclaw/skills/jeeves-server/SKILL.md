@@ -14,7 +14,7 @@ Operate and interact with a jeeves-server deployment. Use for file browsing, doc
 | `server_status` | Server health: version, uptime, port, Chrome availability, export formats, auth info |
 | `server_browse` | Get file/directory metadata and listings for a browse path |
 | `server_link_info` | Query available link types for a path (page URL, raw URL, export links) |
-| `server_share` | Generate share links with optional expiry and directory depth |
+| `server_share` | Generate share links with optional expiry, link-following depth and `dirs` |
 | `server_export` | Trigger export (PDF, DOCX, SVG, PNG, ZIP) and get download URL |
 | `server_event_status` | Query event gateway status, active schemas, and recent event log |
 | `server_config` | Query resolved server configuration (supports JSONPath) |
@@ -70,10 +70,51 @@ Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) ret
 
 - **Insiders** authenticate via Google OAuth, email magic link, or key-based auth — bare URLs work for them
 - **Outsiders** need HMAC share links — use `server_share` to generate them
-- Share links have configurable expiry (default 30 days)
-- Directory shares support depth control for recursive access
+- Share links can expire: `server_share` takes `expiryDays`; without it no expiry is sent and the link never expires
+- A plain directory share covers the whole tree below it; depth and `dirs` make a deep share instead (see **Deep shares** below). The web UI only makes plain directory shares (it hides depth and `dirs` for directories); for a deep directory share use `server_share` with `depth` or `dirs`
 - An `outsiderPolicy` can constrain which paths are eligible for outsider sharing
 - **Scoped insiders** (sessions, insider keys, scoped machine keys) only reach paths within their scopes: directories above an allowed path can be browsed for navigation, but viewing, exporting, writing or sharing anything outside scope returns 403, and directory archives omit out-of-scope entries. Scope globs follow picomatch: use `/**` to grant a whole tree (`/*` matches direct children only)
+
+## Route Prefixes
+
+| Prefix | Serves |
+| --- | --- |
+| `/browse/<path>` | Web UI (what humans open) |
+| `/api/raw/<path>` | Raw file bytes |
+| `/api/export/<path>?format=…` | PDF / DOCX (Markdown), ZIP / tar (directories) |
+| `/api/mermaid-export/<path>?format=…` | Mermaid SVG / PNG / PDF |
+| `/api/plantuml-export/<path>?format=…` | PlantUML exports |
+| `/api/link-info/<path>` | Available link types and export formats |
+| `/health` | Unauthenticated liveness check (`{ "ok": true }`) |
+| `/status` | Unauthenticated server status |
+
+**Raw and export links from a share link.** Content routes check the key against the path after their prefix, so swapping `/browse/` for `/api/raw/` or `/api/export/` in a share URL, keeping its whole query string (`?k=…` and any `exp`, `d`, `dirs`, `s`), gives a working raw or export link. `server_share` already returns `rawUrl` for file shares, plain or deep (a deep file key opens that one file on `/api/raw/` too, nothing else); directory shares, plain or deep, have no `rawUrl` key.
+
+**Auth parameter name.** Generated links carry the key as `k`. The old name `key` is still accepted (if both are present, `k` wins).
+
+**Deep shares.** A deep share key opens exactly the path it was issued for. Links in a shared document, and entries of a directory reached through one (only with `dirs`), carry their own keys; each step uses one level of depth. A plain directory share (no depth and no `dirs`, including `server_share` with `insiders`) still covers the whole tree below it.
+
+**Insider scope rules.** Content routes (`/api/raw`, `/api/export`, `/api/file`, …) require the path itself to be in scope; navigation routes (directory listings) also admit ancestors of an allowed path. This applies to sessions as well as keys.
+
+## Configuration Notes
+
+- **State lives in `config.json`.** Insider seeds are stored in the server's `config.json` (`state.json` no longer exists).
+- **Back up** `config.json` and the event queue (`logs/event-queue.jsonl` plus its `.cursor` file). Neither is part of the npm package.
+- `roots` (Linux only) maps root ids to filesystem paths for the file browser; Windows discovers drives automatically.
+- `events` maps event names to a JSON Schema and a command; see the event gateway below.
+- `oauth` configures OAuth2 credential management (`credentialDir` plus `providers`) used by the `oauth_*` tools.
+- `go` maps shortlink slugs to redirect targets, served unauthenticated at `/go/<slug>`.
+- Mermaid needs no extra config: `@mermaid-js/mermaid-cli` is bundled (`mermaidCliPath` is ignored).
+- `publicUrl` is read from the server's own `config.json` (or `JEEVES_SERVER_PUBLIC_URL`), not from the plugin entry. The server also builds login links, `share-for` links and OAuth redirects on it; it's required (unless `trustProxyHeaders: true`) whenever email, Google or OAuth login is configured, and the server refuses to start without it. In key-only configs without it, `share-for` returns relative URLs.
+- `server_resolve_path` and `server_event_status` need the plugin key (insider access). `/api/events` (behind `server_event_status`) answers only insiders with no scopes configured (any `scopes`, even `allow: ['/**']`, are refused); it keeps unmatched webhook bodies up to 256 KiB each (`truncated` marks cut ones).
+
+## Event Gateway
+
+`POST /event?k=<key>` with a JSON body. The body is matched against each configured event's JSON Schema (ajv); the first match wins. An optional JsonMap transform reshapes the payload, and matched events go to a durable JSONL queue that is processed in order. `server_event_status` shows schemas and recent log entries.
+
+## Agent Guidance
+
+When handing documents to people, prefer share links over file uploads, and Markdown over DOCX/PDF unless they need a file.
 
 ## Export
 
@@ -228,6 +269,10 @@ Restart the gateway (and jeeves-server, if its `keys._plugin` changed) to load t
 ## Troubleshooting
 
 If a tool reports `configRoot not configured` (only `server_service` `install` reads it; the HTTP API tools work without it): set `plugins.entries.jeeves-server-openclaw.config.configRoot` (e.g. `jeeves install server --config-root <config-root>`) or the `JEEVES_CONFIG_ROOT` environment variable, then restart the gateway.
+
+If share links you relay arrive truncated (the key shows as `key=***` or similar): the server predates 3.15.0, whose links carry the key as `k` because OpenClaw masks the value of any query parameter named `key` in tool output. Upgrade the server and plugin together.
+
+If an export returns 502 ("document did not render"): the render page did not report a rendered document (sign-in page, error or timeout), and nothing was cached. Check the server's `_internal` key and logs.
 
 If the server is unreachable:
 

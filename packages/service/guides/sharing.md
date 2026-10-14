@@ -27,7 +27,7 @@ Depends on which auth modes are active:
 
 - **Google OAuth** (`'google'` mode) — Insider logs in with Google. The server checks their email against the `insiders` map. On first login, a key seed is auto-generated and persisted to `config.json`.
 - **Email magic link** (`'email'` mode) — Insider enters their email on the sign-in page and is redirected to a verification page. If the email matches an insider, the server sends an email containing a one-time code and a clickable magic link. The user enters the code on the verification page (which decrypts a stateless token client-side) or clicks the magic link directly. Either path sets a session cookie identical to Google OAuth. On first login, a key seed is auto-generated.
-- **Key auth** (`'keys'` mode) — Insider uses a derived URL key (`?key=<insider-key>`). The key is derived from a configured seed via HMAC-SHA256.
+- **Key auth** (`'keys'` mode) — Insider uses a derived URL key (`?k=<insider-key>`). The key is derived from a configured seed via HMAC-SHA256.
 
 ### What insiders can do
 
@@ -139,18 +139,18 @@ In the header of any file or directory view, insiders see sharing controls:
 1. **Link dropdown** (🔗) — Copy a share link
 2. **Expiry selector** — Choose how long the link is valid: never, 1 hour, 1 day, 1 week, 1 month, or 1 year
 
-The generated URL includes the outsider key as a `?key=` parameter and (if expiring) an `&exp=` parameter with the expiration timestamp.
+The generated URL includes the outsider key as a `?k=` parameter and (if expiring) an `&exp=` parameter with the expiration timestamp.
 
 **Example insider link:**
 
 ```
-https://jeeves.example.com/browse/d/docs/design.md?key=a1b2c3d4...
+https://jeeves.example.com/browse/d/docs/design.md?k=a1b2c3d4...
 ```
 
 **Example outsider link (expiring):**
 
 ```
-https://jeeves.example.com/browse/d/docs/design.md?key=e5f6a7b8...&exp=1771340000000
+https://jeeves.example.com/browse/d/docs/design.md?k=e5f6a7b8...&exp=1771340000000
 ```
 
 ### Directory sharing
@@ -162,6 +162,24 @@ When you share a directory link, the outsider can:
 - View any file within that directory tree
 
 The server checks the outsider key against the requested path **and all ancestor paths**, so a key generated for `/d/docs/` also grants access to `/d/docs/report.md` and `/d/docs/specs/api.md`.
+
+This applies to every directory share made without a depth or `dirs`: links from the UI, `POST /api/share`, and `POST /api/util/share-for` (the plugin's `server_share` with an insider audience). A directory shared **with** a depth or `dirs` is a deep share instead (see below).
+
+The UI only makes plain directory shares: for a directory, the link menu hides the depth and `dirs` controls. Make a deep directory share through `POST /api/share` (with `depth` or `dirs`) or the plugin's `server_share`.
+
+### Deep shares (depth and `dirs`)
+
+A share with a **depth** lets the outsider follow links from the shared document, up to that many hops. Each link the server renders for the outsider carries its own key, bound to that one target (`k`, plus `d`, `dirs`, `s` and any `exp`). A deep share key opens exactly the path it was issued for and nothing else.
+
+- A link to another document is one hop.
+- A link to a **directory** is followed only if the share allows directories (`dirs`). Directories are recognised on the server, whether or not the link ends in `/`.
+- A directory reached this way shows only its **immediate entries**. Opening an entry is another hop: each entry in the listing carries its own link, and once the depth is used up entries are shown as plain text.
+- Subdirectories in such a listing are directory hops too, so they need `dirs` as well.
+- The sharer's own scopes are checked against every path the outsider opens.
+
+### Raw links for shared files
+
+A share key works on every content route for its path, so swapping `/browse/` for `/api/raw/` in a file's share URL, keeping the whole query string, gives a working raw link. This holds for deep file shares too: the deep key still opens only that one file. `POST /api/share` reports `isDirectory` in its response, and the plugin's `server_share` returns `rawUrl` for file shares (plain or deep) and no `rawUrl` for directory shares.
 
 ### Link expiration
 

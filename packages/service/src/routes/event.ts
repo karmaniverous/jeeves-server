@@ -2,6 +2,7 @@
  * Event Gateway webhook endpoint
  */
 
+import { getUrlKey } from '@karmaniverous/jeeves-server-core';
 import {
   type Json,
   JsonMap,
@@ -16,12 +17,13 @@ import { verifyKey } from '../auth/keys.js';
 import { getConfig } from '../config/index.js';
 import { logEvent } from '../services/eventLog.js';
 import { enqueue } from '../services/eventQueue.js';
+import { storedBody } from '../util/eventBody.js';
 
 const ajv = new Ajv();
 
 interface EventRequest {
   Body: Record<string, unknown>;
-  Querystring: { key?: string };
+  Querystring: { k?: string; key?: string };
 }
 
 /**
@@ -68,7 +70,7 @@ export const eventRoute: FastifyPluginCallback = (fastify, _opts, done) => {
   fastify.addHook('preHandler', async (request, reply) => {
     if (!request.url.startsWith('/event')) return;
 
-    const provided = (request.query as { key?: string }).key;
+    const provided = getUrlKey(request.query);
     const config = getConfig();
 
     const result = verifyKey(
@@ -100,10 +102,12 @@ export const eventRoute: FastifyPluginCallback = (fastify, _opts, done) => {
       return { matched: match.name };
     } else {
       // Log unmatched event
+      // Full bodies are kept (they're used to design new event schemas),
+      // capped per entry.
       logEvent({
         event: null,
         matched: false,
-        bodyPreview: JSON.stringify(body),
+        ...storedBody(JSON.stringify(body)),
       });
 
       // Always return 200 for unmatched events (prevents webhook retry/disable)

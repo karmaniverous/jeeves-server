@@ -6,6 +6,7 @@
  * @packageDocumentation
  */
 
+import { getUrlKey } from '@karmaniverous/jeeves-server-core';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import {
@@ -18,7 +19,6 @@ import {
 import { canAccessPath, canNavigatePath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
 import type { NormalizedScopes, RuntimeConfig } from '../../config/types.js';
-import { decodeStack } from '../../services/deepShareLinks.js';
 import {
   type ContentRoute,
   hasTraversalSegment,
@@ -28,7 +28,11 @@ import {
 } from './contentRoute.js';
 import { OUT_OF_SCOPE_ERROR } from './scopeGuard.js';
 
-/** API prefixes that authenticate themselves or are public. */
+/**
+ * API routes that authenticate themselves or are public. An entry ending in
+ * `/` matches everything below it; any other entry matches that exact path
+ * or its sub-paths, never a longer name sharing the prefix.
+ */
 const UNAUTHENTICATED_PREFIXES = [
   '/api/readme-link',
   '/api/content-link/',
@@ -36,9 +40,17 @@ const UNAUTHENTICATED_PREFIXES = [
   '/api/auth/magic',
   '/api/public-content/',
   '/api/diagram/',
-  '/api/status',
-  '/api/resolve-path',
 ];
+
+/** True when the request path is public or self-authenticating. */
+export function isUnauthenticatedApiPath(url: string): boolean {
+  const pathname = url.split('?')[0];
+  return UNAUTHENTICATED_PREFIXES.some((prefix) =>
+    prefix.endsWith('/')
+      ? pathname.startsWith(prefix)
+      : pathname === prefix || pathname.startsWith(prefix + '/'),
+  );
+}
 
 /**
  * True when `scopes` permit the request addressed by `route`. Navigation
@@ -64,7 +76,8 @@ function authenticateUtility(
   request: FastifyRequest,
   reply: FastifyReply,
 ): void {
-  const { key, exp } = request.query as { key?: string; exp?: string };
+  const { exp } = request.query as { exp?: string };
+  const key = getUrlKey(request.query);
 
   if (key) {
     const keyResult = resolveKeyAuth(config, '/', key, exp);
@@ -100,34 +113,27 @@ function authenticateUtility(
 }
 
 /**
- * Verify the URL key for `urlPath`, retrying against the last deep-share
- * stack entry for directory shares (`dirs=1`).
+ * Verify the URL key for exactly `urlPath`. Deep share keys are bound to
+ * one path; entries of a directory reached via a deep link carry their own
+ * sub-keys (see `computeEntryLink`), so there is no fallback to another
+ * stack entry. Deep share keys never authenticate non-content routes.
  */
 function resolveUrlKey(
   config: RuntimeConfig,
   urlPath: string,
   query: AuthQuery,
+  contentRoute: ContentRoute | null,
 ) {
   const deepParams = extractDeepParams(query);
   const result = resolveKeyAuth(
     config,
     urlPath,
-    query.key,
+    getUrlKey(query),
     query.exp,
     deepParams,
   );
-  if (result.valid || deepParams?.dirs !== '1' || !query.key) return result;
-
-  const stack = decodeStack(deepParams.s);
-  const lastStackEntry = stack[stack.length - 1];
-  if (!lastStackEntry || lastStackEntry === urlPath) return result;
-  return resolveKeyAuth(
-    config,
-    lastStackEntry,
-    query.key,
-    query.exp,
-    deepParams,
-  );
+  if (result.valid && deepParams && !contentRoute) return { valid: false };
+  return result;
 }
 
 /**
@@ -138,7 +144,7 @@ function resolveUrlKey(
 export function addAuthMiddleware(fastify: FastifyInstance): void {
   fastify.addHook('preHandler', async (request, reply) => {
     if (!request.url.startsWith('/api')) return;
-    if (UNAUTHENTICATED_PREFIXES.some((p) => request.url.startsWith(p))) return;
+    if (isUnauthenticatedApiPath(request.url)) return;
 
     const config = getConfig();
 
@@ -160,6 +166,7 @@ export function addAuthMiddleware(fastify: FastifyInstance): void {
       config,
       urlPath,
       request.query as AuthQuery,
+      contentRoute,
     );
 
     // Always check the session: insiders visiting outsider links are upgraded

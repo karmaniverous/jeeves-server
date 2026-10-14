@@ -25,34 +25,37 @@ Jeeves Server can export files as PDF, DOCX, ZIP, or tar — turning Markdown in
 
 The **Download dropdown** (⬇️ icon) in the header shows available export options based on the current file type. Click an option and the file downloads directly — a spinner shows during generation, replaced by a checkmark on completion.
 
-### Via URL Parameters
+Directory archives (ZIP and Tar) and **Clear Cache** are offered to insiders only; outsiders get the formats of the file they were shared. In a directory listing reached through a deep share link, entries have no Download menu: open the entry (which uses one level of the share's depth) and download from its page.
 
-Append to any file URL:
+### Via URL
+
+Export and raw routes take the same path as the page URL, after their own prefix:
 
 ```
-# PDF export
-/browse/d/docs/design.md?export=pdf
+# PDF / DOCX export of a Markdown file
+/api/export/d/docs/design.md?format=pdf
+/api/export/d/docs/design.md?format=docx
 
-# DOCX export
-/browse/d/docs/design.md?export=docx
+# ZIP / tar export of a directory
+/api/export/d/docs?format=zip
 
 # Raw file download
-/browse/d/docs/design.md?raw=1
+/api/raw/d/docs/design.md
 ```
 
-These work with both insider keys (`?key=<insider-key>&export=pdf`) and outsider share links.
+These work with insider keys (`?k=<insider-key>`), session cookies and outsider share links: swap `/browse/` for `/api/export/` or `/api/raw/` in a share URL and keep its query string.
 
 ### Programmatic Access
 
 ```bash
 # Download PDF via curl
-curl -o design.pdf "https://jeeves.example.com/path/d/docs/design.md?key=<key>&export=pdf"
+curl -o design.pdf "https://jeeves.example.com/api/export/d/docs/design.md?format=pdf&k=<key>"
 
 # Download DOCX
-curl -o design.docx "https://jeeves.example.com/path/d/docs/design.md?key=<key>&export=docx"
+curl -o design.docx "https://jeeves.example.com/api/export/d/docs/design.md?format=docx&k=<key>"
 
 # Download raw file
-curl -o design.md "https://jeeves.example.com/path/d/docs/design.md?key=<key>&raw=1"
+curl -o design.md "https://jeeves.example.com/api/raw/d/docs/design.md?k=<key>"
 ```
 
 ## PDF Export
@@ -60,9 +63,10 @@ curl -o design.md "https://jeeves.example.com/path/d/docs/design.md?key=<key>&ra
 PDF generation uses [**Puppeteer**](https://github.com/puppeteer/puppeteer) with your installed Chrome/Chromium. The server:
 
 1. Launches headless Chrome
-2. Loads the rendered markdown page (authenticating with the `_internal` key)
-3. Prints to PDF with print-quality settings
-4. Returns the PDF as a download
+2. Loads the rendered markdown page, authenticating with the `_internal` key once the caller's own access has been checked (so exports work from expiring and deep share links too)
+3. Waits for the page to report that the document has rendered
+4. Prints to PDF with print-quality settings
+5. Returns the PDF as a download
 
 ### Requirements
 
@@ -96,7 +100,11 @@ PDFs render from the same HTML as the browser view, but:
 - Ensure the `_internal` key is configured in `keys`
 - Check server logs for Puppeteer errors
 
-**Blank or login page in PDF:**
+**Export returns 502 ("document did not render"):**
+
+The renderer waits for the page to report `data-render-state="ready"` on its root element. If the page shows the sign-in page, an error, or never finishes, the export fails with 502 and nothing is cached. The response's `renderState` says which: `auth-required`, `error` or `timeout`. Check the `_internal` key and the server logs.
+
+**502 with `renderState: "auth-required"` (the render page asked for sign-in):**
 
 - The `_internal` key's derived insider key must be valid
 - Verify with: `curl -s "http://localhost:<port>/insider-key" -H "X-API-Key: <_internal-seed>"`
@@ -104,18 +112,18 @@ PDFs render from the same HTML as the browser view, but:
 **Timeout on large documents:**
 
 - Large markdown files with many code blocks or diagrams take longer to render
-- The server has a default timeout; very large documents may need optimization
+- Each wait while the page renders is capped at 15 seconds; a page that never reports its render state fails with 502 (`renderState: "timeout"`), so very large documents may need optimization
 
 ## DOCX Export
 
-DOCX generation converts the rendered HTML to a Word document using [`@turbodocx/html-to-docx`](https://github.com/nickmessing/turbodocx). This happens server-side without Chrome.
+DOCX generation converts the rendered HTML to a Word document using [`@turbodocx/html-to-docx`](https://github.com/nickmessing/turbodocx). The server renders the page in headless Chrome exactly as for PDF (authenticating with the `_internal` key and waiting for the page to report that it has rendered), turns diagrams into PNG images, and converts the resulting HTML.
 
 DOCX exports:
 
 - Preserve headings, tables, lists, and basic formatting
 - Include code blocks (without syntax highlighting colors)
 - Embed images as inline content
-- Work independently of the `_internal` key (no Puppeteer needed)
+- Need Chrome and the `_internal` key, like PDF exports (a page that does not render fails with 502, as above)
 
 ## Mermaid Export
 

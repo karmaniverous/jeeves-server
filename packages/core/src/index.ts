@@ -52,3 +52,4 @@ export type {
   ShareRequest,
   ShareResponse,
 } from './types.js';
+export { getUrlKey, LEGACY_URL_KEY_PARAM, URL_KEY_PARAM } from './urlKey.js';

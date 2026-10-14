@@ -15,20 +15,19 @@ import { sanitizeReturnTo } from '../auth/resolve.js';
 import { COOKIE_NAME, setSessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
 import { writeInsiderSeedToConfig } from '../util/configPersist.js';
+import {
+  getPublicOrigin,
+  type OriginRequest,
+  sendPublicOriginConfigError,
+} from '../util/publicOrigin.js';
 
 /**
- * Build the redirect URI from the request.
- * Uses the Host header to include port, and X-Forwarded-Proto for scheme.
+ * Build the Google redirect URI on the configured public origin, or null
+ * when none can be determined (never from untrusted request headers).
  */
-function getRedirectUri(request: {
-  headers: Record<string, string | string[] | undefined>;
-  hostname: string;
-}): string {
-  const proto =
-    (request.headers['x-forwarded-proto'] as string | undefined) ?? 'http';
-  const host =
-    (request.headers['host'] as string | undefined) ?? request.hostname;
-  return `${proto}://${host}/auth/callback`;
+function getRedirectUri(request: OriginRequest): string | null {
+  const origin = getPublicOrigin(getConfig(), request);
+  return origin ? `${origin}/auth/callback` : null;
 }
 
 export const authRoute: FastifyPluginCallback = (fastify, _opts, done) => {
@@ -46,7 +45,10 @@ export const authRoute: FastifyPluginCallback = (fastify, _opts, done) => {
         ? Buffer.from(request.query.returnTo).toString('base64url')
         : undefined;
 
-      const url = buildAuthUrl(google.clientId, getRedirectUri(request), state);
+      const redirectUri = getRedirectUri(request);
+      if (!redirectUri) return sendPublicOriginConfigError(reply);
+
+      const url = buildAuthUrl(google.clientId, redirectUri, state);
       return reply.redirect(url);
     },
   );
@@ -74,11 +76,14 @@ export const authRoute: FastifyPluginCallback = (fastify, _opts, done) => {
       return reply.code(400).send({ error: 'Missing authorization code' });
     }
 
+    const redirectUri = getRedirectUri(request);
+    if (!redirectUri) return sendPublicOriginConfigError(reply);
+
     // Exchange code for tokens
     const tokens = await exchangeCode(
       google.clientId,
       google.clientSecret,
-      getRedirectUri(request),
+      redirectUri,
       code,
     );
 

@@ -17,15 +17,11 @@ import { packageDirectorySync } from 'package-directory';
 import { _pathMatchesScopes } from '../../auth/keys.js';
 import { findInsider } from '../../auth/resolve.js';
 import { getConfig, resetConfig } from '../../config/index.js';
-import { encodeStack } from '../../services/deepShareLinks.js';
+import { isDirectoryUrlPath } from '../../services/contentPath.js';
+import { createDeepShare, createPathShare } from '../../services/shareLinks.js';
 import { writeInsiderSeedToConfig } from '../../util/configPersist.js';
-import {
-  computeDeepShareKey,
-  computeOutsiderKeyWithExpiry,
-  computePathKey,
-  type DeepShareParams,
-} from '../../util/crypto.js';
 import { fsPathToUrl, getRoots } from '../../util/platform.js';
+import { getPublicOrigin } from '../../util/publicOrigin.js';
 import { rejectOutOfScope } from './scopeGuard.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -35,17 +31,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * hops, which break when the compiled output adds a `dist/` layer.
  */
 const serverRoot = packageDirectorySync({ cwd: __dirname }) ?? __dirname;
-
-/** Build a deep-share browse URL from its constituent parts. */
-function buildDeepShareUrl(
-  targetPath: string,
-  key: string,
-  params: { depth: number; dirs: boolean; stack: string; exp?: string },
-): string {
-  let url = `/browse${targetPath}?key=${key}&d=${String(params.depth)}&dirs=${params.dirs ? '1' : '0'}&s=${params.stack}`;
-  if (params.exp) url += `&exp=${params.exp}`;
-  return url;
-}
 
 export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   const roots = getRoots(getConfig().roots);
@@ -72,13 +57,8 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       return reply.code(404).send({ error: 'README.md not found' });
 
     const urlPath = fsPathToUrl(readmePath, roots);
-    const stack = encodeStack([urlPath]);
-    const deepParams = { depth: 2, dirs: false, stack, exp: undefined };
-    const key = computeDeepShareKey(seed, urlPath, deepParams);
-
-    return reply.send({
-      url: buildDeepShareUrl(urlPath, key, { depth: 2, dirs: false, stack }),
-    });
+    const { url } = createDeepShare(seed, urlPath, { depth: 2, dirs: false });
+    return reply.send({ url });
   });
 
   // GET /api/content-link/:file — share link for content/*.md (terms, privacy)
@@ -95,13 +75,8 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       return reply.code(404).send({ error: `${file}.md not found` });
 
     const urlPath = fsPathToUrl(contentPath, roots);
-    const stack = encodeStack([urlPath]);
-    const deepParams = { depth: 0, dirs: false, stack, exp: undefined };
-    const key = computeDeepShareKey(seed, urlPath, deepParams);
-
-    return reply.send({
-      url: buildDeepShareUrl(urlPath, key, { depth: 0, dirs: false, stack }),
-    });
+    const { url } = createDeepShare(seed, urlPath, { depth: 0, dirs: false });
+    return reply.send({ url });
   });
 
   // POST /api/share
@@ -116,38 +91,22 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
 
     if (rejectOutOfScope(request, reply, targetPath)) return reply;
 
-    let outsiderKey: string;
-    let shareUrl: string;
-
-    if ((depth && depth > 0) || dirs) {
-      const stack = encodeStack([targetPath]);
-      const deepParams: DeepShareParams = {
-        depth: depth ?? 0,
-        dirs: dirs ?? false,
-        stack,
-        exp: expiry,
-      };
-      outsiderKey = computeDeepShareKey(seed, targetPath, deepParams);
-      shareUrl = buildDeepShareUrl(targetPath, outsiderKey, {
-        depth: depth ?? 0,
-        dirs: dirs ?? false,
-        stack,
-        exp: expiry,
-      });
-    } else if (expiry) {
-      outsiderKey = computeOutsiderKeyWithExpiry(seed, targetPath, expiry);
-      shareUrl = `/browse${targetPath}?key=${outsiderKey}&exp=${expiry}`;
-    } else {
-      outsiderKey = computePathKey(seed, targetPath);
-      shareUrl = `/browse${targetPath}?key=${outsiderKey}`;
-    }
+    const share =
+      (depth && depth > 0) || dirs
+        ? createDeepShare(seed, targetPath, {
+            depth: depth ?? 0,
+            dirs: dirs ?? false,
+            exp: expiry,
+          })
+        : createPathShare(seed, targetPath, expiry);
 
     return reply.send({
-      url: shareUrl,
+      url: share.url,
       path: targetPath,
       exp: expiry ?? null,
       depth: depth ?? 0,
       dirs: dirs ?? false,
+      isDirectory: isDirectoryUrlPath(targetPath),
     });
   });
 
@@ -230,13 +189,13 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
 
     const hasOutsiders = unknownIds.length > 0;
 
+    // Absolute URLs only from the configured public origin; otherwise
+    // relative (never from untrusted request headers).
+    const origin = getPublicOrigin(config, request) ?? '';
+
     if (!hasOutsiders) {
-      const proto = String(request.headers['x-forwarded-proto'] || 'https');
-      const host = String(
-        request.headers['x-forwarded-host'] || request.headers.host,
-      );
       return reply.send({
-        url: `${proto}://${host}/browse${targetPath}`,
+        url: `${origin}/browse${targetPath}`,
         type: 'insider',
       });
     }
@@ -256,25 +215,20 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
 
     const shareDepth = depth ?? 0;
     const shareDirs = dirs ?? false;
-    const stack = encodeStack([targetPath]);
-    const deepParams: DeepShareParams = {
-      depth: shareDepth,
-      dirs: shareDirs,
-      stack,
-    };
-    const outsiderKey = computeDeepShareKey(sharerSeed, targetPath, deepParams);
-    const proto = String(request.headers['x-forwarded-proto'] || 'https');
-    const host = String(
-      request.headers['x-forwarded-host'] || request.headers.host,
-    );
-
-    let shareUrl = `${proto}://${host}/browse${targetPath}?key=${outsiderKey}`;
-    if (shareDepth > 0) shareUrl += `&d=${String(shareDepth)}`;
-    shareUrl += `&dirs=${shareDirs ? '1' : '0'}`;
-    if (stack) shareUrl += `&s=${stack}`;
+    // A directory shared without depth or dirs is a tree share: a plain path
+    // key covers every file below it, as the UI's directory links do.
+    // Otherwise the same deep share as POST /api/share, which always emits
+    // d (also d=0) so verification recognises a deep key (#282).
+    const share =
+      shareDepth <= 0 && !shareDirs && isDirectoryUrlPath(targetPath)
+        ? createPathShare(sharerSeed, targetPath)
+        : createDeepShare(sharerSeed, targetPath, {
+            depth: shareDepth,
+            dirs: shareDirs,
+          });
 
     const response: Record<string, unknown> = {
-      url: shareUrl,
+      url: `${origin}${share.url}`,
       type: 'outsider-share',
     };
 
