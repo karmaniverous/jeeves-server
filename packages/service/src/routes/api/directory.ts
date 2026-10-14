@@ -13,8 +13,9 @@ import type { FastifyPluginCallback } from 'fastify';
 import { canAccessPath, canNavigatePath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
 import {
+  canListDirectory,
   computeEntryLink,
-  decodeStack,
+  toDeepShareContext,
 } from '../../services/deepShareLinks.js';
 import { filterBreadcrumbsForOutsider } from '../../util/breadcrumbs.js';
 import {
@@ -126,20 +127,11 @@ export const directoryRoutes: FastifyPluginCallback = (
       const seed = request.authSeed;
       const deepContext =
         !isInsider && deep && seed
-          ? {
-              maxDepth: Number.parseInt(deep.d, 10) || 0,
-              dirs: deep.dirs === '1',
-              stackCompressed: deep.s,
-              exp: (request.query as { exp?: string }).exp,
-            }
+          ? toDeepShareContext(deep, (request.query as { exp?: string }).exp)
           : null;
       const dirPath = `/${reqPath.replace(/\/+$/u, '')}`;
-      if (deepContext && !deepContext.dirs) {
-        const stack = decodeStack(deepContext.stackCompressed);
-        const sharedRoot = stack.length === 1 ? stack[0] : undefined;
-        if (sharedRoot?.toLowerCase() !== dirPath.toLowerCase()) {
-          return reply.code(401).send({ error: 'Unauthorized' });
-        }
+      if (deepContext && !canListDirectory(deepContext, dirPath)) {
+        return reply.code(401).send({ error: 'Unauthorized' });
       }
 
       const allEntries = await fsp.readdir(resolved, {

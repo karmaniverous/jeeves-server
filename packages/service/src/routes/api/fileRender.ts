@@ -7,16 +7,16 @@
  * @packageDocumentation
  */
 
-import fs from 'node:fs';
 import path from 'node:path';
 
 import { getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyRequest } from 'fastify';
 
-import { getConfig } from '../../config/index.js';
+import { isDirectoryUrlPath } from '../../services/contentPath.js';
 import {
   rewriteLinksForDeepShare,
   rewriteSimpleImageAuth,
+  toDeepShareContext,
 } from '../../services/deepShareLinks.js';
 import {
   renderEmbeddedDiagrams,
@@ -24,21 +24,6 @@ import {
 } from '../../services/embeddedDiagrams.js';
 import { registerDiagramHashes } from '../../services/exportCache.js';
 import { parseMarkdown } from '../../services/markdown.js';
-import { getRoots, urlPathToFs } from '../../util/platform.js';
-
-/** Whether a content URL path names an existing directory (by stat). */
-export function isDirectoryUrlPath(urlPath: string): boolean {
-  const fsPath = urlPathToFs(
-    urlPath.replace(/^\/+/u, ''),
-    getRoots(getConfig().roots),
-  );
-  if (!fsPath) return false;
-  try {
-    return fs.statSync(fsPath).isDirectory();
-  } catch {
-    return false;
-  }
-}
 
 /** Watcher render response shape. */
 export interface WatcherRenderResponse {
@@ -131,15 +116,18 @@ export async function renderMarkdownContent(
   const seed = request.authSeed;
   if (!isInsider && seed) {
     if (deepShare) {
-      const maxDepth = parseInt(deepShare.d, 10);
+      const context = toDeepShareContext(
+        deepShare,
+        (request.query as { exp?: string }).exp,
+      );
       html = rewriteLinksForDeepShare(
         html,
         seed,
         `/${reqPath}`,
-        isNaN(maxDepth) ? 0 : maxDepth,
-        deepShare.dirs === '1',
-        deepShare.s,
-        (request.query as { exp?: string }).exp,
+        context.maxDepth,
+        context.dirs,
+        context.stackCompressed,
+        context.exp,
         isDirectoryUrlPath,
       );
     } else {

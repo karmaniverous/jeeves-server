@@ -17,10 +17,10 @@ import {
 } from '../auth/resolve.js';
 import { getConfig, resetConfig } from '../config/index.js';
 import { appendEvent } from '../services/eventQueue.js';
+import { createPathShare } from '../services/shareLinks.js';
 import { writeInsiderSeedToConfig } from '../util/configPersist.js';
 import {
   computeInsiderKey,
-  computeOutsiderKeyWithExpiry,
   computePathKey,
   timingSafeEqual,
 } from '../util/crypto.js';
@@ -172,21 +172,6 @@ async function rotateInsiderSeed(
 }
 
 function buildShareResponse(seed: string, targetPath: string, expiry?: string) {
-  let outsiderKey: string;
-  let shareUrl: string;
-
-  if (expiry) {
-    outsiderKey = computeOutsiderKeyWithExpiry(seed, targetPath, expiry);
-    shareUrl = `/browse${targetPath}?k=${outsiderKey}&exp=${expiry}`;
-  } else {
-    outsiderKey = computePathKey(seed, targetPath);
-    shareUrl = `/browse${targetPath}?k=${outsiderKey}`;
-  }
-
-  return {
-    path: targetPath,
-    key: outsiderKey,
-    exp: expiry ?? null,
-    url: shareUrl,
-  };
+  const { key, url } = createPathShare(seed, targetPath, expiry);
+  return { path: targetPath, key, exp: expiry ?? null, url };
 }

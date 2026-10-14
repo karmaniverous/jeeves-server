@@ -13,6 +13,7 @@ import {
   computePathKey,
   type DeepShareParams,
 } from '../util/crypto.js';
+import { deepShareQuery, pathKeyQuery } from '../util/shareQuery.js';
 
 /**
  * Parse a compressed stack string into an array of paths.
@@ -93,8 +94,7 @@ function computeSubLink(
     .split('/')
     .map((segment) => encodeURIComponent(segment))
     .join('/');
-  let url = `/browse${encodedPath}?k=${key}&d=${String(maxDepth)}&dirs=${dirs ? '1' : '0'}&s=${compressedStack}`;
-  if (exp) url += `&exp=${exp}`;
+  let url = `/browse${encodedPath}?${deepShareQuery(key, params)}`;
   if (fragment !== undefined) url += `#${fragment}`;
   return url;
 }
@@ -105,6 +105,36 @@ export interface DeepShareContext {
   dirs: boolean;
   stackCompressed: string;
   exp: string | undefined;
+}
+
+/**
+ * Deep share context from the verified request params (`d`, `dirs`, `s`)
+ * and the query's `exp`. A missing or non-numeric depth counts as 0.
+ */
+export function toDeepShareContext(
+  params: { d: string; dirs: string; s: string },
+  exp: string | undefined,
+): DeepShareContext {
+  return {
+    maxDepth: Number.parseInt(params.d, 10) || 0,
+    dirs: params.dirs === '1',
+    stackCompressed: params.s,
+    exp,
+  };
+}
+
+/**
+ * Whether a deep link may list `directoryPath`. With `dirs`, any directory
+ * it reaches; without, only the shared path itself (a one-entry stack).
+ */
+export function canListDirectory(
+  context: DeepShareContext,
+  directoryPath: string,
+): boolean {
+  if (context.dirs) return true;
+  const stack = decodeStack(context.stackCompressed);
+  const sharedRoot = stack.length === 1 ? stack[0] : undefined;
+  return sharedRoot?.toLowerCase() === directoryPath.toLowerCase();
 }
 
 /** Decode the stack and make sure the current path is its last entry. */
@@ -198,6 +228,14 @@ export function rewriteLinksForDeepShare(
 
   const remaining = remainingDepth(maxDepth, currentStack);
 
+  // The current page's deep params: what raw links and images carry.
+  const pageParams: DeepShareParams = {
+    depth: maxDepth,
+    dirs,
+    stack: stackCompressed,
+    exp,
+  };
+
   const $ = cheerio.load(html, null, false);
 
   // Rewrite <a> tags
@@ -227,15 +265,7 @@ export function rewriteLinksForDeepShare(
     // Author-written raw links get the same deep-share auth as embedded
     // images (#269). Plain relative links are not turned into raw links.
     if (href.startsWith('/api/raw/')) {
-      $el.attr(
-        'href',
-        authenticateRawUrl(href, seed, {
-          depth: maxDepth,
-          dirs,
-          stack: stackCompressed,
-          exp,
-        }),
-      );
+      $el.attr('href', authenticateRawUrl(href, seed, pageParams));
       return;
     }
 
@@ -292,12 +322,7 @@ export function rewriteLinksForDeepShare(
   });
 
   // Rewrite <img> src for images that use /api/raw/ — add key auth
-  rewriteImageAuth($, seed, {
-    depth: maxDepth,
-    dirs,
-    stack: stackCompressed,
-    exp,
-  });
+  rewriteImageAuth($, seed, pageParams);
 
   return $.html();
 }
@@ -345,18 +370,10 @@ export function authenticateRawUrl(
   }
   const sep = base.includes('?') ? '&' : '?';
 
-  if (!deepParams) {
-    return `${base}${sep}k=${computePathKey(seed, rawPath)}${fragment}`;
-  }
-  const key = computeDeepShareKey(seed, rawPath, deepParams);
-  const params = [
-    `k=${key}`,
-    `d=${String(deepParams.depth)}`,
-    `dirs=${deepParams.dirs ? '1' : '0'}`,
-    `s=${deepParams.stack}`,
-    ...(deepParams.exp ? [`exp=${deepParams.exp}`] : []),
-  ];
-  return `${base}${sep}${params.join('&')}${fragment}`;
+  const query = deepParams
+    ? deepShareQuery(computeDeepShareKey(seed, rawPath, deepParams), deepParams)
+    : pathKeyQuery(computePathKey(seed, rawPath));
+  return `${base}${sep}${query}${fragment}`;
 }
 
 /**

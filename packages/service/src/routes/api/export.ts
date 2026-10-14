@@ -25,6 +25,7 @@ import {
 } from '../../services/exportCache.js';
 import { RenderFailedError } from '../../services/puppeteer.js';
 import { getRoots, urlPathToFs } from '../../util/platform.js';
+import { pathKeyQuery } from '../../util/shareQuery.js';
 import { isArchiveFormat, sendDirectoryArchive } from './archiveExport.js';
 
 /**
@@ -37,7 +38,7 @@ export function buildRenderUrl(
   reqPath: string,
   key: string,
 ): string {
-  return `http://${host}:${String(port)}/browse/${reqPath}?k=${key}&render_diagrams=1&plain_code=1`;
+  return `http://${host}:${String(port)}/browse/${reqPath}?${pathKeyQuery(key)}&render_diagrams=1&plain_code=1`;
 }
 
 export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {

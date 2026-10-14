@@ -64,7 +64,7 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
 
 const { addAuthMiddleware } = await import('./middleware.js');
 const { directoryRoutes } = await import('./directory.js');
-const { isDirectoryUrlPath } = await import('./fileRender.js');
+const { isDirectoryUrlPath } = await import('../../services/contentPath.js');
 const { encodeStack, rewriteLinksForDeepShare } =
   await import('../../services/deepShareLinks.js');
 
