@@ -42,7 +42,7 @@ function buildDeepShareUrl(
   key: string,
   params: { depth: number; dirs: boolean; stack: string; exp?: string },
 ): string {
-  let url = `/browse${targetPath}?key=${key}&d=${String(params.depth)}&dirs=${params.dirs ? '1' : '0'}&s=${params.stack}`;
+  let url = `/browse${targetPath}?k=${key}&d=${String(params.depth)}&dirs=${params.dirs ? '1' : '0'}&s=${params.stack}`;
   if (params.exp) url += `&exp=${params.exp}`;
   return url;
 }
@@ -136,10 +136,10 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       });
     } else if (expiry) {
       outsiderKey = computeOutsiderKeyWithExpiry(seed, targetPath, expiry);
-      shareUrl = `/browse${targetPath}?key=${outsiderKey}&exp=${expiry}`;
+      shareUrl = `/browse${targetPath}?k=${outsiderKey}&exp=${expiry}`;
     } else {
       outsiderKey = computePathKey(seed, targetPath);
-      shareUrl = `/browse${targetPath}?key=${outsiderKey}`;
+      shareUrl = `/browse${targetPath}?k=${outsiderKey}`;
     }
 
     return reply.send({
@@ -268,7 +268,7 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       request.headers['x-forwarded-host'] || request.headers.host,
     );
 
-    let shareUrl = `${proto}://${host}/browse${targetPath}?key=${outsiderKey}`;
+    let shareUrl = `${proto}://${host}/browse${targetPath}?k=${outsiderKey}`;
     if (shareDepth > 0) shareUrl += `&d=${String(shareDepth)}`;
     shareUrl += `&dirs=${shareDirs ? '1' : '0'}`;
     if (stack) shareUrl += `&s=${stack}`;

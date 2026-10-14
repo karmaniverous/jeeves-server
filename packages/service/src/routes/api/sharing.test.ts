@@ -98,7 +98,7 @@ describe('POST /api/share', () => {
       const body = (
         await share(app, { path: '/j/a.md' })
       ).json<ShareResponse>();
-      expect(body.url).toMatch(/^\/browse\/j\/a\.md\?key=[0-9a-f]{32}$/);
+      expect(body.url).toMatch(/^\/browse\/j\/a\.md\?k=[0-9a-f]{32}$/);
       expect(body).toMatchObject({ exp: null, depth: 0, dirs: false });
     });
 
@@ -110,7 +110,7 @@ describe('POST /api/share', () => {
         await share(app, { path: '/j/a.md', expiry: '1700000000000' })
       ).json<ShareResponse>();
       expect(body.url).toMatch(
-        /^\/browse\/j\/a\.md\?key=[0-9a-f]{32}&exp=1700000000000$/,
+        /^\/browse\/j\/a\.md\?k=[0-9a-f]{32}&exp=1700000000000$/,
       );
       expect(body.url.split('&')[0]).not.toBe(plain.url);
       expect(body.exp).toBe('1700000000000');
@@ -121,7 +121,7 @@ describe('POST /api/share', () => {
         await share(app, { path: '/j/dir', depth: 2, dirs: true, expiry: '9' })
       ).json<ShareResponse>();
       expect(body.url).toMatch(
-        /^\/browse\/j\/dir\?key=[0-9a-f]{32}&d=2&dirs=1&s=[^&]+&exp=9$/,
+        /^\/browse\/j\/dir\?k=[0-9a-f]{32}&d=2&dirs=1&s=[^&]+&exp=9$/,
       );
       expect(body).toMatchObject({ depth: 2, dirs: true });
     });

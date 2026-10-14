@@ -27,6 +27,19 @@ import {
 import { getRoots, urlPathToFs } from '../../util/platform.js';
 import { isArchiveFormat, sendDirectoryArchive } from './archiveExport.js';
 
+/**
+ * Build the loopback URL Puppeteer renders for a document export. The key
+ * travels as `k` (#279).
+ */
+export function buildRenderUrl(
+  host: string,
+  port: number,
+  reqPath: string,
+  key: string,
+): string {
+  return `http://${host}:${String(port)}/browse/${reqPath}?k=${key}&render_diagrams=1&plain_code=1`;
+}
+
 export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   const roots = getRoots(getConfig().roots);
 
@@ -81,7 +94,7 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       const bindAddr = getBindAddress('server');
       // Use loopback if bound to all interfaces (0.0.0.0 is not a valid request target)
       const renderHost = bindAddr === '0.0.0.0' ? '127.0.0.1' : bindAddr;
-      const exportUrl = `http://${renderHost}:${String(port)}/browse/${reqPath}?key=${exportKey}&render_diagrams=1&plain_code=1`;
+      const exportUrl = buildRenderUrl(renderHost, port, reqPath, exportKey);
       const fileName = path.basename(resolved);
       const baseName = fileName.replace(/\.md$/i, '');
 

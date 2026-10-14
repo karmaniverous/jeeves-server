@@ -87,7 +87,7 @@ function computeSubLink(
   const key = computeDeepShareKey(seed, targetUrlPath, params);
 
   // Build URL
-  let url = `/browse${targetUrlPath}?key=${key}&d=${String(maxDepth)}&dirs=${dirs ? '1' : '0'}&s=${compressedStack}`;
+  let url = `/browse${targetUrlPath}?k=${key}&d=${String(maxDepth)}&dirs=${dirs ? '1' : '0'}&s=${compressedStack}`;
   if (exp) url += `&exp=${exp}`;
   if (fragment !== undefined) url += `#${fragment}`;
   return url;
@@ -230,7 +230,7 @@ export function rewriteImageAuth(
     if (deepParams) {
       const key = computeDeepShareKey(seed, rawPath, deepParams);
       const params = [
-        `key=${key}`,
+        `k=${key}`,
         `d=${String(deepParams.depth)}`,
         `dirs=${deepParams.dirs ? '1' : '0'}`,
         `s=${deepParams.stack}`,
@@ -239,7 +239,7 @@ export function rewriteImageAuth(
       authSrc = `${src}${sep}${params.join('&')}`;
     } else {
       const key = computePathKey(seed, rawPath);
-      authSrc = `${src}${sep}key=${key}`;
+      authSrc = `${src}${sep}k=${key}`;
     }
 
     $el.attr('src', authSrc);

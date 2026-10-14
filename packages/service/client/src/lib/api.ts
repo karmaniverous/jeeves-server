@@ -1,28 +1,34 @@
 /**
  * API client for Jeeves Server backend
  *
- * Auth: session cookies (Google OAuth) or key-based (?key= URL param).
+ * Auth: session cookies (Google OAuth) or key-based (`?k=` URL param; the
+ * legacy `?key=` name is still read).
  * When a key is present in the URL, it's stored and passed to all API calls.
  */
 
 const API_BASE = '/api';
 
-/** Extract and cache auth params from URL (once) */
-const _urlParams = new URLSearchParams(window.location.search);
-const _urlKey = _urlParams.get('key');
-
-/** Auth-related params to forward on every API call (key + deep share params) */
-const _authSuffix = (() => {
-  if (!_urlKey) return '';
+/**
+ * Build the auth query suffix to forward on API calls from a page's search
+ * params: the URL key (read as `k`, falling back to the legacy `key`, sent
+ * as `k`) plus the deep share params. Empty when the page has no key.
+ */
+export function buildAuthSuffix(search: string): string {
+  const urlParams = new URLSearchParams(search);
+  const urlKey = urlParams.get('k') || urlParams.get('key');
+  if (!urlKey) return '';
   const params = new URLSearchParams();
-  params.set('key', _urlKey);
+  params.set('k', urlKey);
   // Forward deep share params so the server can verify the key
   for (const p of ['d', 'dirs', 's', 'exp'] as const) {
-    const v = _urlParams.get(p);
+    const v = urlParams.get(p);
     if (v !== null) params.set(p, v);
   }
   return params.toString();
-})();
+}
+
+/** Auth-related params to forward on every API call (cached once per page). */
+const _authSuffix = buildAuthSuffix(window.location.search);
 
 /** Append auth params to a URL if a key was provided */
 export function withKey(url: string): string {

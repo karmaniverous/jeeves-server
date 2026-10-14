@@ -177,10 +177,10 @@ function buildShareResponse(seed: string, targetPath: string, expiry?: string) {
 
   if (expiry) {
     outsiderKey = computeOutsiderKeyWithExpiry(seed, targetPath, expiry);
-    shareUrl = `/browse${targetPath}?key=${outsiderKey}&exp=${expiry}`;
+    shareUrl = `/browse${targetPath}?k=${outsiderKey}&exp=${expiry}`;
   } else {
     outsiderKey = computePathKey(seed, targetPath);
-    shareUrl = `/browse${targetPath}?key=${outsiderKey}`;
+    shareUrl = `/browse${targetPath}?k=${outsiderKey}`;
   }
 
   return {

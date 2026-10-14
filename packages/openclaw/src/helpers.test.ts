@@ -35,12 +35,12 @@ describe('computeInsiderKey', () => {
 describe('withAuth', () => {
   it('appends key param to URL without query', () => {
     const url = withAuth('http://localhost/api', 'seed');
-    expect(url).toContain('?key=');
+    expect(url).toContain('?k=');
   });
 
   it('appends key param to URL with existing query', () => {
     const url = withAuth('http://localhost/api?foo=bar', 'seed');
-    expect(url).toContain('&key=');
+    expect(url).toContain('&k=');
   });
 
   it('returns URL unchanged when no seed', () => {

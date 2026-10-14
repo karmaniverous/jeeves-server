@@ -100,7 +100,7 @@ export async function setupAuthInterception(
         url.origin === allowedOrigin &&
         url.pathname.startsWith('/api/raw/')
       ) {
-        url.searchParams.set('key', authKey);
+        url.searchParams.set('k', authKey);
         void req.continue({ url: url.toString() });
       } else {
         void req.continue();

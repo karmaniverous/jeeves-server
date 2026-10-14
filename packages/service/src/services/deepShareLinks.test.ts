@@ -22,7 +22,7 @@ describe('rewriteLinksForDeepShare', () => {
         undefined,
       );
       // Fragment must come after all query params (cheerio encodes & as &amp;)
-      expect(result).toMatch(/\?key=.*&amp;d=.*&amp;s=.*#p01-fix/);
+      expect(result).toMatch(/\?k=.*&amp;d=.*&amp;s=.*#p01-fix/);
       // Must NOT have #fragment before ?
       expect(result).not.toMatch(/#p01-fix\?/);
     });
@@ -38,7 +38,7 @@ describe('rewriteLinksForDeepShare', () => {
         '',
         undefined,
       );
-      expect(result).toMatch(/\?key=.*#section2/);
+      expect(result).toMatch(/\?k=.*#section2/);
       expect(result).not.toMatch(/#section2\?/);
     });
 
@@ -53,7 +53,7 @@ describe('rewriteLinksForDeepShare', () => {
         '',
         undefined,
       );
-      expect(result).toMatch(/\?key=.*#heading/);
+      expect(result).toMatch(/\?k=.*#heading/);
       expect(result).not.toMatch(/#heading\?/);
     });
 
@@ -81,8 +81,8 @@ describe('rewriteLinksForDeepShare', () => {
       );
 
       // Extract key from both — should be identical since fragment is not part of path
-      const keyWith = resultWith.match(/key=([a-f0-9]+)/)?.[1];
-      const keyWithout = resultWithout.match(/key=([a-f0-9]+)/)?.[1];
+      const keyWith = resultWith.match(/[?&]k=([a-f0-9]+)/)?.[1];
+      const keyWithout = resultWithout.match(/[?&]k=([a-f0-9]+)/)?.[1];
       expect(keyWith).toBe(keyWithout);
     });
 
@@ -97,7 +97,7 @@ describe('rewriteLinksForDeepShare', () => {
         '',
         undefined,
       );
-      expect(result).toMatch(/\?key=/);
+      expect(result).toMatch(/\?k=/);
       expect(result).not.toContain('#');
     });
 
