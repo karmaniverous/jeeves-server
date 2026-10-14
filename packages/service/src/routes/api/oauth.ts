@@ -121,7 +121,9 @@ function resolveCredentialFile(
 
 /**
  * Why an explicit `origin` is unacceptable for a redirect URI, or null when
- * it is fine: https (or http on localhost), no path, no query.
+ * it is fine: https (or http on localhost), no credentials, no path, no
+ * query, no fragment. A bare `@`, `?` or `#` counts too: the URL parser
+ * drops it, but it would still be pasted into the redirect URI.
  */
 function originParamError(origin: string): string | null {
   let originUrl: URL;
@@ -138,8 +140,16 @@ function originParamError(origin: string): string | null {
   ) {
     return 'origin scheme must be https (or http for localhost)';
   }
+  if (originUrl.username || originUrl.password || origin.includes('@')) {
+    return 'origin must not contain credentials';
+  }
+  if (originUrl.hash || origin.includes('#')) {
+    return 'origin must not have a fragment';
+  }
   if (originUrl.pathname !== '/') return 'origin must not have a pathname';
-  if (originUrl.search) return 'origin must not have query parameters';
+  if (originUrl.search || origin.includes('?')) {
+    return 'origin must not have query parameters';
+  }
   return null;
 }
 

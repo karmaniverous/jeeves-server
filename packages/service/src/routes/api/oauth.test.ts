@@ -302,6 +302,19 @@ describe('OAuth API routes', () => {
         'https://public.example.com/?a=1',
         'origin must not have query parameters',
       ],
+      ['https://public.example.com/?', 'origin must not have query parameters'],
+      [
+        'https://user:pass@public.example.com',
+        'origin must not contain credentials',
+      ],
+      [
+        'https://user@public.example.com',
+        'origin must not contain credentials',
+      ],
+      ['https://@public.example.com', 'origin must not contain credentials'],
+      ['https://public.example.com/#x', 'origin must not have a fragment'],
+      ['https://public.example.com#x', 'origin must not have a fragment'],
+      ['https://public.example.com/#', 'origin must not have a fragment'],
     ])('rejects origin %s', async (origin, error) => {
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
