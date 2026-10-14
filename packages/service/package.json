@@ -91,14 +91,14 @@
     "github": {
       "release": true,
       "releaseName": "${name.split('/').pop()}@${version}",
-      "releaseNotes": "npx git-cliff --tag ${version} --unreleased --strip header"
+      "releaseNotes": "npx git-cliff --tag service/${version} --unreleased --strip header"
     },
     "hooks": {
       "before:init": [
         "node ../../scripts/check-core-range.mjs"
       ],
       "after:bump": [
-        "npx git-cliff --tag ${version} -o CHANGELOG.md",
+        "npx git-cliff --tag service/${version} -o CHANGELOG.md",
         "npm install --package-lock-only --ignore-scripts",
         "git add ../../package-lock.json"
       ],

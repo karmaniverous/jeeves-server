@@ -63,14 +63,14 @@
     "github": {
       "release": true,
       "releaseName": "${name.split('/').pop()}@${version}",
-      "releaseNotes": "npx git-cliff --tag ${version} --unreleased --strip header"
+      "releaseNotes": "npx git-cliff --tag openclaw/${version} --unreleased --strip header"
     },
     "hooks": {
       "before:init": [
         "node ../../scripts/check-core-range.mjs"
       ],
       "after:bump": [
-        "npx git-cliff --tag ${version} -o CHANGELOG.md",
+        "npx git-cliff --tag openclaw/${version} -o CHANGELOG.md",
         "node -e \"const f='openclaw.plugin.json';const j=JSON.parse(require('fs').readFileSync(f,'utf8'));j.version='${version}';require('fs').writeFileSync(f,JSON.stringify(j,null,2)+'')\"",
         "npx prettier --write openclaw.plugin.json",
         "npm install --package-lock-only --ignore-scripts",
