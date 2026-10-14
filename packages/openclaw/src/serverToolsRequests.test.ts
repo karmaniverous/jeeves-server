@@ -83,6 +83,29 @@ describe('server_share rawUrl (#278)', () => {
     expect(new URL(url).searchParams.has('k')).toBe(true);
     expect(new URL(url).searchParams.has('key')).toBe(false);
   });
+
+  it('server_resolve_path sends the plugin key', async () => {
+    const tools = new Map<string, ToolDescriptor>();
+    const api: PluginApi = {
+      registerTool: (tool: ToolDescriptor) => {
+        tools.set(tool.name, tool);
+      },
+      logger: { warn: vi.fn() },
+      pluginConfig: { pluginKey: 'seed' },
+    };
+    vi.stubEnv('JEEVES_SERVER_PLUGIN_KEY', 'seed');
+    registerServerTools(api, BASE_URL, () => undefined);
+    fetchJsonMock.mockResolvedValueOnce({ browsePath: 'j/a.md' });
+    await tools
+      .get('server_resolve_path')
+      ?.execute('call-1', { fsPath: 'J:\\a.md' });
+    vi.unstubAllEnvs();
+    const [url] = fetchJsonMock.mock.calls[0] as [string];
+    const parsed = new URL(url);
+    expect(parsed.pathname).toBe('/api/resolve-path');
+    expect(parsed.searchParams.get('fsPath')).toBe('J:\\a.md');
+    expect(parsed.searchParams.get('k')).toMatch(/^[0-9a-f]+$/u);
+  });
 });
 
 describe('server_export timeout', () => {

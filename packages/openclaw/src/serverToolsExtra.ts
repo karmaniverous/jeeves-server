@@ -216,10 +216,10 @@ export function registerExtraServerTools(
         },
         required: ['fsPath'],
       },
+      // Authenticated (server 3.15.0+): sends the plugin key.
       buildRequest: (params) => [
         '/api/resolve-path?fsPath=' + encodeURIComponent(String(params.fsPath)),
       ],
-      skipAuth: true,
     },
   ];
 

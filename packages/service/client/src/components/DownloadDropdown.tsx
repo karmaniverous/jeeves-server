@@ -11,6 +11,8 @@ import {
 } from '@/components/ActionDropdown';
 import { useActionState } from '@/components/useActionState';
 import { clearCache, withKey } from '@/lib/api';
+import { useAuthStatus } from '@/lib/AuthStatusContext';
+import { getDownloadItems, showClearCache } from '@/lib/downloadItems';
 
 interface DownloadDropdownProps {
   reqPath: string;
@@ -20,101 +22,6 @@ interface DownloadDropdownProps {
   variant?: 'header' | 'default' | 'menuItem';
   onError?: (error: string) => void;
   onStateChange?: (state: ActionState) => void;
-}
-
-interface DownloadItem {
-  label: string;
-  href: string;
-  filename: string;
-}
-
-function getDownloadItems(
-  reqPath: string,
-  file: { fileName: string; type: string } | null,
-  isDirectory?: boolean,
-): DownloadItem[] {
-  const items: DownloadItem[] = [];
-
-  if (isDirectory || !file) {
-    const baseDirName = reqPath.split('/').pop() ?? 'archive';
-    items.push({
-      label: 'ZIP',
-      href: `/api/export/${reqPath}?format=zip`,
-      filename: `${baseDirName}.zip`,
-    });
-    items.push({
-      label: 'Tar',
-      href: `/api/export/${reqPath}?format=tar`,
-      filename: `${baseDirName}.tar`,
-    });
-    return items;
-  }
-
-  const baseName = file.fileName.replace(/\.[^.]+$/, '');
-  items.push({
-    label: 'Raw',
-    href: `/api/raw/${reqPath}`,
-    filename: file.fileName,
-  });
-
-  if (file.type === 'markdown' || file.type === '.md') {
-    items.push({
-      label: 'PDF',
-      href: `/api/export/${reqPath}?format=pdf`,
-      filename: `${baseName}.pdf`,
-    });
-    items.push({
-      label: 'DOCX',
-      href: `/api/export/${reqPath}?format=docx`,
-      filename: `${baseName}.docx`,
-    });
-  }
-
-  if (file.type === 'mermaid' || file.type === '.mmd') {
-    items.push({
-      label: 'SVG',
-      href: `/api/mermaid-export/${reqPath}?format=svg`,
-      filename: `${baseName}.svg`,
-    });
-    items.push({
-      label: 'PNG',
-      href: `/api/mermaid-export/${reqPath}?format=png`,
-      filename: `${baseName}.png`,
-    });
-    items.push({
-      label: 'PDF',
-      href: `/api/mermaid-export/${reqPath}?format=pdf`,
-      filename: `${baseName}.pdf`,
-    });
-  }
-
-  if (
-    file.type === 'plantuml' ||
-    ['.puml', '.plantuml', '.pu'].includes(file.type)
-  ) {
-    items.push({
-      label: 'SVG',
-      href: `/api/plantuml-export/${reqPath}?format=svg`,
-      filename: `${baseName}.svg`,
-    });
-    items.push({
-      label: 'PNG',
-      href: `/api/plantuml-export/${reqPath}?format=png`,
-      filename: `${baseName}.png`,
-    });
-    items.push({
-      label: 'PDF',
-      href: `/api/plantuml-export/${reqPath}?format=pdf`,
-      filename: `${baseName}.pdf`,
-    });
-    items.push({
-      label: 'EPS',
-      href: `/api/plantuml-export/${reqPath}?format=eps`,
-      filename: `${baseName}.eps`,
-    });
-  }
-
-  return items;
 }
 
 async function downloadBlob(href: string, filename: string) {
@@ -150,7 +57,8 @@ export function DownloadDropdown({
     },
     onStateChange,
   );
-  const items = getDownloadItems(reqPath, file, isDirectory);
+  const { isInsider } = useAuthStatus();
+  const items = getDownloadItems(reqPath, file, isDirectory, isInsider);
 
   if (items.length === 0) return null;
 
@@ -176,7 +84,7 @@ export function DownloadDropdown({
           {item.label}
         </DropdownMenuItem>
       ))}
-      {!isDirectory && (
+      {showClearCache(isDirectory, isInsider) && (
         <>
           <DropdownMenuSeparator />
           <DropdownMenuItem

@@ -28,7 +28,11 @@ import {
 } from './contentRoute.js';
 import { OUT_OF_SCOPE_ERROR } from './scopeGuard.js';
 
-/** API prefixes that authenticate themselves or are public. */
+/**
+ * API routes that authenticate themselves or are public. An entry ending in
+ * `/` matches everything below it; any other entry matches that exact path
+ * or its sub-paths, never a longer name sharing the prefix.
+ */
 const UNAUTHENTICATED_PREFIXES = [
   '/api/readme-link',
   '/api/content-link/',
@@ -36,9 +40,17 @@ const UNAUTHENTICATED_PREFIXES = [
   '/api/auth/magic',
   '/api/public-content/',
   '/api/diagram/',
-  '/api/status',
-  '/api/resolve-path',
 ];
+
+/** True when the request path is public or self-authenticating. */
+export function isUnauthenticatedApiPath(url: string): boolean {
+  const pathname = url.split('?')[0];
+  return UNAUTHENTICATED_PREFIXES.some((prefix) =>
+    prefix.endsWith('/')
+      ? pathname.startsWith(prefix)
+      : pathname === prefix || pathname.startsWith(prefix + '/'),
+  );
+}
 
 /**
  * True when `scopes` permit the request addressed by `route`. Navigation
@@ -132,7 +144,7 @@ function resolveUrlKey(
 export function addAuthMiddleware(fastify: FastifyInstance): void {
   fastify.addHook('preHandler', async (request, reply) => {
     if (!request.url.startsWith('/api')) return;
-    if (UNAUTHENTICATED_PREFIXES.some((p) => request.url.startsWith(p))) return;
+    if (isUnauthenticatedApiPath(request.url)) return;
 
     const config = getConfig();
 

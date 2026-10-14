@@ -159,6 +159,10 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   fastify.delete<{ Params: { '*': string } }>(
     '/api/export-cache/*',
     async (request, reply) => {
+      // Insider only: clearing caches is not something a share link grants.
+      if (request.accessMode !== 'insider') {
+        return reply.code(403).send({ error: 'Insider access required' });
+      }
       const reqPath = request.params['*'];
       if (!reqPath) return reply.code(400).send({ error: 'Path required' });
 

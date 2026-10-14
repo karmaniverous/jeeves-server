@@ -21,6 +21,12 @@ export const resolvePathRoutes: FastifyPluginCallback = (
   done,
 ) => {
   fastify.get('/api/resolve-path', async (request, reply) => {
+    // Machine key or insider only: the answer reveals the configured roots
+    // and publicUrl.
+    if (request.accessMode !== 'insider') {
+      return reply.code(403).send({ error: 'Insider access required' });
+    }
+
     const { fsPath } = request.query as { fsPath?: string };
 
     if (!fsPath) {

@@ -14,14 +14,20 @@ const registeredRoutes: Record<
   {
     method: string;
     path: string;
-    handler: (request: { query: Record<string, string> }) => Promise<unknown>;
+    handler: (request: {
+      query: Record<string, string>;
+      accessMode?: string;
+    }) => Promise<unknown>;
   }
 > = {};
 
 const mockFastify = {
   get: (
     path: string,
-    handler: (request: { query: Record<string, string> }) => Promise<unknown>,
+    handler: (request: {
+      query: Record<string, string>;
+      accessMode?: string;
+    }) => Promise<unknown>,
   ) => {
     registeredRoutes[path] = { method: 'GET', path, handler };
   },
@@ -44,6 +50,7 @@ describe('eventsRoutes', () => {
     mockedGetRecentEvents.mockReturnValue(mockEvents as never);
 
     const result = await registeredRoutes['/api/events'].handler({
+      accessMode: 'insider',
       query: {},
     });
 
@@ -55,6 +62,7 @@ describe('eventsRoutes', () => {
     mockedGetRecentEvents.mockReturnValue([] as never);
 
     await registeredRoutes['/api/events'].handler({
+      accessMode: 'insider',
       query: { limit: '50' },
     });
 
@@ -65,6 +73,7 @@ describe('eventsRoutes', () => {
     mockedGetRecentEvents.mockReturnValue([] as never);
 
     await registeredRoutes['/api/events'].handler({
+      accessMode: 'insider',
       query: { limit: '999' },
     });
 
@@ -75,6 +84,7 @@ describe('eventsRoutes', () => {
     mockedGetRecentEvents.mockReturnValue([] as never);
 
     await registeredRoutes['/api/events'].handler({
+      accessMode: 'insider',
       query: { limit: '0' },
     });
 
@@ -85,6 +95,7 @@ describe('eventsRoutes', () => {
     mockedGetRecentEvents.mockReturnValue([] as never);
 
     await registeredRoutes['/api/events'].handler({
+      accessMode: 'insider',
       query: { limit: 'abc' },
     });
 
@@ -95,6 +106,7 @@ describe('eventsRoutes', () => {
     mockedGetRecentEvents.mockReturnValue([] as never);
 
     await registeredRoutes['/api/events'].handler({
+      accessMode: 'insider',
       query: { limit: '-5' },
     });
 

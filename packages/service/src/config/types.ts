@@ -155,5 +155,13 @@ export interface EventLogEntry {
   matched: boolean;
   exitCode?: number;
   durationMs?: number;
+  /** Unmatched body as JSON, capped at {@link MAX_STORED_BODY_BYTES}. */
   bodyPreview?: string;
+  /** True when `bodyPreview` was cut at the cap. */
+  truncated?: boolean;
+  /** UTF-8 byte length of the full body JSON, when truncated. */
+  originalBytes?: number;
 }
+
+/** Cap on a stored unmatched event body (256 KiB of UTF-8 JSON). */
+export const MAX_STORED_BODY_BYTES = 256 * 1024;

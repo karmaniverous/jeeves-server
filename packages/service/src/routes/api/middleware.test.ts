@@ -85,6 +85,7 @@ async function buildApp(): Promise<FastifyInstance> {
   app.post('/api/search', echo);
   app.post('/api/util/share-for', echo);
   app.get('/api/status', echo);
+  app.get('/api/auth/status', echo);
   await app.ready();
   return app;
 }
@@ -276,9 +277,15 @@ describe('auth middleware', () => {
 
   it('skips auth for unauthenticated prefixes', async () => {
     resolveSessionAuth.mockReturnValue(FAIL);
-    const res = await app.inject({ url: '/api/status' });
+    const res = await app.inject({ url: '/api/auth/status' });
     expect(res.statusCode).toBe(200);
     expect(resolveSessionAuth).not.toHaveBeenCalled();
+  });
+
+  it('authenticates /api/status (no longer a public prefix)', async () => {
+    resolveSessionAuth.mockReturnValue(FAIL);
+    const res = await app.inject({ url: '/api/status' });
+    expect(res.statusCode).toBe(401);
   });
 
   describe('/api/util/*', () => {
