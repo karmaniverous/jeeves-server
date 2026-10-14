@@ -158,9 +158,9 @@ describe('rewriteUrlsInData', () => {
   it('rewrites the server_share response shape', () => {
     const shareResponse = {
       path: '/j/docs/readme.md',
-      url: `${baseUrl}/browse/j/docs/readme.md?key=abc123`,
-      pageUrl: `${baseUrl}/browse/j/docs/readme.md?key=abc123`,
-      rawUrl: `${baseUrl}/raw/j/docs/readme.md?key=abc123`,
+      url: `${baseUrl}/browse/j/docs/readme.md?k=abc123`,
+      pageUrl: `${baseUrl}/browse/j/docs/readme.md?k=abc123`,
+      rawUrl: `${baseUrl}/api/raw/j/docs/readme.md?k=abc123`,
       exp: null,
       depth: 0,
       dirs: false,
@@ -172,13 +172,13 @@ describe('rewriteUrlsInData', () => {
       publicUrl,
     ) as typeof shareResponse;
     expect(result.url).toBe(
-      'https://jeeves.johngalt.id/browse/j/docs/readme.md?key=abc123',
+      'https://jeeves.johngalt.id/browse/j/docs/readme.md?k=abc123',
     );
     expect(result.pageUrl).toBe(
-      'https://jeeves.johngalt.id/browse/j/docs/readme.md?key=abc123',
+      'https://jeeves.johngalt.id/browse/j/docs/readme.md?k=abc123',
     );
     expect(result.rawUrl).toBe(
-      'https://jeeves.johngalt.id/raw/j/docs/readme.md?key=abc123',
+      'https://jeeves.johngalt.id/api/raw/j/docs/readme.md?k=abc123',
     );
     expect(result.path).toBe('/j/docs/readme.md');
   });
