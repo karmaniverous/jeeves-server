@@ -41,6 +41,15 @@ export function areValidCredentialNames(
 }
 
 /**
+ * True when a `path.relative` result climbs out of its base: it is `..` or
+ * starts with a `..` segment. A file name merely starting with `..` (e.g.
+ * `..github-me-oauth2.json`) stays inside.
+ */
+function escapesBase(rel: string): boolean {
+  return /^\.\.(?:[\\/]|$)/u.test(rel) || path.isAbsolute(rel);
+}
+
+/**
  * Build the credential file path for a provider/account pair. Throws when
  * either name is invalid or the path would leave `credentialDir`.
  */
@@ -55,7 +64,7 @@ export function credentialPath(
   const dir = path.resolve(credentialDir);
   const file = path.resolve(dir, `${provider}-${account}-oauth2.json`);
   const rel = path.relative(dir, file);
-  if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) {
+  if (!rel || escapesBase(rel)) {
     throw new Error('Credential path escapes the credential directory');
   }
   return file;

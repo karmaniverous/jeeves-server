@@ -71,6 +71,9 @@ const GOOD_NAMES = [
   'a+b@x.io',
   // `..` inside a name is not a path segment once separators are excluded.
   'a..b',
+  // A leading `..` is part of the file name, not a parent segment.
+  '..github',
+  '...',
 ];
 
 describe('isValidCredentialName', () => {
@@ -96,7 +99,9 @@ describe('credentialPath', () => {
       credentialPath(CRED_DIR, 'google', name),
     ]) {
       expect(path.dirname(file)).toBe(CRED_DIR);
-      expect(path.relative(CRED_DIR, file).startsWith('..')).toBe(false);
+      const rel = path.relative(CRED_DIR, file);
+      expect(rel).toBe(path.basename(file));
+      expect(path.isAbsolute(rel)).toBe(false);
     }
     expect(credentialPath(CRED_DIR, 'google', name)).toBe(
       path.join(CRED_DIR, `google-${name}-oauth2.json`),
@@ -159,7 +164,7 @@ describe('OAuth API routes reject invalid names with 400', () => {
     expect(outcome(await start(name, 'me'))).toEqual(NAME_REJECTED);
   });
 
-  it.each(['me', 'jason@johngalt.id', 'a+b@x.io'])(
+  it.each(['me', 'jason@johngalt.id', 'a+b@x.io', '..github', 'a..b'])(
     'lets %s through to the credential lookup',
     async (account) => {
       const res = await app.inject(`/api/oauth/status?${q('google', account)}`);
@@ -175,6 +180,31 @@ describe('OAuth API routes reject invalid names with 400', () => {
     expect(
       (await app.inject(`/api/oauth/token?${q('google', '')}`)).statusCode,
     ).toBe(400);
+  });
+
+  it.each(['..github', 'a..b'])(
+    'lets %s through as a provider to the credential lookup',
+    async (provider) => {
+      const res = await app.inject(`/api/oauth/status?${q(provider, 'me')}`);
+      expect(res.statusCode).toBe(200);
+      expect(res.json<{ exists: boolean }>().exists).toBe(false);
+    },
+  );
+
+  it.each(['..github', 'a..b'])('starts a flow for %s', async (name) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/oauth/start',
+      payload: {
+        provider: name,
+        account: name,
+        clientId: 'cid',
+        clientSecret: 'secret',
+        authUrl: 'https://auth.example.com/authorize',
+        tokenUrl: 'https://auth.example.com/token',
+      },
+    });
+    expect(res.statusCode).toBe(200);
   });
 
   it('starts a flow for an email-style account', async () => {
