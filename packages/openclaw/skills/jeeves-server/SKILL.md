@@ -88,7 +88,7 @@ Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) ret
 | `/health` | Unauthenticated liveness check (`{ "ok": true }`) |
 | `/status` | Unauthenticated server status |
 
-**Raw and export links from a share link.** Content routes check the key against the path after their prefix, so swapping `/browse/` for `/api/raw/` or `/api/export/` in a share URL, keeping its whole query string (`?k=…` and any `exp`, `d`, `dirs`, `s`), gives a working raw or export link. `server_share` already returns `rawUrl` for single-file shares.
+**Raw and export links from a share link.** Content routes check the key against the path after their prefix, so swapping `/browse/` for `/api/raw/` or `/api/export/` in a share URL, keeping its whole query string (`?k=…` and any `exp`, `d`, `dirs`, `s`), gives a working raw or export link. `server_share` already returns `rawUrl` for file shares, plain or deep (a deep file key opens that one file on `/api/raw/` too, nothing else); directory shares, plain or deep, have no `rawUrl` key.
 
 **Auth parameter name.** Generated links carry the key as `k`. The old name `key` is still accepted (if both are present, `k` wins).
 

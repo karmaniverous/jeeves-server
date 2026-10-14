@@ -177,6 +177,10 @@ A share with a **depth** lets the outsider follow links from the shared document
 - Subdirectories in such a listing are directory hops too, so they need `dirs` as well.
 - The sharer's own scopes are checked against every path the outsider opens.
 
+### Raw links for shared files
+
+A share key works on every content route for its path, so swapping `/browse/` for `/api/raw/` in a file's share URL, keeping the whole query string, gives a working raw link. This holds for deep file shares too: the deep key still opens only that one file. `POST /api/share` reports `isDirectory` in its response, and the plugin's `server_share` returns `rawUrl` for file shares (plain or deep) and no `rawUrl` for directory shares.
+
 ### Link expiration
 
 - **"Never"** links work until the insider rotates their key

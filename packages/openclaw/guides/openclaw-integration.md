@@ -83,7 +83,7 @@ The plugin reads `publicUrl` from the server’s own config at `{configRoot}/jee
 | `server_browse` | Get file/directory metadata and listings |
 | `server_link_info` | Query available link types for a path |
 | `server_drives` | List available root drives/labels |
-| `server_share` | Generate share links with optional expiry (`expiryDays`; omitted, the link never expires), depth, insider audience, and outsider policy enforcement |
+| `server_share` | Generate share links (with `rawUrl` for file shares, plain or deep; none for directories) with optional expiry (`expiryDays`; omitted, the link never expires), depth, insider audience, and outsider policy enforcement |
 | `server_export` | Trigger export (PDF, DOCX, SVG, PNG, ZIP); waits up to 10 minutes, other tools use the core 120 s default |
 | `server_export_cache_clear` | Clear export and diagram caches for a path |
 | `server_file_write` | Overwrite file content (insider-only) |

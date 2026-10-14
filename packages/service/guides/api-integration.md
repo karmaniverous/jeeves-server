@@ -87,7 +87,7 @@ function insiderKey(seed) {
 | --- | --- | --- |
 | `GET` | `/insider-key` | Get derived insider key (requires `X-API-Key` header with seed) |
 | `GET` | `/key?path=<path>` | Compute outsider key for a path |
-| `POST` | `/api/share` | Generate share link (`path`, `expiry` as epoch ms, `depth`, `dirs`) |
+| `POST` | `/api/share` | Generate share link (`path`, `expiry` as epoch ms, `depth`, `dirs`); the response reports `isDirectory` |
 | `POST` | `/api/util/share-for` | Generate share link for a specific audience (insiders, enforceOutsiderPolicy) |
 | `POST` | `/api/rotate-key` | Rotate an insider's key (invalidates all their outsider links) |
 

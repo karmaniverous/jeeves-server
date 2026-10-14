@@ -106,6 +106,7 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       exp: expiry ?? null,
       depth: depth ?? 0,
       dirs: dirs ?? false,
+      isDirectory: isDirectoryUrlPath(targetPath),
     });
   });
 

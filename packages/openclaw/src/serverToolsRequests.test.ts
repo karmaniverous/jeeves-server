@@ -75,6 +75,69 @@ describe('server_share rawUrl (#278)', () => {
     expect(text).not.toContain(`${BASE_URL}/raw/`);
   });
 
+  /** The parsed JSON result of a tool run. */
+  async function shareResult(
+    response: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    const result = await run('server_share', { path: 'j/docs' }, response);
+    const text = (result.content[0] as { text: string }).text;
+    return JSON.parse(text) as Record<string, unknown>;
+  }
+
+  it('gives a plain file share a raw URL carrying k', async () => {
+    const out = await shareResult({
+      url: '/browse/j/docs/a.md?k=abc',
+      path: '/j/docs/a.md',
+      exp: null,
+      depth: 0,
+      dirs: false,
+      isDirectory: false,
+    });
+    expect(out.rawUrl).toBe(`${BASE_URL}/api/raw/j/docs/a.md?k=abc`);
+  });
+
+  it('gives a deep file share a raw URL with the whole deep query', async () => {
+    const out = await shareResult({
+      url: '/browse/j/docs/a.md?k=abc&d=2&dirs=1&s=stk&exp=9',
+      path: '/j/docs/a.md',
+      exp: '9',
+      depth: 2,
+      dirs: true,
+      isDirectory: false,
+    });
+    expect(out.rawUrl).toBe(
+      `${BASE_URL}/api/raw/j/docs/a.md?k=abc&d=2&dirs=1&s=stk&exp=9`,
+    );
+  });
+
+  it.each([
+    ['plain', { depth: 0, dirs: false, url: '/browse/j/docs?k=abc' }],
+    [
+      'deep',
+      { depth: 1, dirs: true, url: '/browse/j/docs?k=abc&d=1&dirs=1&s=x' },
+    ],
+  ])('omits rawUrl for a %s directory share', async (_label, share) => {
+    const out = await shareResult({
+      ...share,
+      path: '/j/docs',
+      exp: null,
+      isDirectory: true,
+    });
+    expect(out).not.toHaveProperty('rawUrl');
+    expect(out.pageUrl).toBe(`${BASE_URL}${share.url}`);
+  });
+
+  it('keeps the old rule when the server does not report isDirectory', async () => {
+    const deep = await shareResult({
+      url: '/browse/j/docs/a.md?k=abc&d=2&dirs=0&s=stk',
+      path: '/j/docs/a.md',
+      exp: null,
+      depth: 2,
+      dirs: false,
+    });
+    expect(deep.rawUrl).toBeNull();
+  });
+
   it('only rewrites the leading /browse/ segment', () => {
     expect(toRawUrl(`${BASE_URL}/browse/j/browse/a.md?k=abc`)).toBe(
       `${BASE_URL}/api/raw/j/browse/a.md?k=abc`,

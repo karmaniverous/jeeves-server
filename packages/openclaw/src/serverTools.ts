@@ -99,7 +99,7 @@ export function registerServerTools(
     {
       name: 'server_share',
       description:
-        'Generate a share link for a path. Returns an HMAC-signed page URL and raw URL (when applicable), with optional expiry, link-following depth and dirs. A plain directory share (no depth, no dirs) covers the whole tree below it. When insiders are specified, uses the share-for endpoint to target specific audience members.',
+        'Generate a share link for a path. Returns an HMAC-signed page URL, plus a raw URL (rawUrl) for file shares, plain or deep; directory shares have no rawUrl. Takes optional expiry, link-following depth and dirs. A plain directory share (no depth, no dirs) covers the whole tree below it. When insiders are specified, uses the share-for endpoint to target specific audience members.',
       parameters: {
         type: 'object',
         properties: {
@@ -168,16 +168,20 @@ export function registerServerTools(
 
         const result = data as ShareResponse;
         const pageUrl = result.url ? toAbsoluteUrl(baseUrl, result.url) : null;
-        const rawUrl =
-          pageUrl && !result.dirs && (result.depth ?? 0) === 0
-            ? toRawUrl(pageUrl)
-            : null;
+        const shared = { ...result, url: pageUrl, pageUrl };
 
+        // Directory shares (plain or deep) have no raw URL at all.
+        if (result.isDirectory === true) return shared;
+
+        // A file share's key, plain or deep, is bound to the file's path and
+        // verifies on /api/raw/ with the same query. Servers before 3.15.0
+        // do not report isDirectory: keep the old rule (plain shares only).
+        const rawEligible =
+          result.isDirectory === false ||
+          (!result.dirs && (result.depth ?? 0) === 0);
         return {
-          ...result,
-          url: pageUrl,
-          pageUrl,
-          rawUrl,
+          ...shared,
+          rawUrl: pageUrl && rawEligible ? toRawUrl(pageUrl) : null,
         };
       },
     },
