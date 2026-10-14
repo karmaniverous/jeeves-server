@@ -99,7 +99,7 @@ export function registerServerTools(
     {
       name: 'server_share',
       description:
-        'Generate a share link for a path. Returns an HMAC-signed page URL and raw URL (when applicable), with optional expiry and directory depth. When insiders are specified, uses the share-for endpoint to target specific audience members.',
+        'Generate a share link for a path. Returns an HMAC-signed page URL and raw URL (when applicable), with optional expiry, link-following depth and dirs. A plain directory share (no depth, no dirs) covers the whole tree below it. When insiders are specified, uses the share-for endpoint to target specific audience members.',
       parameters: {
         type: 'object',
         properties: {
@@ -113,7 +113,8 @@ export function registerServerTools(
           },
           depth: {
             type: 'number',
-            description: 'Directory depth for deep shares (0 = file only)',
+            description:
+              'Links the outsider may follow from the shared page, making a deep share (0 or omitted: a document opens on its own; a directory covers its whole tree)',
           },
           dirs: {
             type: 'boolean',

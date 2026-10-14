@@ -93,7 +93,7 @@ function insiderKey(seed) {
 
 ### Scopes and errors
 
-Content routes (`/api/path`, `/api/file`, `/api/raw`, `/api/export`, `/api/export-cache`, `/api/mermaid-export`, `/api/plantuml-export`, `/api/link-info`) verify `?k=` against the content path after the route prefix, so share keys work on all of them. For scoped identities:
+Content routes (`/api/path`, `/api/file`, `/api/raw`, `/api/export`, `/api/export-cache`, `/api/mermaid-export`, `/api/plantuml-export`, `/api/link-info`) verify `?k=` against the content path after the route prefix, so share keys work on all of them except `DELETE /api/export-cache`, which is insider only (403 for share keys). For scoped identities:
 
 | Status | Body | When |
 | --- | --- | --- |
@@ -152,7 +152,7 @@ Directory listings and link info admit ancestors of in-scope paths (for navigati
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/api/resolve-path?fsPath=<absolute path>` | Map a filesystem path to `{ browsePath, browseUrl, publicUrl? }`. Requires a machine key, insider key or insider session (401 without credentials, 403 for share keys). |
+| `GET` | `/api/resolve-path?fsPath=<absolute path>` | Map a filesystem path to `{ browsePath, browseUrl, publicUrl? }`. Requires a machine key or insider session (401 without credentials, 403 for share keys). |
 | `GET` | `/api/events?limit=N` | Recent event log entries (1–100, default 20). Only for insiders with no scopes configured (a machine key or insider session without `scopes`). Any configured scopes refuse access, even `allow: ['/**']`: such insider sessions get 403, and such machine keys are refused. Unmatched webhook bodies are stored in full up to 256 KiB; larger ones are cut at the cap and carry `truncated: true` and `originalBytes`. |
 
 ## Converting Windows Paths to URLs

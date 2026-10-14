@@ -43,6 +43,12 @@ export const serverEndpoints: Record<string, EndpointEntry> = {
       'Server health: name, version, uptime, status, health details.',
     unauthenticated: true,
   },
+  health: {
+    method: 'GET',
+    path: '/health',
+    description: 'Liveness check: returns { ok: true }, no downstream checks.',
+    unauthenticated: true,
+  },
   config: {
     method: 'GET',
     path: '/config',
@@ -185,6 +191,13 @@ export const serverEndpoints: Record<string, EndpointEntry> = {
     description:
       'Query available link types for a path (page, raw, PDF, DOCX, etc.).',
   },
+  'resolve-path': {
+    method: 'GET',
+    path: '/api/resolve-path',
+    description:
+      'Map an absolute filesystem path to its browse path and URLs (?fsPath=).',
+    insiderOnly: true,
+  },
   'rotate-key': {
     method: 'POST',
     path: '/api/rotate-key',
@@ -204,6 +217,7 @@ export const serverEndpoints: Record<string, EndpointEntry> = {
     path: '/api/events',
     description:
       'Query recent event log entries (insiders with no scopes configured; limit capped at 100).',
+    insiderOnly: true,
   },
 
   // --- Search ---

@@ -105,8 +105,8 @@ Insiders can create links to share files or directories with [outsiders](#outsid
 1. Click the **link** icon in the header bar.
 2. Configure sharing options:
    - **Expiry** — How long the link remains valid.
-   - **Depth** — For directories, how many levels deep the share extends.
-   - **Include directories** — Whether subdirectory listings are accessible.
+   - **Depth** — For directories, how many links the outsider may follow from the shared page (each link, or each entry opened in a directory reached that way, uses one level). With no depth, a shared document opens on its own and a shared directory covers every file below it.
+   - **Include directories** (`dirs`) — Whether subdirectory listings are accessible.
 3. Copy the generated link.
 
 Share links are cryptographically signed and cannot be guessed. Each link is scoped to the specific path and sharing options you selected.

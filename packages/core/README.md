@@ -14,20 +14,28 @@ Shared workspace package providing cryptographic utilities and API types consume
 | `computeDeepShareKey(seed, path, params)` | HMAC-SHA256 key for deep directory shares with depth/dirs/stack/expiry |
 | `timingSafeEqual(a, b)` | Constant-time string comparison to prevent timing attacks |
 
+### URL Key Parameter
+
+| Export | Description |
+| --- | --- |
+| `URL_KEY_PARAM` | `'k'`: the query parameter every generated URL carries its auth key in |
+| `LEGACY_URL_KEY_PARAM` | `'key'`: the old name, still accepted everywhere |
+| `getUrlKey(query)` | Read the auth key from a parsed query object or `URLSearchParams`: `k` wins when both names are present; empty values count as absent; the first of repeated values is used |
+
 ### Config Schema
 
 | Export | Description |
 | --- | --- |
 | `loggingConfigSchema` | Zod schema for `logging` config block (`level`, `file`, both optional) |
 | `LoggingConfig` | Inferred TypeScript type from `loggingConfigSchema` |
-| `jeevesConfigSchema` | Full server config Zod schema (includes `logging`, `oauth`, all other fields) |
+| `jeevesConfigSchema` | Full server config Zod schema (includes `logging`, `oauth`, `publicUrl`, `trustProxyHeaders` and all other fields; requires `publicUrl` or `trustProxyHeaders: true` when email, Google or OAuth login is configured) |
 
 ### Endpoint Catalog
 
 | Export | Description |
 | --- | --- |
 | `EndpointEntry` | Interface describing a single API operation (method, path, description, auth flags) |
-| `serverEndpoints` | Complete declarative catalog of all jeeves-server API endpoints (38 entries) |
+| `serverEndpoints` | Complete declarative catalog of all jeeves-server API endpoints (39 entries) |
 
 ### API Types
 

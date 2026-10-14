@@ -14,7 +14,7 @@ Operate and interact with a jeeves-server deployment. Use for file browsing, doc
 | `server_status` | Server health: version, uptime, port, Chrome availability, export formats, auth info |
 | `server_browse` | Get file/directory metadata and listings for a browse path |
 | `server_link_info` | Query available link types for a path (page URL, raw URL, export links) |
-| `server_share` | Generate share links with optional expiry and directory depth |
+| `server_share` | Generate share links with optional expiry, link-following depth and `dirs` |
 | `server_export` | Trigger export (PDF, DOCX, SVG, PNG, ZIP) and get download URL |
 | `server_event_status` | Query event gateway status, active schemas, and recent event log |
 | `server_config` | Query resolved server configuration (supports JSONPath) |
@@ -71,7 +71,7 @@ Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) ret
 - **Insiders** authenticate via Google OAuth, email magic link, or key-based auth — bare URLs work for them
 - **Outsiders** need HMAC share links — use `server_share` to generate them
 - Share links have configurable expiry (default 30 days)
-- Directory shares support depth control for recursive access
+- A plain directory share covers the whole tree below it; depth and `dirs` make a deep share instead (see **Deep shares** below)
 - An `outsiderPolicy` can constrain which paths are eligible for outsider sharing
 - **Scoped insiders** (sessions, insider keys, scoped machine keys) only reach paths within their scopes: directories above an allowed path can be browsed for navigation, but viewing, exporting, writing or sharing anything outside scope returns 403, and directory archives omit out-of-scope entries. Scope globs follow picomatch: use `/**` to grant a whole tree (`/*` matches direct children only)
 
