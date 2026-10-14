@@ -9,6 +9,9 @@ import crypto from 'node:crypto';
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
+import { getConfig } from '../config/index.js';
+import { isSecureOrigin } from '../util/publicOrigin.js';
+
 const COOKIE_NAME = 'jeeves_session';
 const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
@@ -90,8 +93,8 @@ export function setSessionCookie(
   void reply.setCookie(COOKIE_NAME, cookieValue, {
     path: '/',
     httpOnly: true,
-    secure:
-      (request.headers['x-forwarded-proto'] as string | undefined) === 'https',
+    // Follows the public origin scheme (publicUrl; headers only if trusted).
+    secure: isSecureOrigin(getConfig(), request),
     sameSite: 'lax',
     maxAge: 30 * 24 * 60 * 60,
   });

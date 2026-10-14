@@ -26,6 +26,7 @@ import {
   type DeepShareParams,
 } from '../../util/crypto.js';
 import { fsPathToUrl, getRoots } from '../../util/platform.js';
+import { getPublicOrigin } from '../../util/publicOrigin.js';
 import { rejectOutOfScope } from './scopeGuard.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -230,13 +231,13 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
 
     const hasOutsiders = unknownIds.length > 0;
 
+    // Absolute URLs only from the configured public origin; otherwise
+    // relative (never from untrusted request headers).
+    const origin = getPublicOrigin(config, request) ?? '';
+
     if (!hasOutsiders) {
-      const proto = String(request.headers['x-forwarded-proto'] || 'https');
-      const host = String(
-        request.headers['x-forwarded-host'] || request.headers.host,
-      );
       return reply.send({
-        url: `${proto}://${host}/browse${targetPath}`,
+        url: `${origin}/browse${targetPath}`,
         type: 'insider',
       });
     }
@@ -263,14 +264,9 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       stack,
     };
     const outsiderKey = computeDeepShareKey(sharerSeed, targetPath, deepParams);
-    const proto = String(request.headers['x-forwarded-proto'] || 'https');
-    const host = String(
-      request.headers['x-forwarded-host'] || request.headers.host,
-    );
-
     // Same builder as POST /api/share: always emits d (also d=0), which
     // verification needs to recognise a deep key (#282).
-    const shareUrl = `${proto}://${host}${buildDeepShareUrl(targetPath, outsiderKey, deepParams)}`;
+    const shareUrl = `${origin}${buildDeepShareUrl(targetPath, outsiderKey, deepParams)}`;
 
     const response: Record<string, unknown> = {
       url: shareUrl,

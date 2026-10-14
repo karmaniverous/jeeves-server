@@ -55,7 +55,8 @@ async function shareFor(body: Record<string, unknown>): Promise<URL> {
   expect(res.statusCode).toBe(200);
   const json = res.json<{ url: string; type: string }>();
   expect(json.type).toBe('outsider-share');
-  return new URL(json.url);
+  // Relative without publicUrl (no publicUrl): resolve against a dummy base.
+  return new URL(json.url, 'http://relative.invalid');
 }
 
 describe('share-for outsider links (#282)', () => {

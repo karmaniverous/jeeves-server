@@ -31,6 +31,10 @@ import { initDiagramCache } from './services/diagramCache.js';
 import { initTransport } from './services/email.js';
 import { startQueueProcessor } from './services/eventQueue.js';
 import { initExportCache } from './services/exportCache.js';
+import {
+  missingPublicOriginForLogin,
+  PUBLIC_ORIGIN_CONFIG_ERROR,
+} from './util/publicOrigin.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -140,6 +144,11 @@ async function start() {
       initTransport(config.emailAuth.smtpUrl);
     }
 
+    // Login links and OAuth redirects need a trusted public origin.
+    if (missingPublicOriginForLogin(config)) {
+      console.error(`[config] ${PUBLIC_ORIGIN_CONFIG_ERROR}`);
+    }
+
     // Initialize caches
     initDiagramCache(config.diagramCachePath);
     initExportCache();
@@ -159,6 +168,7 @@ async function start() {
     console.log(`  POST /event    - Event Gateway (key auth)`);
     console.log(`  GET  /key      - Compute path key (X-API-Key auth)`);
     console.log(`  GET  /status   - Server status (no auth)`);
+    console.log(`  GET  /health   - Liveness check (no auth)`);
   } catch (err) {
     console.error('Fatal startup error:', err);
     process.exit(1);

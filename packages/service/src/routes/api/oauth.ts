@@ -14,6 +14,10 @@ import type { FastifyPluginAsync } from 'fastify';
 import { getConfig } from '../../config/index.js';
 import { credentialPath, storePending } from '../../services/oauthState.js';
 import { withFileLock } from '../../util/fileMutex.js';
+import {
+  getPublicOrigin,
+  PUBLIC_ORIGIN_CONFIG_ERROR,
+} from '../../util/publicOrigin.js';
 
 interface StartBody {
   provider: string;
@@ -148,20 +152,16 @@ export const oauthApiRoutes: FastifyPluginAsync = (fastify) => {
         }
       }
 
-      // Derive redirect_uri
+      // Derive redirect_uri: the caller's validated origin, else the
+      // configured public origin (never untrusted request headers).
       const origin =
-        request.body.origin ??
-        (request.headers['host']
-          ? `${(request.headers['x-forwarded-proto'] as string | undefined) ?? 'http'}://${request.headers['host']}`
-          : null);
+        request.body.origin ?? getPublicOrigin(getConfig(), request);
 
       if (!origin) {
-        return reply
-          .code(400)
-          .send({ error: 'Cannot determine server origin for redirect_uri' });
+        return reply.code(500).send({ error: PUBLIC_ORIGIN_CONFIG_ERROR });
       }
 
-      const redirectUri = new URL('/oauth/callback', origin).toString();
+      const redirectUri = `${origin.replace(/\/+$/u, '')}/oauth/callback`;
 
       // Store pending
       storePending(state, {
