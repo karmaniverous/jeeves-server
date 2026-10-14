@@ -148,8 +148,20 @@ export function rewriteLinksForDeepShare(
       return;
     }
 
-    // Raw file links — leave as-is (these are for images/downloads)
-    if (href.startsWith('/api/raw/')) return;
+    // Author-written raw links get the same deep-share auth as embedded
+    // images (#269). Plain relative links are not turned into raw links.
+    if (href.startsWith('/api/raw/')) {
+      $el.attr(
+        'href',
+        authenticateRawUrl(href, seed, {
+          depth: maxDepth,
+          dirs,
+          stack: stackCompressed,
+          exp,
+        }),
+      );
+      return;
+    }
 
     // Strip fragment before resolving path, preserve it for later
     const hashIndex = href.indexOf('#');
@@ -223,27 +235,44 @@ export function rewriteImageAuth(
     const src = $el.attr('src');
     if (!src || !src.startsWith('/api/raw/')) return;
 
-    const rawPath = '/' + src.replace('/api/raw/', '').split('?')[0];
-    const sep = src.includes('?') ? '&' : '?';
-
-    let authSrc: string;
-    if (deepParams) {
-      const key = computeDeepShareKey(seed, rawPath, deepParams);
-      const params = [
-        `k=${key}`,
-        `d=${String(deepParams.depth)}`,
-        `dirs=${deepParams.dirs ? '1' : '0'}`,
-        `s=${deepParams.stack}`,
-        ...(deepParams.exp ? [`exp=${deepParams.exp}`] : []),
-      ];
-      authSrc = `${src}${sep}${params.join('&')}`;
-    } else {
-      const key = computePathKey(seed, rawPath);
-      authSrc = `${src}${sep}k=${key}`;
-    }
-
-    $el.attr('src', authSrc);
+    $el.attr('src', authenticateRawUrl(src, seed, deepParams));
   });
+}
+
+/**
+ * Append outsider auth to an `/api/raw/...` URL: a deep share key over the
+ * decoded content path with the share's deep params, or a simple path key
+ * when there are none. The key travels as `k` (#279).
+ */
+export function authenticateRawUrl(
+  rawUrl: string,
+  seed: string,
+  deepParams?: DeepShareParams,
+): string {
+  const hashIndex = rawUrl.indexOf('#');
+  const base = hashIndex >= 0 ? rawUrl.slice(0, hashIndex) : rawUrl;
+  const fragment = hashIndex >= 0 ? rawUrl.slice(hashIndex) : '';
+  const encodedPath = '/' + base.slice('/api/raw/'.length).split('?')[0];
+  let rawPath: string;
+  try {
+    rawPath = decodeURIComponent(encodedPath);
+  } catch {
+    rawPath = encodedPath;
+  }
+  const sep = base.includes('?') ? '&' : '?';
+
+  if (!deepParams) {
+    return `${base}${sep}k=${computePathKey(seed, rawPath)}${fragment}`;
+  }
+  const key = computeDeepShareKey(seed, rawPath, deepParams);
+  const params = [
+    `k=${key}`,
+    `d=${String(deepParams.depth)}`,
+    `dirs=${deepParams.dirs ? '1' : '0'}`,
+    `s=${deepParams.stack}`,
+    ...(deepParams.exp ? [`exp=${deepParams.exp}`] : []),
+  ];
+  return `${base}${sep}${params.join('&')}${fragment}`;
 }
 
 /**
