@@ -82,6 +82,47 @@ describe('server_share rawUrl (#278)', () => {
   });
 });
 
+describe('server_share expiry', () => {
+  /** The JSON body of the first request sent. */
+  function firstBody(): Record<string, unknown> {
+    const [, init] = fetchJsonMock.mock.calls[0] as [
+      string,
+      { body?: string } | undefined,
+    ];
+    return JSON.parse(init?.body ?? '{}') as Record<string, unknown>;
+  }
+
+  const response = {
+    url: '/browse/j/docs/a.md?k=abc',
+    path: '/j/docs/a.md',
+    exp: null,
+  };
+
+  it('sends no expiry when expiryDays is omitted (the link never expires)', async () => {
+    await run('server_share', { path: 'j/docs/a.md' }, response);
+    expect(firstRequest().url.pathname).toBe('/api/share');
+    expect(firstBody()).toEqual({ path: '/j/docs/a.md' });
+  });
+
+  it('sends an epoch-ms expiry when expiryDays is set', async () => {
+    const before = Date.now();
+    await run('server_share', { path: 'j/docs/a.md', expiryDays: 2 }, response);
+    const expiry = Number(firstBody().expiry);
+    expect(expiry).toBeGreaterThanOrEqual(before + 2 * 86_400_000);
+    expect(expiry).toBeLessThanOrEqual(Date.now() + 2 * 86_400_000);
+  });
+
+  it('does not describe a default expiry', () => {
+    const tool = collectTools().get('server_share');
+    const schema = tool?.parameters as {
+      properties: Record<string, { description: string }>;
+    };
+    const description = schema.properties.expiryDays.description;
+    expect(description).not.toMatch(/default/i);
+    expect(description).toMatch(/never expires/i);
+  });
+});
+
 describe('plugin key (#279)', () => {
   it('is sent as k, never as key', async () => {
     await run('server_browse', { path: 'j' }, {}, 'seed');

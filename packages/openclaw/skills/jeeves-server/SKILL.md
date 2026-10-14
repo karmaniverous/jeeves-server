@@ -70,7 +70,7 @@ Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) ret
 
 - **Insiders** authenticate via Google OAuth, email magic link, or key-based auth — bare URLs work for them
 - **Outsiders** need HMAC share links — use `server_share` to generate them
-- Share links have configurable expiry (default 30 days)
+- Share links can expire: `server_share` takes `expiryDays`; without it no expiry is sent and the link never expires
 - A plain directory share covers the whole tree below it; depth and `dirs` make a deep share instead (see **Deep shares** below). The web UI only makes plain directory shares (it hides depth and `dirs` for directories); for a deep directory share use `server_share` with `depth` or `dirs`
 - An `outsiderPolicy` can constrain which paths are eligible for outsider sharing
 - **Scoped insiders** (sessions, insider keys, scoped machine keys) only reach paths within their scopes: directories above an allowed path can be browsed for navigation, but viewing, exporting, writing or sharing anything outside scope returns 403, and directory archives omit out-of-scope entries. Scope globs follow picomatch: use `/**` to grant a whole tree (`/*` matches direct children only)

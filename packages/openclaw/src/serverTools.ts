@@ -109,7 +109,8 @@ export function registerServerTools(
           },
           expiryDays: {
             type: 'number',
-            description: 'Link expiry in days (default: 30)',
+            description:
+              'Link expiry in days. Omitted: no expiry is sent and the link never expires',
           },
           depth: {
             type: 'number',
