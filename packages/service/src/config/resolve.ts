@@ -306,6 +306,7 @@ export function buildRuntimeConfig(
         : null,
     configPath,
     publicUrl: config.publicUrl,
+    trustProxyHeaders: config.trustProxyHeaders,
     eventQueueConcurrency: config.eventQueueConcurrency,
     ...resolveEventPaths(config.eventQueue, rootDir),
   };

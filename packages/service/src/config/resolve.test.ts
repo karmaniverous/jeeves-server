@@ -231,6 +231,7 @@ describe('buildRuntimeConfig', () => {
     insiders: {},
     go: {},
     eventQueueConcurrency: 3,
+    trustProxyHeaders: false,
   } as JeevesConfig;
 
   it('constructs correct path fields', () => {
@@ -317,6 +318,21 @@ describe('buildRuntimeConfig', () => {
 
     expect(result.publicUrl).toBeUndefined();
   });
+
+  it.each([true, false])(
+    'passes through trustProxyHeaders (%s)',
+    (trustProxyHeaders) => {
+      const config = { ...baseConfig, trustProxyHeaders };
+
+      const result = buildRuntimeConfig(
+        config,
+        '/srv/jeeves',
+        '/srv/jeeves/config.json',
+      );
+
+      expect(result.trustProxyHeaders).toBe(trustProxyHeaders);
+    },
+  );
 
   it('passes through eventQueueConcurrency', () => {
     const config = {

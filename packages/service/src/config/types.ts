@@ -107,6 +107,11 @@ export interface RuntimeConfig {
   eventLogPath: string;
   /** Public base URL for shareable links (e.g. https://jeeves.johngalt.id). */
   publicUrl?: string;
+  /**
+   * Use forwarding/Host headers for the public origin when `publicUrl` is
+   * unset (see `getPublicOrigin`).
+   */
+  trustProxyHeaders: boolean;
   /** Maximum concurrent event queue entries. */
   eventQueueConcurrency: number;
 }

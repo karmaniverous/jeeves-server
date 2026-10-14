@@ -76,6 +76,7 @@ export function makeRuntimeConfig(options: FixtureOptions = {}): RuntimeConfig {
     eventQueueCursorPath: 'queue.jsonl.cursor',
     eventLogPath: 'event-log.jsonl',
     eventQueueConcurrency: 1,
+    trustProxyHeaders: false,
     ...options.overrides,
   };
 }
