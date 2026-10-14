@@ -87,10 +87,87 @@ function computeSubLink(
   const key = computeDeepShareKey(seed, targetUrlPath, params);
 
   // Build URL
-  let url = `/browse${targetUrlPath}?k=${key}&d=${String(maxDepth)}&dirs=${dirs ? '1' : '0'}&s=${compressedStack}`;
+  // The key covers the decoded path (what the middleware verifies); the URL
+  // carries it percent-encoded.
+  const encodedPath = targetUrlPath
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
+  let url = `/browse${encodedPath}?k=${key}&d=${String(maxDepth)}&dirs=${dirs ? '1' : '0'}&s=${compressedStack}`;
   if (exp) url += `&exp=${exp}`;
   if (fragment !== undefined) url += `#${fragment}`;
   return url;
+}
+
+/** Deep share parameters of the current request, as received. */
+export interface DeepShareContext {
+  maxDepth: number;
+  dirs: boolean;
+  stackCompressed: string;
+  exp: string | undefined;
+}
+
+/** Decode the stack and make sure the current path is its last entry. */
+function stackWithCurrent(stackCompressed: string, currentPath: string) {
+  const stack = decodeStack(stackCompressed);
+  if (stack.length === 0 || stack[stack.length - 1] !== currentPath) {
+    stack.push(currentPath);
+  }
+  return stack;
+}
+
+/**
+ * Share URL for one entry of a directory listing reached via a deep link:
+ * opening the entry is a step like following a link, so it is pushed onto
+ * the stack and consumes depth; subdirectories need `dirs`. Returns null
+ * when the entry may not be opened (depth exhausted or directory without
+ * `dirs`): the listing shows it as plain text.
+ */
+export function computeEntryLink(
+  seed: string,
+  directoryPath: string,
+  entryName: string,
+  isDirectory: boolean,
+  context: DeepShareContext,
+): string | null {
+  const stack = stackWithCurrent(context.stackCompressed, directoryPath);
+  if (remainingDepth(context.maxDepth, stack) <= 0) return null;
+  const target =
+    directoryPath === '/' ? `/${entryName}` : `${directoryPath}/${entryName}`;
+  return computeSubLink(
+    seed,
+    target,
+    stack,
+    context.maxDepth,
+    context.dirs,
+    context.exp,
+    isDirectory,
+  );
+}
+
+/**
+ * Normalize a link target to a content URL path: percent-decoded, `.` and
+ * `..` resolved, duplicate and trailing slashes removed. Returns null when
+ * the target escapes the root or can't be decoded.
+ */
+export function normalizeTargetPath(target: string): string | null {
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(target);
+  } catch {
+    return null;
+  }
+  const out: string[] = [];
+  for (const segment of decoded.split('/')) {
+    if (segment === '' || segment === '.') continue;
+    if (segment === '..') {
+      if (out.length === 0) return null;
+      out.pop();
+      continue;
+    }
+    out.push(segment);
+  }
+  return out.length > 0 ? `/${out.join('/')}` : null;
 }
 
 /**
@@ -101,6 +178,11 @@ function computeSubLink(
  * - Links beyond depth get stripped (text preserved, link removed)
  * - External links (http/https) are left unchanged
  * - Anchor links (#) are left unchanged
+ *
+ * `isDirectoryPath` decides whether a target is a directory (the server
+ * passes a filesystem stat). Without it, only a trailing slash marks a
+ * directory; the directory route also refuses hops into directories
+ * without `dirs`, so a misclassified link still can't list one.
  */
 export function rewriteLinksForDeepShare(
   html: string,
@@ -110,15 +192,9 @@ export function rewriteLinksForDeepShare(
   dirs: boolean,
   stackCompressed: string,
   exp: string | undefined,
+  isDirectoryPath?: (urlPath: string) => boolean,
 ): string {
-  const currentStack = decodeStack(stackCompressed);
-  // Ensure current path is in the stack
-  if (
-    currentStack.length === 0 ||
-    currentStack[currentStack.length - 1] !== currentPath
-  ) {
-    currentStack.push(currentPath);
-  }
+  const currentStack = stackWithCurrent(stackCompressed, currentPath);
 
   const remaining = remainingDepth(maxDepth, currentStack);
 
@@ -184,13 +260,21 @@ export function rewriteLinksForDeepShare(
         : `/${hrefWithoutFragment.split('?')[0]}`;
     }
 
-    // Normalize
-    targetPath = targetPath.replace(/\/+/g, '/');
+    // Normalize (decode, resolve . and .., drop trailing slash); a target
+    // that escapes the root is stripped.
+    const hadTrailingSlash = targetPath.endsWith('/');
+    const normalized = normalizeTargetPath(targetPath);
+    if (normalized === null) {
+      $el.replaceWith($el.html() ?? '');
+      return;
+    }
 
-    const isDirectory = targetPath.endsWith('/');
+    const isDirectory = isDirectoryPath
+      ? isDirectoryPath(normalized)
+      : hadTrailingSlash;
     const subLink = computeSubLink(
       seed,
-      targetPath,
+      normalized,
       currentStack,
       maxDepth,
       dirs,

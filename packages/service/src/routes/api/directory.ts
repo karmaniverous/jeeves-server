@@ -12,6 +12,10 @@ import type { FastifyPluginCallback } from 'fastify';
 
 import { canAccessPath, canNavigatePath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
+import {
+  computeEntryLink,
+  decodeStack,
+} from '../../services/deepShareLinks.js';
 import { filterBreadcrumbsForOutsider } from '../../util/breadcrumbs.js';
 import {
   breadcrumbParts,
@@ -29,6 +33,11 @@ export interface DirectoryEntryInfo {
   size: number | null;
   mtime: string | null;
   itemCount: number | null;
+  /**
+   * Deep-share listings only: the entry's own share URL (opening it is a
+   * step that consumes depth), or null when it may not be opened.
+   */
+  shareUrl?: string | null;
 }
 
 /**
@@ -111,6 +120,28 @@ export const directoryRoutes: FastifyPluginCallback = (
 
       const isInsider = request.accessMode === 'insider';
 
+      // Deep share context (outsider via a deep link). A directory reached
+      // by a hop (not the shared path itself) needs dirs=1.
+      const deep = request.deepShareParams;
+      const seed = request.authSeed;
+      const deepContext =
+        !isInsider && deep && seed
+          ? {
+              maxDepth: Number.parseInt(deep.d, 10) || 0,
+              dirs: deep.dirs === '1',
+              stackCompressed: deep.s,
+              exp: (request.query as { exp?: string }).exp,
+            }
+          : null;
+      const dirPath = `/${reqPath.replace(/\/+$/u, '')}`;
+      if (deepContext && !deepContext.dirs) {
+        const stack = decodeStack(deepContext.stackCompressed);
+        const sharedRoot = stack.length === 1 ? stack[0] : undefined;
+        if (sharedRoot?.toLowerCase() !== dirPath.toLowerCase()) {
+          return reply.code(401).send({ error: 'Unauthorized' });
+        }
+      }
+
       const allEntries = await fsp.readdir(resolved, {
         withFileTypes: true,
       });
@@ -131,9 +162,22 @@ export const directoryRoutes: FastifyPluginCallback = (
         return a.name.localeCompare(b.name);
       });
 
-      const result = await Promise.all(
+      const mapped = await Promise.all(
         sorted.map((entry) => mapDirectoryEntry(entry, resolved)),
       );
+      const result =
+        deepContext && seed
+          ? mapped.map((entry) => ({
+              ...entry,
+              shareUrl: computeEntryLink(
+                seed,
+                dirPath,
+                entry.name,
+                entry.type === 'directory',
+                deepContext,
+              ),
+            }))
+          : mapped;
 
       const breadcrumbs = breadcrumbParts(resolved, roots);
       const matchedPath = request.authMatchedPath ?? null;

@@ -12,6 +12,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@karmaniverous/jeeves', () => ({
   getServiceUrl: () => 'http://watcher:1936',
 }));
+vi.mock('../../config/index.js', () => ({
+  getConfig: () => ({ roots: {} }),
+}));
 
 const HASH = 'a'.repeat(64);
 vi.mock('../../services/markdown.js', () => ({
@@ -46,7 +49,7 @@ vi.mock('../../services/deepShareLinks.js', () => ({
     rewriteSimpleImageAuth(...a),
 }));
 
-const { renderMarkdownContent, tryWatcherRender } =
+const { isDirectoryUrlPath, renderMarkdownContent, tryWatcherRender } =
   await import('./fileRender.js');
 
 describe('tryWatcherRender', () => {
@@ -183,6 +186,7 @@ describe('renderMarkdownContent', () => {
       true,
       'stk',
       '9',
+      isDirectoryUrlPath,
     );
   });
 });

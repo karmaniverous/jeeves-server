@@ -7,11 +7,13 @@
  * @packageDocumentation
  */
 
+import fs from 'node:fs';
 import path from 'node:path';
 
 import { getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyRequest } from 'fastify';
 
+import { getConfig } from '../../config/index.js';
 import {
   rewriteLinksForDeepShare,
   rewriteSimpleImageAuth,
@@ -22,6 +24,21 @@ import {
 } from '../../services/embeddedDiagrams.js';
 import { registerDiagramHashes } from '../../services/exportCache.js';
 import { parseMarkdown } from '../../services/markdown.js';
+import { getRoots, urlPathToFs } from '../../util/platform.js';
+
+/** Whether a content URL path names an existing directory (by stat). */
+export function isDirectoryUrlPath(urlPath: string): boolean {
+  const fsPath = urlPathToFs(
+    urlPath.replace(/^\/+/u, ''),
+    getRoots(getConfig().roots),
+  );
+  if (!fsPath) return false;
+  try {
+    return fs.statSync(fsPath).isDirectory();
+  } catch {
+    return false;
+  }
+}
 
 /** Watcher render response shape. */
 export interface WatcherRenderResponse {
@@ -123,6 +140,7 @@ export async function renderMarkdownContent(
         deepShare.dirs === '1',
         deepShare.s,
         (request.query as { exp?: string }).exp,
+        isDirectoryUrlPath,
       );
     } else {
       html = rewriteSimpleImageAuth(html, seed);

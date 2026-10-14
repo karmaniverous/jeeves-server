@@ -44,6 +44,11 @@ export interface DirectoryEntry {
   size: number | null;
   mtime: string | null;
   itemCount?: number | null;
+  /**
+   * Present only in listings reached via a deep share link: the entry's own
+   * share URL, or null when it may not be opened (depth exhausted).
+   */
+  shareUrl?: string | null;
 }
 
 export interface DirectoryListing {

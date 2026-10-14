@@ -19,7 +19,6 @@ import {
 import { canAccessPath, canNavigatePath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
 import type { NormalizedScopes, RuntimeConfig } from '../../config/types.js';
-import { decodeStack } from '../../services/deepShareLinks.js';
 import {
   type ContentRoute,
   hasTraversalSegment,
@@ -102,23 +101,27 @@ function authenticateUtility(
 }
 
 /**
- * Verify the URL key for `urlPath`, retrying against the last deep-share
- * stack entry for directory shares (`dirs=1`).
+ * Verify the URL key for exactly `urlPath`. Deep share keys are bound to
+ * one path; entries of a directory reached via a deep link carry their own
+ * sub-keys (see `computeEntryLink`), so there is no fallback to another
+ * stack entry. Deep share keys never authenticate non-content routes.
  */
 function resolveUrlKey(
   config: RuntimeConfig,
   urlPath: string,
   query: AuthQuery,
+  contentRoute: ContentRoute | null,
 ) {
   const deepParams = extractDeepParams(query);
-  const key = getUrlKey(query);
-  const result = resolveKeyAuth(config, urlPath, key, query.exp, deepParams);
-  if (result.valid || deepParams?.dirs !== '1' || !key) return result;
-
-  const stack = decodeStack(deepParams.s);
-  const lastStackEntry = stack[stack.length - 1];
-  if (!lastStackEntry || lastStackEntry === urlPath) return result;
-  return resolveKeyAuth(config, lastStackEntry, key, query.exp, deepParams);
+  const result = resolveKeyAuth(
+    config,
+    urlPath,
+    getUrlKey(query),
+    query.exp,
+    deepParams,
+  );
+  if (result.valid && deepParams && !contentRoute) return { valid: false };
+  return result;
 }
 
 /**
@@ -151,6 +154,7 @@ export function addAuthMiddleware(fastify: FastifyInstance): void {
       config,
       urlPath,
       request.query as AuthQuery,
+      contentRoute,
     );
 
     // Always check the session: insiders visiting outsider links are upgraded
