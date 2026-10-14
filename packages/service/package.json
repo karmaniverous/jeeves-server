@@ -94,6 +94,9 @@
       "releaseNotes": "npx git-cliff --tag ${version} --unreleased --strip header"
     },
     "hooks": {
+      "before:init": [
+        "node ../../scripts/check-core-range.mjs"
+      ],
       "after:bump": [
         "npx git-cliff --tag ${version} -o CHANGELOG.md",
         "npm install --package-lock-only --ignore-scripts",
