@@ -133,7 +133,7 @@ Directory listings and link info admit ancestors of in-scope paths (for navigati
 | `GET` | `/api/oauth/status?provider=&account=` | Check credential existence and expiry |
 | `GET` | `/api/oauth/token?provider=&account=` | Retrieve valid access token (auto-refreshes if expired) |
 
-`provider` and `account` may only contain letters, digits, `.`, `_` and `-` (not `.`, no `..`); anything else is rejected with 400.
+`provider` and `account` may only contain letters, digits, `.`, `_`, `-`, `@` and `+` (so `jason@johngalt.id` works), and may not be `.` or `..`. Path separators, control characters and empty values are rejected with 400.
 
 ### Event Gateway
 

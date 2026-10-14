@@ -47,23 +47,36 @@ afterAll(async () => {
 const BAD_NAMES = [
   '..',
   '.',
-  'a..b',
   '../etc',
+  '../jason@johngalt.id',
   'a/b',
   'a\\b',
+  'x@y.io/..',
   '/abs',
   'C:\\abs',
-  'user@example.com',
   'with space',
+  '\u0000',
+  'a\u0000b',
+  'a\nb',
+  'a\tb',
+  'a\u007fb',
+];
+
+const GOOD_NAMES = [
+  'google',
+  'x',
+  'salesforce-prod',
+  'my.account_1',
+  'jason@johngalt.id',
+  'a+b@x.io',
+  // `..` inside a name is not a path segment once separators are excluded.
+  'a..b',
 ];
 
 describe('isValidCredentialName', () => {
-  it.each(['google', 'x', 'salesforce-prod', 'my.account_1'])(
-    'accepts %s',
-    (name) => {
-      expect(isValidCredentialName(name)).toBe(true);
-    },
-  );
+  it.each(GOOD_NAMES)('accepts %s', (name) => {
+    expect(isValidCredentialName(name)).toBe(true);
+  });
 
   it.each([...BAD_NAMES, ''])('rejects %j', (name) => {
     expect(isValidCredentialName(name)).toBe(false);
@@ -74,6 +87,19 @@ describe('credentialPath', () => {
   it('builds a path inside the credential directory', () => {
     expect(credentialPath(CRED_DIR, 'google', 'me')).toBe(
       path.join(CRED_DIR, 'google-me-oauth2.json'),
+    );
+  });
+
+  it.each(GOOD_NAMES)('keeps %s inside the credential directory', (name) => {
+    for (const file of [
+      credentialPath(CRED_DIR, name, 'me'),
+      credentialPath(CRED_DIR, 'google', name),
+    ]) {
+      expect(path.dirname(file)).toBe(CRED_DIR);
+      expect(path.relative(CRED_DIR, file).startsWith('..')).toBe(false);
+    }
+    expect(credentialPath(CRED_DIR, 'google', name)).toBe(
+      path.join(CRED_DIR, `google-${name}-oauth2.json`),
     );
   });
 
@@ -115,9 +141,37 @@ describe('OAuth API routes reject invalid names with 400', () => {
     expect(res.statusCode).toBe(400);
   });
 
-  it('lets a valid name through to the credential lookup', async () => {
-    const res = await app.inject(`/api/oauth/status?${q('google', 'me')}`);
+  it.each(['me', 'jason@johngalt.id', 'a+b@x.io'])(
+    'lets %s through to the credential lookup',
+    async (account) => {
+      const res = await app.inject(`/api/oauth/status?${q('google', account)}`);
+      expect(res.statusCode).toBe(200);
+      expect(res.json<{ exists: boolean }>().exists).toBe(false);
+    },
+  );
+
+  it('rejects empty names with 400', async () => {
+    expect(
+      (await app.inject(`/api/oauth/status?${q('', 'me')}`)).statusCode,
+    ).toBe(400);
+    expect(
+      (await app.inject(`/api/oauth/token?${q('google', '')}`)).statusCode,
+    ).toBe(400);
+  });
+
+  it('starts a flow for an email-style account', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/oauth/start',
+      payload: {
+        provider: 'github',
+        account: 'jason@johngalt.id',
+        clientId: 'cid',
+        clientSecret: 'secret',
+        authUrl: 'https://auth.example.com/authorize',
+        tokenUrl: 'https://auth.example.com/token',
+      },
+    });
     expect(res.statusCode).toBe(200);
-    expect(res.json<{ exists: boolean }>().exists).toBe(false);
   });
 });

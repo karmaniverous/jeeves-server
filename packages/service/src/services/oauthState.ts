@@ -7,23 +7,28 @@ import path from 'node:path';
 
 import { createTtlStateMap } from './ttlStateMap.js';
 
-/** Allowed characters for OAuth provider and account names. */
-const CREDENTIAL_NAME_RE = /^[A-Za-z0-9._-]+$/u;
+/**
+ * Allowed characters for OAuth provider and account names: letters, digits,
+ * `.`, `_`, `-`, `@` and `+` (so email-style accounts work). Path separators,
+ * NUL and other control characters, and empty values never match.
+ */
+const CREDENTIAL_NAME_RE = /^[A-Za-z0-9._@+-]+$/u;
 
 /** Error returned when a provider or account name is rejected. */
 export const INVALID_CREDENTIAL_NAME_ERROR =
-  'provider and account may only contain letters, digits, ".", "_" and "-" (no "..")';
+  'provider and account may only contain letters, digits, ".", "_", "-", "@" and "+", and may not be "." or ".."';
 
 /**
- * True when `value` is safe in a credential file name: letters, digits,
- * `.`, `_` and `-` only; not `.` and no `..`.
+ * True when `value` is safe in a credential file name: only the allowed
+ * characters, and not `.` or `..`. With separators excluded, a whole-value
+ * `..` is the only way to form a `..` path segment.
  */
 export function isValidCredentialName(value: unknown): value is string {
   return (
     typeof value === 'string' &&
     CREDENTIAL_NAME_RE.test(value) &&
     value !== '.' &&
-    !value.includes('..')
+    value !== '..'
   );
 }
 
