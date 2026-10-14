@@ -2,49 +2,61 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.14.1] - 2026-10-04
+## [0.15.0] - 2026-10-14
+
+### 🚀 Features
+
+- *(share)* Generate share and auth URLs with k (#279)
+- *(core)* TrustProxyHeaders config setting; core 0.4.0
+- *(share)* Report isDirectory from /api/share; server_share returns rawUrl for plain and deep file shares, none for directories
+
+### 🐛 Bug Fixes
+
+- *(plugin)* Server_share rawUrl uses /api/raw/ (#278)
+- *(release)* GitHub release notes and changelog use the new version tag (#276)
+- *(auth)* Tighten auth on resolve-path, events and export-cache routes
+- *(release)* Match npm-package-template-ts#30 exactly (#276)
+- *(config)* Require publicUrl when login flows are configured
+- *(sharing)* Issue plain tree keys for share-for directory links without depth
+- *(events)* Restrict /api/events to unscoped insiders
+- *(release)* Pass the package-prefixed tag to git-cliff
 
 ### 💼 Other
 
-- [271] fix(service): address review on insider scope enforcement (#271)
+- Updated core
 
-Copilot review:
-- Propagate key scopes: verifyKey/resolveKeyAuth now return the matched
-  key's (or issuing insider's) scopes and the middleware sets
-  request.insiderScopes on key auth, so scoped machine insider keys get
-  filtered archives and listings, and outsider directory shares hide
-  entries outside the issuer's scopes.
-- Directory archive size limit counts only in-scope files (getDirSize
-  takes an optional file filter), so denied content can neither block an
-  export with 413 nor leak its size.
-- Split fileContent.ts (430 lines) into fileContent (GET), fileWrite
-  (PUT) and fileRender (watcher proxy + Markdown pipeline).
+### 📚 Documentation
 
-SOLID/DRY:
-- contentRoute.ts owns URL -> content path mapping; the middleware's
-  string replace chain is gone. Key auth for /api/mermaid-export,
-  /api/plantuml-export and /api/link-info is now verified against the
-  content path, so share keys work there as documented (previously
-  rejected).
-- scopeAccess.ts holds pure scope decisions; scopeGuard.ts the shared
-  403 response used by every route-level check.
-- archiveExport.ts owns directory archive export.
-- Middleware split into authenticateUtility / resolveUrlKey helpers.
+- K parameter, /status and /health, skill additions (#279, #259, #274)
+- Deep share semantics, publicUrl and trustProxyHeaders, route auth
+- Point event log readers to /api/events and fix an en dash
+- Sync guides, skill, README and endpoint catalog with 3.15.0 behaviour
+- Directory shares from the UI are plain; deep directory shares come from the API or plugin
+- *(plugin)* Server_share links never expire when expiryDays is omitted
 
-Tests: 494 -> 568 service tests. New route tests for archive export,
-file write, file content, file render, link info scope, share route,
-getDirSize, key scope propagation. Removed sharing tests that exercised
-an inline copy of the code; merged duplicate export format tests.
+### 🧪 Testing
 
-Docs: scope enforcement in sharing/api-integration/exports guides,
-access decision flow diagram, plugin skill; fix scope examples that
-used /* (direct children only) where /** was meant; fix /api/path and
-/api/share body in the API reference.
+- *(openclaw)* Use the current server_share shape in the rewrite fixture
+- *(events)* Pin the strict rule for insiders with any scopes configured
+- Replace constant-only and weak assertions with behaviour checks
+
+### ⚙️ Miscellaneous Tasks
+
+- Revert package version bumps (releases are done locally)
+## [0.14.1] - 2026-10-04
+
+### 🐛 Bug Fixes
+
+- *(service)* Address review on insider scope enforcement (#271)
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-openclaw v0.14.1
 ## [0.14.0] - 2026-09-29
 
 ### 💼 Other
 
-- [261] updated jeeves-core
+- Updated jeeves-core
 - Updated core
 
 ### ⚙️ Miscellaneous Tasks
@@ -54,25 +66,31 @@ used /* (direct children only) where /** was meant; fix /api/path and
 
 ### 💼 Other
 
-- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-9
-- [261] updated core
-- [261] chore: release @karmaniverous/jeeves-server-openclaw v0.14.0-3
+- Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-openclaw v0.14.0-3
 ## [0.14.0-2] - 2026-09-27
 
 ### 💼 Other
 
-- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-8
-- [261] updated core
-- [261] chore: release @karmaniverous/jeeves-server-openclaw v0.14.0-2
+- Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-openclaw v0.14.0-2
 ## [0.14.0-1] - 2026-09-27
+
+### 🐛 Bug Fixes
+
+- *(openclaw)* Accurate configRoot-unset startup warning (#266)
+- Update root package-lock.json in release-it after:bump hook
 
 ### 💼 Other
 
-- [261] fix(openclaw): accurate configRoot-unset startup warning (#266)
-- [261] chore(release): prettier-format openclaw.plugin.json after bump
-- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-7
-- [261] updated core
-- [261] [267] fix: tests and typecheck read core and CLI from source, not dist
+- Updated core
+- [267] fix: tests and typecheck read core and CLI from source, not dist
 
 Service and openclaw vitest configs alias @karmaniverous/jeeves-server-core
 to packages/core/src, and their tsconfigs map it with paths, so typecheck
@@ -87,50 +105,36 @@ Source resolution exposes core's @deprecated mermaidCliPath, so the ignored
 field is no longer copied into RuntimeConfig.
 
 Closes #267
-- [261] fix: update root package-lock.json in release-it after:bump hook
-- [261] chore: release @karmaniverous/jeeves-server-openclaw v0.14.0-1
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-openclaw v0.14.0-1
 ## [0.14.0-0] - 2026-09-27
+
+### 🚀 Features
+
+- *(openclaw)* [**breaking**] Standard OpenClaw plugin on jeeves core 0.6.0 with lazy configRoot
+- *(openclaw)* Pass lazy apiUrl to createPluginToolset; pin core 0.6.0-4
+
+### 🐛 Bug Fixes
+
+- *(openclaw)* Gate only tools that read configRoot
+- *(release)* Use --github.preRelease for release-it 21
 
 ### 💼 Other
 
-- [261] feat(openclaw)!: standard OpenClaw plugin on jeeves core 0.6.0 with lazy configRoot
+- Updated core
 
-Move the plugin (and jeeves-server-core) to @karmaniverous/jeeves@0.6.0-3,
-the static-content core (karmaniverous/jeeves#109).
+### 🧪 Testing
 
-- Remove the ComponentWriter / TOOLS.md "## Server" section, the async
-  status-menu cache (promptInjection) and the createPluginCli-based
-  install/uninstall bin. `jeeves install` installs the plugin with
-  `openclaw plugins install` and writes its config.
-- Resolve configRoot lazily (plugin config, then JEEVES_CONFIG_ROOT) when a
-  tool runs. register() always succeeds, logs one warning when configRoot is
-  unset, and defers core init() to first use. Tools invoked without it return
-  a clear error naming both ways to set it. publicUrl is read per call.
-- Manifest: configRoot/pluginKey descriptions; configRoot has no default and
-  is not required. SKILL.md gains name/description frontmatter (#260) and
-  jeeves install instructions.
-- Tests: registration without config, tool error, plugin config / OpenClaw
-  config entry / env var, late config, lazy publicUrl, no conversation hooks,
-  manifest and skill frontmatter checks.
+- *(openclaw)* Merge duplicate HTTP-tool configRoot tests
 
-BREAKING CHANGE: the `jeeves-server-openclaw install|uninstall` CLI is gone;
-install with `jeeves install server` (or `openclaw plugins install`). The
-plugin no longer writes TOOLS.md; use `server_status` and the skill.
+### ⚙️ Miscellaneous Tasks
 
-Closes #261
-Closes #263
-Closes #260
-- [261] chore(openclaw): update rollup, @rollup/plugin-commonjs and zod minors
-- [261] chore(deps): ncu -u --peer across all packages
-- [261] chore: resolve knip findings and audit advisories (lodash-es override)
-- [261] chore: apply prettier across the repo; ignore generated CHANGELOGs
-- [261] fix(openclaw): gate only tools that read configRoot
-- [261] feat(openclaw): pass lazy apiUrl to createPluginToolset; pin core 0.6.0-4
-- [261] test(openclaw): merge duplicate HTTP-tool configRoot tests
-- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-6
-- [261] fix(release): use --github.preRelease for release-it 21
-- [261] updated core
-- [261] chore: release @karmaniverous/jeeves-server-openclaw v0.14.0-0
+- *(openclaw)* Update rollup, @rollup/plugin-commonjs and zod minors
+- Resolve knip findings and audit advisories (lodash-es override)
+- Apply prettier across the repo; ignore generated CHANGELOGs
+- Release @karmaniverous/jeeves-server-openclaw v0.14.0-0
 ## [0.13.0] - 2026-07-02
 
 ### 📚 Documentation
@@ -142,17 +146,26 @@ Closes #260
 - Release @karmaniverous/jeeves-server-openclaw v0.13.0
 ## [0.12.0] - 2026-06-25
 
+### 🐛 Bug Fixes
+
+- Remove hardcoded j:/config fallback for configRoot (#244)
+- Replace hardcoded j/ drive prefix in tool examples (#246)
+- Require auth for server_resolve_path plugin tool (#247)
+- Make resolve-path endpoint unauthenticated (#247)
+- Remove publicUrl from plugin config, make eventQueueConcurrency configurable (#245, #247)
+
 ### 💼 Other
 
-- [SERVER-312] fix: remove hardcoded j:/config fallback for configRoot (#244)
-- [SERVER-312] fix: replace hardcoded j/ drive prefix in tool examples (#246)
-- [SERVER-312] fix: require auth for server_resolve_path plugin tool (#247)
-- [SERVER-312] fix: make resolve-path endpoint unauthenticated (#247)
-- [SERVER-312] fix: remove publicUrl from plugin config, make eventQueueConcurrency configurable (#245, #247)
-- [SERVER-312] docs: update guides for eventQueue, eventQueueConcurrency, publicUrl, server_resolve_path (#244, #245, #246, #247)
-- [SERVER-312] refactor: extract resolveEventPaths helper, add skipAuth to ApiToolConfig (#245, #247)
-- [SERVER-312] docs: sync skill, guides, and config reference with touched code (#244, #245, #246, #247)
 - Updated core
+
+### 🚜 Refactor
+
+- Extract resolveEventPaths helper, add skipAuth to ApiToolConfig (#245, #247)
+
+### 📚 Documentation
+
+- Update guides for eventQueue, eventQueueConcurrency, publicUrl, server_resolve_path (#244, #245, #246, #247)
+- Sync skill, guides, and config reference with touched code (#244, #245, #246, #247)
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -305,65 +318,31 @@ Closes #260
 - Release @karmaniverous/jeeves-server-openclaw v0.9.1
 ## [0.9.0] - 2026-04-11
 
-### 💼 Other
+### 🚀 Features
 
-- [V3-7] feat: add publicUrl config for shareable URL rewriting (#145)
+- Add publicUrl config for shareable URL rewriting (#145)
+- Update TOOLS guidance to note automatic URL rewriting (#152)
 
-When publicUrl is configured in the plugin, all URLs returned to tool
-callers are rewritten to use the public domain instead of the local
-bind address. When absent, URLs pass through unchanged (dev behavior).
+### 🐛 Bug Fixes
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] feat: update TOOLS guidance to note automatic URL rewriting (#152)
+- Address Gemini review — URL boundary, checkbox regex, Cheerio, race condition
+- Toggle-checkbox route wildcard position (CI fix)
 
-Remove the need for manual loopback URL rewriting instructions. Add a
-note that server tools automatically rewrite URLs when publicUrl is
-configured.
+### 🚜 Refactor
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] chore: bump versions (service 3.7.0, openclaw 0.8.0)
+- SOLID/DRY pass across v3.7.0 changes
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] refactor: SOLID/DRY pass across v3.7.0 changes
+### 📚 Documentation
 
-- Remove eslint-disable comments in events.ts and fileContent.ts by
-  using non-async plugin pattern (matching toggleCheckbox.ts convention)
-- Eliminate redundant handleText branches (rawOnly and non-rawOnly
-  produced identical output)
-- Extract magic number 86400000 to named MS_PER_DAY constant
-- Optimize rewriteUrlsInData to pre-compute both origins instead of
-  re-parsing URLs on every string match
+- Sync documentation with v3.7.0 implementation
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] test: improve coverage and remove trivial tests
+### 🧪 Testing
 
-Add missing edge-case tests for events route (limit clamping, non-numeric
-input, negative values), serverTools URL rewriting (HTTPS with port,
-port-mismatch non-rewrite), and toggleCheckbox (content preservation,
-multi-checkbox targeting). No trivial tests found to remove.
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] docs: sync documentation with v3.7.0 implementation
-
-Add publicUrl config to all doc surfaces (SKILL.md, openclaw-integration.md,
-README). Document checkbox toggling capability in TOOLS.md injection and
-SKILL.md. Add v3.7.0 and v0.8.0 CHANGELOG entries. Fix prettier formatting
-in toggleCheckbox test.
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] fix: address Gemini review — URL boundary, checkbox regex, Cheerio, race condition
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] fix: toggle-checkbox route wildcard position (CI fix)
-
-Move wildcard from middle of route path to end: POST /api/file/*/toggle-checkbox
-→ POST /api/toggle-checkbox/*. Fastify's find-my-way router requires wildcards
-to be the last character in the route.
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+- Improve coverage and remove trivial tests
 
 ### ⚙️ Miscellaneous Tasks
 
+- Bump versions (service 3.7.0, openclaw 0.8.0)
 - Release @karmaniverous/jeeves-server-openclaw v0.9.0
 ## [0.7.5] - 2026-04-08
 
@@ -390,15 +369,9 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 - Release @karmaniverous/jeeves-server-openclaw v0.7.3
 ## [0.7.2] - 2026-04-05
 
-### 💼 Other
+### 🐛 Bug Fixes
 
-- [150] fix: consume core importMetaUrl for plugin install (#150)
-
-Fixes #150. Also closes #147.
-
-- Bump @karmaniverous/jeeves to ^0.5.4 in both packages
-- Replace distDir with importMetaUrl in plugin CLI
-- Remove unused node:path and node:url imports from cli.ts
+- Consume core importMetaUrl for plugin install (#150)
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -411,82 +384,52 @@ Fixes #150. Also closes #147.
 - Release @karmaniverous/jeeves-server-openclaw v0.7.1
 ## [0.7.0] - 2026-04-03
 
-### 💼 Other
+### 🚀 Features
 
-- [360] feat: Phase 1 — core service adoption (getServiceUrl, getBindAddress, Node 22 fast-fail)
+- Phase 1 — core service adoption (getServiceUrl, getBindAddress, Node 22 fast-fail)
+- Phase 2 — core v0.5.1 wiring (cleanup escalation, getPackageVersion, substituteEnvVars TODO)
 
-- Bump @karmaniverous/jeeves to ^0.5.1 in both packages
-- Set engines.node to >=22 in all package.json files
-- Add runtime Node version fast-fail guard in CLI and start-server entry points
-- Replace bespoke watcherUrl, runnerUrl, metaUrl config properties with getServiceUrl() from core
-- Replace bespoke host config property with getBindAddress() from core
-- Fix hardcoded 127.0.0.1 in export route — now uses resolved bind address
-- Add config migration: deprecated properties stripped with deprecation warnings
-- Update all call sites (runner proxy, search, fileContent, auth-status, status, export)
-- Update RuntimeConfig type and buildRuntimeConfig to remove deprecated fields
-- Wire init() in descriptor.run() and start-server.ts for core service resolution
-- Update all test files for new types and mock getServiceUrl/fetch
+### 📚 Documentation
 
-Closes #135, #141, #142, #143, #145
-- [360] feat: Phase 2 — core v0.5.1 wiring (cleanup escalation, getPackageVersion, substituteEnvVars TODO)
-
-- Wire gatewayUrl cleanup escalation in plugin via loadWorkspaceConfig()
-- Replace bespoke packageVersion.ts with core getPackageVersion(import.meta.url)
-- Add TODO comment to substituteEnvVars.ts (core does not export it yet)
-- Update onConfigApply signature to accept config argument (Task 7)
-- [360] docs: Phase 4 — documentation updates for v3.6.0
-
-- Update SKILL.md: Node 22+, CSV rendering, directory counts, collapsible features, core service discovery
-- Update setup guide: remove deprecated config properties, add core service discovery guidance
-- Update README: Node 22+, add CSV and collapsible features to highlights
-- Review promptInjection.ts: no changes needed (status shape unchanged)
+- Phase 4 — documentation updates for v3.6.0
 
 ### ⚙️ Miscellaneous Tasks
 
 - Release @karmaniverous/jeeves-server-openclaw v0.7.0
 ## [0.6.2] - 2026-03-31
 
-### 💼 Other
-
-- [53] chore: bump core to v0.4.6 (init before run) + fix knip issues
-- [53] chore: bump core to v0.4.6 (init before run) + fix knip issues
-
 ### ⚙️ Miscellaneous Tasks
 
+- Bump core to v0.4.6 (init before run) + fix knip issues
+- Bump core to v0.4.6 (init before run) + fix knip issues
 - Release @karmaniverous/jeeves-server-openclaw v0.6.2
 ## [0.6.1] - 2026-03-30
 
-### 💼 Other
+### 🚀 Features
 
-- [51] feat: integrate descriptor.run from core v0.4.5
+- Integrate descriptor.run from core v0.4.5
 
 ### ⚙️ Miscellaneous Tasks
 
 - Release @karmaniverous/jeeves-server-openclaw v0.6.1
 ## [0.6.0] - 2026-03-30
 
-### 💼 Other
+### 🐛 Bug Fixes
 
-- [35] fix: use static bind default, bump openclaw core dep, remove local stub
-- [35] fix: add missing dirs param to server_share plugin tool (#99, #87)
+- Use static bind default, bump openclaw core dep, remove local stub
+- Add missing dirs param to server_share plugin tool (#99, #87)
+- Resolve lint errors from core v0.4.4 migration
 
-The server_share tool was missing the dirs parameter that the POST /api/share
-endpoint accepts. Added dirs to tool parameters and buildRequest body.
+### 🚜 Refactor
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [35] refactor: migrate openclaw plugin to core v0.4.4 SDK
+- Migrate openclaw plugin to core v0.4.4 SDK
+- Adopt createPluginToolset, health-nested status, event endpoint (#87, #112, #118, #128)
+- Remove Connected Services from TOOLS.md writer (closes #128)
 
-Remove hand-rolled serviceCommands/pluginRemove in favor of core's
-createServiceManager and createPluginCli. Rewrite cli.ts to delegate
-to createPluginCli factory. Update index.ts to construct a full
-JeevesComponentDescriptor for createComponentWriter.
+### 📚 Documentation
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [35] fix: resolve lint errors from core v0.4.4 migration
-- [35] refactor: adopt createPluginToolset, health-nested status, event endpoint (#87, #112, #118, #128)
-- [35] refactor: remove Connected Services from TOOLS.md writer (closes #128)
-- [35] docs: sync documentation with SDK adoption changes
-- [35] docs: add title front matter to all guides
+- Sync documentation with SDK adoption changes
+- Add title front matter to all guides
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -498,19 +441,22 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 - Release @karmaniverous/jeeves-server-openclaw v0.5.1
 ## [0.5.0] - 2026-03-22
 
-### 💼 Other
+### 🚀 Features
 
-- [117] feat: bump core to v0.3.0 and consolidate status endpoint (#117)
-- [117] refactor(openclaw): use resolveOptionalPluginSetting for getPluginKey (#112)
+- Bump core to v0.3.0 and consolidate status endpoint (#117)
+
+### 🚜 Refactor
+
+- *(openclaw)* Use resolveOptionalPluginSetting for getPluginKey (#112)
 
 ### ⚙️ Miscellaneous Tasks
 
 - Release @karmaniverous/jeeves-server-openclaw v0.5.0
 ## [0.4.1] - 2026-03-22
 
-### 💼 Other
+### 🚀 Features
 
-- [113] feat: add host bind and metaUrl config options
+- Add host bind and metaUrl config options
 
 ### ⚙️ Miscellaneous Tasks
 
