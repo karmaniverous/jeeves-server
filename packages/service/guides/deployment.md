@@ -158,7 +158,7 @@ curl http://localhost:1934/health
 curl http://localhost:1934/status
 ```
 
-The `/status` endpoint returns version, uptime, connected services, export capabilities, and event schemas. Add `?events=N` to include the N most recent event log entries. Use `/health` for simple load balancer checks and `/status` for monitoring dashboards.
+The `/status` endpoint returns version, uptime, connected services, export capabilities, and event schemas. It does not include event log entries: those come from `GET /api/events?limit=N`, which needs an unscoped insider (an unscoped machine key or insider session). Use `/health` for simple load balancer checks and `/status` for monitoring dashboards.
 
 ## Updating
 

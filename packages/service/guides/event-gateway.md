@@ -202,11 +202,11 @@ process.stdin.on('end', () => {
 ### Via API
 
 ```bash
-# Get 20 most recent event log entries (no auth required)
-curl http://localhost:1934/status?events=20
+# Get the 20 most recent event log entries (unscoped insiders only)
+curl "http://localhost:1934/api/events?limit=20&k=<machine key>"
 ```
 
-The `eventLog` array in the response contains entries newest-first, each with `ts`, `event`, `matched`, `exitCode`, and `durationMs`.
+`GET /api/events?limit=N` (1–100, default 20) returns an array of entries, newest first, each with `ts`, `event`, `matched`, `exitCode` and `durationMs`. Unmatched entries also carry the stored body (`bodyPreview`, with `truncated` and `originalBytes` when it was cut at 256 KiB). It needs an unscoped insider: an unscoped machine key or insider session. Scoped insider sessions get 403, and scoped machine keys are refused. `/status` does not return event log entries.
 
 ### Via log files
 

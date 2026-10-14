@@ -106,7 +106,7 @@ Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) ret
 - `go` maps shortlink slugs to redirect targets, served unauthenticated at `/go/<slug>`.
 - Mermaid needs no extra config: `@mermaid-js/mermaid-cli` is bundled (`mermaidCliPath` is ignored).
 - `publicUrl` is read from the server's own `config.json` (or `JEEVES_SERVER_PUBLIC_URL`), not from the plugin entry. The server also builds login links, `share-for` links and OAuth redirects on it; it's required (unless `trustProxyHeaders: true`) whenever email, Google or OAuth login is configured, and the server refuses to start without it. In key-only configs without it, `share-for` returns relative URLs.
-- `server_resolve_path` and `server_event_status` need the plugin key (insider access). `/api/events` (behind `server_event_status`) answers only unscoped insiders, so a plugin key with scope restrictions gets 403; it keeps unmatched webhook bodies up to 256 KiB each (`truncated` marks cut ones).
+- `server_resolve_path` and `server_event_status` need the plugin key (insider access). `/api/events` (behind `server_event_status`) answers only unscoped insiders, so a plugin key with scope restrictions is refused; it keeps unmatched webhook bodies up to 256 KiB each (`truncated` marks cut ones).
 
 ## Event Gateway
 
