@@ -313,6 +313,25 @@ export const jeevesConfigSchema = z
       }
     }
 
+    // Login links and OAuth redirects are absolute URLs on a trusted public
+    // origin: publicUrl, or forwarding headers only when explicitly trusted.
+    const loginFlows = [
+      config.auth.modes.includes('email') ? 'email login' : null,
+      config.auth.modes.includes('google') ? 'Google login' : null,
+      config.oauth ? 'OAuth (oauth)' : null,
+    ].filter((flow): flow is string => flow !== null);
+    if (
+      loginFlows.length > 0 &&
+      !config.publicUrl &&
+      !config.trustProxyHeaders
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `publicUrl is required when ${loginFlows.join(', ')} is configured (or set trustProxyHeaders: true behind a proxy that sets X-Forwarded-* headers)`,
+        path: ['publicUrl'],
+      });
+    }
+
     // Keys auth mode requires at least one key
     if (
       config.auth.modes.includes('keys') &&

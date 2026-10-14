@@ -19,7 +19,11 @@ export interface OriginRequest {
   hostname?: string;
 }
 
-/** Config error shown when no public origin can be determined. */
+/**
+ * Error for a login request when no public origin can be determined. Config
+ * validation already requires `publicUrl` (or `trustProxyHeaders: true`)
+ * for email, Google and OAuth login, so this is a defensive guard only.
+ */
 export const PUBLIC_ORIGIN_CONFIG_ERROR =
   'Server misconfigured: set publicUrl (or trustProxyHeaders behind a proxy that sets X-Forwarded-* headers) to send login links and OAuth redirects.';
 
@@ -66,20 +70,4 @@ export function isSecureOrigin(
   request: OriginRequest,
 ): boolean {
   return getPublicOrigin(config, request)?.startsWith('https://') ?? false;
-}
-
-/**
- * Whether a configured login mode needs an absolute public origin that the
- * config can't provide (used to warn once at startup).
- */
-export function missingPublicOriginForLogin(
-  config: Pick<
-    RuntimeConfig,
-    'publicUrl' | 'trustProxyHeaders' | 'authModes' | 'emailAuth' | 'googleAuth'
-  >,
-): boolean {
-  if (config.publicUrl || config.trustProxyHeaders) return false;
-  const email = config.authModes.includes('email') && !!config.emailAuth;
-  const google = config.authModes.includes('google') && !!config.googleAuth;
-  return email || google;
 }

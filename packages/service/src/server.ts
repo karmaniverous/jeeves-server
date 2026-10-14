@@ -31,10 +31,6 @@ import { initDiagramCache } from './services/diagramCache.js';
 import { initTransport } from './services/email.js';
 import { startQueueProcessor } from './services/eventQueue.js';
 import { initExportCache } from './services/exportCache.js';
-import {
-  missingPublicOriginForLogin,
-  PUBLIC_ORIGIN_CONFIG_ERROR,
-} from './util/publicOrigin.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -142,11 +138,6 @@ async function start() {
     // Initialize email transport (if email auth is configured)
     if (config.authModes.includes('email') && config.emailAuth) {
       initTransport(config.emailAuth.smtpUrl);
-    }
-
-    // Login links and OAuth redirects need a trusted public origin.
-    if (missingPublicOriginForLogin(config)) {
-      console.error(`[config] ${PUBLIC_ORIGIN_CONFIG_ERROR}`);
     }
 
     // Initialize caches

@@ -121,7 +121,7 @@ Directory listings and link info admit ancestors of in-scope paths (for navigati
 | Method | Path | Description |
 | --- | --- | --- |
 | `GET` | `/api/auth/status` | Check authentication status and mode (no auth required) |
-| `POST` | `/api/auth/magic` | Request a magic login link (no auth required, returns 200 with `{ verifyUrl }` whether or not the email is an insider) Returns 500 with a configuration error when neither `publicUrl` nor `trustProxyHeaders` is set. |
+| `POST` | `/api/auth/magic` | Request a magic login link (no auth required, returns 200 with `{ verifyUrl }` whether or not the email is an insider) |
 | `GET` | `/auth/magic/verify` | OTP verification page — server-rendered page where users enter the emailed code (top-level route, no auth required) |
 | `GET` | `/auth/magic/callback` | Magic link callback — verifies signed token, sets session cookie (top-level route, no auth required) |
 

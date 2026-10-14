@@ -115,9 +115,10 @@ The OpenClaw plugin reads this value from the server config to rewrite tool resp
 
 `publicUrl` is also the origin for every absolute URL the server builds itself: emailed login links, `share-for` links, the Google and generic OAuth `redirect_uri`, and the session cookie's `secure` flag (secure when `publicUrl` is https). Request headers (`Host`, `X-Forwarded-Host`, `X-Forwarded-Proto`) are **not** trusted for this by default, because anyone who can reach the server directly can set them.
 
-Without `publicUrl`:
+**`publicUrl` is required** when email login (`auth.modes` includes `"email"`), Google login (`"google"`) or OAuth credential management (`oauth`) is configured, unless `trustProxyHeaders` is `true`. Without it the config fails validation and the server won't start; the error names `publicUrl`.
 
-- email login answers 500 with a configuration error (logged once at startup too), and Google / generic OAuth flows refuse to start;
+Without `publicUrl` in a config that doesn't need it (key-only access):
+
 - `share-for` returns relative URLs;
 - the session cookie is not marked secure.
 
@@ -499,7 +500,7 @@ Branding is surfaced via the `/status` endpoint (no auth required) so the React 
 | `auth.email` | object | — | Email magic link config (required when modes includes `"email"`) |
 | `plantuml` | object | — | PlantUML rendering config |
 | `diagramCachePath` | string | `.diagram-cache` | Cached rendered diagram directory |
-| `publicUrl` | string | — | Public base URL (e.g. `https://docs.example.com`). Origin for login links, share-for links, OAuth redirects and the cookie `secure` flag; API responses include full public URLs. |
+| `publicUrl` | string | — | Public base URL (e.g. `https://docs.example.com`). Origin for login links, share-for links, OAuth redirects and the cookie `secure` flag; API responses include full public URLs. **Required** with email, Google or OAuth login unless `trustProxyHeaders` is `true`. |
 | `trustProxyHeaders` | boolean | `false` | Derive the public origin from forwarding/`Host` headers when `publicUrl` is unset. Only behind a proxy that sets those headers. |
 | `eventQueue` | string | `{installDir}/logs/event-queue.jsonl` | Absolute path to the durable event queue file. Cursor file is `eventQueue + '.cursor'`. |
 | `eventQueueConcurrency` | number | `3` | Maximum concurrent event queue entries per batch. |

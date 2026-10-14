@@ -7,11 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  getPublicOrigin,
-  isSecureOrigin,
-  missingPublicOriginForLogin,
-} from './publicOrigin.js';
+import { getPublicOrigin, isSecureOrigin } from './publicOrigin.js';
 
 const forged = {
   headers: {
@@ -114,51 +110,5 @@ describe('isSecureOrigin', () => {
 
   it('follows the forwarded scheme when headers are trusted', () => {
     expect(isSecureOrigin({ trustProxyHeaders: true }, forged)).toBe(true);
-  });
-});
-
-describe('missingPublicOriginForLogin', () => {
-  const base = {
-    trustProxyHeaders: false,
-    authModes: ['keys' as const],
-    emailAuth: null,
-    googleAuth: null,
-  };
-
-  it('flags email or Google login without an origin source', () => {
-    expect(
-      missingPublicOriginForLogin({
-        ...base,
-        authModes: ['email'],
-        emailAuth: { smtpUrl: 'smtp://x', fromAddress: 'a@b.c' },
-      }),
-    ).toBe(true);
-    expect(
-      missingPublicOriginForLogin({
-        ...base,
-        authModes: ['google'],
-        googleAuth: { clientId: 'c', clientSecret: 's' },
-      }),
-    ).toBe(true);
-  });
-
-  it('is fine with publicUrl, trusted headers, or key-only auth', () => {
-    expect(missingPublicOriginForLogin(base)).toBe(false);
-    expect(
-      missingPublicOriginForLogin({
-        ...base,
-        authModes: ['email'],
-        emailAuth: { smtpUrl: 'smtp://x', fromAddress: 'a@b.c' },
-        publicUrl: 'https://a.example',
-      }),
-    ).toBe(false);
-    expect(
-      missingPublicOriginForLogin({
-        ...base,
-        authModes: ['email'],
-        emailAuth: { smtpUrl: 'smtp://x', fromAddress: 'a@b.c' },
-        trustProxyHeaders: true,
-      }),
-    ).toBe(false);
   });
 });

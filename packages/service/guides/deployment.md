@@ -140,7 +140,7 @@ server {
 }
 ```
 
-Behind a proxy, set `publicUrl` in the server config (e.g. `https://jeeves.example.com`). Login links, OAuth redirects, `share-for` links and the session cookie's `secure` flag use it; forwarding headers are ignored unless `trustProxyHeaders` is enabled. See [Public URL](./setup.md#public-url).
+Behind a proxy, set `publicUrl` in the server config (e.g. `https://jeeves.example.com`); it's required whenever email, Google or OAuth login is configured, unless `trustProxyHeaders` is `true`. Login links, OAuth redirects, `share-for` links and the session cookie's `secure` flag use it; forwarding headers are ignored unless `trustProxyHeaders` is enabled. See [Public URL](./setup.md#public-url).
 
 ## HTTPS
 

@@ -63,6 +63,33 @@ describe('loadConfig', () => {
     expect(() => loadConfig(path.join(tmpDir, 'nonexistent.json'))).toThrow();
   });
 
+  it('refuses email login without publicUrl, naming publicUrl', () => {
+    const configPath = writeConfig(tmpDir, {
+      ...VALID_CONFIG,
+      auth: {
+        modes: ['keys', 'email'],
+        sessionSecret: 's'.repeat(32),
+        email: { smtpUrl: 'smtp://localhost:25', fromAddress: 'a@example.com' },
+      },
+    });
+    expect(() => loadConfig(configPath)).toThrow(
+      /Invalid configuration[\s\S]*- publicUrl: publicUrl is required when email login is configured/u,
+    );
+  });
+
+  it('loads email login with trustProxyHeaders: true and no publicUrl', () => {
+    const configPath = writeConfig(tmpDir, {
+      ...VALID_CONFIG,
+      trustProxyHeaders: true,
+      auth: {
+        modes: ['keys', 'email'],
+        sessionSecret: 's'.repeat(32),
+        email: { smtpUrl: 'smtp://localhost:25', fromAddress: 'a@example.com' },
+      },
+    });
+    expect(loadConfig(configPath).trustProxyHeaders).toBe(true);
+  });
+
   it('throws on invalid config (missing auth)', () => {
     const configPath = writeConfig(tmpDir, { port: 1234 });
     expect(() => loadConfig(configPath)).toThrow('Invalid configuration');
