@@ -7,13 +7,44 @@ import path from 'node:path';
 
 import { createTtlStateMap } from './ttlStateMap.js';
 
-/** Build the credential file path for a provider/account pair. */
+/** Allowed characters for OAuth provider and account names. */
+const CREDENTIAL_NAME_RE = /^[A-Za-z0-9._-]+$/u;
+
+/** Error returned when a provider or account name is rejected. */
+export const INVALID_CREDENTIAL_NAME_ERROR =
+  'provider and account may only contain letters, digits, ".", "_" and "-" (no "..")';
+
+/**
+ * True when `value` is safe in a credential file name: letters, digits,
+ * `.`, `_` and `-` only, and no `..`.
+ */
+export function isValidCredentialName(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    CREDENTIAL_NAME_RE.test(value) &&
+    !value.includes('..')
+  );
+}
+
+/**
+ * Build the credential file path for a provider/account pair. Throws when
+ * either name is invalid or the path would leave `credentialDir`.
+ */
 export function credentialPath(
   credentialDir: string,
   provider: string,
   account: string,
 ): string {
-  return path.join(credentialDir, `${provider}-${account}-oauth2.json`);
+  if (!isValidCredentialName(provider) || !isValidCredentialName(account)) {
+    throw new Error(INVALID_CREDENTIAL_NAME_ERROR);
+  }
+  const dir = path.resolve(credentialDir);
+  const file = path.resolve(dir, `${provider}-${account}-oauth2.json`);
+  const rel = path.relative(dir, file);
+  if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) {
+    throw new Error('Credential path escapes the credential directory');
+  }
+  return file;
 }
 
 /** Data stored for a pending OAuth2 authorization flow. */

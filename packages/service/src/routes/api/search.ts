@@ -11,31 +11,10 @@ import { stat } from 'node:fs/promises';
 
 import { getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyPluginCallback } from 'fastify';
-import picomatch from 'picomatch';
 
+import { canAccessPath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
-import type { NormalizedScopes } from '../../config/types.js';
 import { fsPathToUrl, getRoots, urlPathToFs } from '../../util/platform.js';
-
-/** Check if a path passes the insider's scope rules. */
-function pathAllowedByScope(
-  urlPath: string,
-  scopes: NormalizedScopes | null,
-): boolean {
-  if (!scopes) return true; // null = unrestricted
-  const normalized = urlPath.toLowerCase().replace(/\/+$/, '');
-  const allowMatch = picomatch(
-    scopes.allow.map((p) => p.toLowerCase().replace(/\/+$/, '')),
-  );
-  if (!allowMatch(normalized)) return false;
-  if (scopes.deny.length > 0) {
-    const denyMatch = picomatch(
-      scopes.deny.map((p) => p.toLowerCase().replace(/\/+$/, '')),
-    );
-    if (denyMatch(normalized)) return false;
-  }
-  return true;
-}
 
 interface WatcherResult {
   id: string;
@@ -126,7 +105,8 @@ export const searchRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
         const browsePath = urlPath.replace(/^\//, '');
 
         // Check insider scope
-        if (!pathAllowedByScope(urlPath, insiderScopes ?? null)) continue;
+        // Same matcher as content routes (dot paths, explicit overrides).
+        if (!canAccessPath(urlPath, insiderScopes ?? null)) continue;
 
         permitted.push({ ...r, browsePath });
       }

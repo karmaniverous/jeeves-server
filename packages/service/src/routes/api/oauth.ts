@@ -12,7 +12,12 @@ import fsp from 'node:fs/promises';
 import type { FastifyPluginAsync } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
-import { credentialPath, storePending } from '../../services/oauthState.js';
+import {
+  credentialPath,
+  INVALID_CREDENTIAL_NAME_ERROR,
+  isValidCredentialName,
+  storePending,
+} from '../../services/oauthState.js';
 import { withFileLock } from '../../util/fileMutex.js';
 import {
   getPublicOrigin,
@@ -90,6 +95,10 @@ export const oauthApiRoutes: FastifyPluginAsync = (fastify) => {
         return reply.code(400).send({
           error: 'provider, account, clientId, and clientSecret are required',
         });
+      }
+
+      if (!isValidCredentialName(provider) || !isValidCredentialName(account)) {
+        return reply.code(400).send({ error: INVALID_CREDENTIAL_NAME_ERROR });
       }
 
       // Merge named provider defaults (request fields override)
@@ -212,6 +221,10 @@ export const oauthApiRoutes: FastifyPluginAsync = (fastify) => {
           .send({ error: 'provider and account query params required' });
       }
 
+      if (!isValidCredentialName(provider) || !isValidCredentialName(account)) {
+        return reply.code(400).send({ error: INVALID_CREDENTIAL_NAME_ERROR });
+      }
+
       const filePath = credentialPath(
         config.oauth.credentialDir,
         provider,
@@ -260,6 +273,10 @@ export const oauthApiRoutes: FastifyPluginAsync = (fastify) => {
         return reply
           .code(400)
           .send({ error: 'provider and account query params required' });
+      }
+
+      if (!isValidCredentialName(provider) || !isValidCredentialName(account)) {
+        return reply.code(400).send({ error: INVALID_CREDENTIAL_NAME_ERROR });
       }
 
       const filePath = credentialPath(
