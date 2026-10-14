@@ -13,7 +13,7 @@ vi.mock('@karmaniverous/jeeves', async (importOriginal) => {
   return { ...actual, fetchJson: fetchJsonMock };
 });
 
-const { EXPORT_TIMEOUT_MS, registerServerTools } =
+const { EXPORT_TIMEOUT_MS, registerServerTools, toRawUrl } =
   await import('./serverTools.js');
 
 const BASE_URL = 'http://127.0.0.1:1934';
@@ -45,6 +45,44 @@ function run(
 
 afterEach(() => {
   fetchJsonMock.mockReset();
+});
+
+describe('server_share rawUrl (#278)', () => {
+  it('maps a depth-0 file share onto /api/raw/ and keeps the key', async () => {
+    const result = await run(
+      'server_share',
+      { path: 'j/docs/a.md' },
+      { url: '/browse/j/docs/a.md?k=abc', path: '/j/docs/a.md', exp: null },
+    );
+    const text = JSON.stringify(result);
+    expect(text).toContain(`${BASE_URL}/api/raw/j/docs/a.md?k=abc`);
+    expect(text).not.toContain(`${BASE_URL}/raw/`);
+  });
+
+  it('only rewrites the leading /browse/ segment', () => {
+    expect(toRawUrl(`${BASE_URL}/browse/j/browse/a.md?k=abc`)).toBe(
+      `${BASE_URL}/api/raw/j/browse/a.md?k=abc`,
+    );
+  });
+
+  it('sends the plugin key as k', async () => {
+    const tools = new Map<string, ToolDescriptor>();
+    const api: PluginApi = {
+      registerTool: (tool: ToolDescriptor) => {
+        tools.set(tool.name, tool);
+      },
+      logger: { warn: vi.fn() },
+      pluginConfig: { pluginKey: 'seed' },
+    };
+    vi.stubEnv('JEEVES_SERVER_PLUGIN_KEY', 'seed');
+    registerServerTools(api, BASE_URL, () => undefined);
+    fetchJsonMock.mockResolvedValueOnce({});
+    await tools.get('server_browse')?.execute('call-1', { path: 'j' });
+    vi.unstubAllEnvs();
+    const [url] = fetchJsonMock.mock.calls[0] as [string];
+    expect(new URL(url).searchParams.has('k')).toBe(true);
+    expect(new URL(url).searchParams.has('key')).toBe(false);
+  });
 });
 
 describe('server_export timeout', () => {

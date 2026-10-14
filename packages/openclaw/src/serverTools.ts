@@ -39,6 +39,16 @@ const MS_PER_DAY = 86_400_000;
  */
 export const EXPORT_TIMEOUT_MS = 600_000;
 
+/**
+ * Map an absolute share page URL (`/browse/...`) onto the raw-content route
+ * (`/api/raw/...`), keeping the auth query (#278: `/raw/` is a 404).
+ */
+export function toRawUrl(pageUrl: string): string {
+  const url = new URL(pageUrl);
+  url.pathname = url.pathname.replace(/^\/browse\//, '/api/raw/');
+  return url.toString();
+}
+
 /** Register all domain-specific server_* tools with the OpenClaw plugin API. */
 export function registerServerTools(
   api: PluginApi,
@@ -158,7 +168,7 @@ export function registerServerTools(
         const pageUrl = result.url ? toAbsoluteUrl(baseUrl, result.url) : null;
         const rawUrl =
           pageUrl && !result.dirs && (result.depth ?? 0) === 0
-            ? pageUrl.replace('/browse/', '/raw/')
+            ? toRawUrl(pageUrl)
             : null;
 
         return {
