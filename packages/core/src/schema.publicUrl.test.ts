@@ -53,21 +53,25 @@ describe('jeevesConfigSchema: publicUrl required for login flows', () => {
     expect(issues[0]).toContain('email login, OAuth (oauth)');
   });
 
-  it.each([email, google, oauth])(
-    'accepts a login flow with publicUrl',
-    (c) => {
-      expect(
-        publicUrlIssues({ ...c, publicUrl: 'https://docs.example.com' }),
-      ).toEqual([]);
-    },
-  );
+  /** Whole-config validity, so an accept can't hide another failure. */
+  const parses = (config: Record<string, unknown>) =>
+    jeevesConfigSchema.safeParse({ ...base, ...config }).success;
 
-  it.each([email, google, oauth])(
-    'accepts a login flow with trustProxyHeaders: true',
-    (c) => {
-      expect(publicUrlIssues({ ...c, trustProxyHeaders: true })).toEqual([]);
-    },
-  );
+  it.each([
+    ['email login', email],
+    ['Google login', google],
+    ['OAuth', oauth],
+  ])('accepts %s with publicUrl', (_flow, c) => {
+    expect(parses({ ...c, publicUrl: 'https://docs.example.com' })).toBe(true);
+  });
+
+  it.each([
+    ['email login', email],
+    ['Google login', google],
+    ['OAuth', oauth],
+  ])('accepts %s with trustProxyHeaders: true', (_flow, c) => {
+    expect(parses({ ...c, trustProxyHeaders: true })).toBe(true);
+  });
 
   it('still rejects with trustProxyHeaders: false', () => {
     expect(
