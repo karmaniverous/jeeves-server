@@ -268,10 +268,9 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       request.headers['x-forwarded-host'] || request.headers.host,
     );
 
-    let shareUrl = `${proto}://${host}/browse${targetPath}?k=${outsiderKey}`;
-    if (shareDepth > 0) shareUrl += `&d=${String(shareDepth)}`;
-    shareUrl += `&dirs=${shareDirs ? '1' : '0'}`;
-    if (stack) shareUrl += `&s=${stack}`;
+    // Same builder as POST /api/share: always emits d (also d=0), which
+    // verification needs to recognise a deep key (#282).
+    const shareUrl = `${proto}://${host}${buildDeepShareUrl(targetPath, outsiderKey, deepParams)}`;
 
     const response: Record<string, unknown> = {
       url: shareUrl,
