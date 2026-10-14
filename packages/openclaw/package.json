@@ -61,7 +61,8 @@
       "tagName": "openclaw/${version}"
     },
     "github": {
-      "release": true
+      "release": true,
+      "releaseNotes": "npx git-cliff --tag openclaw/${version} --latest --strip header"
     },
     "hooks": {
       "after:bump": [
@@ -82,7 +83,7 @@
         "git switch ${branchName}"
       ],
       "before:npm:release": [
-        "npx git-cliff -o CHANGELOG.md",
+        "npx git-cliff --tag openclaw/${version} -o CHANGELOG.md",
         "git add -A"
       ]
     },
