@@ -2,74 +2,86 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-10-14
+
+### 🚀 Features
+
+- *(auth)* Accept the URL key as k as well as key (#279)
+- *(core)* TrustProxyHeaders config setting; core 0.4.0
+- *(share)* Report isDirectory from /api/share; server_share returns rawUrl for plain and deep file shares, none for directories
+
+### 🐛 Bug Fixes
+
+- *(release)* GitHub release notes and changelog use the new version tag (#276)
+- *(release)* Match npm-package-template-ts#30 exactly (#276)
+- *(config)* Require publicUrl when login flows are configured
+- *(events)* Restrict /api/events to unscoped insiders
+- *(release)* Pass the package-prefixed tag to git-cliff
+
+### 📚 Documentation
+
+- Sync guides, skill, README and endpoint catalog with 3.15.0 behaviour
+- *(core)* Document ShareResponse.isDirectory; test /api/share isDirectory with and without a trailing slash
+
+### 🧪 Testing
+
+- *(events)* Pin the strict rule for insiders with any scopes configured
+- Replace constant-only and weak assertions with behaviour checks
+- *(core)* Assert whole-config validity when a login flow is accepted
+
+### ⚙️ Miscellaneous Tasks
+
+- Revert package version bumps (releases are done locally)
 ## [0.3.0] - 2026-09-29
 
 ### 💼 Other
 
-- [261] updated jeeves-core
+- Updated jeeves-core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-core v0.3.0
 ## [0.2.1-3] - 2026-09-28
 
-### 💼 Other
+### ⚙️ Miscellaneous Tasks
 
-- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-9
-- [261] chore: release @karmaniverous/jeeves-server-core v0.2.1-3
+- Release @karmaniverous/jeeves-server-core v0.2.1-3
 ## [0.2.1-2] - 2026-09-27
 
-### 💼 Other
+### 🐛 Bug Fixes
 
-- [261] fix: update root package-lock.json in release-it after:bump hook
-- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-8
-- [261] chore: release @karmaniverous/jeeves-server-core v0.2.1-2
+- Update root package-lock.json in release-it after:bump hook
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-core v0.2.1-2
 ## [0.2.1-1] - 2026-09-27
 
-### 💼 Other
+### ⚙️ Miscellaneous Tasks
 
-- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-7
-- [261] chore: release @karmaniverous/jeeves-server-core v0.2.1-1
+- Release @karmaniverous/jeeves-server-core v0.2.1-1
 ## [0.2.1-0] - 2026-09-27
 
-### 💼 Other
+### 🚀 Features
 
-- [261] feat(openclaw)!: standard OpenClaw plugin on jeeves core 0.6.0 with lazy configRoot
+- *(openclaw)* [**breaking**] Standard OpenClaw plugin on jeeves core 0.6.0 with lazy configRoot
+- *(openclaw)* Pass lazy apiUrl to createPluginToolset; pin core 0.6.0-4
 
-Move the plugin (and jeeves-server-core) to @karmaniverous/jeeves@0.6.0-3,
-the static-content core (karmaniverous/jeeves#109).
+### 🐛 Bug Fixes
 
-- Remove the ComponentWriter / TOOLS.md "## Server" section, the async
-  status-menu cache (promptInjection) and the createPluginCli-based
-  install/uninstall bin. `jeeves install` installs the plugin with
-  `openclaw plugins install` and writes its config.
-- Resolve configRoot lazily (plugin config, then JEEVES_CONFIG_ROOT) when a
-  tool runs. register() always succeeds, logs one warning when configRoot is
-  unset, and defers core init() to first use. Tools invoked without it return
-  a clear error naming both ways to set it. publicUrl is read per call.
-- Manifest: configRoot/pluginKey descriptions; configRoot has no default and
-  is not required. SKILL.md gains name/description frontmatter (#260) and
-  jeeves install instructions.
-- Tests: registration without config, tool error, plugin config / OpenClaw
-  config entry / env var, late config, lazy publicUrl, no conversation hooks,
-  manifest and skill frontmatter checks.
+- *(release)* Use --github.preRelease for release-it 21
 
-BREAKING CHANGE: the `jeeves-server-openclaw install|uninstall` CLI is gone;
-install with `jeeves install server` (or `openclaw plugins install`). The
-plugin no longer writes TOOLS.md; use `server_status` and the skill.
+### ⚙️ Miscellaneous Tasks
 
-Closes #261
-Closes #263
-Closes #260
-- [261] chore(deps): ncu -u --peer across all packages
-- [261] chore: apply prettier across the repo; ignore generated CHANGELOGs
-- [261] feat(openclaw): pass lazy apiUrl to createPluginToolset; pin core 0.6.0-4
-- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-6
-- [261] fix(release): use --github.preRelease for release-it 21
-- [261] chore: release @karmaniverous/jeeves-server-core v0.2.1-0
+- Apply prettier across the repo; ignore generated CHANGELOGs
+- Release @karmaniverous/jeeves-server-core v0.2.1-0
 ## [0.2.0] - 2026-06-25
 
-### 💼 Other
+### 🐛 Bug Fixes
 
-- [SERVER-312] fix: prevent overlapping event queue batches, add eventQueue config (#245)
-- [SERVER-312] fix: remove publicUrl from plugin config, make eventQueueConcurrency configurable (#245, #247)
-- [SERVER-312] fix: address Copilot review — drainLoop error handling, resolve-path 404/400, absolute path validation, stale cursor recovery (#245, #247)
+- Prevent overlapping event queue batches, add eventQueue config (#245)
+- Remove publicUrl from plugin config, make eventQueueConcurrency configurable (#245, #247)
+- Address Copilot review — drainLoop error handling, resolve-path 404/400, absolute path validation, stale cursor recovery (#245, #247)
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -102,10 +114,10 @@ Closes #260
 - Release @karmaniverous/jeeves-server-core v0.1.6
 ## [0.1.5] - 2026-06-13
 
-### 💼 Other
+### 🚀 Features
 
-- [213] feat: add logging.level and logging.file config support (#213)
-- [210] feat: shared endpoint catalog in core package (#210)
+- Add logging.level and logging.file config support (#213)
+- Shared endpoint catalog in core package (#210)
 
 ### 📚 Documentation
 
