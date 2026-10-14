@@ -8,7 +8,7 @@ flowchart TD
     F -- Yes --> G{"Matches machine\ninsider key?"}
     G -- Yes --> H["✅ INSIDER access\n(within scopes)"]
     G -- No --> I{"Matches outsider key?\n(machine or insider seed)"}
-    I -- Yes --> J{"Path matches key\npath or ancestor?"}
+    I -- Yes --> J{"Deep key: exactly its path\n(content routes only);\nplain key: path or ancestor"}
     J -- Yes --> K["✅ OUTSIDER access"]
     J -- No --> L["❌ DENIED"]
     I -- No --> M["❌ DENIED"]

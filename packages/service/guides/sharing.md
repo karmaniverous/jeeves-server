@@ -163,6 +163,16 @@ When you share a directory link, the outsider can:
 
 The server checks the outsider key against the requested path **and all ancestor paths**, so a key generated for `/d/docs/` also grants access to `/d/docs/report.md` and `/d/docs/specs/api.md`.
 
+### Deep shares (depth and `dirs`)
+
+A share with a **depth** lets the outsider follow links from the shared document, up to that many hops. Each link the server renders for the outsider carries its own key, bound to that one target (`k`, plus `d`, `dirs`, `s` and any `exp`). A deep share key opens exactly the path it was issued for and nothing else.
+
+- A link to another document is one hop.
+- A link to a **directory** is followed only if the share allows directories (`dirs`). Directories are recognised on the server, whether or not the link ends in `/`.
+- A directory reached this way shows only its **immediate entries**. Opening an entry is another hop: each entry in the listing carries its own link, and once the depth is used up entries are shown as plain text.
+- Subdirectories in such a listing are directory hops too, so they need `dirs` as well.
+- The sharer's own scopes are checked against every path the outsider opens.
+
 ### Link expiration
 
 - **"Never"** links work until the insider rotates their key

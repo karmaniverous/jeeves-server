@@ -30,7 +30,7 @@ if (Has ?k= parameter?\n(legacy ?key= also accepted)) then (Yes)
       stop
     endif
   elseif (Matches outsider key?\n(machine or insider seed)) then (Yes)
-    if (Path matches key path or ancestor,\nwithin issuer scopes?) then (Yes)
+    if (Deep share key: exactly its path\n(content routes only);\nplain key: its path or an ancestor;\nwithin issuer scopes?) then (Yes)
       :OUTSIDER access;<<#22c55e>>
       stop
     endif

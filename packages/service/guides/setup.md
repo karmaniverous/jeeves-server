@@ -113,6 +113,22 @@ When the server is behind a reverse proxy (Caddy, nginx), set `publicUrl` so API
 
 The OpenClaw plugin reads this value from the server config to rewrite tool response URLs. If not set, URLs use the local API address.
 
+`publicUrl` is also the origin for every absolute URL the server builds itself: emailed login links, `share-for` links, the Google and generic OAuth `redirect_uri`, and the session cookie's `secure` flag (secure when `publicUrl` is https). Request headers (`Host`, `X-Forwarded-Host`, `X-Forwarded-Proto`) are **not** trusted for this by default, because anyone who can reach the server directly can set them.
+
+Without `publicUrl`:
+
+- email login answers 500 with a configuration error (logged once at startup too), and Google / generic OAuth flows refuse to start;
+- `share-for` returns relative URLs;
+- the session cookie is not marked secure.
+
+**`trustProxyHeaders`** (default `false`): when `publicUrl` is unset, derive the origin from `X-Forwarded-Proto` / `X-Forwarded-Host` / `Host` instead. Enable it only when every request reaches the server through a reverse proxy that sets or overwrites those headers. Setting `publicUrl` is preferred.
+
+```json
+{
+  "trustProxyHeaders": true
+}
+```
+
 ### Event queue storage
 
 By default the event queue is stored inside the npm install directory, which is fragile across upgrades. Set `eventQueue` to a stable path:
@@ -483,7 +499,8 @@ Branding is surfaced via the `/status` endpoint (no auth required) so the React 
 | `auth.email` | object | — | Email magic link config (required when modes includes `"email"`) |
 | `plantuml` | object | — | PlantUML rendering config |
 | `diagramCachePath` | string | `.diagram-cache` | Cached rendered diagram directory |
-| `publicUrl` | string | — | Public base URL (e.g. `https://docs.example.com`). When set, API responses include full public URLs. |
+| `publicUrl` | string | — | Public base URL (e.g. `https://docs.example.com`). Origin for login links, share-for links, OAuth redirects and the cookie `secure` flag; API responses include full public URLs. |
+| `trustProxyHeaders` | boolean | `false` | Derive the public origin from forwarding/`Host` headers when `publicUrl` is unset. Only behind a proxy that sets those headers. |
 | `eventQueue` | string | `{installDir}/logs/event-queue.jsonl` | Absolute path to the durable event queue file. Cursor file is `eventQueue + '.cursor'`. |
 | `eventQueueConcurrency` | number | `3` | Maximum concurrent event queue entries per batch. |
 | `outsiderPolicy` | scopes | — | Global outsider sharing constraints |

@@ -92,6 +92,8 @@ Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) ret
 
 **Auth parameter name.** Generated links carry the key as `k`. The old name `key` is still accepted (if both are present, `k` wins).
 
+**Deep shares.** A deep share key opens exactly the path it was issued for. Links in a shared document, and entries of a directory reached through one (only with `dirs`), carry their own keys; each step uses one level of depth. A plain directory share (no depth) still covers the whole tree below it.
+
 **Insider scope rules.** Content routes (`/api/raw`, `/api/export`, `/api/file`, …) require the path itself to be in scope; navigation routes (directory listings) also admit ancestors of an allowed path. This applies to sessions as well as keys.
 
 ## Configuration Notes
@@ -103,7 +105,8 @@ Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) ret
 - `oauth` configures OAuth2 credential management (`credentialDir` plus `providers`) used by the `oauth_*` tools.
 - `go` maps shortlink slugs to redirect targets, served unauthenticated at `/go/<slug>`.
 - Mermaid needs no extra config: `@mermaid-js/mermaid-cli` is bundled (`mermaidCliPath` is ignored).
-- `publicUrl` is read from the server's own `config.json` (or `JEEVES_SERVER_PUBLIC_URL`), not from the plugin entry.
+- `publicUrl` is read from the server's own `config.json` (or `JEEVES_SERVER_PUBLIC_URL`), not from the plugin entry. The server also builds login links, `share-for` links and OAuth redirects on it; without it (and without `trustProxyHeaders`), email login and OAuth refuse with a config error and `share-for` returns relative URLs.
+- `server_resolve_path` and `server_event_status` need the plugin key (insider access); `/api/events` keeps unmatched webhook bodies up to 256 KiB each (`truncated` marks cut ones).
 
 ## Event Gateway
 

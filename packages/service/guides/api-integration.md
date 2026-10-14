@@ -114,14 +114,14 @@ Directory listings and link info admit ancestors of in-scope paths (for navigati
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `DELETE` | `/api/export-cache/<path>` | Clear export and diagram caches for a path |
+| `DELETE` | `/api/export-cache/<path>` | Clear export and diagram caches for a path (insider only) |
 
 ### Authentication
 
 | Method | Path | Description |
 | --- | --- | --- |
 | `GET` | `/api/auth/status` | Check authentication status and mode (no auth required) |
-| `POST` | `/api/auth/magic` | Request a magic login link (no auth required, always returns 200 with `{ verifyUrl }`) |
+| `POST` | `/api/auth/magic` | Request a magic login link (no auth required, returns 200 with `{ verifyUrl }` whether or not the email is an insider) Returns 500 with a configuration error when neither `publicUrl` nor `trustProxyHeaders` is set. |
 | `GET` | `/auth/magic/verify` | OTP verification page — server-rendered page where users enter the emailed code (top-level route, no auth required) |
 | `GET` | `/auth/magic/callback` | Magic link callback — verifies signed token, sets session cookie (top-level route, no auth required) |
 
@@ -132,6 +132,8 @@ Directory listings and link info admit ancestors of in-scope paths (for navigati
 | `POST` | `/api/oauth/start` | Initiate OAuth2 authorization flow (returns auth URL) |
 | `GET` | `/api/oauth/status?provider=&account=` | Check credential existence and expiry |
 | `GET` | `/api/oauth/token?provider=&account=` | Retrieve valid access token (auto-refreshes if expired) |
+
+`provider` and `account` may only contain letters, digits, `.`, `_` and `-` (not `.`, no `..`); anything else is rejected with 400.
 
 ### Event Gateway
 
@@ -145,6 +147,13 @@ Directory listings and link info admit ancestors of in-scope paths (for navigati
 | ------ | -------------------- | ------------------------------------------- |
 | `POST` | `/api/search`        | Semantic search (proxied to jeeves-watcher) |
 | `GET`  | `/api/search/facets` | Get filter facets for search UI (cached)    |
+
+### Path resolution and event log
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/api/resolve-path?fsPath=<absolute path>` | Map a filesystem path to `{ browsePath, browseUrl, publicUrl? }`. Requires a machine key, insider key or insider session (401 without credentials, 403 for share keys). |
+| `GET` | `/api/events?limit=N` | Recent event log entries (1â€“100, default 20). Insider only. Unmatched webhook bodies are stored in full up to 256 KiB; larger ones are cut at the cap and carry `truncated: true` and `originalBytes`. |
 
 ## Converting Windows Paths to URLs
 
