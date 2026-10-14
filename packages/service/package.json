@@ -90,7 +90,8 @@
     },
     "github": {
       "release": true,
-      "releaseNotes": "npx git-cliff --tag service/${version} --latest --strip header"
+      "releaseName": "${name.split('/').pop()}@${version}",
+      "releaseNotes": "npx git-cliff --tag service/${version} --unreleased --strip header"
     },
     "hooks": {
       "after:bump": [

@@ -45,7 +45,8 @@
     },
     "github": {
       "release": true,
-      "releaseNotes": "npx git-cliff --tag core/${version} --latest --strip header"
+      "releaseName": "${name.split('/').pop()}@${version}",
+      "releaseNotes": "npx git-cliff --tag core/${version} --unreleased --strip header"
     },
     "hooks": {
       "after:bump": [
