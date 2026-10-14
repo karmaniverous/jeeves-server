@@ -21,6 +21,10 @@ describe('buildAuthSuffix (#279)', () => {
     );
   });
 
+  it('falls back to the legacy key when k is empty', () => {
+    expect(buildAuthSuffix('?k=&key=old&d=1')).toBe('k=old&d=1');
+  });
+
   it('is empty without a key', () => {
     expect(buildAuthSuffix('?d=2&s=xyz')).toBe('');
   });

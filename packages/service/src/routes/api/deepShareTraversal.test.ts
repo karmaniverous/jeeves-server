@@ -124,7 +124,14 @@ describe('directory reached via a dirs=1 link', () => {
     expect(res.statusCode).toBe(200);
     const { entries } = res.json<Listing>();
     expect(entries.map((e) => e.name).sort()).toEqual(['b.md', 'deeper']);
-    for (const entry of entries) expect(typeof entry.shareUrl).toBe('string');
+    for (const entry of entries) {
+      expect(entry.shareUrl).toMatch(
+        new RegExp(
+          `^/browse/r/docs/sub/${entry.name}\\?k=[0-9a-f]+&d=2&dirs=1&s=`,
+          'u',
+        ),
+      );
+    }
   });
 
   it.each([
@@ -182,7 +189,9 @@ describe('dirs=0', () => {
     const byName = Object.fromEntries(
       res.json<Listing>().entries.map((e) => [e.name, e.shareUrl]),
     );
-    expect(typeof byName['b.md']).toBe('string');
+    expect(byName['b.md']).toMatch(
+      /^\/browse\/r\/docs\/sub\/b\.md\?k=[0-9a-f]+&d=2&dirs=0&s=/u,
+    );
     expect(byName.deeper).toBeNull();
   });
 });

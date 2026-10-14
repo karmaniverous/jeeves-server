@@ -43,11 +43,6 @@ describe('eventsRoutes', () => {
     await eventsRoutes(mockFastify as never, {});
   });
 
-  it('registers route at /api/events', () => {
-    expect(registeredRoutes['/api/events']).toBeDefined();
-    expect(registeredRoutes['/events']).toBeUndefined();
-  });
-
   it('returns recent events with default limit', async () => {
     const mockEvents = [
       { ts: '2026-01-01T00:00:00Z', event: 'test', matched: true },

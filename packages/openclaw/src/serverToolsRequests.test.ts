@@ -13,38 +13,54 @@ vi.mock('@karmaniverous/jeeves', async (importOriginal) => {
   return { ...actual, fetchJson: fetchJsonMock };
 });
 
-const { EXPORT_TIMEOUT_MS, registerServerTools, toRawUrl } =
-  await import('./serverTools.js');
+const { registerServerTools, toRawUrl } = await import('./serverTools.js');
 
 const BASE_URL = 'http://127.0.0.1:1934';
 
-/** Register the server_* tools against a stub API and return them by name. */
-function collectTools(): Map<string, ToolDescriptor> {
+/**
+ * Register the server_* tools against a stub API and return them by name.
+ * With `pluginKey`, the plugin is configured with that key seed.
+ */
+function collectTools(pluginKey?: string): Map<string, ToolDescriptor> {
   const tools = new Map<string, ToolDescriptor>();
   const api: PluginApi = {
     registerTool: (tool: ToolDescriptor) => {
       tools.set(tool.name, tool);
     },
     logger: { warn: vi.fn() },
+    ...(pluginKey ? { pluginConfig: { pluginKey } } : {}),
   };
+  if (pluginKey) vi.stubEnv('JEEVES_SERVER_PLUGIN_KEY', pluginKey);
   registerServerTools(api, BASE_URL, () => undefined);
   return tools;
 }
 
-/** Run a registered tool by name. */
+/** Run a registered tool by name, answering its request with `response`. */
 function run(
   name: string,
   params: Record<string, unknown>,
   response: unknown = {},
+  pluginKey?: string,
 ): Promise<ToolResult> {
   fetchJsonMock.mockResolvedValueOnce(response);
-  const tool = collectTools().get(name);
+  const tool = collectTools(pluginKey).get(name);
   if (!tool) throw new Error(`tool not registered: ${name}`);
   return tool.execute('call-1', params);
 }
 
+/** The URL and fetch options of the first request sent. */
+function firstRequest(): { url: URL; options: unknown } {
+  const [url, , options] = fetchJsonMock.mock.calls[0] as [
+    string,
+    unknown,
+    unknown,
+  ];
+  return { url: new URL(url), options };
+}
+
 afterEach(() => {
   fetchJsonMock.mockReset();
+  vi.unstubAllEnvs();
 });
 
 describe('server_share rawUrl (#278)', () => {
@@ -64,47 +80,27 @@ describe('server_share rawUrl (#278)', () => {
       `${BASE_URL}/api/raw/j/browse/a.md?k=abc`,
     );
   });
+});
 
-  it('sends the plugin key as k', async () => {
-    const tools = new Map<string, ToolDescriptor>();
-    const api: PluginApi = {
-      registerTool: (tool: ToolDescriptor) => {
-        tools.set(tool.name, tool);
-      },
-      logger: { warn: vi.fn() },
-      pluginConfig: { pluginKey: 'seed' },
-    };
-    vi.stubEnv('JEEVES_SERVER_PLUGIN_KEY', 'seed');
-    registerServerTools(api, BASE_URL, () => undefined);
-    fetchJsonMock.mockResolvedValueOnce({});
-    await tools.get('server_browse')?.execute('call-1', { path: 'j' });
-    vi.unstubAllEnvs();
-    const [url] = fetchJsonMock.mock.calls[0] as [string];
-    expect(new URL(url).searchParams.has('k')).toBe(true);
-    expect(new URL(url).searchParams.has('key')).toBe(false);
+describe('plugin key (#279)', () => {
+  it('is sent as k, never as key', async () => {
+    await run('server_browse', { path: 'j' }, {}, 'seed');
+    const { searchParams } = firstRequest().url;
+    expect(searchParams.get('k')).toMatch(/^[0-9a-f]+$/u);
+    expect(searchParams.has('key')).toBe(false);
   });
 
-  it('server_resolve_path sends the plugin key', async () => {
-    const tools = new Map<string, ToolDescriptor>();
-    const api: PluginApi = {
-      registerTool: (tool: ToolDescriptor) => {
-        tools.set(tool.name, tool);
-      },
-      logger: { warn: vi.fn() },
-      pluginConfig: { pluginKey: 'seed' },
-    };
-    vi.stubEnv('JEEVES_SERVER_PLUGIN_KEY', 'seed');
-    registerServerTools(api, BASE_URL, () => undefined);
-    fetchJsonMock.mockResolvedValueOnce({ browsePath: 'j/a.md' });
-    await tools
-      .get('server_resolve_path')
-      ?.execute('call-1', { fsPath: 'J:\\a.md' });
-    vi.unstubAllEnvs();
-    const [url] = fetchJsonMock.mock.calls[0] as [string];
-    const parsed = new URL(url);
-    expect(parsed.pathname).toBe('/api/resolve-path');
-    expect(parsed.searchParams.get('fsPath')).toBe('J:\\a.md');
-    expect(parsed.searchParams.get('k')).toMatch(/^[0-9a-f]+$/u);
+  it('is sent by server_resolve_path (authenticated since 3.15.0)', async () => {
+    await run(
+      'server_resolve_path',
+      { fsPath: 'J:\\a.md' },
+      { browsePath: 'j/a.md' },
+      'seed',
+    );
+    const { url } = firstRequest();
+    expect(url.pathname).toBe('/api/resolve-path');
+    expect(url.searchParams.get('fsPath')).toBe('J:\\a.md');
+    expect(url.searchParams.get('k')).toMatch(/^[0-9a-f]+$/u);
   });
 });
 
@@ -112,25 +108,16 @@ describe('server_export timeout', () => {
   it('passes a 10-minute timeoutMs to fetchJson', async () => {
     await run('server_export', { path: 'j/docs/a.md', format: 'pdf' });
 
-    expect(EXPORT_TIMEOUT_MS).toBe(600_000);
     expect(fetchJsonMock).toHaveBeenCalledTimes(1);
-    const [url, , options] = fetchJsonMock.mock.calls[0] as [
-      string,
-      unknown,
-      unknown,
-    ];
-    expect(url).toContain('/api/export/j/docs/a.md?format=pdf');
-    expect(options).toEqual({ timeoutMs: EXPORT_TIMEOUT_MS });
+    const { url, options } = firstRequest();
+    expect(`${url.pathname}${url.search}`).toBe(
+      '/api/export/j/docs/a.md?format=pdf',
+    );
+    expect(options).toEqual({ timeoutMs: 600_000 });
   });
 
   it('leaves other tools on the core default timeout', async () => {
     await run('server_browse', { path: 'j/docs' });
-
-    const [, , options] = fetchJsonMock.mock.calls[0] as [
-      string,
-      unknown,
-      unknown,
-    ];
-    expect(options).toBeUndefined();
+    expect(firstRequest().options).toBeUndefined();
   });
 });
