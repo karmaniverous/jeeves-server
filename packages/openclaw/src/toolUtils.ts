@@ -105,6 +105,11 @@ export interface ApiToolConfig {
   ) => unknown;
   /** When true, the tool is registered without plugin-key auth. Default: false. */
   skipAuth?: boolean;
+  /**
+   * Request timeout in milliseconds. Omit to use the core library's
+   * `fetchJson` default (120 s).
+   */
+  timeoutMs?: number;
 }
 
 /** Register a single API tool with standard try/catch + ok/connectionFail. */
@@ -137,6 +142,9 @@ export function registerApiTool(
           const rawData = await fetchJson(
             url,
             Object.keys(init).length > 0 ? init : undefined,
+            config.timeoutMs === undefined
+              ? undefined
+              : { timeoutMs: config.timeoutMs },
           );
           const transformed = config.transformResponse
             ? config.transformResponse(rawData, baseUrl, params)

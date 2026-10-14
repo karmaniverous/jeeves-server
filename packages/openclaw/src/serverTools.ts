@@ -32,6 +32,13 @@ import {
 /** Milliseconds in one day. */
 const MS_PER_DAY = 86_400_000;
 
+/**
+ * Timeout for `server_export` (10 minutes, the server's render budget):
+ * cold Puppeteer starts, large PDF/DOCX renders and ZIP archives can exceed
+ * the core library's 120 s `fetchJson` default.
+ */
+export const EXPORT_TIMEOUT_MS = 600_000;
+
 /** Register all domain-specific server_* tools with the OpenClaw plugin API. */
 export function registerServerTools(
   api: PluginApi,
@@ -186,6 +193,7 @@ export function registerServerTools(
         const fmt = String(params.format);
         return ['/api/export/' + p + '?format=' + fmt];
       },
+      timeoutMs: EXPORT_TIMEOUT_MS,
     },
   ];
 
