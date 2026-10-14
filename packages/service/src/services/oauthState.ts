@@ -16,12 +16,13 @@ export const INVALID_CREDENTIAL_NAME_ERROR =
 
 /**
  * True when `value` is safe in a credential file name: letters, digits,
- * `.`, `_` and `-` only, and no `..`.
+ * `.`, `_` and `-` only; not `.` and no `..`.
  */
 export function isValidCredentialName(value: unknown): value is string {
   return (
     typeof value === 'string' &&
     CREDENTIAL_NAME_RE.test(value) &&
+    value !== '.' &&
     !value.includes('..')
   );
 }
