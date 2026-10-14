@@ -1,5 +1,5 @@
 import { FileText, FolderOpen } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import { DownloadDropdown } from '@/components/DownloadDropdown';
 import { LinkDropdown } from '@/components/LinkDropdown';
@@ -34,7 +34,8 @@ export function DirectoryRow({
   const isDir = entry.type === 'directory';
   const hasRaw = !isDir;
   const urlPath = `/${entryPath}`;
-  const target = entryLinkTarget(entryPath, entry.shareUrl);
+  const { search } = useLocation();
+  const target = entryLinkTarget(entryPath, entry.shareUrl, search);
   // Deep-share listings: entry downloads need the entry's own key, so they
   // are offered on the entry's page instead.
   const showDownloads = entry.shareUrl === undefined;
