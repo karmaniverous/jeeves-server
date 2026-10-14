@@ -3,12 +3,14 @@
  * @packageDocumentation
  */
 
+import { RENDER_STATE, renderStateAttribute } from '../util/renderState.js';
+
 /**
  * Render an inline HTML error page.
  */
 export function renderErrorPage(title: string, message: string): string {
   return `<!DOCTYPE html>
-<html lang="en" data-render-state="error">
+<html lang="en"${renderStateAttribute(RENDER_STATE.error)}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

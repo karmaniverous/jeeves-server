@@ -32,6 +32,18 @@ describe('computeRenderState (#295)', () => {
     expect(computeRenderState({ ...base, loading: true })).toBeNull();
   });
 
+  it('reports a load error even while still loading', () => {
+    expect(
+      computeRenderState({ ...base, loading: true, error: 'Unauthorized' }),
+    ).toBe('auth-required');
+  });
+
+  it('waits for the drive list on the root path', () => {
+    expect(
+      computeRenderState({ ...base, reqPath: '', hasDrives: false }),
+    ).toBeNull();
+  });
+
   it('reports auth-required for a 401', () => {
     expect(computeRenderState({ ...base, error: 'Unauthorized' })).toBe(
       'auth-required',

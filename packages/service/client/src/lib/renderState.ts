@@ -5,6 +5,13 @@
  * for the attribute and refuses to export or cache anything but `ready`.
  */
 
+/**
+ * Attribute on `<html>` that carries the render state. Must match the
+ * server's `RENDER_STATE_ATTR` (`src/util/renderState.ts`); the SPA is built
+ * separately, so the value is repeated here and pinned by tests.
+ */
+const RENDER_STATE_ATTR = 'data-render-state';
+
 /** Values of `<html data-render-state>`. */
 export type RenderState = 'ready' | 'auth-required' | 'error';
 
@@ -62,6 +69,6 @@ export function applyRenderState(
   state: RenderState | null,
   root: HTMLElement = document.documentElement,
 ): void {
-  if (state) root.setAttribute('data-render-state', state);
-  else root.removeAttribute('data-render-state');
+  if (state) root.setAttribute(RENDER_STATE_ATTR, state);
+  else root.removeAttribute(RENDER_STATE_ATTR);
 }

@@ -16,8 +16,10 @@ const { assertRenderReady, RenderFailedError, RENDER_TIMEOUT_MS } =
   await import('./puppeteer.js');
 const { renderSignInPage } = await import('../auth/signInPage.js');
 const { renderErrorPage } = await import('../auth/errorPage.js');
+const { RENDER_STATE_ATTR } = await import('../util/renderState.js');
 
 const waitForSelector = vi.fn();
+const evaluate = vi.fn();
 
 /** Fake page whose root reports `state` (or never sets one). */
 function fakePage(state: string | null): Page {
@@ -28,10 +30,9 @@ function fakePage(state: string | null): Page {
         ? Promise.reject(new Error(`timeout ${String(opts.timeout)}`))
         : Promise.resolve({}),
   );
-  return {
-    waitForSelector,
-    evaluate: vi.fn(() => Promise.resolve(state)),
-  } as unknown as Page;
+  evaluate.mockReset();
+  evaluate.mockResolvedValue(state);
+  return { waitForSelector, evaluate } as unknown as Page;
 }
 
 describe('assertRenderReady', () => {
@@ -43,12 +44,24 @@ describe('assertRenderReady', () => {
     });
   });
 
+  it('reads the attribute inside the page, passing its name in', async () => {
+    await assertRenderReady(fakePage('ready'));
+    const [pageFn, attr] = evaluate.mock.calls[0] as [
+      (name: string) => string | null,
+      string,
+    ];
+    expect(attr).toBe(RENDER_STATE_ATTR);
+    document.documentElement.setAttribute(RENDER_STATE_ATTR, 'ready');
+    expect(pageFn(attr)).toBe('ready');
+    document.documentElement.removeAttribute(RENDER_STATE_ATTR);
+  });
+
   it.each([
     ['auth-required', 'auth-required'],
     ['error', 'error'],
-    ['an unknown value', 'error'],
-  ])('rejects when the page reports %s', async (_label, expected) => {
-    const page = fakePage(_label === 'an unknown value' ? 'weird' : _label);
+    ['weird', 'error'],
+  ])('rejects when the page reports %s', async (reported, expected) => {
+    const page = fakePage(reported);
     const err = await assertRenderReady(page).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(RenderFailedError);
     expect((err as InstanceType<typeof RenderFailedError>).renderState).toBe(

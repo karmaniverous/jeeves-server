@@ -8,6 +8,8 @@
  * @packageDocumentation
  */
 
+import { type RenderState, renderStateAttribute } from '../util/renderState.js';
+
 /** Options for rendering a standard page shell. */
 export interface PageShellOptions {
   /** Page &lt;title&gt; suffix (after brand emoji + name). */
@@ -26,7 +28,7 @@ export interface PageShellOptions {
    * Value for `data-render-state` on the document root. The export renderer
    * treats anything but `ready` as a failed render (#295).
    */
-  renderState?: 'auth-required' | 'error';
+  renderState?: Exclude<RenderState, 'ready'>;
 }
 
 /**
@@ -41,12 +43,8 @@ export function renderPageShell(options: PageShellOptions): string {
   const safeName = escapeHtml(brandName);
   const safeEmoji = escapeHtml(brandEmoji);
 
-  const renderStateAttr = options.renderState
-    ? ` data-render-state="${options.renderState}"`
-    : '';
-
   return `<!DOCTYPE html>
-<html lang="en"${renderStateAttr}>
+<html lang="en"${renderStateAttribute(options.renderState)}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

@@ -8,6 +8,7 @@
  */
 
 import type { AuthMode } from '../config/types.js';
+import { RENDER_STATE } from '../util/renderState.js';
 import { escapeHtml, renderPageShell } from './pageShell.js';
 
 /** Page-specific CSS (email input, Google button, divider, etc.). */
@@ -156,6 +157,6 @@ ${emailFormHtml}${dividerHtml}
     extraCss: SIGN_IN_CSS,
     bodyContent,
     footerScript: hasEmail ? MAGIC_FORM_SCRIPT : undefined,
-    renderState: 'auth-required',
+    renderState: RENDER_STATE.authRequired,
   });
 }

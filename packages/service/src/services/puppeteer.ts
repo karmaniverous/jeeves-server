@@ -9,12 +9,14 @@ import type { Browser, Page } from 'puppeteer-core';
 import puppeteer from 'puppeteer-core';
 
 import { getConfig } from '../config/index.js';
+import {
+  RENDER_STATE,
+  RENDER_STATE_ATTR,
+  type RenderState,
+} from '../util/renderState.js';
 
 /** Budget for each wait while a render page settles. */
 export const RENDER_TIMEOUT_MS = 15_000;
-
-/** Values the render page sets on `<html data-render-state>` (#295). */
-export type RenderState = 'ready' | 'auth-required' | 'error';
 
 /**
  * Thrown when the render page did not reach `data-render-state="ready"`
@@ -37,17 +39,23 @@ export class RenderFailedError extends Error {
 export async function assertRenderReady(page: Page): Promise<void> {
   let state: string | null;
   try {
-    await page.waitForSelector('html[data-render-state]', {
+    await page.waitForSelector(`html[${RENDER_STATE_ATTR}]`, {
       timeout: RENDER_TIMEOUT_MS,
     });
-    state = await page.evaluate(() =>
-      document.documentElement.getAttribute('data-render-state'),
+    // Runs in the page: the attribute name is passed in, not closed over.
+    state = await page.evaluate(
+      (attr) => document.documentElement.getAttribute(attr),
+      RENDER_STATE_ATTR,
     );
   } catch {
     throw new RenderFailedError('timeout');
   }
-  if (state === 'ready') return;
-  throw new RenderFailedError(state === 'auth-required' ? state : 'error');
+  if (state === RENDER_STATE.ready) return;
+  throw new RenderFailedError(
+    state === RENDER_STATE.authRequired
+      ? RENDER_STATE.authRequired
+      : RENDER_STATE.error,
+  );
 }
 
 /**
