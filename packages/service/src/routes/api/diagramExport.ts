@@ -18,7 +18,10 @@ import {
   cacheDiagramBuffer,
   getCachedDiagramBuffer,
 } from '../../services/diagramCache.js';
-import { renderMermaidToFile } from '../../services/mermaid.js';
+import {
+  type MermaidFormat,
+  renderMermaidToBuffer,
+} from '../../services/mermaid.js';
 import {
   getPlantUmlFormats,
   renderPlantUmlToBuffer,
@@ -132,10 +135,8 @@ export const diagramExportRoutes: FastifyPluginCallback = (
         resolved,
         '.mmd',
         format,
-        async (filePath, fmt) => {
-          const outFile = await renderMermaidToFile(filePath, fmt);
-          return outFile ? fs.readFileSync(outFile) : null;
-        },
+        (filePath, fmt) =>
+          renderMermaidToBuffer(filePath, fmt as MermaidFormat),
       );
     },
   );

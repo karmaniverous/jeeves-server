@@ -48,7 +48,7 @@ vi.mock('../../services/diagramCache.js', () => {
 });
 
 vi.mock('../../services/mermaid.js', () => ({
-  renderMermaidToFile: vi.fn(),
+  renderMermaidToBuffer: vi.fn(),
 }));
 
 vi.mock('../../services/plantuml.js', () => ({
@@ -57,7 +57,7 @@ vi.mock('../../services/plantuml.js', () => ({
 }));
 
 const { diagramExportRoutes } = await import('./diagramExport.js');
-const { renderMermaidToFile } = await import('../../services/mermaid.js');
+const { renderMermaidToBuffer } = await import('../../services/mermaid.js');
 const { renderPlantUmlToBuffer } = await import('../../services/plantuml.js');
 
 /** Minimal Fastify reply mock that captures sent data. */
@@ -165,7 +165,7 @@ describe('diagramExportRoutes', () => {
     const platformMod = await import('../../util/platform.js');
     vi.spyOn(platformMod, 'urlPathToFs').mockReturnValue(mmdPath);
 
-    vi.mocked(renderMermaidToFile).mockResolvedValue(null);
+    vi.mocked(renderMermaidToBuffer).mockResolvedValue(null);
 
     const reply = createReplyMock();
     await routes['/api/mermaid-export/*'](
