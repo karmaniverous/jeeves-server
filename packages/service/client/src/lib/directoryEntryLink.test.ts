@@ -11,7 +11,9 @@ describe('entryLinkTarget', () => {
   });
 
   it('opens the entry with its own share URL in deep-share listings', () => {
-    expect(entryLinkTarget('r/docs/a.md', '/browse/r/docs/a.md?k=x&d=1')).toEqual({
+    expect(
+      entryLinkTarget('r/docs/a.md', '/browse/r/docs/a.md?k=x&d=1'),
+    ).toEqual({
       kind: 'share',
       href: '/browse/r/docs/a.md?k=x&d=1',
     });

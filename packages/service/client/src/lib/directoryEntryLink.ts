@@ -18,7 +18,8 @@ export function entryLinkTarget(
   entryPath: string,
   shareUrl: string | null | undefined,
 ): EntryLinkTarget {
-  if (shareUrl === undefined) return { kind: 'route', to: `/browse/${entryPath}` };
+  if (shareUrl === undefined)
+    return { kind: 'route', to: `/browse/${entryPath}` };
   if (shareUrl === null) return { kind: 'none' };
   return { kind: 'share', href: shareUrl };
 }

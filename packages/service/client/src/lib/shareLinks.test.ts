@@ -27,8 +27,8 @@ describe('deriveShareLink (#279)', () => {
   });
 
   it('only rewrites a leading /browse/ segment', () => {
-    expect(
-      deriveShareLink(ORIGIN, '/browse/j/browse/a.md?k=abc', 'raw'),
-    ).toBe('https://jeeves.example.com/api/raw/j/browse/a.md?k=abc');
+    expect(deriveShareLink(ORIGIN, '/browse/j/browse/a.md?k=abc', 'raw')).toBe(
+      'https://jeeves.example.com/api/raw/j/browse/a.md?k=abc',
+    );
   });
 });

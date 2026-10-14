@@ -14,9 +14,9 @@ describe('getDownloadItems', () => {
 
   it('offers file formats to insiders and outsiders alike', () => {
     const labels = ['Raw', 'PDF', 'DOCX'];
-    expect(getDownloadItems('r/a.md', md, false, true).map((i) => i.label)).toEqual(
-      labels,
-    );
+    expect(
+      getDownloadItems('r/a.md', md, false, true).map((i) => i.label),
+    ).toEqual(labels);
     expect(
       getDownloadItems('r/a.md', md, false, false).map((i) => i.label),
     ).toEqual(labels);

@@ -46,7 +46,9 @@ const UNAUTHORIZED = 'Unauthorized';
  * Markdown in the rendered tab is ready only once its rendered HTML has
  * loaded; everything else is ready once its data has loaded.
  */
-export function computeRenderState(input: RenderStateInput): RenderState | null {
+export function computeRenderState(
+  input: RenderStateInput,
+): RenderState | null {
   if (input.error)
     return input.error === UNAUTHORIZED ? 'auth-required' : 'error';
   if (input.loading) return null;
