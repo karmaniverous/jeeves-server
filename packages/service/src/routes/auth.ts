@@ -18,7 +18,7 @@ import { writeInsiderSeedToConfig } from '../util/configPersist.js';
 import {
   getPublicOrigin,
   type OriginRequest,
-  PUBLIC_ORIGIN_CONFIG_ERROR,
+  sendPublicOriginConfigError,
 } from '../util/publicOrigin.js';
 
 /**
@@ -46,9 +46,7 @@ export const authRoute: FastifyPluginCallback = (fastify, _opts, done) => {
         : undefined;
 
       const redirectUri = getRedirectUri(request);
-      if (!redirectUri) {
-        return reply.code(500).send({ error: PUBLIC_ORIGIN_CONFIG_ERROR });
-      }
+      if (!redirectUri) return sendPublicOriginConfigError(reply);
 
       const url = buildAuthUrl(google.clientId, redirectUri, state);
       return reply.redirect(url);
@@ -79,9 +77,7 @@ export const authRoute: FastifyPluginCallback = (fastify, _opts, done) => {
     }
 
     const redirectUri = getRedirectUri(request);
-    if (!redirectUri) {
-      return reply.code(500).send({ error: PUBLIC_ORIGIN_CONFIG_ERROR });
-    }
+    if (!redirectUri) return sendPublicOriginConfigError(reply);
 
     // Exchange code for tokens
     const tokens = await exchangeCode(

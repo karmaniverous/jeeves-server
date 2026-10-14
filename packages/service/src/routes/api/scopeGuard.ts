@@ -13,6 +13,22 @@ import { canAccessPath } from '../../auth/scopeAccess.js';
 /** Error message for out-of-scope requests (403). */
 export const OUT_OF_SCOPE_ERROR = 'Path is outside your access scope';
 
+/** Error message for insider-only routes reached without insider access. */
+export const INSIDER_REQUIRED_ERROR = 'Insider access required';
+
+/**
+ * Send 403 and return true unless the request has insider access (session,
+ * insider key or machine key). Share links never pass.
+ */
+export function rejectNonInsider(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): boolean {
+  if (request.accessMode === 'insider') return false;
+  void reply.code(403).send({ error: INSIDER_REQUIRED_ERROR });
+  return true;
+}
+
 /**
  * Send 403 and return true when `request.insiderScopes` do not grant access
  * to `contentPath` (leading slash optional). Returns false, sending nothing,

@@ -9,19 +9,20 @@
 import crypto from 'node:crypto';
 import fsp from 'node:fs/promises';
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
 import {
+  areValidCredentialNames,
   credentialPath,
   INVALID_CREDENTIAL_NAME_ERROR,
-  isValidCredentialName,
   storePending,
 } from '../../services/oauthState.js';
 import { withFileLock } from '../../util/fileMutex.js';
 import {
   getPublicOrigin,
-  PUBLIC_ORIGIN_CONFIG_ERROR,
+  sendPublicOriginConfigError,
+  trimTrailingSlashes,
 } from '../../util/publicOrigin.js';
 
 interface StartBody {
@@ -36,12 +37,8 @@ interface StartBody {
   origin?: string;
 }
 
-interface StatusQuery {
-  provider: string;
-  account: string;
-}
-
-interface TokenQuery {
+/** Query of the credential routes (status, token). */
+interface CredentialQuery {
   provider: string;
   account: string;
 }
@@ -75,6 +72,77 @@ function remainingSeconds(cred: CredentialFile): number | null {
   return Math.max(0, remaining);
 }
 
+/**
+ * Send 400 and return true when the provider or account name is not a safe
+ * credential file name.
+ */
+function rejectInvalidCredentialNames(
+  reply: FastifyReply,
+  provider: string,
+  account: string,
+): boolean {
+  if (areValidCredentialNames(provider, account)) return false;
+  void reply.code(400).send({ error: INVALID_CREDENTIAL_NAME_ERROR });
+  return true;
+}
+
+/**
+ * Shared preamble of the credential routes: OAuth configured (501), insider
+ * caller (401), provider and account present (400) and valid (400). Sends
+ * the error and returns null, or returns the credential file path.
+ */
+function resolveCredentialFile(
+  request: FastifyRequest<{ Querystring: CredentialQuery }>,
+  reply: FastifyReply,
+): string | null {
+  const config = getConfig();
+  if (!config.oauth) {
+    void reply.code(501).send({ error: 'OAuth not configured' });
+    return null;
+  }
+
+  if (request.accessMode !== 'insider') {
+    void reply.code(401).send({ error: 'Insider auth required' });
+    return null;
+  }
+
+  const { provider, account } = request.query;
+  if (!provider || !account) {
+    void reply
+      .code(400)
+      .send({ error: 'provider and account query params required' });
+    return null;
+  }
+
+  if (rejectInvalidCredentialNames(reply, provider, account)) return null;
+
+  return credentialPath(config.oauth.credentialDir, provider, account);
+}
+
+/**
+ * Why an explicit `origin` is unacceptable for a redirect URI, or null when
+ * it is fine: https (or http on localhost), no path, no query.
+ */
+function originParamError(origin: string): string | null {
+  let originUrl: URL;
+  try {
+    originUrl = new URL(origin);
+  } catch {
+    return 'origin must be a valid URL';
+  }
+
+  const scheme = originUrl.protocol.replace(/:$/, '');
+  if (
+    scheme !== 'https' &&
+    !(scheme === 'http' && originUrl.hostname === 'localhost')
+  ) {
+    return 'origin scheme must be https (or http for localhost)';
+  }
+  if (originUrl.pathname !== '/') return 'origin must not have a pathname';
+  if (originUrl.search) return 'origin must not have query parameters';
+  return null;
+}
+
 export const oauthApiRoutes: FastifyPluginAsync = (fastify) => {
   // POST /api/oauth/start
   fastify.post<{ Body: StartBody }>(
@@ -97,9 +165,7 @@ export const oauthApiRoutes: FastifyPluginAsync = (fastify) => {
         });
       }
 
-      if (!isValidCredentialName(provider) || !isValidCredentialName(account)) {
-        return reply.code(400).send({ error: INVALID_CREDENTIAL_NAME_ERROR });
-      }
+      if (rejectInvalidCredentialNames(reply, provider, account)) return reply;
 
       // Merge named provider defaults (request fields override)
       const namedProvider = config.oauth.providers[provider] as
@@ -133,32 +199,8 @@ export const oauthApiRoutes: FastifyPluginAsync = (fastify) => {
 
       // Validate origin param if provided
       if (request.body.origin !== undefined) {
-        let originUrl: URL;
-        try {
-          originUrl = new URL(request.body.origin);
-        } catch {
-          return reply.code(400).send({ error: 'origin must be a valid URL' });
-        }
-
-        const scheme = originUrl.protocol.replace(/:$/, '');
-        if (
-          scheme !== 'https' &&
-          !(scheme === 'http' && originUrl.hostname === 'localhost')
-        ) {
-          return reply.code(400).send({
-            error: 'origin scheme must be https (or http for localhost)',
-          });
-        }
-        if (originUrl.pathname !== '/') {
-          return reply
-            .code(400)
-            .send({ error: 'origin must not have a pathname' });
-        }
-        if (originUrl.search) {
-          return reply
-            .code(400)
-            .send({ error: 'origin must not have query parameters' });
-        }
+        const error = originParamError(request.body.origin);
+        if (error) return reply.code(400).send({ error });
       }
 
       // Derive redirect_uri: the caller's validated origin, else the
@@ -166,11 +208,9 @@ export const oauthApiRoutes: FastifyPluginAsync = (fastify) => {
       const origin =
         request.body.origin ?? getPublicOrigin(getConfig(), request);
 
-      if (!origin) {
-        return reply.code(500).send({ error: PUBLIC_ORIGIN_CONFIG_ERROR });
-      }
+      if (!origin) return sendPublicOriginConfigError(reply);
 
-      const redirectUri = `${origin.replace(/\/+$/u, '')}/oauth/callback`;
+      const redirectUri = `${trimTrailingSlashes(origin)}/oauth/callback`;
 
       // Store pending
       storePending(state, {
@@ -202,34 +242,12 @@ export const oauthApiRoutes: FastifyPluginAsync = (fastify) => {
   );
 
   // GET /api/oauth/status
-  fastify.get<{ Querystring: StatusQuery }>(
+  fastify.get<{ Querystring: CredentialQuery }>(
     '/api/oauth/status',
     async (request, reply) => {
-      const config = getConfig();
-      if (!config.oauth) {
-        return reply.code(501).send({ error: 'OAuth not configured' });
-      }
-
-      if (request.accessMode !== 'insider') {
-        return reply.code(401).send({ error: 'Insider auth required' });
-      }
-
+      const filePath = resolveCredentialFile(request, reply);
+      if (!filePath) return reply;
       const { provider, account } = request.query;
-      if (!provider || !account) {
-        return reply
-          .code(400)
-          .send({ error: 'provider and account query params required' });
-      }
-
-      if (!isValidCredentialName(provider) || !isValidCredentialName(account)) {
-        return reply.code(400).send({ error: INVALID_CREDENTIAL_NAME_ERROR });
-      }
-
-      const filePath = credentialPath(
-        config.oauth.credentialDir,
-        provider,
-        account,
-      );
 
       let exists = false;
       try {
@@ -256,34 +274,11 @@ export const oauthApiRoutes: FastifyPluginAsync = (fastify) => {
   );
 
   // GET /api/oauth/token
-  fastify.get<{ Querystring: TokenQuery }>(
+  fastify.get<{ Querystring: CredentialQuery }>(
     '/api/oauth/token',
     async (request, reply) => {
-      const config = getConfig();
-      if (!config.oauth) {
-        return reply.code(501).send({ error: 'OAuth not configured' });
-      }
-
-      if (request.accessMode !== 'insider') {
-        return reply.code(401).send({ error: 'Insider auth required' });
-      }
-
-      const { provider, account } = request.query;
-      if (!provider || !account) {
-        return reply
-          .code(400)
-          .send({ error: 'provider and account query params required' });
-      }
-
-      if (!isValidCredentialName(provider) || !isValidCredentialName(account)) {
-        return reply.code(400).send({ error: INVALID_CREDENTIAL_NAME_ERROR });
-      }
-
-      const filePath = credentialPath(
-        config.oauth.credentialDir,
-        provider,
-        account,
-      );
+      const filePath = resolveCredentialFile(request, reply);
+      if (!filePath) return reply;
 
       try {
         await fsp.access(filePath);

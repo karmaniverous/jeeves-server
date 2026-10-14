@@ -14,6 +14,7 @@ import type { FastifyPluginCallback } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
 import { encodeUrlPath, fsPathToUrl, getRoots } from '../../util/platform.js';
+import { rejectNonInsider } from './scopeGuard.js';
 
 export const resolvePathRoutes: FastifyPluginCallback = (
   fastify,
@@ -23,9 +24,7 @@ export const resolvePathRoutes: FastifyPluginCallback = (
   fastify.get('/api/resolve-path', async (request, reply) => {
     // Machine key or insider only: the answer reveals the configured roots
     // and publicUrl.
-    if (request.accessMode !== 'insider') {
-      return reply.code(403).send({ error: 'Insider access required' });
-    }
+    if (rejectNonInsider(request, reply)) return reply;
 
     const { fsPath } = request.query as { fsPath?: string };
 

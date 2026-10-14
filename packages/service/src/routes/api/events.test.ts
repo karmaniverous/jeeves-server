@@ -7,6 +7,7 @@ vi.mock('../../services/eventLog.js', () => ({
 
 const { getRecentEvents } = await import('../../services/eventLog.js');
 const mockedGetRecentEvents = vi.mocked(getRecentEvents);
+const { DEFAULT_EVENTS_LIMIT, MAX_EVENTS_LIMIT } = await import('./events.js');
 
 // Capture the route registration
 const registeredRoutes: Record<
@@ -48,8 +49,10 @@ describe('eventsRoutes', () => {
   });
 
   it('returns recent events with default limit', async () => {
-    const mockEvents = [{ id: '1', name: 'test' }];
-    mockedGetRecentEvents.mockReturnValue(mockEvents as never);
+    const mockEvents = [
+      { ts: '2026-01-01T00:00:00Z', event: 'test', matched: true },
+    ];
+    mockedGetRecentEvents.mockReturnValue(mockEvents);
 
     const result = await registeredRoutes['/api/events'].handler({
       accessMode: 'insider',
@@ -57,7 +60,7 @@ describe('eventsRoutes', () => {
       query: {},
     });
 
-    expect(mockedGetRecentEvents).toHaveBeenCalledWith(20);
+    expect(mockedGetRecentEvents).toHaveBeenCalledWith(DEFAULT_EVENTS_LIMIT);
     expect(result).toEqual(mockEvents);
   });
 
@@ -73,7 +76,7 @@ describe('eventsRoutes', () => {
     expect(mockedGetRecentEvents).toHaveBeenCalledWith(50);
   });
 
-  it('caps limit at 100', async () => {
+  it('caps limit at the maximum', async () => {
     mockedGetRecentEvents.mockReturnValue([] as never);
 
     await registeredRoutes['/api/events'].handler({
@@ -82,10 +85,10 @@ describe('eventsRoutes', () => {
       query: { limit: '999' },
     });
 
-    expect(mockedGetRecentEvents).toHaveBeenCalledWith(100);
+    expect(mockedGetRecentEvents).toHaveBeenCalledWith(MAX_EVENTS_LIMIT);
   });
 
-  it('treats zero as falsy and falls back to default 20', async () => {
+  it('treats zero as falsy and falls back to the default', async () => {
     mockedGetRecentEvents.mockReturnValue([] as never);
 
     await registeredRoutes['/api/events'].handler({
@@ -94,10 +97,10 @@ describe('eventsRoutes', () => {
       query: { limit: '0' },
     });
 
-    expect(mockedGetRecentEvents).toHaveBeenCalledWith(20);
+    expect(mockedGetRecentEvents).toHaveBeenCalledWith(DEFAULT_EVENTS_LIMIT);
   });
 
-  it('falls back to default 20 for non-numeric limit', async () => {
+  it('falls back to the default for non-numeric limit', async () => {
     mockedGetRecentEvents.mockReturnValue([] as never);
 
     await registeredRoutes['/api/events'].handler({
@@ -106,7 +109,7 @@ describe('eventsRoutes', () => {
       query: { limit: 'abc' },
     });
 
-    expect(mockedGetRecentEvents).toHaveBeenCalledWith(20);
+    expect(mockedGetRecentEvents).toHaveBeenCalledWith(DEFAULT_EVENTS_LIMIT);
   });
 
   it('clamps negative limit to 1', async () => {

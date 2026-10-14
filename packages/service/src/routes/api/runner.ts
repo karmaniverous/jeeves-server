@@ -8,6 +8,8 @@
 import { getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyPluginCallback, FastifyReply } from 'fastify';
 
+import { rejectNonInsider } from './scopeGuard.js';
+
 function getRunnerUrl(): string {
   return getServiceUrl('runner');
 }
@@ -35,9 +37,7 @@ async function proxyToRunner(
 
 export const runnerRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   fastify.addHook('preHandler', async (request, reply) => {
-    if (request.accessMode !== 'insider') {
-      return reply.code(403).send({ error: 'Insider access required' });
-    }
+    if (rejectNonInsider(request, reply)) return reply;
   });
 
   fastify.get('/api/runner/jobs', async (_req, reply) => {

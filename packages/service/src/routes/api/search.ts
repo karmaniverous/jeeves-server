@@ -15,6 +15,7 @@ import type { FastifyPluginCallback } from 'fastify';
 import { canAccessPath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
 import { fsPathToUrl, getRoots, urlPathToFs } from '../../util/platform.js';
+import { rejectNonInsider } from './scopeGuard.js';
 
 interface WatcherResult {
   id: string;
@@ -60,9 +61,7 @@ export const searchRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
     };
   }>('/api/search', async (request, reply) => {
     // Insider-only
-    if (request.accessMode !== 'insider') {
-      return reply.code(403).send({ error: 'Insider access required' });
-    }
+    if (rejectNonInsider(request, reply)) return reply;
 
     const config = getConfig();
     const watcherUrl = getServiceUrl('watcher');
@@ -218,9 +217,7 @@ export const searchRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   const FACETS_CACHE_TTL_MS = 60_000; // 1 minute
 
   fastify.get('/api/search/facets', async (request, reply) => {
-    if (request.accessMode !== 'insider') {
-      return reply.code(403).send({ error: 'Insider access required' });
-    }
+    if (rejectNonInsider(request, reply)) return reply;
 
     const watcherUrl = getServiceUrl('watcher');
 

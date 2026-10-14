@@ -11,7 +11,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { getConfig } from '../../config/index.js';
 import { withFileLock } from '../../util/fileMutex.js';
 import { getRoots, urlPathToFs } from '../../util/platform.js';
-import { rejectOutOfScope } from './scopeGuard.js';
+import { rejectNonInsider, rejectOutOfScope } from './scopeGuard.js';
 
 /**
  * Regex matching a GFM task-list checkbox: a list marker followed by `[ ]`, `[x]`, or `[X]`.
@@ -114,9 +114,7 @@ export const fileMutationRoutes: FastifyPluginAsync = (fastify) => {
     Params: { '*': string };
     Body: MutationBody;
   }>('/api/file/*', async (request, reply) => {
-    if (request.accessMode !== 'insider') {
-      return reply.code(403).send({ error: 'Insider access required' });
-    }
+    if (rejectNonInsider(request, reply)) return reply;
 
     const reqPath = request.params['*'];
     if (!reqPath) return reply.code(400).send({ error: 'Path required' });

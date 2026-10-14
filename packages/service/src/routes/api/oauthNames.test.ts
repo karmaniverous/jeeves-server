@@ -25,7 +25,7 @@ vi.mock('../../config/index.js', () => ({
 }));
 
 const { oauthApiRoutes } = await import('./oauth.js');
-const { credentialPath, isValidCredentialName } =
+const { credentialPath, INVALID_CREDENTIAL_NAME_ERROR, isValidCredentialName } =
   await import('../../services/oauthState.js');
 
 let app: FastifyInstance;
@@ -113,32 +113,50 @@ describe('OAuth API routes reject invalid names with 400', () => {
   const q = (provider: string, account: string) =>
     `provider=${encodeURIComponent(provider)}&account=${encodeURIComponent(account)}`;
 
+  /** The name-rule 400 (not some other 400). */
+  const NAME_REJECTED = {
+    statusCode: 400,
+    body: { error: INVALID_CREDENTIAL_NAME_ERROR },
+  };
+  const outcome = (res: { statusCode: number; json: () => unknown }) => ({
+    statusCode: res.statusCode,
+    body: res.json(),
+  });
+
   it.each(BAD_NAMES)('status: %j', async (name) => {
-    const res = await app.inject(`/api/oauth/status?${q(name, 'me')}`);
-    expect(res.statusCode).toBe(400);
-    const res2 = await app.inject(`/api/oauth/status?${q('google', name)}`);
-    expect(res2.statusCode).toBe(400);
+    expect(
+      outcome(await app.inject(`/api/oauth/status?${q(name, 'me')}`)),
+    ).toEqual(NAME_REJECTED);
+    expect(
+      outcome(await app.inject(`/api/oauth/status?${q('google', name)}`)),
+    ).toEqual(NAME_REJECTED);
   });
 
   it.each(BAD_NAMES)('token: %j', async (name) => {
-    const res = await app.inject(`/api/oauth/token?${q(name, 'me')}`);
-    expect(res.statusCode).toBe(400);
+    expect(
+      outcome(await app.inject(`/api/oauth/token?${q(name, 'me')}`)),
+    ).toEqual(NAME_REJECTED);
+    expect(
+      outcome(await app.inject(`/api/oauth/token?${q('google', name)}`)),
+    ).toEqual(NAME_REJECTED);
   });
 
   it.each(BAD_NAMES)('start: %j', async (name) => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/oauth/start',
-      payload: {
-        provider: 'github',
-        account: name,
-        clientId: 'cid',
-        clientSecret: 'secret',
-        authUrl: 'https://auth.example.com/authorize',
-        tokenUrl: 'https://auth.example.com/token',
-      },
-    });
-    expect(res.statusCode).toBe(400);
+    const start = (provider: string, account: string) =>
+      app.inject({
+        method: 'POST',
+        url: '/api/oauth/start',
+        payload: {
+          provider,
+          account,
+          clientId: 'cid',
+          clientSecret: 'secret',
+          authUrl: 'https://auth.example.com/authorize',
+          tokenUrl: 'https://auth.example.com/token',
+        },
+      });
+    expect(outcome(await start('github', name))).toEqual(NAME_REJECTED);
+    expect(outcome(await start(name, 'me'))).toEqual(NAME_REJECTED);
   });
 
   it.each(['me', 'jason@johngalt.id', 'a+b@x.io'])(

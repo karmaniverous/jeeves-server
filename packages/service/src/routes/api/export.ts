@@ -27,6 +27,7 @@ import { RenderFailedError } from '../../services/puppeteer.js';
 import { getRoots, urlPathToFs } from '../../util/platform.js';
 import { pathKeyQuery } from '../../util/shareQuery.js';
 import { isArchiveFormat, sendDirectoryArchive } from './archiveExport.js';
+import { rejectNonInsider } from './scopeGuard.js';
 
 /**
  * Build the loopback URL Puppeteer renders for a document export. The key
@@ -161,9 +162,7 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
     '/api/export-cache/*',
     async (request, reply) => {
       // Insider only: clearing caches is not something a share link grants.
-      if (request.accessMode !== 'insider') {
-        return reply.code(403).send({ error: 'Insider access required' });
-      }
+      if (rejectNonInsider(request, reply)) return reply;
       const reqPath = request.params['*'];
       if (!reqPath) return reply.code(400).send({ error: 'Path required' });
 

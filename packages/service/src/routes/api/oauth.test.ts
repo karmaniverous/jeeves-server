@@ -291,6 +291,46 @@ describe('OAuth API routes', () => {
       clientSecret: 'csecret',
     };
 
+    it.each([
+      ['not a url', 'origin must be a valid URL'],
+      [
+        'http://public.example.com',
+        'origin scheme must be https (or http for localhost)',
+      ],
+      ['https://public.example.com/app', 'origin must not have a pathname'],
+      [
+        'https://public.example.com/?a=1',
+        'origin must not have query parameters',
+      ],
+    ])('rejects origin %s', async (origin, error) => {
+      const routes = await getHandlers();
+      const { reply, capture } = buildReply();
+      await routes['/api/oauth/start'].handler(
+        { body: { ...startBody, origin }, accessMode: 'insider', headers: {} },
+        reply,
+      );
+      expect(capture.statusCode).toBe(400);
+      expect(capture.body).toEqual({ error });
+    });
+
+    it.each([
+      ['http://localhost:5173', 'http://localhost:5173/oauth/callback'],
+      [
+        'https://public.example.com/',
+        'https://public.example.com/oauth/callback',
+      ],
+    ])('accepts origin %s', async (origin, redirectUri) => {
+      const routes = await getHandlers();
+      const { reply, capture } = buildReply();
+      await routes['/api/oauth/start'].handler(
+        { body: { ...startBody, origin }, accessMode: 'insider', headers: {} },
+        reply,
+      );
+      expect(capture.statusCode).toBe(200);
+      const pending = consumePending((capture.body as { state: string }).state);
+      expect(pending?.redirectUri).toBe(redirectUri);
+    });
+
     it('refuses without publicUrl or trustProxyHeaders (no header origin)', async () => {
       const routes = await getHandlers();
       const { reply, capture } = buildReply();

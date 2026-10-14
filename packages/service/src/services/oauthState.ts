@@ -32,6 +32,14 @@ export function isValidCredentialName(value: unknown): value is string {
   );
 }
 
+/** True when both the provider and the account name are valid. */
+export function areValidCredentialNames(
+  provider: unknown,
+  account: unknown,
+): boolean {
+  return isValidCredentialName(provider) && isValidCredentialName(account);
+}
+
 /**
  * Build the credential file path for a provider/account pair. Throws when
  * either name is invalid or the path would leave `credentialDir`.
@@ -41,7 +49,7 @@ export function credentialPath(
   provider: string,
   account: string,
 ): string {
-  if (!isValidCredentialName(provider) || !isValidCredentialName(account)) {
+  if (!areValidCredentialNames(provider, account)) {
     throw new Error(INVALID_CREDENTIAL_NAME_ERROR);
   }
   const dir = path.resolve(credentialDir);

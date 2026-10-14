@@ -35,7 +35,15 @@ fs.writeFileSync(path.join(tmpRoot, 'r', 'a.md'), '# a\n');
 const SESSION_SECRET = 's'.repeat(64);
 const SCOPED_EMAIL = 'scoped@example.com';
 const ALL_SCOPED_EMAIL = 'all-scoped@example.com';
+const ALL_SCOPED_MACHINE_SEED = 'all-scoped-machine-seed-0123456789';
 const config = makeRuntimeConfig({
+  extraKeys: [
+    {
+      name: 'all-scoped-machine',
+      seed: ALL_SCOPED_MACHINE_SEED,
+      scopes: scopes(['/**']),
+    },
+  ],
   extraInsiders: [
     {
       email: SCOPED_EMAIL,
@@ -90,7 +98,9 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
 const { addAuthMiddleware, isUnauthenticatedApiPath } =
   await import('./middleware.js');
 const { resolvePathRoutes } = await import('./resolvePath.js');
-const { eventsRoutes } = await import('./events.js');
+const { eventsRoutes, UNSCOPED_INSIDER_REQUIRED_ERROR } =
+  await import('./events.js');
+const { INSIDER_REQUIRED_ERROR } = await import('./scopeGuard.js');
 const { exportRoutes } = await import('./export.js');
 const { eventRoute } = await import('../event.js');
 
@@ -139,11 +149,12 @@ describe('GET /api/resolve-path', () => {
     expect((await app.inject(url)).statusCode).toBe(401);
   });
 
-  it('refuses an outsider key', async () => {
+  it('refuses an outsider key that verifies for the route path', async () => {
     const res = await app.inject(
       `${url}&k=${outsiderKey('/api/resolve-path')}`,
     );
     expect(res.statusCode).toBe(403);
+    expect(res.json()).toEqual({ error: INSIDER_REQUIRED_ERROR });
   });
 
   it('answers a machine key', async () => {
@@ -162,9 +173,18 @@ describe('GET /api/events', () => {
     expect((await app.inject('/api/events')).statusCode).toBe(401);
   });
 
-  it('refuses an outsider key', async () => {
+  it('refuses an outsider key that verifies for the route path', async () => {
     const res = await app.inject(`/api/events?k=${outsiderKey('/api/events')}`);
     expect(res.statusCode).toBe(403);
+    expect(res.json()).toEqual({ error: UNSCOPED_INSIDER_REQUIRED_ERROR });
+  });
+
+  it("refuses a machine key scoped to allow '/**'", async () => {
+    const res = await app.inject(
+      `/api/events?k=${computeInsiderKey(ALL_SCOPED_MACHINE_SEED)}`,
+    );
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toEqual({ error: UNSCOPED_INSIDER_REQUIRED_ERROR });
   });
 
   it('answers an unscoped machine key', async () => {
@@ -192,7 +212,7 @@ describe('GET /api/events', () => {
   ])('refuses %s', async (_label, email) => {
     const res = await withSession(email);
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: 'Unscoped insider access required' });
+    expect(res.json()).toEqual({ error: UNSCOPED_INSIDER_REQUIRED_ERROR });
   });
 });
 
@@ -203,6 +223,7 @@ describe('DELETE /api/export-cache', () => {
       url: `/api/export-cache/r/a.md?k=${outsiderKey('/r/a.md')}`,
     });
     expect(res.statusCode).toBe(403);
+    expect(res.json()).toEqual({ error: INSIDER_REQUIRED_ERROR });
   });
 
   it('lets an insider clear the cache', async () => {
@@ -255,6 +276,6 @@ describe('stored event bodies', () => {
     expect(entry.originalBytes).toBe(
       Buffer.byteLength(JSON.stringify(payload)),
     );
-    expect(Buffer.byteLength(entry.bodyPreview)).toBe(256 * 1024);
+    expect(Buffer.byteLength(entry.bodyPreview)).toBe(MAX_STORED_BODY_BYTES);
   });
 });

@@ -10,6 +10,8 @@
  * @packageDocumentation
  */
 
+import type { FastifyReply } from 'fastify';
+
 import type { RuntimeConfig } from '../config/types.js';
 
 /** The request fields the origin can be derived from. */
@@ -26,6 +28,16 @@ export interface OriginRequest {
  */
 export const PUBLIC_ORIGIN_CONFIG_ERROR =
   'Server misconfigured: set publicUrl (or trustProxyHeaders behind a proxy that sets X-Forwarded-* headers) to send login links and OAuth redirects.';
+
+/** Answer a login request that has no public origin: 500 with the error. */
+export function sendPublicOriginConfigError(reply: FastifyReply): FastifyReply {
+  return reply.code(500).send({ error: PUBLIC_ORIGIN_CONFIG_ERROR });
+}
+
+/** `url` without trailing slashes. */
+export function trimTrailingSlashes(url: string): string {
+  return url.replace(/\/+$/u, '');
+}
 
 /** Host[:port], IPv4 or bracketed IPv6; nothing else is accepted. */
 const HOST_RE =
@@ -47,7 +59,7 @@ export function getPublicOrigin(
   config: Pick<RuntimeConfig, 'publicUrl' | 'trustProxyHeaders'>,
   request: OriginRequest,
 ): string | null {
-  if (config.publicUrl) return config.publicUrl.replace(/\/+$/u, '');
+  if (config.publicUrl) return trimTrailingSlashes(config.publicUrl);
   if (!config.trustProxyHeaders) return null;
 
   const proto = (
