@@ -6,6 +6,7 @@
  * and auth-status routes.
  */
 
+import { getUrlKey } from '@karmaniverous/jeeves-server-core';
 import type { FastifyRequest } from 'fastify';
 
 import type {
@@ -149,6 +150,9 @@ export function resolveSessionAuth(
 
 /** Query params used for auth resolution on SPA and API routes. */
 export interface AuthQuery {
+  /** URL auth key (generated name; read both names via `getUrlKey`). */
+  k?: string;
+  /** Legacy URL auth key name, still accepted. */
   key?: string;
   exp?: string;
   d?: string;
@@ -220,7 +224,7 @@ export function resolveAuth(
   const keyResult = resolveKeyAuth(
     config,
     urlPath,
-    query.key,
+    getUrlKey(query),
     query.exp,
     deepParams,
   );

@@ -2,6 +2,7 @@
  * Event Gateway webhook endpoint
  */
 
+import { getUrlKey } from '@karmaniverous/jeeves-server-core';
 import {
   type Json,
   JsonMap,
@@ -21,7 +22,7 @@ const ajv = new Ajv();
 
 interface EventRequest {
   Body: Record<string, unknown>;
-  Querystring: { key?: string };
+  Querystring: { k?: string; key?: string };
 }
 
 /**
@@ -68,7 +69,7 @@ export const eventRoute: FastifyPluginCallback = (fastify, _opts, done) => {
   fastify.addHook('preHandler', async (request, reply) => {
     if (!request.url.startsWith('/event')) return;
 
-    const provided = (request.query as { key?: string }).key;
+    const provided = getUrlKey(request.query);
     const config = getConfig();
 
     const result = verifyKey(

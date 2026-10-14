@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { getBindAddress } from '@karmaniverous/jeeves';
+import { getUrlKey } from '@karmaniverous/jeeves-server-core';
 import type { FastifyPluginCallback } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
@@ -71,7 +72,7 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       const config = getConfig();
       const internalKey = config.internalInsiderKey;
       const { port } = config;
-      const exportKey = (request.query as { key?: string }).key || internalKey;
+      const exportKey = getUrlKey(request.query) ?? internalKey;
       if (!exportKey)
         return reply
           .code(500)

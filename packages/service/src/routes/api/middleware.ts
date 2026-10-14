@@ -6,6 +6,7 @@
  * @packageDocumentation
  */
 
+import { getUrlKey } from '@karmaniverous/jeeves-server-core';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import {
@@ -64,7 +65,8 @@ function authenticateUtility(
   request: FastifyRequest,
   reply: FastifyReply,
 ): void {
-  const { key, exp } = request.query as { key?: string; exp?: string };
+  const { exp } = request.query as { exp?: string };
+  const key = getUrlKey(request.query);
 
   if (key) {
     const keyResult = resolveKeyAuth(config, '/', key, exp);
@@ -109,25 +111,14 @@ function resolveUrlKey(
   query: AuthQuery,
 ) {
   const deepParams = extractDeepParams(query);
-  const result = resolveKeyAuth(
-    config,
-    urlPath,
-    query.key,
-    query.exp,
-    deepParams,
-  );
-  if (result.valid || deepParams?.dirs !== '1' || !query.key) return result;
+  const key = getUrlKey(query);
+  const result = resolveKeyAuth(config, urlPath, key, query.exp, deepParams);
+  if (result.valid || deepParams?.dirs !== '1' || !key) return result;
 
   const stack = decodeStack(deepParams.s);
   const lastStackEntry = stack[stack.length - 1];
   if (!lastStackEntry || lastStackEntry === urlPath) return result;
-  return resolveKeyAuth(
-    config,
-    lastStackEntry,
-    query.key,
-    query.exp,
-    deepParams,
-  );
+  return resolveKeyAuth(config, lastStackEntry, key, query.exp, deepParams);
 }
 
 /**
