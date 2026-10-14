@@ -2,64 +2,87 @@
 
 All notable changes to this project will be documented in this file.
 
-## [3.14.1] - 2026-10-04
+## [3.15.0] - 2026-10-14
+
+### 🚀 Features
+
+- *(auth)* Accept the URL key as k as well as key (#279)
+- *(share)* Generate share and auth URLs with k (#279)
+- *(service)* GET /health liveness endpoint (#259)
+- *(core)* TrustProxyHeaders config setting; core 0.4.0
+- *(share)* Report isDirectory from /api/share; server_share returns rawUrl for plain and deep file shares, none for directories
+
+### 🐛 Bug Fixes
+
+- *(share)* Share-for depth-0 links carry d (#282)
+- *(share)* Authenticate author-written /api/raw/ links in deep shares (#269)
+- *(export)* Render with the internal key and never cache a failed render (#295)
+- *(export)* Render Mermaid file exports in a temp dir (#281)
+- *(release)* GitHub release notes and changelog use the new version tag (#276)
+- *(auth)* Build public URLs from publicUrl, not request headers
+- *(share)* Bind deep share keys to one path; per-entry keys in listings
+- *(auth)* Tighten auth on resolve-path, events and export-cache routes
+- *(search)* Filter search results with the content-route scope matcher
+- *(oauth)* Validate provider and account names before building credential paths
+- *(release)* Match npm-package-template-ts#30 exactly (#276)
+- *(config)* Require publicUrl when login flows are configured
+- *(oauth)* Allow @ and + in credential provider and account names
+- *(sharing)* Issue plain tree keys for share-for directory links without depth
+- *(events)* Restrict /api/events to unscoped insiders
+- *(release)* Pass the package-prefixed tag to git-cliff
+- *(client)* Keep the share query on directory entry routes under a plain outsider share
+- *(oauth)* Accept credential names that start with two dots
+- *(oauth)* Reject start origins with credentials or a fragment
 
 ### 💼 Other
 
-- [271] fix(service): enforce insider scopes for session-authenticated requests (#271)
+- Updated core
 
-The API auth middleware accepted Google-session insiders on every content route without checking their scopes, so scoped insiders could read, export and overwrite files outside scope. /api/drives was unfiltered.
+### 🚜 Refactor
 
-- Enforce session insider scopes in the middleware for all content routes (path, file, raw, export, export-cache, mermaid/plantuml export, link-info). Navigation routes allow ancestors of in-scope paths; content routes require the path itself. Out-of-scope requests return 403, or fall back to a valid key on the URL.
+- *(sharing)* Build share URLs and deep share contexts through shared helpers
+- *(routes)* Share insider, OAuth credential and public-origin guards; name event limits
+- *(export)* Name the render-state attribute and values shared by pages and the renderer
+- *(oauth)* Split the OAuth API routes into start, credential routes and a credential store
 
-- Reject '..' path segments on content routes (400).
+### 📚 Documentation
 
-- Filter /api/drives to navigable roots; refuse out-of-scope file metadata on /api/path and /api/link-info.
+- K parameter, /status and /health, skill additions (#279, #259, #274)
+- Deep share semantics, publicUrl and trustProxyHeaders, route auth
+- Point event log readers to /api/events and fix an en dash
+- Sync guides, skill, README and endpoint catalog with 3.15.0 behaviour
+- Directory shares from the UI are plain; deep directory shares come from the API or plugin
+- *(core)* Document ShareResponse.isDirectory; test /api/share isDirectory with and without a trailing slash
 
-- Defence in depth on PUT/POST /api/file and POST /api/share; filter archive export entries by scope.
+### 🎨 Styling
 
-- Replace prefix-based directory visibility with segment-wise glob matching so wildcard scopes (e.g. jeeves-*/**) show their directories.
+- *(client)* Prettier-format the 3.15.0 client lib files
 
-Closes #271
-- [271] fix(service): address review on insider scope enforcement (#271)
+### 🧪 Testing
 
-Copilot review:
-- Propagate key scopes: verifyKey/resolveKeyAuth now return the matched
-  key's (or issuing insider's) scopes and the middleware sets
-  request.insiderScopes on key auth, so scoped machine insider keys get
-  filtered archives and listings, and outsider directory shares hide
-  entries outside the issuer's scopes.
-- Directory archive size limit counts only in-scope files (getDirSize
-  takes an optional file filter), so denied content can neither block an
-  export with 413 nor leak its size.
-- Split fileContent.ts (430 lines) into fileContent (GET), fileWrite
-  (PUT) and fileRender (watcher proxy + Markdown pipeline).
+- *(docs)* Update the deep-share validation script for k and per-path deep keys
+- *(events)* Pin the strict rule for insiders with any scopes configured
+- Replace constant-only and weak assertions with behaviour checks
 
-SOLID/DRY:
-- contentRoute.ts owns URL -> content path mapping; the middleware's
-  string replace chain is gone. Key auth for /api/mermaid-export,
-  /api/plantuml-export and /api/link-info is now verified against the
-  content path, so share keys work there as documented (previously
-  rejected).
-- scopeAccess.ts holds pure scope decisions; scopeGuard.ts the shared
-  403 response used by every route-level check.
-- archiveExport.ts owns directory archive export.
-- Middleware split into authenticateUtility / resolveUrlKey helpers.
+### ⚙️ Miscellaneous Tasks
 
-Tests: 494 -> 568 service tests. New route tests for archive export,
-file write, file content, file render, link info scope, share route,
-getDirSize, key scope propagation. Removed sharing tests that exercised
-an inline copy of the code; merged duplicate export format tests.
+- Revert package version bumps (releases are done locally)
+- *(client)* Regenerate the client lockfile from its manifest
+## [3.14.1] - 2026-10-04
 
-Docs: scope enforcement in sharing/api-integration/exports guides,
-access decision flow diagram, plugin skill; fix scope examples that
-used /* (direct children only) where /** was meant; fix /api/path and
-/api/share body in the API reference.
+### 🐛 Bug Fixes
+
+- *(service)* Enforce insider scopes for session-authenticated requests (#271)
+- *(service)* Address review on insider scope enforcement (#271)
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.14.1
 ## [3.14.0] - 2026-09-29
 
 ### 💼 Other
 
-- [261] updated jeeves-core
+- Updated jeeves-core
 - Updated core
 
 ### ⚙️ Miscellaneous Tasks
@@ -69,14 +92,20 @@ used /* (direct children only) where /** was meant; fix /api/path and
 
 ### 💼 Other
 
-- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-9
-- [261] updated core
-- [261] chore: release @karmaniverous/jeeves-server v3.14.0-2
+- Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.14.0-2
 ## [3.14.0-1] - 2026-09-27
+
+### 🐛 Bug Fixes
+
+- Update root package-lock.json in release-it after:bump hook
 
 ### 💼 Other
 
-- [261] [267] fix: tests and typecheck read core and CLI from source, not dist
+- [267] fix: tests and typecheck read core and CLI from source, not dist
 
 Service and openclaw vitest configs alias @karmaniverous/jeeves-server-core
 to packages/core/src, and their tsconfigs map it with paths, so typecheck
@@ -91,27 +120,31 @@ Source resolution exposes core's @deprecated mermaidCliPath, so the ignored
 field is no longer copied into RuntimeConfig.
 
 Closes #267
-- [261] fix: update root package-lock.json in release-it after:bump hook
-- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-8
-- [261] updated core
-- [261] chore: release @karmaniverous/jeeves-server v3.14.0-1
+- Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server v3.14.0-1
 ## [3.14.0-0] - 2026-09-27
+
+### 🐛 Bug Fixes
+
+- Adapt to puppeteer 25, archiver 8, markdown-it 15 and TypeScript 6 majors
+- *(build)* Clear vite native-config, chunk-size and rollup outputToFilesystem warnings
+- *(release)* Use --github.preRelease for release-it 21
+- *(service)* Merge server_config_apply patches into the runtime config file (#265)
 
 ### 💼 Other
 
-- [261] chore(deps): ncu -u --peer across all packages
-- [261] fix: adapt to puppeteer 25, archiver 8, markdown-it 15 and TypeScript 6 majors
-- [261] chore: resolve knip findings and audit advisories (lodash-es override)
-- [261] chore: apply prettier across the repo; ignore generated CHANGELOGs
-- [261] fix(build): clear vite native-config, chunk-size and rollup outputToFilesystem warnings
-- [261] chore: move every package to @karmaniverous/jeeves 0.6.0-4; allow install scripts by name
-- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-6
-- [261] fix(release): use --github.preRelease for release-it 21
-- [261] updated core
-- [261] fix(service): merge server_config_apply patches into the runtime config file (#265)
-- [261] chore(deps): pin @karmaniverous/jeeves 0.6.0-7
-- [261] updated core
-- [261] chore: release @karmaniverous/jeeves-server v3.14.0-0
+- Updated core
+- Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Resolve knip findings and audit advisories (lodash-es override)
+- Apply prettier across the repo; ignore generated CHANGELOGs
+- Move every package to @karmaniverous/jeeves 0.6.0-4; allow install scripts by name
+- Release @karmaniverous/jeeves-server v3.14.0-0
 ## [3.13.1] - 2026-07-04
 
 ### 🐛 Bug Fixes
@@ -163,49 +196,68 @@ Closes #267
 - Release @karmaniverous/jeeves-server v3.12.2
 ## [3.12.1] - 2026-06-27
 
-### 💼 Other
+### 🐛 Bug Fixes
 
-- [SERVER-312] fix: resolve-path route must use /api/ prefix to match middleware bypass and meta caller
+- Resolve-path route must use /api/ prefix to match middleware bypass and meta caller
 
 ### ⚙️ Miscellaneous Tasks
 
 - Release @karmaniverous/jeeves-server v3.12.1
 ## [3.12.0] - 2026-06-25
 
+### 🚀 Features
+
+- Expose resolve-path API endpoint, add publicUrl to server config (#247)
+
+### 🐛 Bug Fixes
+
+- Prevent overlapping event queue batches, add eventQueue config (#245)
+- Make resolve-path endpoint unauthenticated (#247)
+- Remove publicUrl from plugin config, make eventQueueConcurrency configurable (#245, #247)
+- Address Copilot review — drainLoop error handling, resolve-path 404/400, absolute path validation, stale cursor recovery (#245, #247)
+
 ### 💼 Other
 
-- [SERVER-312] fix: prevent overlapping event queue batches, add eventQueue config (#245)
-- [SERVER-312] feat: expose resolve-path API endpoint, add publicUrl to server config (#247)
-- [SERVER-312] fix: make resolve-path endpoint unauthenticated (#247)
-- [SERVER-312] fix: remove publicUrl from plugin config, make eventQueueConcurrency configurable (#245, #247)
-- [SERVER-312] docs: update guides for eventQueue, eventQueueConcurrency, publicUrl, server_resolve_path (#244, #245, #246, #247)
-- [SERVER-312] refactor: extract resolveEventPaths helper, add skipAuth to ApiToolConfig (#245, #247)
-- [SERVER-312] test: replace trivial eventQueue tests, add resolve-path and config path resolution coverage (#244, #245, #247)
-- [SERVER-312] docs: sync skill, guides, and config reference with touched code (#244, #245, #246, #247)
-- [SERVER-312] fix: address Copilot review — drainLoop error handling, resolve-path 404/400, absolute path validation, stale cursor recovery (#245, #247)
 - Updated core
+
+### 🚜 Refactor
+
+- Extract resolveEventPaths helper, add skipAuth to ApiToolConfig (#245, #247)
+
+### 📚 Documentation
+
+- Update guides for eventQueue, eventQueueConcurrency, publicUrl, server_resolve_path (#244, #245, #246, #247)
+- Sync skill, guides, and config reference with touched code (#244, #245, #246, #247)
+
+### 🧪 Testing
+
+- Replace trivial eventQueue tests, add resolve-path and config path resolution coverage (#244, #245, #247)
 
 ### ⚙️ Miscellaneous Tasks
 
 - Release @karmaniverous/jeeves-server v3.12.0
 ## [3.11.4] - 2026-06-19
 
-### 💼 Other
+### 🐛 Bug Fixes
 
-- [README-404] fix: include guides/ in package files (fixes /readme 404)
+- Include guides/ in package files (fixes /readme 404)
 
 ### ⚙️ Miscellaneous Tasks
 
 - Release @karmaniverous/jeeves-server v3.11.4
 ## [3.11.3] - 2026-06-19
 
+### 🚀 Features
+
+- Dynamic favicon from config
+
+### 🐛 Bug Fixes
+
+- Restore accidentally deleted types in types.ts
+- Use correct versions for updated dependencies
+
 ### 💼 Other
 
-- [ISSUE-239] feat: dynamic favicon from config
-
-Fixes #239. Also resolves lingering knip errors for unlisted and unused dependencies.
-- [ISSUE-239] fix: restore accidentally deleted types in types.ts
-- [ISSUE-239] fix: use correct versions for updated dependencies
 - Lintfix
 
 ### ⚙️ Miscellaneous Tasks
@@ -282,15 +334,18 @@ Fixes #239. Also resolves lingering knip errors for unlisted and unused dependen
 - Release @karmaniverous/jeeves-server v3.11.0
 ## [3.10.15] - 2026-06-13
 
+### 🚀 Features
+
+- Add logging.level and logging.file config support (#213)
+- Auth-gated SPA fallback with branded sign-in page (#214)
+
 ### 🐛 Bug Fixes
 
+- Show edit button on rendered tab for insiders (#211)
 - Address Copilot review and CI smoke test failures
 
 ### 💼 Other
 
-- [211] fix: show edit button on rendered tab for insiders (#211)
-- [213] feat: add logging.level and logging.file config support (#213)
-- [214] feat: auth-gated SPA fallback with branded sign-in page (#214)
 - Updated core
 
 ### 🚜 Refactor
@@ -332,10 +387,13 @@ Fixes #239. Also resolves lingering knip errors for unlisted and unused dependen
 - Release @karmaniverous/jeeves-server v3.10.13
 ## [3.10.12] - 2026-05-29
 
+### 🐛 Bug Fixes
+
+- Thread auth key through Puppeteer export for raw image resolution (#220)
+- Restrict auth key interception to local origin
+
 ### 💼 Other
 
-- [220] fix: thread auth key through Puppeteer export for raw image resolution (#220)
-- [220] fix: restrict auth key interception to local origin
 - Merge remote-tracking branch 'origin/bugfix/220-raw-image-export-auth' into chore/ncu-update-and-hoist-144
 - Updated core
 
@@ -553,14 +611,12 @@ Fixes #239. Also resolves lingering knip errors for unlisted and unused dependen
 
 ### 🐛 Bug Fixes
 
+- Prettier formatting in toggleCheckbox route
 - Make clear-cache visible to outsiders in download menu
 - Move DownloadDropdown outside isInsider gate in DirectoryRow
 
 ### 💼 Other
 
-- [V3-7] fix: prettier formatting in toggleCheckbox route
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 - Lintfix
 
 ### ⚙️ Miscellaneous Tasks
@@ -568,123 +624,72 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 - Release @karmaniverous/jeeves-server v3.8.4
 ## [3.8.3] - 2026-04-11
 
+### 🐛 Bug Fixes
+
+- Checkbox click handler — use native capture-phase delegation via ref callback, fix mtime stale-write flow
+
 ### 💼 Other
 
-- [V3-7] fix: checkbox click handler — use native capture-phase delegation via ref callback, fix mtime stale-write flow
-- [V3-7] refactor: simplify checkbox toggle to fire-and-forget (no mtime, no conflict)
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 - Fix
+
+### 🚜 Refactor
+
+- Simplify checkbox toggle to fire-and-forget (no mtime, no conflict)
 
 ### ⚙️ Miscellaneous Tasks
 
 - Release @karmaniverous/jeeves-server v3.8.3
 ## [3.8.2] - 2026-04-11
 
-### 💼 Other
+### 🐛 Bug Fixes
 
-- [V3-7] fix: use descendant selector for checkbox indexing (li > input -> li input)
+- Use descendant selector for checkbox indexing (li > input -> li input)
 
 ### ⚙️ Miscellaneous Tasks
 
 - Release @karmaniverous/jeeves-server v3.8.2
 ## [3.8.1] - 2026-04-11
 
-### 💼 Other
+### 🐛 Bug Fixes
 
-- [V3-7] fix: checkbox toggle click handling for dangerouslySetInnerHTML
-
-With dangerouslySetInnerHTML, the browser toggles native checkboxes before
-the React click handler fires. Read input.checked directly (already the
-desired new state) instead of inverting it. Replace preventDefault with
-stopPropagation to allow the visual toggle while preventing parent
-navigation.
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+- Checkbox toggle click handling for dangerouslySetInnerHTML
 
 ### ⚙️ Miscellaneous Tasks
 
 - Release @karmaniverous/jeeves-server v3.8.1
 ## [3.8.0] - 2026-04-11
 
-### 💼 Other
+### 🚀 Features
 
-- [V3-7] fix: correct /events route path to /api/events (#156)
+- Add checkbox indexing and mtime to markdown pipeline (#154)
+- Add POST /api/file/*/toggle-checkbox endpoint (#154)
+- Wire MarkdownView checkbox toggling (#154)
 
-The events route was registered as '/events' instead of '/api/events',
-causing 404 responses. Fixed the path and added tests.
+### 🐛 Bug Fixes
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] feat: add checkbox indexing and mtime to markdown pipeline (#154)
+- Correct /events route path to /api/events (#156)
+- Address Gemini review — URL boundary, checkbox regex, Cheerio, race condition
+- Toggle-checkbox route wildcard position (CI fix)
 
-Assign sequential data-checkbox-index to each GFM task-list checkbox
-in rendered HTML. Include file mtime in markdown API responses so the
-client can send it with toggle-checkbox requests for stale-write
-protection.
+### 🚜 Refactor
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] feat: add POST /api/file/*/toggle-checkbox endpoint (#154)
+- SOLID/DRY pass across v3.7.0 changes
 
-Insider-only endpoint to flip a single GFM task-list checkbox in a
-markdown source file. Uses mtime-based stale-write protection (409 on
-conflict). Includes tests for happy path, stale-write, outsider
-rejection, and out-of-range index.
+### 📚 Documentation
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] feat: wire MarkdownView checkbox toggling (#154)
+- Sync documentation with v3.7.0 implementation
 
-Enable interactive checkboxes for insiders in rendered markdown.
-POST toggle-checkbox on click with data-checkbox-index, checked
-state, and mtime. Update mtime on success, re-fetch on 409 conflict.
-Disable checkboxes and show loading state during flight.
+### 🎨 Styling
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] chore: bump versions (service 3.7.0, openclaw 0.8.0)
+- Fix prettier formatting in markdown tests
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] style: fix prettier formatting in markdown tests
+### 🧪 Testing
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] refactor: SOLID/DRY pass across v3.7.0 changes
-
-- Remove eslint-disable comments in events.ts and fileContent.ts by
-  using non-async plugin pattern (matching toggleCheckbox.ts convention)
-- Eliminate redundant handleText branches (rawOnly and non-rawOnly
-  produced identical output)
-- Extract magic number 86400000 to named MS_PER_DAY constant
-- Optimize rewriteUrlsInData to pre-compute both origins instead of
-  re-parsing URLs on every string match
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] test: improve coverage and remove trivial tests
-
-Add missing edge-case tests for events route (limit clamping, non-numeric
-input, negative values), serverTools URL rewriting (HTTPS with port,
-port-mismatch non-rewrite), and toggleCheckbox (content preservation,
-multi-checkbox targeting). No trivial tests found to remove.
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] docs: sync documentation with v3.7.0 implementation
-
-Add publicUrl config to all doc surfaces (SKILL.md, openclaw-integration.md,
-README). Document checkbox toggling capability in TOOLS.md injection and
-SKILL.md. Add v3.7.0 and v0.8.0 CHANGELOG entries. Fix prettier formatting
-in toggleCheckbox test.
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] fix: address Gemini review — URL boundary, checkbox regex, Cheerio, race condition
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [V3-7] fix: toggle-checkbox route wildcard position (CI fix)
-
-Move wildcard from middle of route path to end: POST /api/file/*/toggle-checkbox
-→ POST /api/toggle-checkbox/*. Fastify's find-my-way router requires wildcards
-to be the last character in the route.
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+- Improve coverage and remove trivial tests
 
 ### ⚙️ Miscellaneous Tasks
 
+- Bump versions (service 3.7.0, openclaw 0.8.0)
 - Release @karmaniverous/jeeves-server v3.8.0
 ## [3.6.5] - 2026-04-08
 
@@ -711,15 +716,9 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 - Release @karmaniverous/jeeves-server v3.6.3
 ## [3.6.2] - 2026-04-05
 
-### 💼 Other
+### 🐛 Bug Fixes
 
-- [150] fix: consume core importMetaUrl for plugin install (#150)
-
-Fixes #150. Also closes #147.
-
-- Bump @karmaniverous/jeeves to ^0.5.4 in both packages
-- Replace distDir with importMetaUrl in plugin CLI
-- Remove unused node:path and node:url imports from cli.ts
+- Consume core importMetaUrl for plugin install (#150)
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -734,183 +733,88 @@ Fixes #150. Also closes #147.
 - Release @karmaniverous/jeeves-server v3.6.1
 ## [3.6.0] - 2026-04-03
 
-### 💼 Other
+### 🚀 Features
 
-- [360] feat: Phase 1 — core service adoption (getServiceUrl, getBindAddress, Node 22 fast-fail)
+- Phase 1 — core service adoption (getServiceUrl, getBindAddress, Node 22 fast-fail)
+- Phase 2 — core v0.5.1 wiring (cleanup escalation, getPackageVersion, substituteEnvVars TODO)
+- Phase 3 — UX improvements (CSV tables, directory item counts, collapsible frontmatter, collapsible TOC)
 
-- Bump @karmaniverous/jeeves to ^0.5.1 in both packages
-- Set engines.node to >=22 in all package.json files
-- Add runtime Node version fast-fail guard in CLI and start-server entry points
-- Replace bespoke watcherUrl, runnerUrl, metaUrl config properties with getServiceUrl() from core
-- Replace bespoke host config property with getBindAddress() from core
-- Fix hardcoded 127.0.0.1 in export route — now uses resolved bind address
-- Add config migration: deprecated properties stripped with deprecation warnings
-- Update all call sites (runner proxy, search, fileContent, auth-status, status, export)
-- Update RuntimeConfig type and buildRuntimeConfig to remove deprecated fields
-- Wire init() in descriptor.run() and start-server.ts for core service resolution
-- Update all test files for new types and mock getServiceUrl/fetch
+### 🚜 Refactor
 
-Closes #135, #141, #142, #143, #145
-- [360] feat: Phase 2 — core v0.5.1 wiring (cleanup escalation, getPackageVersion, substituteEnvVars TODO)
+- Address code review — async directory reads, CSV row normalization, extract mapDirectoryEntry
+- Split TocSection.tsx — move utilities to tocUtils.ts (fixes react-refresh lint)
 
-- Wire gatewayUrl cleanup escalation in plugin via loadWorkspaceConfig()
-- Replace bespoke packageVersion.ts with core getPackageVersion(import.meta.url)
-- Add TODO comment to substituteEnvVars.ts (core does not export it yet)
-- Update onConfigApply signature to accept config argument (Task 7)
-- [360] feat: Phase 3 — UX improvements (CSV tables, directory item counts, collapsible frontmatter, collapsible TOC)
+### 📚 Documentation
 
-- Add CSV rendered table view with RFC 4180 parser and HTML table rendering
-- Add Rendered/Raw tab support for .csv files in FileContentView
-- Add .csv-table styles matching prose typography
-- Add directory item counts (nonrecursive) in Size column for directory rows
-- Add collapsible large frontmatter (>10 lines collapsed by default with toggle)
-- Add collapsible TOC sections with chevron toggles and auto-expand on scroll
-- Add TocSection component with buildTocTree() and findAncestorSlugs() utilities
-- Add 12 unit tests for CSV parsing (quoted fields, escaped quotes, empty fields, etc.)
+- Phase 4 — documentation updates for v3.6.0
+- Fix Node version in deployment guide (20 → 22)
 
-Closes #48, #49, #115, #116
-- [360] docs: Phase 4 — documentation updates for v3.6.0
+### 🧪 Testing
 
-- Update SKILL.md: Node 22+, CSV rendering, directory counts, collapsible features, core service discovery
-- Update setup guide: remove deprecated config properties, add core service discovery guidance
-- Update README: Node 22+, add CSV and collapsible features to highlights
-- Review promptInjection.ts: no changes needed (status shape unchanged)
-- [360] chore: Phase 5 — quality gates clean (knip fixes, remove package-directory dep)
-
-- Remove unused package-directory dependency (replaced by core getPackageVersion)
-- Add start-server.ts as knip entry point
-- All quality gates pass: lint, typecheck, knip, build, test (165 tests)
-- [360] chore: remove TASK.md build artifact, DRY up Node version check and fix minor issues
-- [360] test: add missing test coverage for v3.6.0 features
-
-- Deprecated config property migration (loadConfig.test.ts)
-- Collapsible frontmatter threshold logic (markdown.test.ts)
-- Export URL 0.0.0.0 → 127.0.0.1 fallback (export.test.ts)
-- Directory itemCount mapping (directory.test.ts)
-- CSV table css-table class + large CSV (csv.test.ts)
-- Runner proxy URL resolution (runner.test.ts)
-- Search watcher URL resolution (search.test.ts)
-- [360] refactor: address code review — async directory reads, CSV row normalization, extract mapDirectoryEntry
-- [360] docs: fix Node version in deployment guide (20 → 22)
-- [360] refactor: split TocSection.tsx — move utilities to tocUtils.ts (fixes react-refresh lint)
+- Add missing test coverage for v3.6.0 features
 
 ### ⚙️ Miscellaneous Tasks
 
+- Phase 5 — quality gates clean (knip fixes, remove package-directory dep)
+- Remove TASK.md build artifact, DRY up Node version check and fix minor issues
 - Release @karmaniverous/jeeves-server v3.6.0
 ## [3.5.2] - 2026-03-31
 
-### 💼 Other
-
-- [53] chore: bump core to v0.4.6 (init before run) + fix knip issues
-- [53] chore: bump core to v0.4.6 (init before run) + fix knip issues
-
 ### ⚙️ Miscellaneous Tasks
 
+- Bump core to v0.4.6 (init before run) + fix knip issues
+- Bump core to v0.4.6 (init before run) + fix knip issues
 - Release @karmaniverous/jeeves-server v3.5.2
 ## [3.5.1] - 2026-03-30
 
-### 💼 Other
+### 🚀 Features
 
-- [51] feat: integrate descriptor.run from core v0.4.5
+- Integrate descriptor.run from core v0.4.5
 
 ### ⚙️ Miscellaneous Tasks
 
 - Release @karmaniverous/jeeves-server v3.5.1
 ## [3.5.0] - 2026-03-30
 
+### 🚀 Features
+
+- Replace cosmiconfig with direct JSON config loading
+- Use getBindAddress from core, replace localhost with 127.0.0.1
+- Define JeevesComponentDescriptor for server component
+- Add GET /api/events endpoint for event log queries
+- Add POST /config/apply endpoint using createConfigApplyHandler
+
 ### 🐛 Bug Fixes
 
+- Use static bind default, bump openclaw core dep, remove local stub
+- Decode HTML entities in TOC heading text (#102)
+- Show user-friendly search error messages (#98)
+- Encode browse path segments in API calls, add SPA catch-all (#50, #127)
+- Resolve lint errors from core v0.4.4 migration
+- Resolve startCommand path absolutely for CI compatibility
 - Align config validate test assertion with core SDK output
 
-### 💼 Other
+### 🚜 Refactor
 
-- [35] chore: bump @karmaniverous/jeeves to ^0.4.3, remove cosmiconfig dep
+- Replace hand-rolled package.json walk with packageDirectorySync (#96)
+- Migrate GET /status to createStatusHandler factory
+- Migrate openclaw plugin to core v0.4.4 SDK
+- Replace hand-rolled CLI with createServiceCli(descriptor) (#106)
+- SOLID/DRY cleanup
 
-Bump the core jeeves dependency in packages/service from ^0.3.0 to ^0.4.3
-and remove the cosmiconfig dependency (no longer needed after config loading
-is switched to direct JSON reads in the next commit).
+### 📚 Documentation
 
-Note: openclaw dep bump deferred to S4/S5 as it requires API migration.
+- Sync documentation with SDK adoption changes
+- Add title front matter to all guides
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [35] feat: replace cosmiconfig with direct JSON config loading
+### 🧪 Testing
 
-Replace cosmiconfig-based config loading with direct JSON file reads.
-Add config path migration logic that automatically moves old-style
-jeeves-server.config.json to new jeeves-server/config.json convention.
-Make loadConfig/initConfig/resetConfig synchronous since all I/O is now
-sync fs operations.
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [35] feat: use getBindAddress from core, replace localhost with 127.0.0.1
-
-Import SERVER_PORT and getBindAddress from @karmaniverous/jeeves for
-schema defaults instead of hardcoded values. Replace 'localhost' with
-'127.0.0.1' in URL constructions (export route, path redirect) to
-avoid DNS resolution ambiguity.
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [35] fix: use static bind default, bump openclaw core dep, remove local stub
-- [35] fix: decode HTML entities in TOC heading text (#102)
-
-The TOC sidebar displayed raw HTML entities like &quot; and &#39; because
-heading text was only stripped of HTML tags, not decoded. Now uses cheerio
-to properly extract text content with entity decoding.
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [35] fix: show user-friendly search error messages (#98)
-
-Parse watcher error responses and display contextual messages instead of
-raw JSON error strings in the search modal.
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [35] fix: encode browse path segments in API calls, add SPA catch-all (#50, #127)
-
-Client API functions now properly encode each path segment with
-encodeURIComponent, fixing issues with dotfile directories and paths
-containing special characters. Also added a setNotFoundHandler SPA
-fallback to catch edge cases where wildcard routes miss certain paths
-(e.g. dot-prefixed segments on Linux).
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [35] refactor: replace hand-rolled package.json walk with packageDirectorySync (#96)
-
-Replaced the manual directory walk in packageVersion.ts with
-packageDirectorySync from the package-directory npm package. Added
-package-directory as a direct dependency of the service package.
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [35] feat: define JeevesComponentDescriptor for server component
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [35] refactor: migrate GET /status to createStatusHandler factory
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [35] feat: add GET /api/events endpoint for event log queries
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [35] feat: add POST /config/apply endpoint using createConfigApplyHandler
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [35] refactor: migrate openclaw plugin to core v0.4.4 SDK
-
-Remove hand-rolled serviceCommands/pluginRemove in favor of core's
-createServiceManager and createPluginCli. Rewrite cli.ts to delegate
-to createPluginCli factory. Update index.ts to construct a full
-JeevesComponentDescriptor for createComponentWriter.
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-- [35] fix: resolve lint errors from core v0.4.4 migration
-- [35] chore: update deps (peer-safe)
-- [35] refactor: replace hand-rolled CLI with createServiceCli(descriptor) (#106)
-- [35] refactor: SOLID/DRY cleanup
-- [35] test: add tests for diagramExport and sharing helpers
-- [35] docs: sync documentation with SDK adoption changes
-- [35] fix: resolve startCommand path absolutely for CI compatibility
-- [35] docs: add title front matter to all guides
+- Add tests for diagramExport and sharing helpers
 
 ### ⚙️ Miscellaneous Tasks
 
+- Bump @karmaniverous/jeeves to ^0.4.3, remove cosmiconfig dep
+- Update deps (peer-safe)
 - Release @karmaniverous/jeeves-server v3.5.0
 ## [3.4.2] - 2026-03-25
 
@@ -919,28 +823,28 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 - Release @karmaniverous/jeeves-server v3.4.2
 ## [3.4.1] - 2026-03-23
 
-### 💼 Other
+### 🐛 Bug Fixes
 
-- [120] fix: runner proxy routes call /status instead of /stats and /health (#120)
-- [120] fix: runner proxy routes call /status instead of /stats and /health (#120)
+- Runner proxy routes call /status instead of /stats and /health (#120)
+- Runner proxy routes call /status instead of /stats and /health (#120)
 
 ### ⚙️ Miscellaneous Tasks
 
 - Release @karmaniverous/jeeves-server v3.4.1
 ## [3.4.0] - 2026-03-22
 
-### 💼 Other
+### 🚀 Features
 
-- [117] feat: bump core to v0.3.0 and consolidate status endpoint (#117)
+- Bump core to v0.3.0 and consolidate status endpoint (#117)
 
 ### ⚙️ Miscellaneous Tasks
 
 - Release @karmaniverous/jeeves-server v3.4.0
 ## [3.3.1] - 2026-03-22
 
-### 💼 Other
+### 🚀 Features
 
-- [113] feat: add host bind and metaUrl config options
+- Add host bind and metaUrl config options
 
 ### ⚙️ Miscellaneous Tasks
 
