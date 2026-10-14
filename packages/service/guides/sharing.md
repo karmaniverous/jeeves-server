@@ -165,6 +165,8 @@ The server checks the outsider key against the requested path **and all ancestor
 
 This applies to every directory share made without a depth or `dirs`: links from the UI, `POST /api/share`, and `POST /api/util/share-for` (the plugin's `server_share` with an insider audience). A directory shared **with** a depth or `dirs` is a deep share instead (see below).
 
+The UI only makes plain directory shares: for a directory, the link menu hides the depth and `dirs` controls. Make a deep directory share through `POST /api/share` (with `depth` or `dirs`) or the plugin's `server_share`.
+
 ### Deep shares (depth and `dirs`)
 
 A share with a **depth** lets the outsider follow links from the shared document, up to that many hops. Each link the server renders for the outsider carries its own key, bound to that one target (`k`, plus `d`, `dirs`, `s` and any `exp`). A deep share key opens exactly the path it was issued for and nothing else.

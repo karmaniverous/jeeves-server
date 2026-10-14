@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { deriveShareLink } from './shareLinks';
+import { deriveShareLink, shareDepthOptions } from './shareLinks';
 
 const ORIGIN = 'https://jeeves.example.com';
 
@@ -30,5 +30,22 @@ describe('deriveShareLink (#279)', () => {
     expect(deriveShareLink(ORIGIN, '/browse/j/browse/a.md?k=abc', 'raw')).toBe(
       'https://jeeves.example.com/api/raw/j/browse/a.md?k=abc',
     );
+  });
+});
+
+describe('shareDepthOptions', () => {
+  it('sends depth and dirs for a document', () => {
+    expect(shareDepthOptions({ depth: 2, dirs: true })).toEqual({
+      depth: 2,
+      dirs: true,
+    });
+  });
+
+  it('omits a zero depth and unset dirs for a document', () => {
+    expect(shareDepthOptions({ depth: 0, dirs: false })).toEqual({});
+  });
+
+  it('sends neither for a directory, so UI directory shares are plain', () => {
+    expect(shareDepthOptions({ depth: 3, dirs: true }, true)).toEqual({});
   });
 });
