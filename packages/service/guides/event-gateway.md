@@ -108,7 +108,7 @@ curl -s "https://your-domain.com/insider-key" -H "X-API-Key: <your-seed>"
 Use the returned key in webhook URLs:
 
 ```bash
-curl -X POST "https://your-domain.com/event?key=<derived-key>" \
+curl -X POST "https://your-domain.com/event?k=<derived-key>" \
   -H "Content-Type: application/json" \
   -d '{"type": "page.content_updated", "data": {"page_id": "abc123"}}'
 ```
@@ -203,7 +203,7 @@ process.stdin.on('end', () => {
 
 ```bash
 # Get 20 most recent event log entries (no auth required)
-curl http://localhost:1934/api/status?events=20
+curl http://localhost:1934/status?events=20
 ```
 
 The `eventLog` array in the response contains entries newest-first, each with `ts`, `event`, `matched`, `exitCode`, and `durationMs`.
@@ -226,7 +226,7 @@ grep '"matched":false' /path/to/event-log.jsonl
 2. **Create a scoped key** for the webhook
 3. **Register the webhook URL** in Notion:
    - Settings → Connections → Add a connection
-   - Webhook URL: `https://your-domain.com/event?key=<webhook-derived-key>`
+   - Webhook URL: `https://your-domain.com/event?k=<webhook-derived-key>`
 4. **Write your handler** to process the mapped body
 5. **Verify** by triggering a page update and checking `logs/event-log.jsonl`
 

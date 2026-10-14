@@ -23,7 +23,7 @@ if (Valid session cookie\n(Google OAuth insider)?) then (Yes)
   endif
 endif
 
-if (Has ?key=*** parameter?) then (Yes)
+if (Has ?k= parameter?\n(legacy ?key= also accepted)) then (Yes)
   if (Matches machine\ninsider key?) then (Yes)
     if (Path within\nkey scopes?) then (Yes)
       :INSIDER access\n(within scopes);<<#22c55e>>

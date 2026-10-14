@@ -27,7 +27,7 @@ Depends on which auth modes are active:
 
 - **Google OAuth** (`'google'` mode) — Insider logs in with Google. The server checks their email against the `insiders` map. On first login, a key seed is auto-generated and persisted to `config.json`.
 - **Email magic link** (`'email'` mode) — Insider enters their email on the sign-in page and is redirected to a verification page. If the email matches an insider, the server sends an email containing a one-time code and a clickable magic link. The user enters the code on the verification page (which decrypts a stateless token client-side) or clicks the magic link directly. Either path sets a session cookie identical to Google OAuth. On first login, a key seed is auto-generated.
-- **Key auth** (`'keys'` mode) — Insider uses a derived URL key (`?key=<insider-key>`). The key is derived from a configured seed via HMAC-SHA256.
+- **Key auth** (`'keys'` mode) — Insider uses a derived URL key (`?k=<insider-key>`). The key is derived from a configured seed via HMAC-SHA256.
 
 ### What insiders can do
 
@@ -139,18 +139,18 @@ In the header of any file or directory view, insiders see sharing controls:
 1. **Link dropdown** (🔗) — Copy a share link
 2. **Expiry selector** — Choose how long the link is valid: never, 1 hour, 1 day, 1 week, 1 month, or 1 year
 
-The generated URL includes the outsider key as a `?key=` parameter and (if expiring) an `&exp=` parameter with the expiration timestamp.
+The generated URL includes the outsider key as a `?k=` parameter and (if expiring) an `&exp=` parameter with the expiration timestamp.
 
 **Example insider link:**
 
 ```
-https://jeeves.example.com/browse/d/docs/design.md?key=a1b2c3d4...
+https://jeeves.example.com/browse/d/docs/design.md?k=a1b2c3d4...
 ```
 
 **Example outsider link (expiring):**
 
 ```
-https://jeeves.example.com/browse/d/docs/design.md?key=e5f6a7b8...&exp=1771340000000
+https://jeeves.example.com/browse/d/docs/design.md?k=e5f6a7b8...&exp=1771340000000
 ```
 
 ### Directory sharing

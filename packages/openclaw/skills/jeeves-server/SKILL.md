@@ -75,6 +75,44 @@ Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) ret
 - An `outsiderPolicy` can constrain which paths are eligible for outsider sharing
 - **Scoped insiders** (sessions, insider keys, scoped machine keys) only reach paths within their scopes: directories above an allowed path can be browsed for navigation, but viewing, exporting, writing or sharing anything outside scope returns 403, and directory archives omit out-of-scope entries. Scope globs follow picomatch: use `/**` to grant a whole tree (`/*` matches direct children only)
 
+## Route Prefixes
+
+| Prefix | Serves |
+| --- | --- |
+| `/browse/<path>` | Web UI (what humans open) |
+| `/api/raw/<path>` | Raw file bytes |
+| `/api/export/<path>?format=…` | PDF / DOCX (Markdown), ZIP / tar (directories) |
+| `/api/mermaid-export/<path>?format=…` | Mermaid SVG / PNG / PDF |
+| `/api/plantuml-export/<path>?format=…` | PlantUML exports |
+| `/api/link-info/<path>` | Available link types and export formats |
+| `/health` | Unauthenticated liveness check (`{ "ok": true }`) |
+| `/status` | Unauthenticated server status |
+
+**Raw and export links from a share link.** Content routes check the key against the path after their prefix, so swapping `/browse/` for `/api/raw/` or `/api/export/` in a share URL, keeping its whole query string (`?k=…` and any `exp`, `d`, `dirs`, `s`), gives a working raw or export link. `server_share` already returns `rawUrl` for single-file shares.
+
+**Auth parameter name.** Generated links carry the key as `k`. The old name `key` is still accepted (if both are present, `k` wins).
+
+**Insider scope rules.** Content routes (`/api/raw`, `/api/export`, `/api/file`, …) require the path itself to be in scope; navigation routes (directory listings) also admit ancestors of an allowed path. This applies to sessions as well as keys.
+
+## Configuration Notes
+
+- **State lives in `config.json`.** Insider seeds are stored in the server's `config.json` (`state.json` no longer exists).
+- **Back up** `config.json` and the event queue (`logs/event-queue.jsonl` plus its `.cursor` file). Neither is part of the npm package.
+- `roots` (Linux only) maps root ids to filesystem paths for the file browser; Windows discovers drives automatically.
+- `events` maps event names to a JSON Schema and a command; see the event gateway below.
+- `oauth` configures OAuth2 credential management (`credentialDir` plus `providers`) used by the `oauth_*` tools.
+- `go` maps shortlink slugs to redirect targets, served unauthenticated at `/go/<slug>`.
+- Mermaid needs no extra config: `@mermaid-js/mermaid-cli` is bundled (`mermaidCliPath` is ignored).
+- `publicUrl` is read from the server's own `config.json` (or `JEEVES_SERVER_PUBLIC_URL`), not from the plugin entry.
+
+## Event Gateway
+
+`POST /event?k=<key>` with a JSON body. The body is matched against each configured event's JSON Schema (ajv); the first match wins. An optional JsonMap transform reshapes the payload, and matched events go to a durable JSONL queue that is processed in order. `server_event_status` shows schemas and recent log entries.
+
+## Agent Guidance
+
+When handing documents to people, prefer share links over file uploads, and Markdown over DOCX/PDF unless they need a file.
+
 ## Export
 
 Available formats depend on file type and server capabilities:
@@ -228,6 +266,10 @@ Restart the gateway (and jeeves-server, if its `keys._plugin` changed) to load t
 ## Troubleshooting
 
 If a tool reports `configRoot not configured` (only `server_service` `install` reads it; the HTTP API tools work without it): set `plugins.entries.jeeves-server-openclaw.config.configRoot` (e.g. `jeeves install server --config-root <config-root>`) or the `JEEVES_CONFIG_ROOT` environment variable, then restart the gateway.
+
+If share links you relay arrive truncated (the key shows as `key=***` or similar): the server predates 3.15.0, whose links carry the key as `k` because OpenClaw masks the value of any query parameter named `key` in tool output. Upgrade the server and plugin together.
+
+If an export returns 502 ("document did not render"): the render page did not report a rendered document (sign-in page, error or timeout), and nothing was cached. Check the server's `_internal` key and logs.
 
 If the server is unreachable:
 

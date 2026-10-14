@@ -80,27 +80,27 @@ jobs:
 
       - name: Smoke test - drives endpoint
         run: |
-          RESPONSE=$(curl -s "http://localhost:1934/api/drives?key=$INSIDER_KEY")
+          RESPONSE=$(curl -s "http://localhost:1934/api/drives?k=$INSIDER_KEY")
           echo "Drives response: $RESPONSE"
           echo "$RESPONSE" | grep -q '"letter"' || (echo "FAIL: No drives in response" && exit 1)
           echo "$RESPONSE" | grep -q '"workspace"' || (echo "FAIL: workspace root not found" && exit 1)
 
       - name: Smoke test - directory listing
         run: |
-          RESPONSE=$(curl -s "http://localhost:1934/api/path/workspace?key=$INSIDER_KEY")
+          RESPONSE=$(curl -s "http://localhost:1934/api/path/workspace?k=$INSIDER_KEY")
           echo "Directory response (first 500 chars): ${RESPONSE:0:500}"
           echo "$RESPONSE" | grep -q '"entries"' || (echo "FAIL: No entries in directory listing" && exit 1)
 
       - name: Smoke test - file serving
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" "http://localhost:1934/api/file/workspace/README.md?key=$INSIDER_KEY")
+          RESPONSE=$(curl -s -w "\n%{http_code}" "http://localhost:1934/api/file/workspace/README.md?k=$INSIDER_KEY")
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           echo "README.md status: $HTTP_CODE"
           [ "$HTTP_CODE" = "200" ] || (echo "FAIL: README.md returned $HTTP_CODE" && exit 1)
 
       - name: Smoke test - SPA loads (authenticated)
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" "http://localhost:1934/browse?key=$INSIDER_KEY")
+          RESPONSE=$(curl -s -w "\n%{http_code}" "http://localhost:1934/browse?k=$INSIDER_KEY")
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           echo "SPA (authenticated) status: $HTTP_CODE"
           [ "$HTTP_CODE" = "200" ] || (echo "FAIL: SPA didn't load with key" && exit 1)

@@ -36,7 +36,7 @@ async function fetchJson(url) {
 }
 
 async function getShareLink(path, depth, dirs) {
-  const res = await fetch(`${BASE}/api/share?key=${INSIDER_KEY}`, {
+  const res = await fetch(`${BASE}/api/share?k=${INSIDER_KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ path, depth, dirs }),
@@ -59,7 +59,7 @@ function parseShareUrl(url) {
 
 /** Build API file URL from share params */
 function apiFileUrl(params) {
-  let url = `${BASE}/api/file${params.path}?key=${params.key}`;
+  let url = `${BASE}/api/file${params.path}?k=${params.key}`;
   if (params.d !== null) url += `&d=${params.d}`;
   if (params.dirs !== null) url += `&dirs=${params.dirs}`;
   if (params.s !== null) url += `&s=${params.s}`;
@@ -69,7 +69,7 @@ function apiFileUrl(params) {
 
 /** Build API path (directory) URL from share params */
 function apiDirUrl(dirPath, params) {
-  let url = `${BASE}/api/path${dirPath}?key=${params.key}`;
+  let url = `${BASE}/api/path${dirPath}?k=${params.key}`;
   if (params.d !== null) url += `&d=${params.d}`;
   if (params.dirs !== null) url += `&dirs=${params.dirs}`;
   if (params.s !== null) url += `&s=${params.s}`;
@@ -377,7 +377,7 @@ async function runTests() {
     const params = parseShareUrl(share.url);
 
     // Try to use Page A's key to access Page B directly
-    const pageBUrl = `${BASE}/api/file/e/dev/karmaniverous/jeeves-server/test-docs/page-b.md?key=${params.key}`;
+    const pageBUrl = `${BASE}/api/file/e/dev/karmaniverous/jeeves-server/test-docs/page-b.md?k=${params.key}`;
     const pageBRes = await fetchJson(pageBUrl);
     assert(
       pageBRes.status === 401,

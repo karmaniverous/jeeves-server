@@ -8,7 +8,9 @@ How to interact with Jeeves Server programmatically — for scripts, bots, AI as
 
 ## Authentication for API Access
 
-All API requests (except `/health` and `/api/status`) authenticate via `?key=<insider-key>` URL parameter or session cookie.
+All API requests (except `/health` and `/status`) authenticate via `?k=<insider-key>` URL parameter or session cookie.
+
+> **`k`, not `key`.** Since 3.15.0 every URL the server generates carries its auth key as `k`. The old parameter name `key` is still accepted everywhere (when both are present, `k` wins), so existing links, bookmarks and webhook URLs keep working. Generated links use `k` because some agent platforms (OpenClaw among them) mask the value of any query parameter named `key` in tool output.
 
 ### Browser Auth Gate
 
@@ -53,8 +55,8 @@ function insiderKey(seed) {
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/health` | Simple health check (200 OK) |
-| `GET` | `/api/status` | Server metadata: version, uptime, services, capabilities. Add `?events=N` for recent event log entries |
+| `GET` | `/health` | Liveness check: returns `{ "ok": true }` |
+| `GET` | `/status` | Server metadata: version, uptime, services, capabilities. Add `?events=N` for recent event log entries |
 
 ### File Access (auth required)
 
@@ -91,7 +93,7 @@ function insiderKey(seed) {
 
 ### Scopes and errors
 
-Content routes (`/api/path`, `/api/file`, `/api/raw`, `/api/export`, `/api/export-cache`, `/api/mermaid-export`, `/api/plantuml-export`, `/api/link-info`) verify `?key=` against the content path after the route prefix, so share keys work on all of them. For scoped identities:
+Content routes (`/api/path`, `/api/file`, `/api/raw`, `/api/export`, `/api/export-cache`, `/api/mermaid-export`, `/api/plantuml-export`, `/api/link-info`) verify `?k=` against the content path after the route prefix, so share keys work on all of them. For scoped identities:
 
 | Status | Body | When |
 | --- | --- | --- |
@@ -174,7 +176,7 @@ function winPathToUrl(winPath, prefix = '/browse/') {
 
 ```javascript
 const insiderKey = computeInsiderKey(seed);
-const url = \`https://jeeves.example.com/browse/d/docs/design.md?key=\${insiderKey}\`;
+const url = \`https://jeeves.example.com/browse/d/docs/design.md?k=\${insiderKey}\`;
 ```
 
 ### Outsider links (path-scoped)
@@ -200,6 +202,6 @@ If you're an AI assistant working with Jeeves Server:
 
 1. **Use the OpenClaw plugin** if available — it provides tools for browsing (`server_browse`, `server_link_info`, `server_drives`), sharing (`server_share`), export (`server_export`, `server_export_cache_clear`), file mutation (`server_file_write`, `server_file_mutate`), auth (`server_auth_status`, `server_rotate_key`), events (`server_event_status`), and OAuth credential management (`oauth_authorize`, `oauth_status`, `oauth_token`)
 2. **Convert Windows paths** to URL paths using the formula above
-3. **Use `/api/status`** for health checks (no auth required)
+3. **Use `/health`** for liveness checks and **`/status`** for details (no auth required for either)
 4. **Prefer `/browse/` routes** for links you share with humans (renders the SPA)
 5. **Use `/api/export/` routes** for direct PDF/DOCX downloads

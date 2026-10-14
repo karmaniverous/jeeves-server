@@ -4,7 +4,7 @@ flowchart TD
     C -- Yes --> D["✅ INSIDER access\n(within scopes)"]
     C -- No --> E["❌ DENIED"]
 
-    B -- No --> F{"Has ?key=\nparameter?"}
+    B -- No --> F{"Has ?k=\nparameter?"}
     F -- Yes --> G{"Matches machine\ninsider key?"}
     G -- Yes --> H["✅ INSIDER access\n(within scopes)"]
     G -- No --> I{"Matches outsider key?\n(machine or insider seed)"}

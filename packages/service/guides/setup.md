@@ -226,7 +226,7 @@ Users authenticate with their Google account. The server checks their email agai
 
 **Best for:** Headless access, bot integrations, simple setups without Google.
 
-Users authenticate by appending `?key=<value>` to any URL. The server derives keys from configured seeds using HMAC-SHA256.
+Users authenticate by appending `?k=<value>` to any URL. The server derives keys from configured seeds using HMAC-SHA256.
 
 **Requirements when enabled:**
 
@@ -269,7 +269,7 @@ Users enter their email on the sign-in page. If the email matches a configured i
 
 ### Both Modes Together
 
-When multiple modes are active, browser users log in with Google or email magic link, and bots/scripts use `?key=` for stateless access. All methods work on every endpoint.
+When multiple modes are active, browser users log in with Google or email magic link, and bots/scripts use `?k=` for stateless access. All methods work on every endpoint.
 
 | Scenario | Recommended |
 | --- | --- |

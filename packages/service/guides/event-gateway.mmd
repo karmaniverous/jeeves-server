@@ -1,5 +1,5 @@
 flowchart TD
-    A["POST /event?key=‹scoped-key›"] --> B["Authenticate key\n(check scope includes /event)"]
+    A["POST /event?k=‹scoped-key›"] --> B["Authenticate key\n(check scope includes /event)"]
     B --> C{"For each event\nin config.events"}
     C --> D["Validate body against\nevent.schema (ajv)"]
     D --> E{"Match?"}
