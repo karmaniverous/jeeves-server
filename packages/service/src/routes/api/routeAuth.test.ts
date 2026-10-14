@@ -1,8 +1,8 @@
 /**
  * Route auth tightening: /api/resolve-path needs a machine or insider key,
- * /api/events is for unscoped insiders only, DELETE /api/export-cache is
- * insider-only, public prefixes match whole path segments, and stored event
- * bodies are capped.
+ * /api/events is only for insiders with no scopes configured, DELETE
+ * /api/export-cache is insider-only, public prefixes match whole path
+ * segments, and stored event bodies are capped.
  * Real middleware and HMAC keys.
  *
  * @packageDocumentation
@@ -34,12 +34,19 @@ fs.writeFileSync(path.join(tmpRoot, 'r', 'a.md'), '# a\n');
 
 const SESSION_SECRET = 's'.repeat(64);
 const SCOPED_EMAIL = 'scoped@example.com';
+const ALL_SCOPED_EMAIL = 'all-scoped@example.com';
 const config = makeRuntimeConfig({
   extraInsiders: [
     {
       email: SCOPED_EMAIL,
       seed: 'scoped-insider-seed-0123456789',
       scopes: scopes(['/r/**']),
+      keyCreatedAt: null,
+    },
+    {
+      email: ALL_SCOPED_EMAIL,
+      seed: 'all-scoped-insider-seed-0123456789',
+      scopes: scopes(['/**']),
       keyCreatedAt: null,
     },
   ],
@@ -173,12 +180,17 @@ describe('GET /api/events', () => {
       cookies: { [COOKIE_NAME]: createSessionCookie(email, SESSION_SECRET) },
     });
 
-  it('answers an unscoped insider session', async () => {
+  it('answers an insider session with no scopes configured', async () => {
+    expect(config.resolvedInsiders[0]?.scopes).toBeNull();
     expect((await withSession(INSIDER_EMAIL)).statusCode).toBe(200);
   });
 
-  it('refuses a scoped insider session', async () => {
-    const res = await withSession(SCOPED_EMAIL);
+  // Strict rule: any configured scopes refuse, even ones that allow everything.
+  it.each([
+    ['a path-scoped insider session', SCOPED_EMAIL],
+    ["an insider session scoped to allow '/**'", ALL_SCOPED_EMAIL],
+  ])('refuses %s', async (_label, email) => {
+    const res = await withSession(email);
     expect(res.statusCode).toBe(403);
     expect(res.json()).toEqual({ error: 'Unscoped insider access required' });
   });

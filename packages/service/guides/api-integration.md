@@ -56,7 +56,7 @@ function insiderKey(seed) {
 | Method | Path | Description |
 | --- | --- | --- |
 | `GET` | `/health` | Liveness check: returns `{ "ok": true }` |
-| `GET` | `/status` | Server metadata: version, uptime, services, capabilities. For recent event log entries, use `GET /api/events?limit=N` (unscoped insiders; see below) |
+| `GET` | `/status` | Server metadata: version, uptime, services, capabilities. For recent event log entries, use `GET /api/events?limit=N` (insiders with no scopes configured; see below) |
 
 ### File Access (auth required)
 
@@ -153,7 +153,7 @@ Directory listings and link info admit ancestors of in-scope paths (for navigati
 | Method | Path | Description |
 | --- | --- | --- |
 | `GET` | `/api/resolve-path?fsPath=<absolute path>` | Map a filesystem path to `{ browsePath, browseUrl, publicUrl? }`. Requires a machine key, insider key or insider session (401 without credentials, 403 for share keys). |
-| `GET` | `/api/events?limit=N` | Recent event log entries (1–100, default 20). Unscoped insiders only (an unscoped machine key or insider session): scoped insider sessions get 403, and scoped machine keys are refused. Unmatched webhook bodies are stored in full up to 256 KiB; larger ones are cut at the cap and carry `truncated: true` and `originalBytes`. |
+| `GET` | `/api/events?limit=N` | Recent event log entries (1–100, default 20). Only for insiders with no scopes configured (a machine key or insider session without `scopes`). Any configured scopes refuse access, even `allow: ['/**']`: such insider sessions get 403, and such machine keys are refused. Unmatched webhook bodies are stored in full up to 256 KiB; larger ones are cut at the cap and carry `truncated: true` and `originalBytes`. |
 
 ## Converting Windows Paths to URLs
 

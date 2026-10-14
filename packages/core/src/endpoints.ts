@@ -203,7 +203,7 @@ export const serverEndpoints: Record<string, EndpointEntry> = {
     method: 'GET',
     path: '/api/events',
     description:
-      'Query recent event log entries (unscoped insiders only; limit capped at 100).',
+      'Query recent event log entries (insiders with no scopes configured; limit capped at 100).',
   },
 
   // --- Search ---
