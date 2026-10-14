@@ -161,7 +161,8 @@ export const serverEndpoints: Record<string, EndpointEntry> = {
   share: {
     method: 'POST',
     path: '/api/share',
-    description: 'Generate HMAC-signed share link for a path.',
+    description:
+      'Generate HMAC-signed share link for a path; the response reports whether the path is a directory (isDirectory).',
     insiderOnly: true,
   },
   'share-for': {

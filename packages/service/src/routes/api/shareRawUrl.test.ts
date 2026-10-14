@@ -136,6 +136,23 @@ describe('file shares: the raw URL works for that file only', () => {
   });
 });
 
+describe('/api/share reports isDirectory', () => {
+  it.each([
+    ['a file', FILE, false],
+    ['a directory', '/r/docs', true],
+    ['a directory with a trailing slash', '/r/docs/', true],
+    ['a nested directory without a trailing slash', '/r/docs/sub', true],
+  ])('%s', async (_label, target, expected) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: `/api/share?k=${machineKey}`,
+      payload: { path: target },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json<{ isDirectory: unknown }>().isDirectory).toBe(expected);
+  });
+});
+
 describe('directory shares', () => {
   it.each([
     ['plain', {}],

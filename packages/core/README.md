@@ -41,7 +41,7 @@ Shared workspace package providing cryptographic utilities and API types consume
 
 | Type | Description |
 | --- | --- |
-| `ShareRequest` / `ShareResponse` | `POST /api/share` payloads |
+| `ShareRequest` / `ShareResponse` | `POST /api/share` payloads (`ShareResponse.isDirectory`, optional: whether the shared path is an existing directory; sent by servers from 3.15.0) |
 | `ShareForRequest` / `ShareForResponse` | `POST /api/util/share-for` payloads (audience-based sharing) |
 | `AuthStatusResponse` | `GET /api/auth/status` response |
 | `RotateKeyResponse` | `POST /api/rotate-key` response |
