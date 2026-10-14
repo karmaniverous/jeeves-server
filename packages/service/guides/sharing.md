@@ -163,6 +163,8 @@ When you share a directory link, the outsider can:
 
 The server checks the outsider key against the requested path **and all ancestor paths**, so a key generated for `/d/docs/` also grants access to `/d/docs/report.md` and `/d/docs/specs/api.md`.
 
+This applies to every directory share made without a depth or `dirs`: links from the UI, `POST /api/share`, and `POST /api/util/share-for` (the plugin's `server_share` with an insider audience). A directory shared **with** a depth or `dirs` is a deep share instead (see below).
+
 ### Deep shares (depth and `dirs`)
 
 A share with a **depth** lets the outsider follow links from the shared document, up to that many hops. Each link the server renders for the outsider carries its own key, bound to that one target (`k`, plus `d`, `dirs`, `s` and any `exp`). A deep share key opens exactly the path it was issued for and nothing else.

@@ -92,7 +92,7 @@ Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) ret
 
 **Auth parameter name.** Generated links carry the key as `k`. The old name `key` is still accepted (if both are present, `k` wins).
 
-**Deep shares.** A deep share key opens exactly the path it was issued for. Links in a shared document, and entries of a directory reached through one (only with `dirs`), carry their own keys; each step uses one level of depth. A plain directory share (no depth) still covers the whole tree below it.
+**Deep shares.** A deep share key opens exactly the path it was issued for. Links in a shared document, and entries of a directory reached through one (only with `dirs`), carry their own keys; each step uses one level of depth. A plain directory share (no depth and no `dirs`, including `server_share` with `insiders`) still covers the whole tree below it.
 
 **Insider scope rules.** Content routes (`/api/raw`, `/api/export`, `/api/file`, …) require the path itself to be in scope; navigation routes (directory listings) also admit ancestors of an allowed path. This applies to sessions as well as keys.
 

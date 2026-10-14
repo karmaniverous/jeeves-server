@@ -27,6 +27,7 @@ import {
 } from '../../util/crypto.js';
 import { fsPathToUrl, getRoots } from '../../util/platform.js';
 import { getPublicOrigin } from '../../util/publicOrigin.js';
+import { isDirectoryUrlPath } from './fileRender.js';
 import { rejectOutOfScope } from './scopeGuard.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -257,16 +258,28 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
 
     const shareDepth = depth ?? 0;
     const shareDirs = dirs ?? false;
-    const stack = encodeStack([targetPath]);
-    const deepParams: DeepShareParams = {
-      depth: shareDepth,
-      dirs: shareDirs,
-      stack,
-    };
-    const outsiderKey = computeDeepShareKey(sharerSeed, targetPath, deepParams);
-    // Same builder as POST /api/share: always emits d (also d=0), which
-    // verification needs to recognise a deep key (#282).
-    const shareUrl = `${origin}${buildDeepShareUrl(targetPath, outsiderKey, deepParams)}`;
+    let shareUrl: string;
+    if (shareDepth <= 0 && !shareDirs && isDirectoryUrlPath(targetPath)) {
+      // A directory shared without depth or dirs is a tree share: a plain
+      // path key covers every file below it, as the UI's directory links do.
+      const outsiderKey = computePathKey(sharerSeed, targetPath);
+      shareUrl = `${origin}/browse${targetPath}?k=${outsiderKey}`;
+    } else {
+      const stack = encodeStack([targetPath]);
+      const deepParams: DeepShareParams = {
+        depth: shareDepth,
+        dirs: shareDirs,
+        stack,
+      };
+      const outsiderKey = computeDeepShareKey(
+        sharerSeed,
+        targetPath,
+        deepParams,
+      );
+      // Same builder as POST /api/share: always emits d (also d=0), which
+      // verification needs to recognise a deep key (#282).
+      shareUrl = `${origin}${buildDeepShareUrl(targetPath, outsiderKey, deepParams)}`;
+    }
 
     const response: Record<string, unknown> = {
       url: shareUrl,
