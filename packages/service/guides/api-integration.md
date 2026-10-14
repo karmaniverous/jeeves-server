@@ -153,7 +153,7 @@ Directory listings and link info admit ancestors of in-scope paths (for navigati
 | Method | Path | Description |
 | --- | --- | --- |
 | `GET` | `/api/resolve-path?fsPath=<absolute path>` | Map a filesystem path to `{ browsePath, browseUrl, publicUrl? }`. Requires a machine key, insider key or insider session (401 without credentials, 403 for share keys). |
-| `GET` | `/api/events?limit=N` | Recent event log entries (1â€“100, default 20). Insider only. Unmatched webhook bodies are stored in full up to 256 KiB; larger ones are cut at the cap and carry `truncated: true` and `originalBytes`. |
+| `GET` | `/api/events?limit=N` | Recent event log entries (1â€“100, default 20). Unscoped insiders only: insiders or machine keys with scope restrictions get 403. Unmatched webhook bodies are stored in full up to 256 KiB; larger ones are cut at the cap and carry `truncated: true` and `originalBytes`. |
 
 ## Converting Windows Paths to URLs
 

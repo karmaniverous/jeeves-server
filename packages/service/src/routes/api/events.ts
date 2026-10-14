@@ -10,9 +10,12 @@ export const eventsRoutes: FastifyPluginAsync = (fastify) => {
   fastify.get<{ Querystring: { limit?: string } }>(
     '/api/events',
     (request, reply) => {
-      // Insider only: unmatched webhook bodies are stored in full.
-      if (request.accessMode !== 'insider') {
-        return reply.code(403).send({ error: 'Insider access required' });
+      // Unscoped insiders only: unmatched webhook bodies are stored in full
+      // and belong to no path a scoped insider could be checked against.
+      if (request.accessMode !== 'insider' || request.insiderScopes !== null) {
+        return reply
+          .code(403)
+          .send({ error: 'Unscoped insider access required' });
       }
       const limit = Math.min(
         Math.max(parseInt(request.query.limit ?? '20', 10) || 20, 1),

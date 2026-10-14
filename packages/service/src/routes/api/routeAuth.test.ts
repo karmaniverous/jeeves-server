@@ -1,7 +1,8 @@
 /**
  * Route auth tightening: /api/resolve-path needs a machine or insider key,
- * /api/events and DELETE /api/export-cache are insider-only, public
- * prefixes match whole path segments, and stored event bodies are capped.
+ * /api/events is for unscoped insiders only, DELETE /api/export-cache is
+ * insider-only, public prefixes match whole path segments, and stored event
+ * bodies are capped.
  * Real middleware and HMAC keys.
  *
  * @packageDocumentation
@@ -11,14 +12,18 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import cookie from '@fastify/cookie';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { COOKIE_NAME, createSessionCookie } from '../../auth/session.js';
 import { MAX_STORED_BODY_BYTES } from '../../config/types.js';
 import {
+  INSIDER_EMAIL,
   INSIDER_SEED,
   MACHINE_SEED,
   makeRuntimeConfig,
+  scopes,
 } from '../../testing/authFixture.js';
 import { computeInsiderKey, computePathKey } from '../../util/crypto.js';
 import { storedBody } from '../../util/eventBody.js';
@@ -27,8 +32,21 @@ const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'route-auth-'));
 fs.mkdirSync(path.join(tmpRoot, 'r'), { recursive: true });
 fs.writeFileSync(path.join(tmpRoot, 'r', 'a.md'), '# a\n');
 
+const SESSION_SECRET = 's'.repeat(64);
+const SCOPED_EMAIL = 'scoped@example.com';
 const config = makeRuntimeConfig({
-  overrides: { publicUrl: 'https://docs.example.com' },
+  extraInsiders: [
+    {
+      email: SCOPED_EMAIL,
+      seed: 'scoped-insider-seed-0123456789',
+      scopes: scopes(['/r/**']),
+      keyCreatedAt: null,
+    },
+  ],
+  overrides: {
+    publicUrl: 'https://docs.example.com',
+    sessionSecret: SESSION_SECRET,
+  },
 });
 const logEventMock = vi.hoisted(() => vi.fn());
 
@@ -73,6 +91,7 @@ let app: FastifyInstance;
 
 beforeAll(async () => {
   app = Fastify({ bodyLimit: 4 * 1024 * 1024 });
+  await app.register(cookie);
   await app.register(async (api) => {
     addAuthMiddleware(api);
     await api.register(resolvePathRoutes);
@@ -141,10 +160,27 @@ describe('GET /api/events', () => {
     expect(res.statusCode).toBe(403);
   });
 
-  it('answers a machine key', async () => {
+  it('answers an unscoped machine key', async () => {
     const res = await app.inject(`/api/events?k=${machineKey}`);
     expect(res.statusCode).toBe(200);
     expect(res.json<unknown[]>()).toHaveLength(1);
+  });
+
+  /** GET /api/events with an insider session for `email`. */
+  const withSession = (email: string) =>
+    app.inject({
+      url: '/api/events',
+      cookies: { [COOKIE_NAME]: createSessionCookie(email, SESSION_SECRET) },
+    });
+
+  it('answers an unscoped insider session', async () => {
+    expect((await withSession(INSIDER_EMAIL)).statusCode).toBe(200);
+  });
+
+  it('refuses a scoped insider session', async () => {
+    const res = await withSession(SCOPED_EMAIL);
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toEqual({ error: 'Unscoped insider access required' });
   });
 });
 

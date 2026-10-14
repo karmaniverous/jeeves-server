@@ -17,6 +17,7 @@ const registeredRoutes: Record<
     handler: (request: {
       query: Record<string, string>;
       accessMode?: string;
+      insiderScopes?: unknown;
     }) => Promise<unknown>;
   }
 > = {};
@@ -27,6 +28,7 @@ const mockFastify = {
     handler: (request: {
       query: Record<string, string>;
       accessMode?: string;
+      insiderScopes?: unknown;
     }) => Promise<unknown>,
   ) => {
     registeredRoutes[path] = { method: 'GET', path, handler };
@@ -51,6 +53,7 @@ describe('eventsRoutes', () => {
 
     const result = await registeredRoutes['/api/events'].handler({
       accessMode: 'insider',
+      insiderScopes: null,
       query: {},
     });
 
@@ -63,6 +66,7 @@ describe('eventsRoutes', () => {
 
     await registeredRoutes['/api/events'].handler({
       accessMode: 'insider',
+      insiderScopes: null,
       query: { limit: '50' },
     });
 
@@ -74,6 +78,7 @@ describe('eventsRoutes', () => {
 
     await registeredRoutes['/api/events'].handler({
       accessMode: 'insider',
+      insiderScopes: null,
       query: { limit: '999' },
     });
 
@@ -85,6 +90,7 @@ describe('eventsRoutes', () => {
 
     await registeredRoutes['/api/events'].handler({
       accessMode: 'insider',
+      insiderScopes: null,
       query: { limit: '0' },
     });
 
@@ -96,6 +102,7 @@ describe('eventsRoutes', () => {
 
     await registeredRoutes['/api/events'].handler({
       accessMode: 'insider',
+      insiderScopes: null,
       query: { limit: 'abc' },
     });
 
@@ -107,6 +114,7 @@ describe('eventsRoutes', () => {
 
     await registeredRoutes['/api/events'].handler({
       accessMode: 'insider',
+      insiderScopes: null,
       query: { limit: '-5' },
     });
 
