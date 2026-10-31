@@ -18,7 +18,7 @@ function getRunnerUrl(): string {
 async function proxyToRunner(
   reply: FastifyReply,
   path: string,
-  method: 'GET' | 'POST' = 'GET',
+  method: 'GET' | 'POST' | 'PATCH' = 'GET',
 ): Promise<void> {
   try {
     const res = await fetch(`${getRunnerUrl()}${path}`, { method });
@@ -77,7 +77,7 @@ export const runnerRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       await proxyToRunner(
         reply,
         `/jobs/${encodeURIComponent(req.params.id)}/enable`,
-        'POST',
+        'PATCH',
       );
     },
   );
@@ -88,7 +88,7 @@ export const runnerRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       await proxyToRunner(
         reply,
         `/jobs/${encodeURIComponent(req.params.id)}/disable`,
-        'POST',
+        'PATCH',
       );
     },
   );
