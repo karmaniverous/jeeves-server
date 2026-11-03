@@ -62,8 +62,11 @@ export function RunnerJob() {
       if (job.enabled) await disableJob(job.id);
       else await enableJob(job.id);
       await fetchData();
-    } catch {
+    } catch (err) {
       await fetchData();
+      setError(
+        err instanceof Error ? err.message : 'Failed to update the job',
+      );
     }
   }, [job, fetchData]);
 
@@ -72,8 +75,9 @@ export function RunnerJob() {
     try {
       await triggerJobRun(job.id);
       setTimeout(() => void fetchData(), 500);
-    } catch {
+    } catch (err) {
       await fetchData();
+      setError(err instanceof Error ? err.message : 'Failed to start the job');
     }
   }, [job, fetchData]);
 
