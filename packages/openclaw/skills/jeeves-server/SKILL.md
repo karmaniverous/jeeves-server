@@ -1,6 +1,7 @@
 ---
 name: jeeves-server
-description: Operate and interact with a jeeves-server deployment. Use for file browsing, document sharing, export, link generation, event gateway queries, and server diagnostics.
+description: >
+  jeeves-server: file browsing, share and insider links, PDF/DOCX export, path resolution, .md edits, event gateway, OAuth tokens, config, diagnostics.
 ---
 
 # Jeeves Server Skill
