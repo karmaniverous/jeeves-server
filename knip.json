@@ -6,6 +6,7 @@
         "src/dev-server.ts",
         "test-docs/**/*.js",
         "scripts/capture-wire.ts",
+        "scripts/write-api-reference.ts",
         "src/test/wire/wireRecord.record.ts"
       ],
       "includeEntryExports": true,

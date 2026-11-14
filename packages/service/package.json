@@ -130,6 +130,7 @@
     "url": "git+https://github.com/karmaniverous/jeeves-server.git"
   },
   "scripts": {
+    "api-reference": "tsx scripts/write-api-reference.ts",
     "build": "cross-env NO_COLOR=1 rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
     "changelog": "git-cliff -o CHANGELOG.md",
     "dev": "tsx watch src/server.ts",
