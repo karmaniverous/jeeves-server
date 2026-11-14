@@ -65,7 +65,7 @@ In `openclaw.json`, configure the plugin entry:
 
 ### Lazy `configRoot`
 
-With a running gateway, `openclaw plugins install` activates the plugin before `jeeves install` writes its config, so the plugin never needs `configRoot` to load:
+`jeeves install` writes the plugin config before it runs `openclaw plugins install`, but the plugin can still load without one (installed by hand with `openclaw plugins install`, or its config removed), so it never needs `configRoot` to load:
 
 - Registration always succeeds. When neither the plugin config nor `JEEVES_CONFIG_ROOT` provides `configRoot`, the plugin logs one warning.
 - `configRoot` is resolved (plugin config, then `JEEVES_CONFIG_ROOT`) each time a tool runs, and core `init()` runs on first use.

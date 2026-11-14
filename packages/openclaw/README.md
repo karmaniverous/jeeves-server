@@ -21,7 +21,16 @@ jeeves install server --config-root /path/to/config
 # Restart the OpenClaw gateway after installing
 ```
 
-`jeeves install` runs `openclaw plugins install npm:@karmaniverous/jeeves-server-openclaw@<version> --pin --accept-capabilities` and writes the plugin config below. There is no plugin-specific installer.
+`jeeves install` runs `openclaw plugins install npm:@karmaniverous/jeeves-server-openclaw@<version> --pin --accept-capabilities --force` and writes the plugin config below. There is no plugin-specific installer.
+
+### Checked against `@karmaniverous/jeeves` 0.11.0
+
+The install behaviour this plugin documents was checked against jeeves 0.11.0's `jeeves install`, `update` and `uninstall` source (jeeves-server 3.16.0). It matches: the `openclaw plugins install` command line above; the config written to `plugins.entries.jeeves-server-openclaw.config` (`configRoot` from `--config-root`, required; `apiUrl`, default `http://127.0.0.1:1934`; `pluginKey`); removal of a legacy `extensions/jeeves-server-openclaw` copy; `jeeves update server`; `jeeves uninstall` (`--dry-run`, legacy TOOLS.md block); no gateway restart. jeeves 0.11.0 adds or differs in:
+
+- **Order:** the plugin config is written (one `openclaw config set --batch-file`) _before_ `openclaw plugins install` (the 3.15.0 docs said after). The plugin still loads without `configRoot`, for an install by hand or a removed config.
+- **`pluginKey` sync:** the server's literal `keys._plugin` (in `<configRoot>/jeeves-server/config.json`) wins; with no server key the plugin's key is copied there; with neither, one is generated and written to both; if they differ, install fails before any change unless `--server-plugin-key` is passed. A `${VAR}` server key is never overwritten.
+- **Skips** `openclaw plugins install` when the plugin is already installed at the resolved version (unless `--force-reinstall`); a legacy copy is removed only after the install succeeds, and only when its `package.json` names this package.
+- **Also** renders the platform content (SOUL.md and AGENTS.md managed blocks), wires skills and runs `patch-openclaw` (skip with `--content-only` or `--skip-patch`); `jeeves update` fills in missing plugin config.
 
 ## Configuration
 
