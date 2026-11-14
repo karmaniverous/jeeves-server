@@ -402,6 +402,8 @@ See the [Event Gateway](event-gateway.md) guide for full configuration and usage
 
 The server proxies semantic search queries to [jeeves-watcher](https://github.com/karmaniverous/jeeves-watcher) and provides a search UI in the header, with filter facets and scope-aware result filtering. The watcher URL is resolved automatically via core service discovery (default port 1936).
 
+The server calls the watcher through [`@karmaniverous/jeeves-watcher-sdk`](https://www.npmjs.com/package/@karmaniverous/jeeves-watcher-sdk), with a budget per call: `POST /render` 5 s (text files the watcher renders, e.g. JSON through a Handlebars template), `POST /search` 30 s and `GET /search/facets` 15 s (facets are cached for a minute). The watcher is an enhancer: if it is down, slow or answers an error, files show raw and the search routes answer `502`.
+
 To override the default URL, configure it in `{configRoot}/jeeves-core/config.json`:
 
 ```json

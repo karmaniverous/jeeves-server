@@ -1,13 +1,13 @@
 /**
  * Markdown rendering for the file content API: parses Markdown to HTML,
  * registers diagram hashes, optionally renders embedded diagrams and
- * rewrites links for outsider shares; also proxies jeeves-watcher's
- * `/render` endpoint for other text formats.
+ * rewrites links for outsider shares; also asks jeeves-watcher (through
+ * its SDK) to render other text formats.
  *
  * @packageDocumentation
  */
 
-import { getServiceUrl } from '@karmaniverous/jeeves';
+import type { RenderResponse } from '@karmaniverous/jeeves-watcher-sdk';
 import type { FastifyRequest } from 'fastify';
 
 import { isDirectoryUrlPath } from '../../services/contentPath.js';
@@ -19,14 +19,12 @@ import {
 import { renderEmbeddedDiagrams } from '../../services/embeddedDiagrams.js';
 import { registerDiagramHashes } from '../../services/exportCache.js';
 import { parseMarkdown } from '../../services/markdown.js';
-
-/** Watcher render response shape. */
-export interface WatcherRenderResponse {
-  renderAs: string;
-  content: string;
-  rules: string[];
-  metadata: Record<string, unknown>;
-}
+import {
+  toWatcherPath,
+  WATCHER_TIMEOUT_MS,
+  watcherAnswered,
+  watcherClient,
+} from '../../services/watcher.js';
 
 /** Rendered Markdown: HTML plus heading outline. */
 export interface RenderedMarkdown {
@@ -35,37 +33,23 @@ export interface RenderedMarkdown {
 }
 
 /**
- * Try to render a file via the watcher's render endpoint.
- * Returns null if watcher is not configured, unreachable, or no rules match.
+ * Try to render a file via the watcher's render endpoint (5 s budget).
+ * Returns null if the watcher is unreachable, answers with an error, or no
+ * rules match: the caller then shows the file raw. Only an unreached
+ * watcher is logged.
  */
 export async function tryWatcherRender(
   fsPath: string,
-): Promise<WatcherRenderResponse | null> {
-  const watcherUrl = getServiceUrl('watcher');
-
+): Promise<RenderResponse | null> {
   try {
-    const res = await fetch(`${watcherUrl}/render`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        path: fsPath
-          .replace(/\\/g, '/')
-          .replace(
-            /^([A-Z]):/,
-            (_: string, d: string) => d.toLowerCase() + ':',
-          ),
-      }),
-      signal: AbortSignal.timeout(5000),
+    const data = await watcherClient(WATCHER_TIMEOUT_MS.render).render({
+      path: toWatcherPath(fsPath),
     });
-
-    if (!res.ok) return null;
-
-    const data = (await res.json()) as WatcherRenderResponse;
-    if (data.rules.length === 0) return null;
-
-    return data;
+    return data.rules.length === 0 ? null : data;
   } catch (err) {
-    console.warn('Watcher render failed for ' + fsPath + ':', err);
+    if (!watcherAnswered(err)) {
+      console.warn('Watcher render failed for ' + fsPath + ':', err);
+    }
     return null;
   }
 }

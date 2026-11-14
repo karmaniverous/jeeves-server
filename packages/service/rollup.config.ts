@@ -10,7 +10,15 @@ const pkg = JSON.parse(
   fs.readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
 ) as { dependencies?: Record<string, string> };
 
-const external = [/^node:/, ...Object.keys(pkg.dependencies ?? {})];
+// A dependency stays external with its subpath exports too
+// (`@karmaniverous/jeeves/catalog`).
+const external = [
+  /^node:/,
+  ...Object.keys(pkg.dependencies ?? {}).map(
+    (name) =>
+      new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(/|$)`),
+  ),
+];
 
 const tsPlugin = () =>
   typescriptPlugin({

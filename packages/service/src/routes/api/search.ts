@@ -1,5 +1,5 @@
 /**
- * Search API route — proxies to jeeves-watcher for semantic search.
+ * Search API route — proxies to jeeves-watcher (through its SDK) for semantic search.
  *
  * Handles: POST /api/search, GET /api/search/facets.
  * Insider-only. Results filtered by insider's scope.
@@ -9,13 +9,34 @@
 
 import { stat } from 'node:fs/promises';
 
-import { getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyPluginCallback } from 'fastify';
 
 import { canAccessPath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
+import {
+  transportCause,
+  transportMessage,
+  WATCHER_TIMEOUT_MS,
+  watcherAnswered,
+  watcherClient,
+} from '../../services/watcher.js';
 import { fsPathToUrl, getRoots, urlPathToFs } from '../../util/platform.js';
 import { rejectNonInsider } from './scopeGuard.js';
+
+/**
+ * The facets route's `detail` for a failed call: the HTTP status the
+ * watcher answered with, the SDK's reason for a refused request or an
+ * unparseable answer, else the transport error's message.
+ *
+ * @param err - What the call threw.
+ * @returns The detail.
+ */
+function facetsFailureDetail(err: unknown): string {
+  if (!watcherAnswered(err)) return transportMessage(err);
+  return err.status !== undefined && err.status >= 300
+    ? `HTTP ${String(err.status)}`
+    : err.message;
+}
 
 interface WatcherResult {
   id: string;
@@ -64,7 +85,6 @@ export const searchRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
     if (rejectNonInsider(request, reply)) return reply;
 
     const config = getConfig();
-    const watcherUrl = getServiceUrl('watcher');
 
     const { query, limit = 20, filter } = request.body;
     if (!query || typeof query !== 'string') {
@@ -77,22 +97,22 @@ export const searchRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
     // Over-fetch to account for scope filtering
     const fetchLimit = Math.min(limit * 5, 200);
 
+    let rawResults: WatcherResult[];
     try {
-      const watcherRes = await fetch(`${watcherUrl}/search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, limit: fetchLimit, filter }),
+      rawResults = await watcherClient(WATCHER_TIMEOUT_MS.search).search({
+        query,
+        limit: fetchLimit,
+        filter,
       });
+    } catch (err) {
+      return await reply.code(502).send({
+        error: watcherAnswered(err)
+          ? `Watcher search failed: ${err.message}`
+          : `Watcher unreachable: ${String(transportCause(err))}`,
+      });
+    }
 
-      if (!watcherRes.ok) {
-        const msg = await watcherRes.text().catch(() => '');
-        return await reply
-          .code(502)
-          .send({ error: `Watcher search failed: ${msg}` });
-      }
-
-      const rawResults = (await watcherRes.json()) as WatcherResult[];
-
+    try {
       // Filter by insider scope and map paths
       const permitted: Array<WatcherResult & { browsePath: string }> = [];
       for (const r of rawResults) {
@@ -219,8 +239,6 @@ export const searchRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   fastify.get('/api/search/facets', async (request, reply) => {
     if (rejectNonInsider(request, reply)) return reply;
 
-    const watcherUrl = getServiceUrl('watcher');
-
     // Return cached if fresh
     if (
       facetsCache &&
@@ -233,13 +251,9 @@ export const searchRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       // Guard against cache stampede: reuse in-flight fetch
       if (!facetsFetchPromise) {
         facetsFetchPromise = (async () => {
-          const watcherRes = await fetch(`${watcherUrl}/search/facets`, {
-            signal: AbortSignal.timeout(15000),
-          });
-          if (!watcherRes.ok) {
-            throw new Error(`HTTP ${String(watcherRes.status)}`);
-          }
-          const data: unknown = await watcherRes.json();
+          const data = await watcherClient(
+            WATCHER_TIMEOUT_MS.facets,
+          ).listFacets({});
           facetsCache = { data, fetchedAt: Date.now() };
           return data;
         })().finally(() => {
@@ -252,7 +266,7 @@ export const searchRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
     } catch (err) {
       return await reply.code(502).send({
         error: 'Failed to reach watcher',
-        detail: err instanceof Error ? err.message : String(err),
+        detail: facetsFailureDetail(err),
       });
     }
   });

@@ -8,6 +8,7 @@
     "@fastify/static": "^10.1.11",
     "@karmaniverous/jeeves": "^0.11.0",
     "@karmaniverous/jeeves-server-core": "^0.4.0",
+    "@karmaniverous/jeeves-watcher-sdk": "^0.4.1",
     "@karmaniverous/jsonmap": "^2.1.1",
     "@mermaid-js/mermaid-cli": "^12.2.0",
     "@turbodocx/html-to-docx": "^1.23.3",
