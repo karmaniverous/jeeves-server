@@ -236,8 +236,17 @@ Users authenticate with their Google account. The server checks their email agai
 1. Create a project (or use an existing one)
 2. Go to **APIs & Services → Credentials → Create Credentials → OAuth client ID**
 3. Application type: **Web application**
-4. Authorized redirect URI: `https://your-domain.com/auth/google/callback`
+4. Authorized redirect URI: `{public origin}/auth/callback`, e.g. `https://your-domain.com/auth/callback`
 5. Copy the client ID and client secret into your config
+
+**Two callbacks, two features.** `GET /auth/callback` is Google sign-in to the portal (`auth.google`); register it in the Google OAuth client above. `GET /oauth/callback` belongs only to the generic OAuth2 credential flow (`oauth.providers`, used by tools that store provider tokens); register it in each provider's client, never in the Google sign-in client. The public origin is `publicUrl` (or, without it, the origin trusted proxy headers give when `trustProxyHeaders` is `true`). At startup the server logs the exact URI for each feature that is on, and `GET /status` reports them as `health.auth.googleRedirectUri` and `health.auth.oauthRedirectUri`:
+
+```text
+Google sign-in redirect URI (register in the Google OAuth client): https://your-domain.com/auth/callback
+OAuth provider redirect URI (provider clients only, not Google sign-in): https://your-domain.com/oauth/callback
+```
+
+**When Google sign-in is refused.** A Google account that isn't in `insiders`, or whose email Google hasn't verified, gets a `403` page in the server's branding instead of an error: it names the Google account used and why it was refused, links **Sign in with a different Google account** (Google's account chooser, back to the same page afterwards), links the email sign-in when `email` is in `auth.modes`, and says who to ask for access. Set that with `auth.accessContact` (free text, e.g. `"Jane Doe <jane@example.com>"`; an email in it becomes a `mailto:` link); without it the page says to ask the administrator of the server (`branding.name`). A client that asks for JSON (`Accept: application/json`) gets `403` with code `SERVER_SIGN_IN_REJECTED` instead. Each refusal is logged at `warn` with the email and reason (`not_insider` or `unverified`).
 
 ### Key-Based Auth (`"keys"`)
 
@@ -543,6 +552,7 @@ jeeves:
 | ~~`metaUrl`~~ | — | — | **Deprecated in v3.6.0.** Use core service discovery. |
 | `branding` | object | — | Instance branding (name, emoji, theme, email template) |
 | `auth.email` | object | — | Email magic link config (required when modes includes `"email"`) |
+| `auth.accessContact` | string | — | Who to ask for access, shown when Google sign-in is refused (an email in it becomes a `mailto:` link) |
 | `plantuml` | object | — | PlantUML rendering config |
 | `diagramCachePath` | string | `.diagram-cache` | Cached rendered diagram directory |
 | `exportCachePath` | string | `.export-cache` | Cached PDF/DOCX export directory |

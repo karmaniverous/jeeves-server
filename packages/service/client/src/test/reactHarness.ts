@@ -17,6 +17,14 @@ import { createRoot } from 'react-dom/client';
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 /**
+ * React's `createElement`, for tests that build elements without JSX: a
+ * test file importing it from here doesn't depend on `react` itself (the
+ * service package's knip run, which also sees client tests, lists no
+ * `react`).
+ */
+export { createElement };
+
+/**
  * Run `fn` inside `act`, then let queued promises and timers settle,
  * waiting `ms` milliseconds more (e.g. for a debounce to elapse).
  */

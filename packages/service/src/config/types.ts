@@ -70,6 +70,8 @@ export interface RuntimeConfig {
   resolvedKeys: ResolvedKey[];
   resolvedInsiders: ResolvedInsider[];
   googleAuth: { clientId: string; clientSecret: string } | null;
+  /** Who to ask for access, shown on the Google sign-in rejection page (#304). */
+  accessContact?: string;
   sessionSecret: string | null;
   internalInsiderKey: string | null;
   oauth: {

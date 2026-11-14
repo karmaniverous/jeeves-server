@@ -34,7 +34,7 @@ vi.mock('../../util/configPersist.js', () => ({
 const { magicLinkHandlers } = await import('./magicLink.js');
 const { sharingHandlers } = await import('./sharing.js');
 const { shareForHandlers } = await import('./shareFor.js');
-const { authRoute } = await import('../auth.js');
+const { googleSignInRoute } = await import('../googleSignIn.js');
 const { setSessionCookie } = await import('../../auth/session.js');
 
 const FORGED = {
@@ -68,7 +68,7 @@ async function buildApp(): Promise<FastifyInstance> {
   await app.register(
     catalogRoutes({ ...sharingHandlers, ...shareForHandlers }),
   );
-  await app.register(authRoute);
+  await app.register(googleSignInRoute);
   app.get('/set-cookie', (request, reply) => {
     setSessionCookie(reply, request, INSIDER_EMAIL, 's'.repeat(64));
     return reply.send({ ok: true });

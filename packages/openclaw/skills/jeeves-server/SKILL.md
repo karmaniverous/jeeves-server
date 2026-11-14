@@ -203,7 +203,8 @@ Or create `jeeves-server/config.json` manually (JSON only):
 **Key fields:**
 
 - `chromePath` — **required**, path to Chrome/Chromium executable
-- `auth.modes` — **required**, array of `"keys"`, `"google"`, and/or `"email"`
+- `auth.modes` - **required**, array of `"keys"`, `"google"`, and/or `"email"`
+- `auth.accessContact` - optional, who to ask for access; shown on the page a refused Google sign-in gets (403 `SERVER_SIGN_IN_REJECTED` for JSON clients). Google sign-in's redirect URI is `{public origin}/auth/callback`; `/oauth/callback` is only for OAuth provider clients
 - `scopes` — named scope definitions (allow/deny), referenced by name from insiders and keys
 - `insiders` — map of email → `{ scopes?, allow?, deny? }`
 - `keys._internal` — required for PDF/DOCX export (Puppeteer auth)

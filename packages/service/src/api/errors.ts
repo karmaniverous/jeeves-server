@@ -125,12 +125,8 @@ export const InternalKeyMissing = defineError(
 /** A change raced another change to the same file. */
 export const Conflict = defineError('SERVER_CONFLICT', '%s', 409);
 
-/** Sign-in refused for that account. */
-export const SignInRejected = defineError(
-  'SERVER_SIGN_IN_REJECTED',
-  'Sign-in is not allowed for this account',
-  403,
-);
+/** Sign-in refused for that account; `%s` names the reason (#304). */
+export const SignInRejected = defineError('SERVER_SIGN_IN_REJECTED', '%s', 403);
 
 /** A request field the route checks itself is missing or invalid. */
 export const InvalidRequest = defineError('SERVER_INVALID_REQUEST', '%s', 400);

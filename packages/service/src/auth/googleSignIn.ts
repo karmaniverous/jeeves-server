@@ -1,6 +1,7 @@
 /**
- * Google OAuth 2.0 helpers.
- * Uses native fetch — no googleapis SDK needed.
+ * Google sign-in to the portal (`auth.modes` includes `google`): the consent URL, the code exchange and the signed-in account. Distinct from the generic OAuth2 provider flow on `/oauth/callback` (#270). Uses native fetch, no googleapis SDK.
+ *
+ * @packageDocumentation
  */
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -15,7 +16,8 @@ interface GoogleTokens {
   token_type: string;
 }
 
-interface GoogleUserInfo {
+/** The Google account a sign-in returned. */
+export interface GoogleSignInUser {
   sub: string;
   email: string;
   email_verified: boolean;
@@ -24,12 +26,25 @@ interface GoogleUserInfo {
 }
 
 /**
- * Build the Google OAuth consent URL.
+ * Google's `prompt`: `consent` for a normal sign-in, `select_account` to
+ * let the person pick a different Google account (#304).
  */
-export function buildAuthUrl(
+export type GoogleSignInPrompt = 'consent' | 'select_account';
+
+/**
+ * Build the Google sign-in consent URL.
+ *
+ * @param clientId - The Google client ID.
+ * @param redirectUri - The redirect URI (`{public origin}/auth/callback`).
+ * @param state - Opaque state (the encoded `returnTo`).
+ * @param prompt - Google's `prompt`.
+ * @returns The URL.
+ */
+export function buildGoogleSignInUrl(
   clientId: string,
   redirectUri: string,
   state?: string,
+  prompt: GoogleSignInPrompt = 'consent',
 ): string {
   const params = new URLSearchParams({
     client_id: clientId,
@@ -37,16 +52,16 @@ export function buildAuthUrl(
     response_type: 'code',
     scope: 'openid email profile',
     access_type: 'offline',
-    prompt: 'consent',
+    prompt,
   });
   if (state) params.set('state', state);
   return `${GOOGLE_AUTH_URL}?${params.toString()}`;
 }
 
 /**
- * Exchange authorization code for tokens.
+ * Exchange a Google sign-in authorization code for tokens.
  */
-export async function exchangeCode(
+export async function exchangeGoogleSignInCode(
   clientId: string,
   clientSecret: string,
   redirectUri: string,
@@ -75,11 +90,11 @@ export async function exchangeCode(
 }
 
 /**
- * Fetch user info using an access token.
+ * Fetch the signed-in Google account with an access token.
  */
-export async function getUserInfo(
+export async function getGoogleSignInUser(
   accessToken: string,
-): Promise<GoogleUserInfo> {
+): Promise<GoogleSignInUser> {
   const resp = await fetch(GOOGLE_USERINFO_URL, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -89,5 +104,5 @@ export async function getUserInfo(
     throw new Error(`Google userinfo failed: ${String(resp.status)} ${text}`);
   }
 
-  return (await resp.json()) as GoogleUserInfo;
+  return (await resp.json()) as GoogleSignInUser;
 }

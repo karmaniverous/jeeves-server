@@ -1,7 +1,6 @@
-import { createElement, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { mountComponent } from '@/test/reactHarness';
+import { createElement, mountComponent } from '@/test/reactHarness';
 
 import { BrandingContext, DEFAULT_BRANDING } from './BrandingContext';
 import { BrandingProvider } from './BrandingProvider';
@@ -35,7 +34,7 @@ describe('useDocumentTitle', () => {
       createElement(Probe, { title }),
     );
   }
-  function Probe({ title }: { title: string | null }): ReactNode {
+  function Probe({ title }: { title: string | null }): null {
     useDocumentTitle(title);
     return null;
   }

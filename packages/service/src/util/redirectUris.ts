@@ -37,6 +37,36 @@ export function googleSignInRedirectUri(
 }
 
 /**
+ * The startup log lines naming the redirect URIs to register (#270): the
+ * Google sign-in URI when `google` is a sign-in mode, the OAuth provider
+ * URI when OAuth providers are configured. Without a configured
+ * `publicUrl` the origin comes from trusted proxy headers per request, so
+ * the line says so instead of guessing.
+ *
+ * @param config - The runtime config.
+ * @returns The lines (none when neither applies).
+ */
+export function redirectUriLogLines(config: RedirectConfig): string[] {
+  const origin = getPublicOrigin(config, { headers: {} });
+  const uri = (path: string): string =>
+    origin
+      ? `${origin}${path}`
+      : `{public origin}${path} (origin from trusted proxy headers; set publicUrl to fix it)`;
+  const lines: string[] = [];
+  if (config.authModes.includes('google')) {
+    lines.push(
+      `Google sign-in redirect URI (register in the Google OAuth client): ${uri(GOOGLE_CALLBACK_PATH)}`,
+    );
+  }
+  if (Object.keys(config.oauth?.providers ?? {}).length > 0) {
+    lines.push(
+      `OAuth provider redirect URI (provider clients only, not Google sign-in): ${uri(OAUTH_CALLBACK_PATH)}`,
+    );
+  }
+  return lines;
+}
+
+/**
  * The redirect URIs `/status` reports in `health.auth`: `googleRedirectUri`
  * when `google` is a sign-in mode and a public origin resolves,
  * `oauthRedirectUri` when OAuth providers are configured and a public

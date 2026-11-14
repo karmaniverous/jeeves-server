@@ -10,8 +10,8 @@ import type { FastifyInstance } from 'fastify';
 
 import { registerApiRoutes } from './api/routes.js';
 import { createServerHandlers } from './routes/api/index.js';
-import { authRoute } from './routes/auth.js';
 import { goRoute } from './routes/go.js';
+import { googleSignInRoute } from './routes/googleSignIn.js';
 import { magicCallbackRoute } from './routes/magicCallback.js';
 import { magicVerifyRoute } from './routes/magicVerify.js';
 import { oauthRoute } from './routes/oauth.js';
@@ -60,7 +60,7 @@ export async function registerServerApp(
   await registerApiRoutes(fastify, { handlers: createServerHandlers() });
   await fastify.register(serviceProbe);
   await fastify.register(staticRoutes);
-  await fastify.register(authRoute);
+  await fastify.register(googleSignInRoute);
   await fastify.register(magicCallbackRoute);
   await fastify.register(magicVerifyRoute);
   await fastify.register(oauthRoute);

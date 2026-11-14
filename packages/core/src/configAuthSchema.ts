@@ -36,6 +36,13 @@ export const authSchema = z.object({
   sessionSecret: z.string().min(1).optional(),
   /** Email (magic link) auth config. Required if modes includes "email". */
   email: emailAuthSchema.optional(),
+  /**
+   * Who to ask for access, shown on the page a refused Google sign-in
+   * gets (#304): free text such as a name and email (an email in it
+   * becomes a `mailto:` link). Without it the page says to ask the
+   * administrator of the server.
+   */
+  accessContact: z.string().trim().min(1).optional(),
 });
 
 /** Event webhook configuration */

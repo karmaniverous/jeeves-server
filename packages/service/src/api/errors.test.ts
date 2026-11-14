@@ -54,7 +54,6 @@ describe('error classes', () => {
     [errors.OAuthRefreshFailed, 'Re-authorization required'],
     [errors.InternalKeyMissing, 'Unavailable: no _internal key is configured'],
     [errors.EmailUnavailable, 'The sign-in email could not be sent'],
-    [errors.SignInRejected, 'Sign-in is not allowed for this account'],
   ])('fixed message %#', (ErrorClass, message) => {
     expect(new ErrorClass().message).toBe(message);
   });

@@ -16,6 +16,7 @@ import { initDiagramCache } from './services/diagramCache.js';
 import { initTransport } from './services/email.js';
 import { startQueueProcessor } from './services/eventQueue.js';
 import { initExportCache } from './services/exportCache.js';
+import { redirectUriLogLines } from './util/redirectUris.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -79,6 +80,7 @@ async function start() {
     console.log(`  GET  /key      - Compute path key (X-API-Key auth)`);
     console.log(`  GET  /status   - Server status (no auth)`);
     console.log(`  GET  /health   - Liveness check (no auth)`);
+    for (const line of redirectUriLogLines(config)) console.log(line);
   } catch (err) {
     console.error('Fatal startup error:', err);
     process.exit(1);

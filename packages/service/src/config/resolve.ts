@@ -180,6 +180,7 @@ export function buildRuntimeConfig(
     resolvedKeys,
     resolvedInsiders,
     googleAuth: config.auth.google ?? null,
+    accessContact: config.auth.accessContact,
     sessionSecret: config.auth.sessionSecret ?? null,
     internalInsiderKey: deriveInternalKey(resolvedKeys),
     diagramCachePath: config.diagramCachePath,

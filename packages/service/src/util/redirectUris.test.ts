@@ -6,7 +6,11 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { googleSignInRedirectUri, statusRedirectUris } from './redirectUris.js';
+import {
+  googleSignInRedirectUri,
+  redirectUriLogLines,
+  statusRedirectUris,
+} from './redirectUris.js';
 
 const PROVIDER = {
   authUrl: 'https://a.test',
@@ -74,5 +78,36 @@ describe('googleSignInRedirectUri', () => {
     expect(
       googleSignInRedirectUri(config({ publicUrl: null }), request),
     ).toBeNull();
+  });
+});
+
+describe('redirectUriLogLines', () => {
+  it('names both URIs on the public origin', () => {
+    expect(redirectUriLogLines(config())).toEqual([
+      'Google sign-in redirect URI (register in the Google OAuth client): https://docs.example.com/auth/callback',
+      'OAuth provider redirect URI (provider clients only, not Google sign-in): https://docs.example.com/oauth/callback',
+    ]);
+  });
+
+  it('logs nothing without the google mode or providers', () => {
+    expect(
+      redirectUriLogLines(config({ authModes: ['keys'], oauth: null })),
+    ).toEqual([]);
+  });
+
+  it('logs only the OAuth line without the google mode', () => {
+    expect(redirectUriLogLines(config({ authModes: ['email'] }))).toEqual([
+      'OAuth provider redirect URI (provider clients only, not Google sign-in): https://docs.example.com/oauth/callback',
+    ]);
+  });
+
+  it('says the origin comes from proxy headers without publicUrl', () => {
+    expect(
+      redirectUriLogLines(
+        config({ publicUrl: undefined, trustProxyHeaders: true, oauth: null }),
+      ),
+    ).toEqual([
+      'Google sign-in redirect URI (register in the Google OAuth client): {public origin}/auth/callback (origin from trusted proxy headers; set publicUrl to fix it)',
+    ]);
   });
 });
