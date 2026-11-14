@@ -158,8 +158,11 @@ export interface EventLogEntry {
   ts: string;
   event: string | null;
   matched: boolean;
-  exitCode?: number;
+  /** Exit code; null when the command was killed by a signal. */
+  exitCode?: number | null;
   durationMs?: number;
+  /** True when the command timed out (it and its process tree were killed). */
+  timedOut?: boolean;
   /** Unmatched body as JSON, capped at {@link MAX_STORED_BODY_BYTES}. */
   bodyPreview?: string;
   /** True when `bodyPreview` was cut at the cap. */

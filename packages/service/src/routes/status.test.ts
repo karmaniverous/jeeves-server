@@ -32,6 +32,7 @@ const mockConfig = {
     servers: ['https://plantuml.com/plantuml'],
   },
   exportFormats: ['pdf', 'docx', 'zip'],
+  eventQueuePath: '/nonexistent/event-queue.jsonl',
 };
 
 vi.mock('../config/index.js', () => ({
@@ -148,6 +149,13 @@ describe('GET /status', () => {
     expect(exports.diagrams).toEqual(['svg', 'png']);
     expect(exports.chromeAvailable).toBe(true);
     expect((health.diagrams as { mermaid: boolean }).mermaid).toBe(true);
+    // Event queue progress (#302, #285): always sent.
+    expect(health.eventQueue).toEqual({
+      offset: 0,
+      size: 0,
+      pendingBytes: 0,
+      parseErrors: 0,
+    });
 
     // Services should be present (cache may or may not have populated)
     const services = health.services as Record<string, unknown>;

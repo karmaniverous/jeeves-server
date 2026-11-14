@@ -22,8 +22,10 @@ export const eventLogEntrySchema = z.looseObject({
   event: z.string().nullable(),
   /** Whether the body matched an event. */
   matched: z.boolean(),
-  /** Exit code of the event command. */
-  exitCode: z.number().optional(),
+  /** Exit code of the event command; null when it was killed by a signal. */
+  exitCode: z.number().nullable().optional(),
+  /** True when the command timed out (it and its process tree were killed). */
+  timedOut: z.boolean().optional(),
   /** Command duration. */
   durationMs: z.number().optional(),
   /** Unmatched body as JSON, capped at 256 KiB. */

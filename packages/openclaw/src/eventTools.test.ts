@@ -23,6 +23,7 @@ const STATUS = {
     chrome: { configured: false },
     auth: { modes: [], insiderCount: 0, keyCount: 1 },
     events: [{ name: 'a' }, { name: 'b' }],
+    eventQueue: { offset: 0, size: 0, pendingBytes: 0, parseErrors: 0 },
     exports: {
       documents: [],
       directories: [],

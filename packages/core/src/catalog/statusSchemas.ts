@@ -69,7 +69,7 @@ export const serverHealthSchema = z.object({
     }),
   ),
   /** Event queue progress. */
-  eventQueue: eventQueueHealthSchema.optional(),
+  eventQueue: eventQueueHealthSchema,
   /** Export capabilities. */
   exports: z.object({
     /** Document formats. */

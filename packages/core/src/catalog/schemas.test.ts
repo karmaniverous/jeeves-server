@@ -100,6 +100,14 @@ describe('status health', () => {
     chrome: { configured: true, path: '/usr/bin/chrome' },
     auth: { modes: ['keys'], insiderCount: 1, keyCount: 2 },
     events: [{ name: 'ping', cmd: 'echo' }],
+    eventQueue: {
+      offset: 10,
+      size: 30,
+      pendingBytes: 20,
+      parseErrors: 1,
+      lastCursorReset: '2026-11-14T00:00:00.000Z',
+      lastRewind: '2026-11-14T00:00:01.000Z',
+    },
     exports: {
       documents: ['pdf'],
       directories: ['zip'],
@@ -137,6 +145,12 @@ describe('status health', () => {
       },
     };
     expect(status.parse(redacted)).toEqual(redacted);
+  });
+
+  it('requires the event queue block (Decision 10)', () => {
+    const rest: Partial<typeof health> = { ...health };
+    delete rest.eventQueue;
+    expect(status.safeParse({ ...body, health: rest }).success).toBe(false);
   });
 
   it('keeps the redirect URIs and the event queue block', () => {

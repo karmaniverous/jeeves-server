@@ -7,6 +7,7 @@
 import {
   D_VALIDATION,
   D4,
+  D10,
   D11,
   D17,
   D22,
@@ -152,14 +153,14 @@ export const DEPARTURES_SERVICE: Readonly<Record<string, WireDeparture>> = {
   },
   status: {
     before:
-      '200 with health.events[].cmd and health.chrome.path, without redirect URIs',
-    allowedBy: `${D22}; ${D17}`,
+      '200 with health.events[].cmd and health.chrome.path, without redirect URIs or health.eventQueue',
+    allowedBy: `${D22}; ${D17}; ${D10}`,
     status: 200,
   },
   'status insider key': {
     before:
-      '200 with health.events[].cmd and health.chrome.path (an insider-seed key is no identity on public routes)',
-    allowedBy: `${D22}; ${D17}`,
+      '200 with health.events[].cmd and health.chrome.path, without health.eventQueue (an insider-seed key is no identity on public routes)',
+    allowedBy: `${D22}; ${D17}; ${D10}`,
     status: 200,
   },
   config: {

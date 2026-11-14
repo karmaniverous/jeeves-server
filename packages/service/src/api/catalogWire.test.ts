@@ -63,14 +63,36 @@ const REDACTED_STAND_INS: Record<string, unknown> = {
   headings: [],
 };
 
+type Body = Record<string, unknown>;
+
 /**
  * Required fields 3.16.0 adds to a recorded success (the wire departures
- * list them): appended to the recorded body before it is parsed.
+ * list them): added to the recorded body, where the schema puts them,
+ * before it is parsed.
  */
-const ADDED_FIELDS: Readonly<Partial<Record<string, Record<string, unknown>>>> =
-  {
-    rotateKey: { invalidates: ['insiderKey', 'outsiderLinks'] },
-  };
+const ADDED_FIELDS: Readonly<Partial<Record<string, (body: Body) => Body>>> = {
+  rotateKey: (body) => ({
+    ...body,
+    invalidates: ['insiderKey', 'outsiderLinks'],
+  }),
+  // Decision 10: health.eventQueue, after health.events.
+  status: ({ health, ...body }) => ({
+    ...body,
+    health: Object.fromEntries(
+      Object.entries(health as Body).flatMap(([key, value]) =>
+        key === 'events'
+          ? [
+              [key, value],
+              [
+                'eventQueue',
+                { offset: 0, size: 0, pendingBytes: 0, parseErrors: 0 },
+              ],
+            ]
+          : [[key, value]],
+      ),
+    ),
+  }),
+};
 
 /**
  * A recorded body with its redacted fields replaced by valid stand-ins and
@@ -83,10 +105,10 @@ const ADDED_FIELDS: Readonly<Partial<Record<string, Record<string, unknown>>>> =
 function comparable(scenario: WireScenario, body: string): string {
   const added = ADDED_FIELDS[entryOf(scenario)?.name ?? ''];
   if (!scenario.redact && !added) return body;
-  const value = JSON.parse(body) as Record<string, unknown>;
+  const value = JSON.parse(body) as Body;
   for (const field of scenario.redact ?? [])
     if (field in REDACTED_STAND_INS) value[field] = REDACTED_STAND_INS[field];
-  return JSON.stringify({ ...value, ...added });
+  return JSON.stringify(added ? added(value) : value);
 }
 
 const SUCCESSES = WIRE_SCENARIOS.flatMap((scenario) => {

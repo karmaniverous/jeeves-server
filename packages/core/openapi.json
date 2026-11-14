@@ -327,6 +327,7 @@
                         "chrome",
                         "auth",
                         "events",
+                        "eventQueue",
                         "exports",
                         "diagrams",
                         "services",
@@ -3254,7 +3255,13 @@
                         "type": "boolean"
                       },
                       "exitCode": {
-                        "type": "number"
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "timedOut": {
+                        "type": "boolean"
                       },
                       "durationMs": {
                         "type": "number"

@@ -15,6 +15,7 @@ import { isAdmin } from '../api/accessHook.js';
 import { type HandlersFor, ok } from '../api/handlerTypes.js';
 import { getConfig } from '../config/index.js';
 import { DEFAULT_BRANDING } from '../config/schema.js';
+import { getEventQueueHealth } from '../services/queueHealth.js';
 import { packageVersion } from '../util/packageVersion.js';
 import { statusRedirectUris } from '../util/redirectUris.js';
 
@@ -175,6 +176,7 @@ const handleStatus = createStatusHandler({
         name,
         cmd: schema.cmd,
       })),
+      eventQueue: getEventQueueHealth(),
       exports: {
         documents: ['pdf', 'docx'],
         directories: ['zip'],

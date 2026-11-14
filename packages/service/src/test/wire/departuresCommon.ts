@@ -68,6 +68,10 @@ export const D14 =
 export const D17 =
   'Decision 17 (#270): /status adds health.auth.googleRedirectUri and oauthRedirectUri (the wire config has the google mode, OAuth providers and publicUrl)';
 
+/** Decision 10 (#302, #285): /status adds health.eventQueue. */
+export const D10 =
+  'Decision 10 (#302, #285): /status adds health.eventQueue (offset, size, pendingBytes, parseErrors, lastCursorReset, lastRewind)';
+
 /** Decision 20 (#292): one rotation route; the legacy routes are removed. */
 export const D20 =
   'Decision 20 (#292): POST /api/rotate-key is the one rotation route; POST /rotate-key and GET /share are removed';

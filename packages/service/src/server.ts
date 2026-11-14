@@ -14,8 +14,8 @@ import { registerServerApp } from './app.js';
 import { getConfig, initConfig, isConfigInitialized } from './config/index.js';
 import { initDiagramCache } from './services/diagramCache.js';
 import { initTransport } from './services/email.js';
-import { startQueueProcessor } from './services/eventQueue.js';
 import { initExportCache } from './services/exportCache.js';
+import { startQueueProcessor } from './services/queueProcessor.js';
 import { redirectUriLogLines } from './util/redirectUris.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

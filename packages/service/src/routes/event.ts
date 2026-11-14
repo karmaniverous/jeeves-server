@@ -70,7 +70,7 @@ export const eventHandlers: HandlersFor<'receiveEvent'> = {
     const match = matchEvent(body);
     if (match) {
       const transformedBody = await transformBody(body, match.map);
-      enqueue(match.name, match.cmd, transformedBody, match.timeoutMs);
+      await enqueue(match.name, match.cmd, transformedBody, match.timeoutMs);
       return ok({ matched: match.name });
     }
     // Full bodies are kept (they're used to design new event schemas),
