@@ -8,9 +8,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  computeDeepShareKey,
   computeInsiderKey,
   computeOutsiderKeyWithExpiry,
   computePathKey,
+  timingSafeEqual,
 } from './index.js';
 
 const SEED = 'test-api-key-12345';
@@ -46,4 +48,43 @@ describe('link keys (re-exported from @karmaniverous/jeeves)', () => {
       expect(computeOutsiderKeyWithExpiry(SEED, '/foo/bar', expiry)).toBe(key);
     },
   );
+});
+
+describe('computeDeepShareKey', () => {
+  // HMAC-SHA256 of `path|depth|dirs|stack|exp` (path lower-cased, slashes
+  // trimmed), first 32 hex characters.
+  it.for([
+    [
+      '/Foo/Bar/',
+      { depth: 2, dirs: true, stack: 'STACK', exp: String(EXPIRY) },
+      '6c23e70b09686405431c930acd07067c',
+    ],
+    [
+      'foo/bar',
+      { depth: 1, dirs: false, stack: '' },
+      '55e716ef1496225e21be45d41127fb5b',
+    ],
+  ] as const)('signs %s %o as %s', ([path, params, key]) => {
+    expect(computeDeepShareKey(SEED, path, params)).toBe(key);
+  });
+
+  it('changes with each parameter', () => {
+    const base = { depth: 1, dirs: false, stack: '' };
+    const key = computeDeepShareKey(SEED, '/a', base);
+    for (const params of [
+      { ...base, depth: 2 },
+      { ...base, dirs: true },
+      { ...base, stack: 'x' },
+      { ...base, exp: '1' },
+    ])
+      expect(computeDeepShareKey(SEED, '/a', params)).not.toBe(key);
+  });
+});
+
+describe('timingSafeEqual', () => {
+  it('is true only for equal strings, false for different lengths', () => {
+    expect(timingSafeEqual('abc', 'abc')).toBe(true);
+    expect(timingSafeEqual('abc', 'abd')).toBe(false);
+    expect(timingSafeEqual('abc', 'abcd')).toBe(false);
+  });
 });

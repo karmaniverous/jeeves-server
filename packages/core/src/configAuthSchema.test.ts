@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { authSchema } from './configAuthSchema.js';
+import { authSchema, getScopeRefs } from './configAuthSchema.js';
 
 describe('authSchema: accessContact (#304)', () => {
   it('is optional', () => {
@@ -20,5 +20,22 @@ describe('authSchema: accessContact (#304)', () => {
     expect(
       authSchema.safeParse({ modes: ['google'], accessContact }).success,
     ).toBe(false);
+  });
+});
+
+describe('getScopeRefs', () => {
+  it.each([
+    ['restricted', ['restricted']],
+    ['/**', []],
+    [
+      ['no-vc', '/j/**', 'team_1'],
+      ['no-vc', 'team_1'],
+    ],
+    [['no-vc', 3], []],
+    [[], []],
+    [{ allow: ['/a'] }, []],
+    [undefined, []],
+  ])('%j refers to named scopes %j', (scopes, refs) => {
+    expect(getScopeRefs(scopes)).toEqual(refs);
   });
 });

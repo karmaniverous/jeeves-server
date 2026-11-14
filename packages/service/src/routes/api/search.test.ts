@@ -103,6 +103,62 @@ describe('POST /api/search', () => {
     ).toMatchObject([{ browsePath: 'r/a.md' }]);
   });
 
+  it('groups chunks by file with its metadata, and collects the filter values', async () => {
+    const hit = (score: number, index: number, extra: object) => ({
+      id: String(index),
+      score,
+      payload: {
+        file_path: '/r/a.md',
+        chunk_text: `c${String(index)}`,
+        chunk_index: index,
+        ...extra,
+      },
+    });
+    search.mockResolvedValue([
+      hit(0.5, 2, { domain: 'email', author: 'ann', participants: 'bob' }),
+      hit(0.9, 1, {}),
+      {
+        id: 'b',
+        score: 0.7,
+        payload: {
+          file_path: '/r/b.md',
+          domains: ['slack'],
+          participants: '["cy","di"]',
+          empty: '',
+        },
+      },
+    ]);
+    const res = await postSearch({ query: 'q', limit: 5 });
+    const body = res.json<{
+      results: {
+        browsePath: string;
+        bestScore: number;
+        chunks: { index: number }[];
+        metadata: Record<string, unknown>;
+      }[];
+      metadata: Record<string, string[]>;
+    }>();
+    expect(body.results.map((r) => [r.browsePath, r.bestScore])).toEqual([
+      ['r/a.md', 0.9],
+      ['r/b.md', 0.7],
+    ]);
+    expect(body.results[0]?.chunks.map((c) => c.index)).toEqual([1, 2]);
+    expect(body.results[0]?.metadata).toEqual({
+      domains: ['email'],
+      author: 'ann',
+      participants: 'bob',
+    });
+    expect(body.results[1]?.metadata).toEqual({
+      domains: ['slack'],
+      participants: '["cy","di"]',
+    });
+    expect(body.metadata).toEqual({
+      domains: ['email', 'slack'],
+      authors: ['ann'],
+      participants: ['bob', 'cy', 'di'],
+    });
+  });
+
   it('caps the over-fetch at 200', async () => {
     search.mockResolvedValue([]);
     await postSearch({ query: 'q', limit: 100 });

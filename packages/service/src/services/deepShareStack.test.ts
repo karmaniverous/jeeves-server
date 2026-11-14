@@ -3,11 +3,14 @@
  * and which directories a deep link may list.
  */
 
+import LZString from 'lz-string';
 import { describe, expect, it } from 'vitest';
 
 import {
   canListDirectory,
+  decodeStack,
   encodeStack,
+  normalizeTargetPath,
   toDeepShareContext,
 } from './deepShareStack.js';
 
@@ -66,5 +69,35 @@ describe('canListDirectory', () => {
       false,
     );
     expect(canListDirectory(context(false, []), '/r/docs')).toBe(false);
+  });
+});
+
+describe('normalizeTargetPath', () => {
+  it.each([
+    ['/j/docs/a%20b.md', '/j/docs/a b.md'],
+    ['/j//docs/./sub/../a.md/', '/j/docs/a.md'],
+    ['/j/..', null],
+    ['/../j/a.md', null],
+    ['/', null],
+    ['/j/%E0%A4%A', null],
+  ])('%s is %s', (target, path) => {
+    expect(normalizeTargetPath(target)).toBe(path);
+  });
+});
+
+describe('decodeStack', () => {
+  it('round-trips encodeStack, and is empty for nothing, garbage or a non-array', () => {
+    expect(decodeStack(encodeStack(['/j/a.md', '/j/b']))).toEqual([
+      '/j/a.md',
+      '/j/b',
+    ]);
+    expect(decodeStack('')).toEqual([]);
+    expect(decodeStack('%%%')).toEqual([]);
+    expect(
+      decodeStack(LZString.compressToEncodedURIComponent('{oops')),
+    ).toEqual([]);
+    expect(decodeStack(LZString.compressToEncodedURIComponent('{}'))).toEqual(
+      [],
+    );
   });
 });
