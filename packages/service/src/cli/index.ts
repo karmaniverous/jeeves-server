@@ -9,7 +9,9 @@
  * @packageDocumentation
  */
 
-import { checkNodeVersion, createServiceCli } from '@karmaniverous/jeeves';
+import { createServiceCli } from '@karmaniverous/jeeves';
+
+import { checkNodeVersion } from './checkNodeVersion.js';
 
 checkNodeVersion();
 

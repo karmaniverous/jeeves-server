@@ -9,3 +9,5 @@ on:
 jobs:
   pack-check:
     uses: karmaniverous/gha-workflows/.github/workflows/npm-pack-check.yml@main
+    with:
+      node-version: '24.22.2'

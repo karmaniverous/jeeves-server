@@ -125,7 +125,7 @@ jeeves-server service start|stop|restart|status [--name <service-name>]
 - **Windows:** File browser auto-discovers drive letters (A–Z). Chrome path defaults to Program Files.
 - **Linux:** File browser uses configurable `roots` (e.g. `{ home: '/home', projects: '/opt/projects' }`). Chromium path is typically `/usr/bin/chromium-browser`.
 
-Both platforms are tested in CI (GitHub Actions on Ubuntu, Node 22+). Node.js 22 or later is required.
+Both platforms are tested in CI (GitHub Actions on Ubuntu, Node 24.22.2 and the latest Node 24). Node.js 24.22.2 or later is required (the floor for every Jeeves component: the built-in SQLite in Node 24.16.0-24.18.0 left WAL files un-checkpointed); the CLI exits with an error on an older Node.
 
 ## Development
 

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Node.js v24+
+- Node.js 24.22.2+
 - npm 10+
 - A `jeeves-core` configuration directory (set via `JEEVES_CONFIG_ROOT` env var, defaults to `J:\config` on the reference install)
 

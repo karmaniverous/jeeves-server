@@ -8,7 +8,7 @@ How to run Jeeves Server in production.
 
 ## Prerequisites
 
-- **Node.js** ≥ 22
+- **Node.js** ≥ 24.22.2 (the floor for every Jeeves component: the built-in SQLite in Node 24.16.0-24.18.0 left WAL files un-checkpointed)
 - **Chrome or Chromium** — for PDF/DOCX export via Puppeteer
 - **A domain** with HTTPS — required for Google OAuth and secure sharing
 - **A reverse proxy** — Caddy, nginx, or similar (recommended)

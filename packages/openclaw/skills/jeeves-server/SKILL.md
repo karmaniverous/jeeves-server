@@ -145,7 +145,7 @@ Service health for companion services (watcher, runner, meta) is mediated throug
 
 ### Prerequisites
 
-- **Node.js 22+** and npm
+- **Node.js 24.22.2+** and npm (the floor for every Jeeves component: the built-in SQLite in Node 24.16.0-24.18.0 left WAL files un-checkpointed)
 - **Java 8+** (optional, for local PlantUML rendering — jar downloaded automatically)
 - **Chrome/Chromium** (required for PDF export)
 - **NSSM** (Windows) or **systemd** (Linux) for service management

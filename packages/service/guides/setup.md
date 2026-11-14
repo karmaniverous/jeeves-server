@@ -6,7 +6,7 @@ title: 'Setup & Configuration'
 
 ## Prerequisites
 
-- **Node.js** ≥ 22
+- **Node.js** ≥ 24.22.2 (the floor for every Jeeves component: the built-in SQLite in Node 24.16.0-24.18.0 left WAL files un-checkpointed)
 - **Chrome or Chromium** — required for PDF export (Puppeteer uses it headlessly)
 
 ## Installation
