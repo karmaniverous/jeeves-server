@@ -1,7 +1,8 @@
 /**
  * Vitest config for recording the wire baseline: runs only `src/test/wire/wireRecord.record.ts`, which writes every scenario's reply to the file named by `WIRE_RECORD`. Used by `scripts/capture-wire.ts`; not part of `npm test`.
  *
- * Standalone rather than merged with `vitest.config.ts`: a stale tracked
+ * Standalone rather than merged with `vitest.config.ts`: the capture copies
+ * this file into a worktree of the branch base, where a stale tracked
  * `vitest.config.js` (no core alias) would shadow the `.ts` config in an
  * import, because Vite resolves `.js` before `.ts`.
  *

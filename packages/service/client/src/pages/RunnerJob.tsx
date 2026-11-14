@@ -64,9 +64,7 @@ export function RunnerJob() {
       await fetchData();
     } catch (err) {
       await fetchData();
-      setError(
-        err instanceof Error ? err.message : 'Failed to update the job',
-      );
+      setError(err instanceof Error ? err.message : 'Failed to update the job');
     }
   }, [job, fetchData]);
 

@@ -1,5 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@latest/schema.json",
   "project": ["src/**/*.ts"],
-  "ignoreBinaries": ["rimraf", "tsx", "eslint", "tsc", "git-cliff", "knip"]
+  "ignoreBinaries": ["rimraf", "tsx", "eslint", "tsc", "git-cliff", "knip"],
+  "ignoreExportsUsedInFile": true
 }

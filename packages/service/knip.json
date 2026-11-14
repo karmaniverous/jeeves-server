@@ -2,6 +2,9 @@
   "$schema": "https://unpkg.com/knip@latest/schema.json",
   "entry": ["src/cli/start-server.ts", "src/dev-server.ts"],
   "project": ["src/**/*.ts"],
+  "vitest": {
+    "config": ["vitest.config.ts", "vitest.wire-record.config.ts"]
+  },
   "ignoreBinaries": ["tsx", "tsc", "git-cliff", "eslint", "knip"],
   "ignoreExportsUsedInFile": true
 }

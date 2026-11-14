@@ -10,7 +10,7 @@
       ],
       "includeEntryExports": true,
       "vitest": {
-        "config": ["vitest.config.{js,ts}", "vitest.wire-record.config.ts"]
+        "config": ["vitest.config.ts", "vitest.wire-record.config.ts"]
       }
     },
     "packages/service/client": {
