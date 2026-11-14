@@ -195,6 +195,24 @@ describe('server_export', () => {
     });
   });
 
+  it.each(['zip', 'tar'])(
+    'with share, a directory %s is an error and signs nothing (archives are insider-only)',
+    async (format) => {
+      const requests = fakeServer({
+        'GET /api/link-info/j/docs': linkInfo(true),
+        'POST /api/share': shareReply(true),
+      });
+      const result = await runTool(pluginTools(), 'server_export', {
+        path: 'j/docs',
+        format,
+        share: {},
+      });
+      expect(result.isError).toBe(true);
+      expect(textOf(result)).toContain('archives are insider-only');
+      expect(requests).toHaveLength(1);
+    },
+  );
+
   it('never returns the plugin key, though it sends it', async () => {
     const requests = fakeServer({
       'GET /api/link-info/j/a.md': linkInfo(false),

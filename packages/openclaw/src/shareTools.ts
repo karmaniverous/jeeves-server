@@ -103,7 +103,7 @@ function exportTool(context: ToolContext): ToolDescriptor {
   return {
     name: 'server_export',
     description:
-      'Get a download URL for an export of a file or directory: pdf or docx for Markdown documents, zip or tar for directories, svg or png for Mermaid (.mmd) and PlantUML (.puml, .plantuml) diagrams. The URL carries no key and opens in an insider browser session; with share, it carries a signed share (optionally expiring) so anyone with the link can download it. Exports render when the URL is opened (Chrome for PDF).',
+      'Get a download URL for an export of a file or directory: pdf or docx for Markdown documents, zip or tar for directories, svg or png for Mermaid (.mmd) and PlantUML (.puml, .plantuml) diagrams. The URL carries no key and opens in an insider browser session; with share, it carries a signed share (optionally expiring) so anyone with the link can download it (files only: directory archives are insider-only, so share with zip or tar is an error). Exports render when the URL is opened (Chrome for PDF).',
     parameters: SERVER_EXPORT_PARAMETERS,
     execute: (_id, params) =>
       runServerCall(context, async (client, baseUrl) => {
@@ -119,6 +119,10 @@ function exportTool(context: ToolContext): ToolDescriptor {
               : `Format "${format}" is not available for ${path}; use ${valid.join(', ')}`,
           );
         const share = params.share as { expiryDays?: unknown } | undefined;
+        if (share !== undefined && info.isDirectory === true)
+          throw new Error(
+            `share is not available for a directory archive (${format}): archives are insider-only, so a shared URL would not open without an insider session; omit share`,
+          );
         if (share === undefined)
           return {
             path,

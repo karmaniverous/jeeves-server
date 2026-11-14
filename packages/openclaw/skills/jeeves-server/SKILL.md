@@ -21,7 +21,7 @@ Operate and interact with a jeeves-server 3.16 deployment through the plugin's t
 | `server_link_info` | `pageUrl`, `rawUrl`, `downloadUrl` and export links for a path |
 | `server_resolve_path` | Absolute filesystem path → browse path, browse URL and public URL |
 | `server_share` | Share link (`expiryDays`, `depth`, `dirs`, or `insiders` for an audience); `rawUrl` for file shares |
-| `server_export` | **Download URL** (not bytes) for `pdf`/`docx` (Markdown), `zip`/`tar` (directories), `svg`/`png` (Mermaid, PlantUML). Unkeyed (insider browser session) or `share: { expiryDays? }` for a URL anyone can open |
+| `server_export` | **Download URL** (not bytes) for `pdf`/`docx` (Markdown), `zip`/`tar` (directories), `svg`/`png` (Mermaid, PlantUML). Unkeyed (insider browser session) or `share: { expiryDays? }` for a URL anyone can open (files only: `share` with `zip`/`tar` is an error, archives are insider-only) |
 | `server_export_cache_clear` | Clear cached exports and diagrams of a file or a directory tree |
 | `server_file_write` | Overwrite an existing file (insider) |
 | `server_file_mutate` | `.md` edits: `edit-block`, `delete-block`, `insert-block`, `edit-cell`, `toggle-checkbox` (insider) |

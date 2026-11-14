@@ -59,7 +59,7 @@ export const SERVER_EXPORT_PARAMETERS: Record<string, unknown> = {
     share: {
       type: 'object',
       description:
-        'Sign a share for the path and derive the URL from it, so someone without a session can download the export. Omitted: the URL carries no credential.',
+        'Sign a share for the path and derive the URL from it, so someone without a session can download the export. Files only: directory archives (zip, tar) are insider-only, so share with them is an error. Omitted: the URL carries no credential.',
       properties: {
         expiryDays: {
           type: 'number',

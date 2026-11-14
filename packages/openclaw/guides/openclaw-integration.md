@@ -86,7 +86,7 @@ The plugin reads `publicUrl` from the server’s own config at `{configRoot}/jee
 | `server_link_info` | Query available link types for a path |
 | `server_drives` | List available root drives/labels |
 | `server_share` | Generate share links (with `rawUrl` for file shares, plain or deep; none for directories) with optional expiry (`expiryDays`; omitted, the link never expires), depth, insider audience, and outsider policy enforcement |
-| `server_export` | Download URL for an export (PDF/DOCX for Markdown, ZIP/Tar for directories, SVG/PNG for Mermaid and PlantUML): unkeyed, for an insider's browser session, or with `share: { expiryDays? }` derived from a signed share. Never fetches the export and never carries the plugin key |
+| `server_export` | Download URL for an export (PDF/DOCX for Markdown, ZIP/Tar for directories, SVG/PNG for Mermaid and PlantUML): unkeyed, for an insider's browser session, or with `share: { expiryDays? }` derived from a signed share (files only: directory archives are insider-only, so `share` with `zip`/`tar` is a tool error). Never fetches the export and never carries the plugin key |
 | `server_export_cache_clear` | Clear export and diagram caches for a path |
 | `server_file_write` | Overwrite file content (insider-only) |
 | `server_file_mutate` | Apply structured mutations to `.md` files: edit-block, delete-block, insert-block, edit-cell, toggle-checkbox (insider-only) |
