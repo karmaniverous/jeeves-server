@@ -225,7 +225,7 @@ Machine keys follow the same derivation model:
 
 ### The `_internal` key
 
-Reserved for server-side operations. Puppeteer uses this key when rendering PDFs and DOCX files (it loads the page in headless Chrome and needs to authenticate). It must be unscoped — the schema enforces this.
+Reserved for server-side operations. Puppeteer uses this key when rendering PDFs and DOCX files (it loads the page in headless Chrome and needs to authenticate). Although unscoped, it is never an admin: `/config`, `/config/apply` and `/api/events` refuse it (`403 SERVER_FORBIDDEN`). It must be unscoped — the schema enforces this.
 
 ---
 

@@ -39,6 +39,7 @@ async function buildApp(
   accessMode: AccessMode,
   scopes: NormalizedScopes | null,
   format: 'zip' | 'tar' = 'tar',
+  dirName = 'docs',
 ): Promise<FastifyInstance> {
   const app = testApp();
   app.get('/archive', async (request, reply) => {
@@ -46,8 +47,8 @@ async function buildApp(
     request.insiderScopes = scopes;
     const { body, headers } = directoryArchive(
       request,
-      path.join(tmpDir, 'docs'),
-      'j/docs',
+      path.join(tmpDir, dirName),
+      `j/${dirName}`,
       format,
     );
     return reply.headers(headers ?? {}).send(body);
@@ -94,7 +95,7 @@ describe('directoryArchive', () => {
     expect(res.statusCode).toBe(200);
     expect(res.headers['content-type']).toBe('application/x-tar');
     expect(res.headers['content-disposition']).toBe(
-      'attachment; filename="docs.tar"',
+      `attachment; filename="docs.tar"; filename*=UTF-8''docs.tar`,
     );
     expect(res.body).toContain('docs/readme.md');
     expect(res.body).toContain('TOP-SECRET-CONTENT');
@@ -115,6 +116,33 @@ describe('directoryArchive', () => {
     expect(res.body).toContain('docs/readme.md');
     expect(res.body).not.toContain('secrets');
     expect(res.body).not.toContain('TOP-SECRET-CONTENT');
+  });
+
+  describe('file names (#316)', () => {
+    it('zips a directory with a non-ASCII name (was a 500)', async () => {
+      write('日本/a.md', 'x');
+      app = await buildApp('insider', null, 'zip', '日本');
+      const res = await app.inject({ url: '/archive' });
+      expect(res.statusCode).toBe(200);
+      expect(res.headers['content-disposition']).toBe(
+        `attachment; filename="__.zip"; filename*=UTF-8''%E6%97%A5%E6%9C%AC.zip`,
+      );
+      expect(res.rawPayload.subarray(0, 2).toString()).toBe('PK');
+    });
+
+    // Windows file names cannot contain `"`; Linux CI runs this.
+    it.skipIf(process.platform === 'win32')(
+      'never sends a quote in the name raw',
+      async () => {
+        write('a"b/a.md', 'x');
+        app = await buildApp('insider', null, 'zip', 'a"b');
+        const res = await app.inject({ url: '/archive' });
+        expect(res.statusCode).toBe(200);
+        expect(res.headers['content-disposition']).toBe(
+          `attachment; filename="a_b.zip"; filename*=UTF-8''a%22b.zip`,
+        );
+      },
+    );
   });
 
   describe('size limit', () => {

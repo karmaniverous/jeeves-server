@@ -27,6 +27,7 @@ import {
   renderPlantUmlToBuffer,
 } from '../../services/plantuml.js';
 import { requireChrome } from '../../services/puppeteer.js';
+import { attachmentDisposition } from '../../util/contentDisposition.js';
 import { DIAGRAM_CONTENT_TYPES } from '../../util/fileDetection.js';
 import { getRoots } from '../../util/platform.js';
 import { fsPathOf, requirePath } from './routePath.js';
@@ -48,7 +49,7 @@ function diagramResult(
 ) {
   return ok(buffer, {
     'content-type': DIAGRAM_CONTENT_TYPES[format] ?? 'application/octet-stream',
-    'content-disposition': `attachment; filename="${downloadName}"`,
+    'content-disposition': attachmentDisposition(downloadName),
   });
 }
 

@@ -87,7 +87,7 @@ Other codes (`SERVER_MACHINE_KEY_NOT_ROTATABLE`, `SERVER_SIGN_IN_REJECTED`, `SER
 ## Configuration notes
 
 - Config is `{configRoot}/jeeves-server/config.json` (JSON, `${VAR}` substitution). Insider seeds live there too (no `state.json`). Back up `config.json` and the event queue (`logs/event-queue.jsonl` and its `.cursor`); neither is in the package.
-- `keys._internal` is required for PDF/DOCX; `keys._plugin` (unscoped) for the plugin. Admin insiders have no `scopes`.
+- `keys._internal` is required for PDF/DOCX (never an admin); `keys._plugin` (unscoped) for the plugin. Admin insiders have no `scopes`.
 - `roots` (Linux) maps root ids to paths; `events` maps names to schema + command; `oauth` (`credentialDir`, `providers`) backs the `oauth_*` tools; `go` maps `/go/<slug>` shortlinks; `printStyles` names PDF styles; `exportCachePath` moves the export cache.
 - `publicUrl` (or `trustProxyHeaders: true`) is required when email, Google or OAuth login is configured. Mermaid is bundled; PlantUML's jar downloads on install (Java optional).
 - CLI: `jeeves-server config` and `config apply` need an admin key: `--key`, `JEEVES_SERVER_KEY`, or `--config` (derives it from `keys._plugin`).

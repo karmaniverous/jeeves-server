@@ -103,12 +103,16 @@ describe('documentExportKey', () => {
     ).not.toBe(keyOf());
   });
 
-  it('changes with the document path, not its case or separators', () => {
+  it('changes with the document path, not its separators (case only off Windows)', () => {
     const other = path.join(dir, 'copy.md');
     expect(keyOf({}, 'pdf', SOURCE, other)).not.toBe(keyOf());
     const plain = '# No images\n';
     expect(keyOf({}, 'pdf', plain, 'D:\\Docs\\Doc.md')).toBe(
-      keyOf({}, 'pdf', plain, 'd:/docs/doc.md'),
+      keyOf({}, 'pdf', plain, 'D:/Docs/Doc.md'),
     );
+    const caseFolded =
+      keyOf({}, 'pdf', plain, 'D:/Docs/Doc.md') ===
+      keyOf({}, 'pdf', plain, 'd:/docs/doc.md');
+    expect(caseFolded).toBe(process.platform === 'win32');
   });
 });

@@ -1,13 +1,13 @@
 /**
- * The access hook (`onRequest`): enforces each catalog entry's access class (`ROUTE_ACCESS`, Decision 8) before the request is parsed, and stores who is calling on the request. Routes outside the catalog (browser routes, the legacy routes) and unknown URLs pass through untouched.
+ * The access hook (`onRequest`): enforces each catalog entry's access class (`ROUTE_ACCESS`, Decision 8) before the request is parsed, and stores who is calling on the request. It runs only inside the catalog scope (`api/routes.ts`): the entry comes from the route Fastify matched, never from the raw URL, and a route that is no catalog entry fails closed.
  *
  * @remarks
  * Public entries resolve an identity when one is present and never fail on
  * it. The key-exchange and webhook entries verify their machine seed or
  * event key. Every other entry rejects a `..` segment in its content path,
- * then resolves an identity (session, machine insider key, and the
+ * (in the decoded path, either separator), then resolves an identity (session, machine insider key, and the
  * insider-seed insider key only where `loginSeedKey`): `admin` needs one with
- * no scopes (Decision 12); on content and navigation entries an identity
+ * no scopes (Decision 12) that is not the `_internal` machine key; on content and navigation entries an identity
  * outside its scopes falls back to a valid share credential (as an outsider,
  * with the signer's scopes), else `SERVER_OUT_OF_SCOPE`. Without an
  * identity, a share credential valid for the content path admits an
@@ -31,16 +31,16 @@ import {
 import type { AuthQuery } from '../auth/resolve.js';
 import { canAccessPath, canNavigatePath } from '../auth/scopeAccess.js';
 import { getConfig } from '../config/index.js';
+import { INTERNAL_KEY_NAME } from '../config/types.js';
 import {
-  hasTraversalSegment,
   parseContentRoute,
+  requireNoTraversal,
 } from '../routes/api/contentRoute.js';
 import { INSIDER_REQUIRED_ERROR } from '../routes/api/scopeGuard.js';
-import { matchCatalogRoute } from './catalogMatch.js';
+import { matchCatalogRequest } from './catalogMatch.js';
 import {
   Forbidden,
   InsiderRequired,
-  InvalidPath,
   OutOfScope,
   Unauthorized,
 } from './errors.js';
@@ -102,17 +102,28 @@ function scopesAllow(
 }
 
 /**
+ * True when an identity is an admin: no scopes configured (Decision 12),
+ * and not the server's own `_internal` machine key, which signs export
+ * renders and share links but never administers the server.
+ *
+ * @param identity - The identity.
+ * @returns Whether it is.
+ */
+const isAdminIdentity = (identity: Identity): boolean =>
+  identity.scopes === null &&
+  !(identity.kind === 'machineKey' && identity.name === INTERNAL_KEY_NAME);
+
+/**
  * Enforce the access class of the catalog entry a request addresses.
  *
  * @param request - The request.
  * @throws `SERVER_INVALID_PATH` (400), `SERVER_UNAUTHORIZED` (401),
  *   `SERVER_FORBIDDEN`, `SERVER_OUT_OF_SCOPE` or `SERVER_INSIDER_REQUIRED`
- *   (403), per the access model.
+ *   (403), per the access model; a plain error (masked 500) when the
+ *   route is no catalog entry.
  */
 export function authorizeRequest(request: FastifyRequest): void {
-  if (request.is404) return;
-  const match = matchCatalogRoute(request.method, request.url);
-  if (!match) return;
+  const match = matchCatalogRequest(request);
   const access = routeAccess(match.name);
   request.access = { entry: match.name, class: access.class };
   const config = getConfig();
@@ -138,12 +149,11 @@ export function authorizeRequest(request: FastifyRequest): void {
   }
 
   const contentPath = parseContentRoute(match, access)?.path;
-  if (contentPath !== undefined && hasTraversalSegment(contentPath))
-    throw new InvalidPath('Invalid path');
+  if (contentPath !== undefined) requireNoTraversal(contentPath);
 
   const identity = resolveIdentity(config, request, query, access.loginSeedKey);
   if (identity) {
-    if (access.class === 'admin' && identity.scopes !== null)
+    if (access.class === 'admin' && !isAdminIdentity(identity))
       throw new Forbidden(UNSCOPED_INSIDER_REQUIRED_ERROR);
     if (
       contentPath === undefined ||
@@ -179,11 +189,12 @@ export function addAccessHook(app: FastifyInstance): void {
 }
 
 /**
- * True when the caller is an admin: an identity with no scopes configured
- * (Decision 12).
+ * True when the caller is an admin ({@link isAdminIdentity}).
  *
  * @param request - The request.
  * @returns Whether it is.
  */
-export const isAdmin = (request: FastifyRequest): boolean =>
-  request.access?.identity?.scopes === null;
+export const isAdmin = (request: FastifyRequest): boolean => {
+  const identity = request.access?.identity;
+  return identity !== undefined && isAdminIdentity(identity);
+};

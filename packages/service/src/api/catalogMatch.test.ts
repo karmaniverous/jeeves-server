@@ -1,71 +1,96 @@
 /**
- * Tests for matching requests to server catalog entries.
+ * Tests for matching a routed request to its server catalog entry: by the route Fastify matched, so percent-encoded URLs resolve to the entry they reach, with the decoded `*` value; any other route fails closed.
  *
  * @packageDocumentation
  */
 
 import { SERVER_CATALOG } from '@karmaniverous/jeeves-server-core';
-import { describe, expect, it } from 'vitest';
+import Fastify, { type FastifyInstance } from 'fastify';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { compileRoutePath, matchCatalogRoute } from './catalogMatch.js';
+import { catalogEntryAt, matchCatalogRequest } from './catalogMatch.js';
 
-describe('matchCatalogRoute', () => {
+describe('catalogEntryAt', () => {
   it.each([
-    ['GET', '/status', { name: 'status' }],
-    ['HEAD', '/status', { name: 'status' }],
-    ['GET', '/config?path=$.port', { name: 'config' }],
-    ['POST', '/config/apply', { name: 'configApply' }],
-    ['GET', '/key?path=/x', { name: 'pathKey' }],
-    ['POST', '/event?k=x', { name: 'receiveEvent' }],
-    ['POST', '/api/search', { name: 'search' }],
-    ['GET', '/api/search/facets', { name: 'searchFacets' }],
-    ['GET', '/api/path/j/a%20b', { name: 'browse', wildcard: 'j/a%20b' }],
-    ['GET', '/api/path', { name: 'browse', wildcard: '' }],
-    ['PUT', '/api/file/j/a.md', { name: 'fileWrite', wildcard: 'j/a.md' }],
-    ['POST', '/api/file/j/a.md', { name: 'fileMutate', wildcard: 'j/a.md' }],
-    [
-      'DELETE',
-      '/api/export-cache/j/a.md',
-      { name: 'exportCacheClear', wildcard: 'j/a.md' },
-    ],
-    ['GET', '/api/export/j/a.md', { name: 'export', wildcard: 'j/a.md' }],
-    ['GET', '/api/diagram/mermaid/abc', { name: 'diagram' }],
-    ['GET', '/api/content-link/terms', { name: 'contentLink' }],
-    ['POST', '/api/util/share-for', { name: 'shareFor' }],
-    [
-      'POST',
-      '/api/runner/jobs/a/run',
-      { name: 'runnerPost', wildcard: 'jobs/a/run' },
-    ],
-  ])('%s %s', (method, url, expected) => {
-    expect(matchCatalogRoute(method, url)).toEqual(expected);
+    ['GET', '/status', 'status'],
+    ['HEAD', '/status', 'status'],
+    ['POST', '/config/apply', 'configApply'],
+    ['GET', '/api/path/*', 'browse'],
+    ['PUT', '/api/file/*', 'fileWrite'],
+    ['GET', '/api/diagram/:type/:hash', 'diagram'],
+  ])('%s %s -> %s', (method, url, name) => {
+    expect(catalogEntryAt(method, url)).toBe(name);
   });
 
   it.each([
     ['GET', '/api/search'],
-    ['GET', '/api/export-cache/j/a.md'],
-    ['GET', '/api/diagram/mermaid'],
-    ['GET', '/api/auth/statusX'],
-    ['GET', '/api/paths/x'],
-    ['POST', '/rotate-key'],
-    ['GET', '/share'],
-    ['GET', '/browse/j/a.md'],
-    ['GET', '/api/drives/'],
-  ])('matches no entry for %s %s', (method, url) => {
-    expect(matchCatalogRoute(method, url)).toBeNull();
+    ['GET', '/browse/*'],
+    ['GET', '/api/path/x'],
+    ['GET', undefined],
+  ])('finds no entry for %s %s', (method, url) => {
+    expect(catalogEntryAt(method, url)).toBeUndefined();
   });
 
-  it('matches each request to at most one entry', () => {
-    const patterns = SERVER_CATALOG.entries.map((e) => ({
-      method: e.method,
-      pattern: compileRoutePath(e.path),
-    }));
-    for (const entry of SERVER_CATALOG.entries) {
-      const sample = entry.path.replace(/:[^/]+/gu, 'x').replace('*', 'y/z');
-      const hits = patterns.filter(
-        (p) => p.method === entry.method && p.pattern.test(sample),
-      );
-      expect(hits, `${entry.method} ${sample}`).toHaveLength(1);
-    }
+  it('has one entry per catalog route', () => {
+    for (const entry of SERVER_CATALOG.entries)
+      expect(catalogEntryAt(entry.method, entry.path)).toBe(entry.name);
+  });
+});
+
+describe('matchCatalogRequest', () => {
+  let app: FastifyInstance;
+
+  beforeAll(async () => {
+    app = Fastify();
+    app.setErrorHandler((error, _request, reply) =>
+      reply.status(500).send({ error: (error as Error).message }),
+    );
+    await app.register((child, _options, done) => {
+      const handler = (request: Parameters<typeof matchCatalogRequest>[0]) =>
+        matchCatalogRequest(request);
+      child.get('/api/path/*', handler);
+      child.get('/config', handler);
+      child.post('/config/apply', handler);
+      child.get('/api/diagram/:type/:hash', handler);
+      child.get('/not-an-entry', handler);
+      done();
+    });
+    await app.ready();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it.each([
+    ['GET', '/config', { name: 'config' }],
+    ['GET', '/%63onfig', { name: 'config' }],
+    ['POST', '/%63onfig/%61pply', { name: 'configApply' }],
+    ['GET', '/api/diagram/mermaid/%61b', { name: 'diagram' }],
+    ['GET', '/api/path/', { name: 'browse', wildcard: '' }],
+    ['GET', '/%61pi/path/j/a%20b', { name: 'browse', wildcard: 'j/a b' }],
+    ['GET', '/api/path/j%2F..%2Fx', { name: 'browse', wildcard: 'j/../x' }],
+    ['GET', '/api/path/j/%2525', { name: 'browse', wildcard: 'j/%25' }],
+  ])('%s %s', async (method, url, expected) => {
+    const res = await app.inject({
+      method: method as 'GET',
+      url,
+      ...(method === 'POST' ? { payload: {} } : {}),
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual(expected);
+  });
+
+  it('resolves HEAD to the GET entry', async () => {
+    const res = await app.inject({ method: 'HEAD', url: '/%63onfig' });
+    expect(res.statusCode).toBe(200);
+  });
+
+  it('fails closed on a route outside the catalog', async () => {
+    const res = await app.inject('/not-an-entry');
+    expect(res.statusCode).toBe(500);
+    expect(res.json()).toEqual({
+      error: 'Route outside the server catalog: GET /not-an-entry',
+    });
   });
 });

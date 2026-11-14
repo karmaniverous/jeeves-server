@@ -118,8 +118,14 @@ describe('Markdown documents: file API, export and link-info agree', () => {
     expect(await views(name)).toEqual({
       type: 'markdown',
       exported: [
-        { status: 200, disposition: `attachment; filename="${base}.pdf"` },
-        { status: 200, disposition: `attachment; filename="${base}.docx"` },
+        {
+          status: 200,
+          disposition: `attachment; filename="${base}.pdf"; filename*=UTF-8''${base}.pdf`,
+        },
+        {
+          status: 200,
+          disposition: `attachment; filename="${base}.docx"; filename*=UTF-8''${base}.docx`,
+        },
       ],
       formats: ['pdf', 'docx'],
     });
@@ -132,8 +138,14 @@ describe('Markdown documents: file API, export and link-info agree', () => {
     expect(await views('industry.json')).toEqual({
       type: 'markdown',
       exported: [
-        { status: 200, disposition: 'attachment; filename="industry.pdf"' },
-        { status: 200, disposition: 'attachment; filename="industry.docx"' },
+        {
+          status: 200,
+          disposition: `attachment; filename="industry.pdf"; filename*=UTF-8''industry.pdf`,
+        },
+        {
+          status: 200,
+          disposition: `attachment; filename="industry.docx"; filename*=UTF-8''industry.docx`,
+        },
       ],
       formats: ['pdf', 'docx'],
     });

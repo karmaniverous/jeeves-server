@@ -11,13 +11,20 @@ import fs from 'node:fs';
 type PathIndex = Record<string, string[]>;
 
 /**
- * Normalise a path for an index: forward slashes, lower case.
+ * Normalise a path for an index: forward slashes, and lower case on
+ * Windows only (its file system ignores case; others don't, so `A.md` and
+ * `a.md` are different files there).
  *
  * @param fsPath - File system path.
+ * @param platform - The platform (default: this process's).
  * @returns The index key.
  */
-export function indexKey(fsPath: string): string {
-  return fsPath.replace(/\\/g, '/').toLowerCase();
+export function indexKey(
+  fsPath: string,
+  platform: NodeJS.Platform = process.platform,
+): string {
+  const key = fsPath.replace(/\\/g, '/');
+  return platform === 'win32' ? key.toLowerCase() : key;
 }
 
 /**

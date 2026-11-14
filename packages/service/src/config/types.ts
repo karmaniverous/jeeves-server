@@ -171,5 +171,11 @@ export interface EventLogEntry {
   originalBytes?: number;
 }
 
+/**
+ * Name of the machine key the server signs its own requests with (export
+ * rendering, share links). It never counts as an admin identity.
+ */
+export const INTERNAL_KEY_NAME = '_internal';
+
 /** Cap on a stored unmatched event body (256 KiB of UTF-8 JSON). */
 export const MAX_STORED_BODY_BYTES = 256 * 1024;

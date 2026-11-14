@@ -12,7 +12,12 @@ import { computeInsiderKey } from '../util/crypto.js';
 import { resolveNamedScopes } from './resolveScopes.js';
 import type { JeevesConfig } from './schema.js';
 import { DEFAULT_BRANDING } from './schema.js';
-import type { ResolvedInsider, ResolvedKey, RuntimeConfig } from './types.js';
+import {
+  INTERNAL_KEY_NAME,
+  type ResolvedInsider,
+  type ResolvedKey,
+  type RuntimeConfig,
+} from './types.js';
 
 export { normalizeScopes, resolveNamedScopes } from './resolveScopes.js';
 
@@ -103,7 +108,7 @@ export function resolvePlantuml(
  * Derive the internal insider key from resolved keys.
  */
 export function deriveInternalKey(resolvedKeys: ResolvedKey[]): string | null {
-  const internalKey = resolvedKeys.find((k) => k.name === '_internal');
+  const internalKey = resolvedKeys.find((k) => k.name === INTERNAL_KEY_NAME);
   return internalKey ? computeInsiderKey(internalKey.seed) : null;
 }
 

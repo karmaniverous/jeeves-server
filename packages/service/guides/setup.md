@@ -392,7 +392,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 | Key | Purpose | Scopes |
 | --- | --- | --- |
-| `_internal` | Puppeteer uses this to authenticate when rendering PDFs/DOCX. **Required for export.** | Must be unscoped |
+| `_internal` | Puppeteer uses this to authenticate when rendering PDFs/DOCX. **Required for export.** Never an admin (refused by `/config`). | Must be unscoped |
 | `_plugin` | OpenClaw plugin authentication. See [OpenClaw Integration](../../openclaw/guides/openclaw-integration.md). | Must be unscoped |
 
 Both reserved keys are enforced unscoped by the Zod schema.

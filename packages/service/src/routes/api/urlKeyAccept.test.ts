@@ -59,15 +59,17 @@ let app: FastifyInstance;
 
 beforeAll(async () => {
   app = testApp();
-  addAccessHook(app);
-  await app.register(async (api) => {
-    for (const prefix of CONTENT_PREFIXES) api.get(`${prefix}/*`, echo);
-    api.post('/api/util/share-for', echo);
-    await api.register(catalogRoutes(authStatusHandlers));
-    api.post('/api/rotate-key', echo);
+  // As production: the hook guards a scope of catalog routes only, so an
+  // unknown URL reaches the root 404 handler.
+  await app.register(async (scope) => {
+    addAccessHook(scope);
+    for (const prefix of CONTENT_PREFIXES) scope.get(`${prefix}/*`, echo);
+    scope.post('/api/util/share-for', echo);
+    scope.post('/api/rotate-key', echo);
+    await scope.register(catalogRoutes(authStatusHandlers));
+    await scope.register(catalogRoutes(keysHandlers));
+    await scope.register(catalogRoutes(eventHandlers));
   });
-  await app.register(catalogRoutes(keysHandlers));
-  await app.register(catalogRoutes(eventHandlers));
   await app.ready();
 });
 

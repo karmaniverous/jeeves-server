@@ -15,6 +15,7 @@ import { ArchiveTooLarge, InsiderRequired } from '../../api/errors.js';
 import { ok } from '../../api/handlerTypes.js';
 import { scopedEntryFilter } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
+import { attachmentDisposition } from '../../util/contentDisposition.js';
 import { getDirSize } from '../../util/platform.js';
 
 /** Supported directory archive formats. */
@@ -76,6 +77,6 @@ export function directoryArchive(
   archive.finalize().catch(logFailure);
   return ok(archive, {
     'content-type': format === 'tar' ? 'application/x-tar' : 'application/zip',
-    'content-disposition': `attachment; filename="${dirName}.${format}"`,
+    'content-disposition': attachmentDisposition(`${dirName}.${format}`),
   });
 }

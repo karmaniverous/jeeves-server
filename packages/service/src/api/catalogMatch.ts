@@ -1,10 +1,9 @@
 /**
- * Maps a request (method and URL) to the server catalog entry whose route it addresses, from the catalog's own paths (`:param` segments and a trailing `*`), plus the raw `*` value. Pure.
+ * Maps a request to the server catalog entry whose route Fastify matched (`request.routeOptions.url` and the method), plus the decoded `*` value. Never re-parses the raw URL: Fastify decodes it before routing, so `/%63onfig` reaches the `/config` route and must be checked as `/config`.
  *
  * @remarks
- * `HEAD` matches the `GET` entry (Fastify answers `HEAD` from `GET`
- * routes). A wildcard route also matches its bare prefix (`/api/path`
- * addresses the root), as the content routes always have.
+ * `HEAD` resolves to the `GET` entry (Fastify answers `HEAD` from `GET`
+ * routes).
  *
  * @packageDocumentation
  */
@@ -13,72 +12,55 @@ import {
   SERVER_CATALOG,
   type ServerEntryName,
 } from '@karmaniverous/jeeves-server-core';
+import type { FastifyRequest } from 'fastify';
 
 /** A request matched to a catalog entry. */
 export interface CatalogMatch {
   /** The entry. */
   name: ServerEntryName;
-  /** The raw (still percent-encoded) `*` value, for wildcard entries. */
+  /** The decoded `*` value, for wildcard entries. */
   wildcard?: string;
 }
 
-/** A compiled entry route. */
-interface EntryMatcher {
-  name: ServerEntryName;
-  method: string;
-  pattern: RegExp;
-  wildcard: boolean;
-}
-
-/** Escape a static path segment for a regular expression. */
-const escape = (segment: string): string =>
-  segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-/**
- * Compile a catalog path (Fastify syntax) to a regular expression whose
- * one optional group is the `*` value.
- *
- * @param path - Catalog path.
- * @returns The pattern.
- */
-export function compileRoutePath(path: string): RegExp {
-  const wildcard = path.endsWith('/*');
-  const segments = (wildcard ? path.slice(0, -2) : path).split('/');
-  const body = segments
-    .map((segment) => (segment.startsWith(':') ? '[^/]+' : escape(segment)))
-    .join('/');
-  return new RegExp(`^${body}${wildcard ? '(?:/(.*))?' : ''}$`, 'u');
-}
-
-const MATCHERS: readonly EntryMatcher[] = SERVER_CATALOG.entries.map(
-  (entry) => ({
-    name: entry.name,
-    method: entry.method,
-    pattern: compileRoutePath(entry.path),
-    wildcard: entry.path.endsWith('/*'),
-  }),
+/** Catalog entries by "METHOD path" (the path as registered). */
+const ENTRIES: ReadonlyMap<string, ServerEntryName> = new Map(
+  SERVER_CATALOG.entries.map((entry) => [
+    `${entry.method} ${entry.path}`,
+    entry.name,
+  ]),
 );
 
 /**
- * The catalog entry a request addresses.
+ * The catalog entry registered at a route.
  *
  * @param method - HTTP method.
- * @param url - Request URL (path and query).
- * @returns The entry and its raw `*` value, or null for any other route.
+ * @param routeUrl - The route's path pattern, as registered.
+ * @returns The entry, or undefined for any other route.
  */
-export function matchCatalogRoute(
+export function catalogEntryAt(
   method: string,
-  url: string,
-): CatalogMatch | null {
-  const pathname = url.split('?')[0];
-  const wanted = method === 'HEAD' ? 'GET' : method;
-  for (const matcher of MATCHERS) {
-    if (matcher.method !== wanted) continue;
-    const match = matcher.pattern.exec(pathname);
-    if (!match) continue;
-    return matcher.wildcard
-      ? { name: matcher.name, wildcard: match.at(1) ?? '' }
-      : { name: matcher.name };
-  }
-  return null;
+  routeUrl: string | undefined,
+): ServerEntryName | undefined {
+  if (routeUrl === undefined) return undefined;
+  return ENTRIES.get(`${method === 'HEAD' ? 'GET' : method} ${routeUrl}`);
+}
+
+/**
+ * The catalog entry the route Fastify matched for a request belongs to.
+ *
+ * @param request - The request (routed).
+ * @returns The entry and its decoded `*` value.
+ * @throws When the route is no catalog entry: callers sit inside the
+ *   catalog scope, so an unknown route fails closed (a masked 500).
+ */
+export function matchCatalogRequest(request: FastifyRequest): CatalogMatch {
+  const routeUrl = request.routeOptions.url;
+  const name = catalogEntryAt(request.method, routeUrl);
+  if (name === undefined)
+    throw new Error(
+      `Route outside the server catalog: ${request.method} ${String(routeUrl)}`,
+    );
+  if (!routeUrl?.endsWith('/*')) return { name };
+  const params = request.params as { '*'?: string } | undefined;
+  return { name, wildcard: params?.['*'] ?? '' };
 }

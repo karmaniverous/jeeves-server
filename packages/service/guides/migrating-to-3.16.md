@@ -67,7 +67,7 @@ Both now answer `404 SERVER_NOT_FOUND`.
 
 ## `/config` and `/config/apply` are admin-only
 
-In 3.15 both routes were unauthenticated: anyone who could reach the port could read the runtime config and rewrite it (only a reverse-proxy block protected them). In 3.16 they are **admin** routes: they accept only an identity with **no scopes configured**, i.e. an unscoped insider session or an unscoped machine key such as the plugin's `_plugin` key. Any configured scope, even `allow: ["/**"]`, gets `403 SERVER_FORBIDDEN`; no credential gets `401 SERVER_UNAUTHORIZED`. `/api/events` follows the same rule (as in 3.15). The `/config/apply` response is redacted like `/config`.
+In 3.15 both routes were unauthenticated: anyone who could reach the port could read the runtime config and rewrite it (only a reverse-proxy block protected them). In 3.16 they are **admin** routes: they accept only an identity with **no scopes configured**, i.e. an unscoped insider session or an unscoped machine key such as the plugin's `_plugin` key, but never the server's own `_internal` key (it renders exports, not admin). Any configured scope, even `allow: ["/**"]`, gets `403 SERVER_FORBIDDEN`; no credential gets `401 SERVER_UNAUTHORIZED`. `/api/events` follows the same rule (as in 3.15). The `/config/apply` response is redacted like `/config`.
 
 To keep using the config from a browser session, remove `scopes`, `allow` and `deny` from your own insider entry:
 
@@ -90,6 +90,8 @@ Every route is a catalog entry with one access class ([API Reference](./api-refe
 - **`GET /api/resolve-path`** checks the resolved path against a scoped caller's scopes (3.15 resolved any path for a scoped session).
 - **The insider-seed insider key** authenticates `POST /api/rotate-key` as well as `POST /api/util/share-for`, and nothing else.
 - **Share keys** never authenticate insider or admin routes.
+- **Access follows the route the server matched**, after percent-decoding, so an encoded URL (`/%63onfig`, `/%61pi/file/...`) gets exactly the checks of the plain one, and an encoded `..` segment (`%2e%2e`, `%2F..%2F`) is `400 SERVER_INVALID_PATH` on every content route. `POST /api/share`, `POST /api/util/share-for` and `GET /api/resolve-path` refuse a path with a `..` segment the same way.
+- **Export downloads** (`/api/export`, `/api/mermaid-export`, `/api/plantuml-export`) send `Content-Disposition: attachment; filename="<ASCII fallback>"; filename*=UTF-8''<percent-encoded name>` (RFC 6266), as `/api/raw?download=1` does: a non-ASCII name (a directory named `日本`, say) no longer fails with 500.
 
 ## `/status` hides admin fields
 

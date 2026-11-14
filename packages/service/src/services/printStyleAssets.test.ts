@@ -16,6 +16,7 @@ const LOGO_URI = `data:image/png;base64,${Buffer.from('PNG').toString('base64')}
 fs.mkdirSync(path.dirname(logo), { recursive: true });
 fs.writeFileSync(logo, 'PNG');
 fs.writeFileSync(path.join(assets, 'font.woff2'), 'W2');
+fs.writeFileSync(path.join(assets, '..logo.png'), 'DOTS');
 fs.writeFileSync(outside, 'SECRET');
 
 afterAll(() => {
@@ -46,6 +47,14 @@ describe('inlineAssets: CSS url()', () => {
     expect(warn).not.toHaveBeenCalled();
   });
 
+  it('inlines a file whose name starts with .. (inside the directory)', () => {
+    const out = css('a { b: url(..logo.png); }');
+    expect(out.text).toBe(
+      `a { b: url("data:image/png;base64,${Buffer.from('DOTS').toString('base64')}"); }`,
+    );
+    expect(warn).not.toHaveBeenCalled();
+  });
+
   it('types fonts by extension', () => {
     expect(css('src: url(font.woff2)').text).toBe(
       `src: url("data:font/woff2;base64,${Buffer.from('W2').toString('base64')}")`,
@@ -54,6 +63,7 @@ describe('inlineAssets: CSS url()', () => {
 
   it.each([
     ['outside the directory', 'url(../secret.png)'],
+    ['in the parent directory', 'url(..)'],
     ['an absolute path', `url("${outside.replaceAll('\\', '/')}")`],
     ['remote', 'url(https://example.com/logo.png)'],
     ['protocol-relative', 'url(//example.com/logo.png)'],

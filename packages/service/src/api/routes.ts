@@ -16,7 +16,7 @@ import {
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import { addAccessHook } from './accessHook.js';
-import { matchCatalogRoute } from './catalogMatch.js';
+import { matchCatalogRequest } from './catalogMatch.js';
 import type { ServerHandlers } from './handlerTypes.js';
 
 /**
@@ -31,7 +31,8 @@ const EMPTY_BODY_ENTRIES: ReadonlySet<ServerEntryName> = new Set([
 ]);
 
 /**
- * Before validation: a missing body is `{}` on the entries that allow one,
+ * Before validation (entry from the matched route, as the access hook
+ * finds it; a route outside the catalog throws): a missing body is `{}` on the entries that allow one,
  * and `GET /api/path/` (an empty browse path) redirects to the drives.
  *
  * @param request - The request.
@@ -42,10 +43,8 @@ export function beforeValidation(
   request: FastifyRequest,
   reply: FastifyReply,
 ): Promise<unknown> {
-  const entry =
-    request.access?.entry ??
-    matchCatalogRoute(request.method, request.url)?.name;
-  if (entry !== undefined && EMPTY_BODY_ENTRIES.has(entry)) request.body ??= {};
+  const entry = matchCatalogRequest(request).name;
+  if (EMPTY_BODY_ENTRIES.has(entry)) request.body ??= {};
   if (entry === 'browse' && (request.params as { '*'?: string })['*'] === '')
     return Promise.resolve(reply.redirect('/api/drives'));
   return Promise.resolve(undefined);

@@ -23,11 +23,13 @@ import {
 import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { findInsider } from '../../auth/resolve.js';
 import { getConfig, resetConfig } from '../../config/index.js';
+import { INTERNAL_KEY_NAME } from '../../config/types.js';
 import { isDirectoryUrlPath } from '../../services/contentPath.js';
 import { appendEvent } from '../../services/eventQueue.js';
 import { createDeepShare, createPathShare } from '../../services/shareLinks.js';
 import { writeInsiderSeedToConfig } from '../../util/configPersist.js';
 import { fsPathToUrl, getRoots } from '../../util/platform.js';
+import { requireNoTraversal } from './contentRoute.js';
 import { requireInScope } from './scopeGuard.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -41,7 +43,7 @@ const serverRoot = packageDirectorySync({ cwd: __dirname }) ?? __dirname;
 /** The _internal key seed (`SERVER_INTERNAL_KEY_MISSING` without one). */
 function getInternalSeed(): string {
   const internalKey = getConfig().resolvedKeys.find(
-    (k) => k.name === '_internal',
+    (k) => k.name === INTERNAL_KEY_NAME,
   );
   if (!internalKey?.seed) throw new InternalKeyMissing();
   return internalKey.seed;
@@ -80,6 +82,7 @@ export const sharingHandlers: HandlersFor<
     if (!seed) throw new Unauthorized('Insider auth required');
 
     const { path: targetPath, expiry, depth, dirs } = body;
+    requireNoTraversal(targetPath);
 
     requireInScope(request, targetPath);
 

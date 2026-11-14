@@ -1,10 +1,11 @@
 /**
- * Maps a request matched to a catalog entry to the filesystem content path it addresses, for access and scope checks: the decoded `*` value of a content or navigation entry, or the entry's fixed `contentPath`. Pure functions; no I/O.
+ * Maps a request matched to a catalog entry to the filesystem content path it addresses, for access and scope checks: the `*` value (as Fastify decoded it) of a content or navigation entry, or the entry's fixed `contentPath`. Pure functions; no I/O.
  *
  * @packageDocumentation
  */
 
 import type { CatalogMatch } from '../../api/catalogMatch.js';
+import { InvalidPath } from '../../api/errors.js';
 import { hasContentPath, type RouteAccess } from '../../api/routeAccess.js';
 
 /** The content path a request addresses. */
@@ -13,19 +14,10 @@ export interface ContentRoute {
   path: string;
 }
 
-/** Percent-decode a URL path, falling back to the raw path if malformed. */
-function decodePath(rawPath: string): string {
-  try {
-    return decodeURIComponent(rawPath);
-  } catch {
-    return rawPath;
-  }
-}
-
 /**
  * The content path of a request to a catalog entry.
  *
- * @param match - The matched entry and its raw `*` value.
+ * @param match - The matched entry and its decoded `*` value.
  * @param access - The entry's access.
  * @returns The content path, or null for entries that address none.
  */
@@ -35,7 +27,7 @@ export function parseContentRoute(
 ): ContentRoute | null {
   if (!hasContentPath(access)) return null;
   if (access.contentPath) return { path: access.contentPath };
-  return { path: decodePath(`/${match.wildcard ?? ''}`) };
+  return { path: `/${match.wildcard ?? ''}` };
 }
 
 /**
@@ -44,4 +36,14 @@ export function parseContentRoute(
  */
 export function hasTraversalSegment(contentPath: string): boolean {
   return contentPath.split(/[\\/]/).some((segment) => segment === '..');
+}
+
+/**
+ * Refuse a path with a `..` segment ({@link hasTraversalSegment}).
+ *
+ * @param contentPath - The decoded path (route or request body).
+ * @throws `SERVER_INVALID_PATH` (400) when it has one.
+ */
+export function requireNoTraversal(contentPath: string): void {
+  if (hasTraversalSegment(contentPath)) throw new InvalidPath('Invalid path');
 }

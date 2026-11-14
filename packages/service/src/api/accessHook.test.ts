@@ -1,5 +1,5 @@
 /**
- * The access hook beyond the class matrix: public entries resolve identity opportunistically, the key-exchange and webhook entries verify their machine seed and event key, `..` segments, what the hook records on the request, and the routes it leaves alone. Real hook, HMAC keys and sessions; echo handlers.
+ * The access hook beyond the class matrix: public entries resolve identity opportunistically, the key-exchange and webhook entries verify their machine seed and event key, `..` segments, percent-encoded URLs (checked as the route Fastify matched), what the hook records on the request, and the routes outside the catalog scope (untouched) or inside it (fail closed). Real hook, HMAC keys and sessions; echo handlers.
  *
  * @packageDocumentation
  */
@@ -16,7 +16,7 @@ import {
   makeRuntimeConfig,
   scopes,
 } from '../testing/authFixture.js';
-import { serverError, testApp } from '../testing/testApp.js';
+import { MASKED_500, serverError, testApp } from '../testing/testApp.js';
 import { computeInsiderKey, computePathKey } from '../util/crypto.js';
 
 const SECRET = 's'.repeat(64);
@@ -49,13 +49,19 @@ let app: FastifyInstance;
 beforeAll(async () => {
   app = testApp();
   await app.register(cookie);
-  addAccessHook(app);
-  app.get('/api/auth/status', echo);
-  app.get('/insider-key', echo);
-  app.post('/event', echo);
-  app.get('/api/file/*', echo);
-  app.get('/api/path/*', echo);
-  app.post('/api/util/share-for', echo);
+  // As production: the hook guards a child scope of catalog routes only.
+  await app.register((child, _options, done) => {
+    addAccessHook(child);
+    child.get('/api/auth/status', echo);
+    child.get('/insider-key', echo);
+    child.post('/event', echo);
+    child.get('/api/file/*', echo);
+    child.get('/api/path/*', echo);
+    child.post('/api/util/share-for', echo);
+    child.get('/config', echo);
+    child.get('/not-an-entry', echo);
+    done();
+  });
   app.get('/browse/*', echo);
   await app.ready();
 });
@@ -238,11 +244,44 @@ describe('loginSeedKey entries', () => {
   });
 });
 
+describe('percent-encoded URLs', () => {
+  it.each([
+    ['/%63onfig', 'config'],
+    ['/%61pi/file/r/a.md', 'fileContent'],
+    ['/api/%66ile/r/a.md', 'fileContent'],
+    ['/api/path/%72', 'browse'],
+  ])('%s is checked as the entry it reaches (%s)', async (url) => {
+    const res = await app.inject(url);
+    expect(res.statusCode).toBe(401);
+    expect(res.json()).toEqual(
+      serverError('SERVER_UNAUTHORIZED', 'Unauthorized'),
+    );
+  });
+
+  it('refuse an encoded .. segment', async () => {
+    const res = await app.inject({
+      url: '/%61pi/file/r/%2e%2e%2Fsecret.md',
+      cookies: sessionCookie,
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json<{ code: string }>().code).toBe('SERVER_INVALID_PATH');
+  });
+});
+
 describe('routes outside the catalog', () => {
-  it('pass browser routes through untouched', async () => {
+  it('pass browser routes, outside the catalog scope, untouched', async () => {
     const res = await app.inject('/browse/r/a.md');
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ access: null, accessMode: null });
+  });
+
+  it('fail closed inside the catalog scope', async () => {
+    const res = await app.inject({
+      url: '/not-an-entry',
+      cookies: sessionCookie,
+    });
+    expect(res.statusCode).toBe(500);
+    expect(res.json()).toEqual(MASKED_500);
   });
 
   it('leave unregistered catalog URLs to the 404 handler', async () => {

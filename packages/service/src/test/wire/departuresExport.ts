@@ -14,8 +14,37 @@ import {
   type WireDeparture,
 } from './departuresCommon.js';
 
+/** #316: every attachment's Content-Disposition is `attachmentDisposition`. */
+const D316_DISPOSITION =
+  '#316 (Raw downloads): exports send attachmentDisposition, the ASCII filename plus the exact UTF-8 name in filename* (RFC 6266/5987), so a non-ASCII name no longer fails (500) and a quote is never sent raw';
+
+/** Export scenarios whose 200 reply only gains `filename*`. */
+const FILENAME_STAR = [
+  'export pdf cached',
+  'export default format cached',
+  'export pdf cached path share',
+  'export pdf cached expiring share',
+  'export docx cached',
+  'export directory zip',
+  'export directory tar',
+  'diagramExport mermaid svg cached',
+  'diagramExport mermaid default cached',
+  'diagramExport mermaid path share',
+] as const;
+
 /** Departures of the exports, export cache, diagram exports, diagrams and public content scenarios. */
 export const DEPARTURES_EXPORT: Readonly<Record<string, WireDeparture>> = {
+  ...Object.fromEntries(
+    FILENAME_STAR.map((name) => [
+      name,
+      {
+        before:
+          '200 with content-disposition attachment; filename="<name>" only',
+        allowedBy: D316_DISPOSITION,
+        status: 200,
+      },
+    ]),
+  ),
   'export pdf without chrome': {
     before:
       '500 {"error":"PDF export failed","details":"Error: Browser was not found at the configured executablePath ({dir}/no-chrome/chrome)"}',

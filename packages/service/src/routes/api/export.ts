@@ -36,6 +36,7 @@ import {
 import { loadMarkdownDocument } from '../../services/markdownDocument.js';
 import { resolvePrintStyle } from '../../services/printStyles.js';
 import { RenderFailedError } from '../../services/puppeteer.js';
+import { attachmentDisposition } from '../../util/contentDisposition.js';
 import { getRoots } from '../../util/platform.js';
 import { pathKeyQuery } from '../../util/shareQuery.js';
 import { directoryArchive, isArchiveFormat } from './archiveExport.js';
@@ -169,7 +170,7 @@ export const exportHandlers: HandlersFor<'export' | 'exportCacheClear'> = {
 
     return ok(buffer, {
       'content-type': contentType,
-      'content-disposition': `attachment; filename="${baseName}.${fileExt}"`,
+      'content-disposition': attachmentDisposition(`${baseName}.${fileExt}`),
       'content-length': String(buffer.length),
       ...(printStyle !== undefined && { 'x-print-style': printStyle }),
     });

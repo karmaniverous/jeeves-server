@@ -16,6 +16,7 @@ import { InvalidPath, NotFound } from '../../api/errors.js';
 import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { getConfig } from '../../config/index.js';
 import { encodeUrlPath, fsPathToUrl, getRoots } from '../../util/platform.js';
+import { requireNoTraversal } from './contentRoute.js';
 import { requireInScope, requireInsider } from './scopeGuard.js';
 
 /** `resolvePath`: a filesystem path's browse path and URLs. */
@@ -31,6 +32,7 @@ export const resolvePathHandlers: HandlersFor<'resolvePath'> = {
     // Reject non-absolute paths
     if (!path.isAbsolute(fsPath))
       throw new InvalidPath('fsPath must be an absolute path');
+    requireNoTraversal(fsPath);
 
     const config = getConfig();
     const roots = getRoots(config.roots);

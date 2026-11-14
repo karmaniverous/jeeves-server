@@ -70,7 +70,9 @@ function inlineRef(
   }
   const file = path.resolve(assetsDir, decodePath(ref.split(/[?#]/)[0]));
   const rel = path.relative(assetsDir, file);
-  if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) {
+  // `..` itself or a `..` first segment; `..logo.png` is inside.
+  const outside = rel === '..' || rel.startsWith(`..${path.sep}`);
+  if (!rel || outside || path.isAbsolute(rel)) {
     warn(`outside the assets directory: ${ref}`);
     return null;
   }
