@@ -4,13 +4,17 @@
  * @packageDocumentation
  */
 
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+
 import fastifyStatic from '@fastify/static';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import { NotFound } from '../api/errors.js';
-import { resolveAuth } from '../auth/resolve.js';
+import { resolveSpaAccess } from '../auth/resolve.js';
 import { renderSignInPage } from '../auth/signInPage.js';
 import { getConfig } from '../config/index.js';
+import { injectPageTitle, spaPageTitle } from './spaTitle.js';
 
 /** Browser routes that serve the SPA shell. */
 const SPA_ROUTES = [
@@ -52,17 +56,27 @@ export async function registerSpa(
 ): Promise<void> {
   await fastify.register(fastifyStatic, { root: clientDir, prefix: '/app/' });
 
-  // Serve index.html for authenticated requests; render the server-side
-  // sign-in page for unauthenticated ones.
+  // Serve index.html for authenticated requests (with the page's title on
+  // /browse/<path>, #262); render the server-side sign-in page for
+  // unauthenticated ones.
   const spaFallback = async (request: FastifyRequest, reply: FastifyReply) => {
     const cfg = getConfig();
-    const auth = resolveAuth(cfg, request);
-    if (auth.type === 'none') {
+    const access = resolveSpaAccess(cfg, request);
+    if (access.type === 'none') {
       return reply
         .type('text/html')
         .send(renderSignInPage(request.url, cfg.authModes, cfg.branding));
     }
-    return reply.sendFile('index.html', clientDir);
+    const title = await spaPageTitle(request.url, access, cfg);
+    if (title === null) return reply.sendFile('index.html', clientDir);
+    const html = await readFile(path.join(clientDir, 'index.html'), 'utf8');
+    return (
+      reply
+        .type('text/html; charset=utf-8')
+        // As @fastify/static sends the plain shell.
+        .header('Cache-Control', 'public, max-age=0')
+        .send(injectPageTitle(html, title, cfg.branding?.name))
+    );
   };
 
   for (const route of SPA_ROUTES) fastify.get(route, spaFallback);

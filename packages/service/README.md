@@ -47,6 +47,8 @@ jeeves:
 ---
 ```
 
+A document's title is its front-matter `title` (a non-empty string), else the file name; other files and directories use their name, a drive root its label. `GET /api/file/*` returns it as `title`, the browser tab shows `{title} - {branding.name}`, and the page shell of `/browse/<path>` carries it in `<title>` and `og:title` for link unfurlers, but only for a request that passes the sign-in gate (a share link, a session or a key). A slow watcher never delays that page more than 1.5 s: the file name is used instead.
+
 ## Docs
 
 - [Setup & Configuration](guides/setup.md)

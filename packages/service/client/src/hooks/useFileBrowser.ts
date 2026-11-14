@@ -6,6 +6,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 
 import type { BreadcrumbItem } from '@/lib/apiTypes';
 import { useAuthStatus } from '@/lib/AuthStatusContext';
+import { useDocumentTitle } from '@/lib/documentTitle';
 import { applyRenderState, computeRenderState } from '@/lib/renderState';
 import { useTheme } from '@/lib/theme';
 import { useFileData } from './useFileData';
@@ -22,20 +23,21 @@ function formatRelativeTime(isoDate: string): string {
   return `${String(days)}d ago`;
 }
 
+/** The decoded last segment of a browse path (`''` for none). */
+function lastSegment(reqPath: string): string {
+  const last = reqPath.split('/').filter(Boolean).pop() ?? '';
+  try {
+    return decodeURIComponent(last);
+  } catch {
+    return last;
+  }
+}
+
 export function useFileBrowser() {
   const params = useParams<{ '*': string }>();
   const reqPath = params['*'] ?? '';
   const [searchParams, setSearchParams] = useSearchParams();
   const [theme, toggleTheme] = useTheme();
-
-  // Browser tab title
-  useEffect(() => {
-    const siteTitle = 'Jeeves Server';
-    const segments = reqPath.split('/').filter(Boolean);
-    const last = segments.length ? segments[segments.length - 1] : '';
-    const decoded = last ? decodeURIComponent(last) : '';
-    document.title = decoded ? `${decoded} - ${siteTitle}` : siteTitle;
-  }, [reqPath]);
 
   // Data
   const {
@@ -71,6 +73,15 @@ export function useFileBrowser() {
   useEffect(() => {
     applyRenderState(renderState);
   }, [renderState]);
+
+  // Browser tab title (#262): the open file's title, else the directory's.
+  useDocumentTitle(
+    file
+      ? (file.title ?? file.fileName)
+      : directory
+        ? lastSegment(reqPath)
+        : null,
+  );
 
   // Sync tab to URL
   const setViewTab = (tab: 'rendered' | 'raw') => {

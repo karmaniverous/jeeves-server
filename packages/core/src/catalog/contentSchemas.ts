@@ -130,7 +130,10 @@ export const fileContentResponseSchema = z.object({
   renderAs: z.string().optional(),
   /** Watcher rules that matched (watcher-rendered files). */
   matchedRules: z.array(z.string()).optional(),
-  /** Document title: front matter `title`, else the file name. */
+  /**
+   * Document title (#262): a Markdown document's front matter `title`, else
+   * the file name. `fileContent` always sends it; `publicContent` doesn't.
+   */
   title: z.string().optional(),
 });
 

@@ -33,7 +33,7 @@ export interface ServerAppOptions {
  * Every catalog entry is registered from `SERVER_CATALOG`
  * (`api/routes.ts`) in a child plugin whose access hook
  * (`api/accessHook.ts`) enforces the entry's access class; browser routes
- * keep their own gate (`resolveAuth`).
+ * keep their own gate (`resolveSpaAccess`).
  *
  * Errors (#315): `registerErrorHandlers` answers every JSON route with
  * Fastify's standard error body, logging through the app's own (pino)

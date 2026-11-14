@@ -252,6 +252,18 @@ describe('GET /api/file/*', () => {
     });
   });
 
+  it.each([
+    ['a.md', '---\ntitle: Front\n---\n# A', '', 'Front'],
+    ['a.md', '---\ntitle: Front\n---\n# A', '?raw=1', 'Front'],
+    ['b.md', '---\ntitle: ""\n---\n# B', '', 'b.md'],
+    ['d.mmd', 'graph', '', 'd.mmd'],
+    ['n.txt', 'hello', '', 'n.txt'],
+    ['p.png', 'x', '', 'p.png'],
+  ])('titles %s%s as %s (#262)', async (name, content, query, title) => {
+    write(name, content);
+    expect((await get(`/api/file/j/${name}${query}`)).body.title).toBe(title);
+  });
+
   it('filters breadcrumbs for outsiders', async () => {
     await app.close();
     app = await buildApp('outsider');

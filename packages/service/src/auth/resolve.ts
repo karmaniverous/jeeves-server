@@ -195,25 +195,32 @@ export function findInsider(
   return insiders.find((i) => i.email.toLowerCase() === email.toLowerCase());
 }
 
+/** The SPA gate's answer: the access type and the identity's scopes. */
+export interface SpaAccess {
+  /** 'insider', 'outsider', or 'none' without valid credentials. */
+  type: 'insider' | 'outsider' | 'none';
+  /** The identity's scopes; null or absent when unrestricted. */
+  scopes?: NormalizedScopes | null;
+}
+
 /**
- * Resolve the authentication state for a request for the SPA auth gate.
+ * Resolve the SPA gate's access for a request, with the identity's scopes.
  *
  * Checks session cookie first, then falls back to key-based auth (handles
- * outsider share links). Returns the access type: 'insider', 'outsider',
- * or 'none' when the request carries no valid credentials.
+ * outsider share links).
  *
  * @param config - Current runtime configuration.
  * @param request - Incoming Fastify request.
- * @returns Object with `type` field: 'insider', 'outsider', or 'none'.
+ * @returns The access type and scopes.
  */
-export function resolveAuth(
+export function resolveSpaAccess(
   config: RuntimeConfig,
   request: FastifyRequest,
-): { type: 'insider' | 'outsider' | 'none' } {
+): SpaAccess {
   // Session cookie takes priority
   const sessionResult = resolveSessionAuth(config, request);
   if (sessionResult.valid && sessionResult.mode) {
-    return { type: sessionResult.mode };
+    return { type: sessionResult.mode, scopes: sessionResult.scopes };
   }
 
   // Key param fallback — handles outsider share links
@@ -233,7 +240,7 @@ export function resolveAuth(
     deepParams,
   );
   if (keyResult.valid && keyResult.mode) {
-    return { type: keyResult.mode };
+    return { type: keyResult.mode, scopes: keyResult.scopes };
   }
 
   return { type: 'none' };

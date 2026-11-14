@@ -34,7 +34,7 @@ The **file browser** is your home screen. Navigate through directories by clicki
 
 | Type | Extensions | Rendering |
 | --- | --- | --- |
-| **Markdown** | `.md`, `.markdown`, and text files jeeves-watcher renders as Markdown | Full formatting, [table of contents](#table-of-contents), embedded [diagrams](#diagrams); front matter shown without the reserved `jeeves` key |
+| **Markdown** | `.md`, `.markdown`, and text files jeeves-watcher renders as Markdown | Full formatting, [table of contents](#table-of-contents), embedded [diagrams](#diagrams); front matter shown without the reserved `jeeves` key; the browser tab and shared-link previews show the front-matter `title` (else the file name) |
 | **Code** | `.ts`, `.js`, `.py`, `.json`, etc. | Syntax highlighting with line numbers, copy and word-wrap toggle |
 | **CSV** | `.csv` | Formatted tables |
 | **SVG** | `.svg` | Interactive pan-and-zoom viewer |

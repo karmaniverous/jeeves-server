@@ -15,7 +15,9 @@ import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { getConfig } from '../../config/index.js';
 import { csvToHtmlTable } from '../../services/csv.js';
 import { getOrRenderDiagram } from '../../services/diagramCache.js';
+import { parseFrontMatter } from '../../services/frontMatter.js';
 import {
+  documentTitle,
   isNativeMarkdown,
   loadMarkdownDocument,
 } from '../../services/markdownDocument.js';
@@ -45,9 +47,12 @@ export const fileContentHandlers: HandlersFor<'fileContent'> = {
 
     const ext = path.extname(resolved).toLowerCase();
     const isInsider = request.accessMode === 'insider';
-    // Fields common to every response shape.
+    const fileName = path.basename(resolved);
+    // Fields common to every response shape; Markdown documents replace
+    // `title` with the document's own (#262).
     const base = {
-      fileName: path.basename(resolved),
+      fileName,
+      title: fileName,
       breadcrumbs: filterBreadcrumbsForOutsider(
         breadcrumbParts(resolved, roots),
         isInsider,
@@ -61,7 +66,13 @@ export const fileContentHandlers: HandlersFor<'fileContent'> = {
     const native = isNativeMarkdown(resolved);
     if (native && rawOnly) {
       const content = fs.readFileSync(resolved, 'utf8');
-      return ok({ type: 'markdown' as const, content, ...base });
+      const { data } = parseFrontMatter(content).frontMatter;
+      return ok({
+        type: 'markdown' as const,
+        content,
+        ...base,
+        title: documentTitle(data, fileName),
+      });
     }
 
     // Diagrams
@@ -114,6 +125,7 @@ export const fileContentHandlers: HandlersFor<'fileContent'> = {
           content,
           ...rendered,
           ...base,
+          title: doc.title,
           mtime: stats.mtimeMs,
           // Watcher documents only (undefined fields are not sent).
           renderAs: doc.renderAs,

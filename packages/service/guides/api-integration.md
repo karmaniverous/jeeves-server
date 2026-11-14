@@ -62,7 +62,7 @@ function insiderKey(seed) {
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/api/file/<path>` | File content (rendered HTML for markdown, raw for others) |
+| `GET` | `/api/file/<path>` | File content (rendered HTML for markdown, raw for others), with the document `title` (front-matter `title`, else the file name) |
 | `GET` | `/api/raw/<path>` | Raw file bytes with appropriate Content-Type |
 | `GET` | `/api/link-info/<path>` | Query available views and export formats for a path |
 

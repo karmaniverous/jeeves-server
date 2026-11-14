@@ -19,10 +19,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       .catch(() => {});
   }, []);
 
-  // Dynamic <title>
-  useEffect(() => {
-    document.title = branding.name;
-  }, [branding.name]);
+  // Pages set the tab title (useDocumentTitle, #262): not overwritten here.
 
   // Dynamic CSS variable injection for theme overrides
   useEffect(() => {

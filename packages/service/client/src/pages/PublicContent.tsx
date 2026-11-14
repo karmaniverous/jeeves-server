@@ -8,6 +8,7 @@ import { Header } from '@/components/layout/Header';
 import { MarkdownView } from '@/components/MarkdownView';
 import { useTopBar } from '@/hooks/useTopBar';
 import type { FileContent } from '@/lib/apiTypes';
+import { useDocumentTitle } from '@/lib/documentTitle';
 import { client } from '@/lib/server';
 import { errorMessage } from '@/lib/serverErrors';
 import { useTheme } from '@/lib/theme';
@@ -24,6 +25,7 @@ const TITLES: Record<string, string> = {
 };
 
 export function PublicContent({ slug }: PublicContentProps) {
+  useDocumentTitle(null);
   const [theme, toggleTheme] = useTheme();
   const [file, setFile] = useState<FileContent | null>(null);
   const [loading, setLoading] = useState(true);
