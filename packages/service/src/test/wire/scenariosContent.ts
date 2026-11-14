@@ -33,7 +33,10 @@ export const P = {
   leaf: '{root}/public/deeper/leaf.md',
   private: '{root}/private/secret.md',
   missing: '{root}/missing.md',
-  traversal: '{root}/sub%20dir/%2E%2E/doc.md',
+  // `%2E%2E/` would be resolved away by the URL parser before the request
+  // is sent; an encoded separator keeps the `..` segment in the path.
+  traversal: '{root}/sub%20dir/..%2Fdoc.md',
+  traversalBackslash: '{root}/sub%20dir/..%5Cdoc.md',
   noRoot: 'zz-no-root/doc.md',
 } as const;
 
@@ -123,6 +126,9 @@ const BROWSE: WireScenario[] = [
   get('browse no root', `/api/path/${P.noRoot}`, { cred: CRED.session }),
   get('browse empty path', '/api/path/', { cred: CRED.session }),
   get('browse traversal', `/api/path/${P.traversal}`, { cred: CRED.session }),
+  get('browse traversal backslash', `/api/path/${P.traversalBackslash}`, {
+    cred: CRED.session,
+  }),
 ];
 
 /** `GET /api/file/*` for each file type. */
@@ -144,6 +150,7 @@ const FILE_TYPES: WireScenario[] = [
   ['missing', P.missing],
   ['no root', P.noRoot],
   ['traversal', P.traversal],
+  ['traversal backslash', P.traversalBackslash],
 ].map(([suffix, path]) =>
   get(`fileContent ${suffix}`, `/api/file/${path}`, { cred: CRED.session }),
 );

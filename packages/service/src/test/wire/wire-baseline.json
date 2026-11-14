@@ -872,11 +872,18 @@
     "body": ""
   },
   "browse traversal": {
-    "status": 200,
+    "status": 400,
     "headers": {
       "content-type": "application/json; charset=utf-8"
     },
-    "body": "{\"type\":\"file\",\"path\":\"{root}/doc.md\",\"ext\":\".md\",\"size\":193,\"mtime\":\"2026-01-02\"}"
+    "body": "{\"error\":\"Invalid path\"}"
+  },
+  "browse traversal backslash": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid path\"}"
   },
   "fileContent markdown": {
     "status": 200,
@@ -991,11 +998,18 @@
     "body": "{\"error\":\"Invalid path\"}"
   },
   "fileContent traversal": {
-    "status": 200,
+    "status": 400,
     "headers": {
       "content-type": "application/json; charset=utf-8"
     },
-    "body": "{\"type\":\"markdown\",\"content\":\"---\\ntitle: Wire Document\\ntags:\\n  - alpha\\n  - beta\\n---\\n\\n# Wire document\\n\\nSee [inner](sub%20dir/inner.md) and [the image](image.png).\\n\\n- [ ] first\\n- [x] second\\n\\n| A | B |\\n| --- | --- |\\n| 1 | 2 |\\n\",\"html\":\"<div class=\\\"frontmatter-block\\\"><pre><code class=\\\"language-yaml\\\">title: Wire Document\\ntags:\\n  - alpha\\n  - beta</code></pre></div>\\n<h1 id=\\\"wire-document\\\" tabindex=\\\"-1\\\" data-source-start=\\\"8\\\" data-source-end=\\\"8\\\">Wire document <a class=\\\"anchor\\\" href=\\\"#wire-document\\\">#</a></h1>\\n<p data-source-start=\\\"10\\\" data-source-end=\\\"10\\\">See <a href=\\\"sub%20dir/inner.md\\\">inner</a> and <a href=\\\"image.png\\\">the image</a>.</p>\\n<ul class=\\\"contains-task-list\\\" data-source-start=\\\"12\\\" data-source-end=\\\"14\\\">\\n<li class=\\\"task-list-item\\\" data-source-start=\\\"12\\\" data-source-end=\\\"12\\\"><input class=\\\"task-list-item-checkbox\\\" disabled=\\\"\\\" type=\\\"checkbox\\\" data-checkbox-index=\\\"0\\\"> first</li>\\n<li class=\\\"task-list-item\\\" data-source-start=\\\"13\\\" data-source-end=\\\"14\\\"><input class=\\\"task-list-item-checkbox\\\" checked=\\\"\\\" disabled=\\\"\\\" type=\\\"checkbox\\\" data-checkbox-index=\\\"1\\\"> second</li>\\n</ul>\\n<table data-source-start=\\\"15\\\" data-source-end=\\\"17\\\">\\n<thead data-source-start=\\\"15\\\" data-source-end=\\\"15\\\">\\n<tr data-source-start=\\\"15\\\" data-source-end=\\\"15\\\">\\n<th>A</th>\\n<th>B</th>\\n</tr>\\n</thead>\\n<tbody data-source-start=\\\"17\\\" data-source-end=\\\"17\\\">\\n<tr data-source-start=\\\"17\\\" data-source-end=\\\"17\\\">\\n<td>1</td>\\n<td>2</td>\\n</tr>\\n</tbody>\\n</table>\\n\",\"headings\":[{\"level\":1,\"text\":\"Wire document\",\"slug\":\"wire-document\"}],\"fileName\":\"doc.md\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"doc.md\",\"path\":\"{root}/doc.md\"}],\"isInsider\":true,\"mtime\":1767323045000}"
+    "body": "{\"error\":\"Invalid path\"}"
+  },
+  "fileContent traversal backslash": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid path\"}"
   },
   "fileContent empty path": {
     "status": 400,
