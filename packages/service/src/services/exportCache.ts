@@ -208,9 +208,9 @@ export function clearDiagramCacheForFile(
   }
 
   // Remove from index
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { [key]: _removed, ...rest } = index;
-  saveDiagramIndex(rest);
+  saveDiagramIndex(
+    Object.fromEntries(Object.entries(index).filter(([k]) => k !== key)),
+  );
 
   return count;
 }

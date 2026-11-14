@@ -22,10 +22,7 @@ const PLACEHOLDER_RE = /<!--DIAGRAM:(mermaid|plantuml):([a-f0-9]{64})-->/g;
  * In-flight diagram sources, keyed by content hash.
  * Entries are cleaned up after a TTL to prevent unbounded growth.
  */
-const diagramSources = new Map<
-  string,
-  { source: string; contextDir?: string; createdAt: number }
->();
+const diagramSources = new Map<string, { source: string; createdAt: number }>();
 
 /** TTL for source map entries (10 minutes) */
 const SOURCE_TTL_MS = 10 * 60 * 1000;
@@ -54,17 +51,6 @@ function diagramHash(type: string, source: string): string {
   return crypto.createHash('sha256').update(`${type}\0${source}`).digest('hex');
 }
 
-/** Module-level context directory for the current markdown parse. */
-let currentContextDir: string | undefined;
-
-/**
- * Set the context directory for diagram registration.
- * Call before parseMarkdown() so registered diagrams know their !include context.
- */
-export function setDiagramContext(contextDir?: string): void {
-  currentContextDir = contextDir;
-}
-
 /**
  * Register a diagram source and return a placeholder HTML div.
  * Called synchronously from the marked renderer.
@@ -76,7 +62,6 @@ export function registerDiagram(
   const hash = diagramHash(type, source);
   diagramSources.set(hash, {
     source,
-    contextDir: currentContextDir,
     createdAt: Date.now(),
   });
   startCleanup();
@@ -91,10 +76,10 @@ export function registerDiagram(
  */
 export function getDiagramSource(
   hash: string,
-): { type: string; source: string; contextDir?: string } | null {
+): { type: string; source: string } | null {
   const entry = diagramSources.get(hash);
   if (!entry) return null;
-  return { type: '', source: entry.source, contextDir: entry.contextDir };
+  return { type: '', source: entry.source };
 }
 
 /**
@@ -103,8 +88,6 @@ export function getDiagramSource(
 export async function renderDiagramToSvg(
   type: string,
   source: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _contextDir?: string,
 ): Promise<string | null> {
   try {
     return await getOrRenderDiagram(type, source, () => {
@@ -125,10 +108,7 @@ export async function renderDiagramToSvg(
  * Replace all diagram placeholders in rendered HTML with inline SVGs.
  * Used for PDF/DOCX export where client-side lazy loading isn't available.
  */
-export async function renderEmbeddedDiagrams(
-  html: string,
-  contextDir?: string,
-): Promise<string> {
+export async function renderEmbeddedDiagrams(html: string): Promise<string> {
   const matches = [...html.matchAll(PLACEHOLDER_RE)];
   if (matches.length === 0) return html;
 
@@ -140,11 +120,7 @@ export async function renderEmbeddedDiagrams(
     const source = entry.source;
     if (!source) continue;
 
-    const svg = await renderDiagramToSvg(
-      type,
-      source,
-      contextDir ?? entry.contextDir,
-    );
+    const svg = await renderDiagramToSvg(type, source);
 
     if (svg) {
       const wrapped = `<div class="embedded-diagram-rendered" data-type="${type}">${svg}</div>`;

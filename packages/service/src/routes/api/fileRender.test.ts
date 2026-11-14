@@ -36,7 +36,6 @@ vi.mock('../../services/exportCache.js', () => ({
 
 const renderEmbeddedDiagrams = vi.fn();
 vi.mock('../../services/embeddedDiagrams.js', () => ({
-  setDiagramContext: vi.fn(),
   renderEmbeddedDiagrams: (...a: unknown[]): unknown =>
     renderEmbeddedDiagrams(...a),
 }));

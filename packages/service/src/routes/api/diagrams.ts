@@ -32,11 +32,7 @@ export const diagramsRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
           .send({ error: 'Diagram source not found (may have expired)' });
       }
 
-      const svg = await renderDiagramToSvg(
-        type,
-        entry.source,
-        entry.contextDir,
-      );
+      const svg = await renderDiagramToSvg(type, entry.source);
       if (!svg) {
         return reply
           .code(500)

@@ -7,8 +7,6 @@
  * @packageDocumentation
  */
 
-import path from 'node:path';
-
 import { getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyRequest } from 'fastify';
 
@@ -18,10 +16,7 @@ import {
   rewriteSimpleImageAuth,
   toDeepShareContext,
 } from '../../services/deepShareLinks.js';
-import {
-  renderEmbeddedDiagrams,
-  setDiagramContext,
-} from '../../services/embeddedDiagrams.js';
+import { renderEmbeddedDiagrams } from '../../services/embeddedDiagrams.js';
 import { registerDiagramHashes } from '../../services/exportCache.js';
 import { parseMarkdown } from '../../services/markdown.js';
 
@@ -89,8 +84,6 @@ export async function renderMarkdownContent(
   const urlDir = reqPath.includes('/')
     ? reqPath.substring(0, reqPath.lastIndexOf('/'))
     : '';
-  const fsDir = path.dirname(resolved);
-  setDiagramContext(fsDir);
   const { headings, html: parsedHtml } = parseMarkdown(markdownSource, {
     linkWindowsPaths: true,
     basePath: urlDir,
@@ -109,7 +102,7 @@ export async function renderMarkdownContent(
   }
 
   if ((request.query as { render_diagrams?: string }).render_diagrams === '1') {
-    html = await renderEmbeddedDiagrams(html, fsDir);
+    html = await renderEmbeddedDiagrams(html);
   }
 
   const deepShare = request.deepShareParams;
