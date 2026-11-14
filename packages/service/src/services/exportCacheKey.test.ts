@@ -103,7 +103,7 @@ describe('documentExportKey', () => {
     ).not.toBe(keyOf());
   });
 
-  it('changes with the document path, not its separators (case only off Windows)', () => {
+  it('changes with the document path, not its separators (nor its case, on Windows)', () => {
     const other = path.join(dir, 'copy.md');
     expect(keyOf({}, 'pdf', SOURCE, other)).not.toBe(keyOf());
     const plain = '# No images\n';

@@ -96,16 +96,16 @@ describe('export entries', () => {
 
   it('clears every entry of a file and nothing else', () => {
     store('D:\\Docs\\A.md', 'a1');
-    store('d:/docs/a.md', 'a2', 'docx');
-    store('d:/docs/a.md.bak', 'other');
+    store('D:/Docs/A.md', 'a2', 'docx');
+    store('D:/Docs/A.md.bak', 'other');
 
-    expect(clearExportCache('d:/docs/a.md')).toBe(2);
+    expect(clearExportCache('D:/Docs/A.md')).toBe(2);
 
     expect(hit('a1')).toBeNull();
     expect(hit('a2', 'docx')).toBeNull();
     expect(hit('other')).toBe('bytes of other');
     expect(fs.existsSync(path.join(cacheDir, 'a1-pdf.json'))).toBe(false);
-    expect(clearExportCache('d:/docs/a.md')).toBe(0);
+    expect(clearExportCache('D:/Docs/A.md')).toBe(0);
   });
 
   it('clears every entry under a directory', () => {
@@ -135,7 +135,7 @@ describe('clearDiagramCacheForFile', () => {
       fs.writeFileSync(path.join(diagramDir, name), 'x');
     }
 
-    expect(clearDiagramCacheForFile('d:/docs/a.md', diagramDir)).toBe(3);
+    expect(clearDiagramCacheForFile('D:/Docs/A.md', diagramDir)).toBe(3);
 
     expect(fs.readdirSync(diagramDir)).toEqual(['h3.svg']);
     expect(indexFile()).toEqual({ '/docs/b.md': ['h3'] });
