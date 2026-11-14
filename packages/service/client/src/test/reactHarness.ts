@@ -16,11 +16,17 @@ import { createRoot } from 'react-dom/client';
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-/** Run `fn` inside `act`, then let queued promises and timers settle. */
-export const settle = (fn: () => void = () => undefined): Promise<void> =>
+/**
+ * Run `fn` inside `act`, then let queued promises and timers settle,
+ * waiting `ms` milliseconds more (e.g. for a debounce to elapse).
+ */
+export const settle = (
+  fn: () => void = () => undefined,
+  ms = 0,
+): Promise<void> =>
   act(async () => {
     fn();
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, ms));
   });
 
 /** A mounted element: re-render it with a new element, or unmount it. */
