@@ -1,48 +1,21 @@
 /**
  * Cryptographic utilities for HMAC key computation and verification.
  *
+ * The link-key functions (`computeInsiderKey`, `computeOutsiderKeyWithExpiry`,
+ * `computePathKey`) are re-exported from `@karmaniverous/jeeves`, which holds
+ * the one implementation (#307). The deep-share key and the timing-safe
+ * comparison stay here: jeeves has no equivalent.
+ *
  * @packageDocumentation
  */
 
 import crypto from 'node:crypto';
 
-/**
- * Compute path-specific key: HMAC-SHA256(apiKey, normalizedPath)
- */
-export function computePathKey(apiKey: string, urlPath: string): string {
-  const normalized = urlPath.toLowerCase().replace(/^\/+|\/+$/g, '');
-  const hash = crypto
-    .createHmac('sha256', apiKey)
-    .update(normalized)
-    .digest('hex');
-  return hash.substring(0, 32);
-}
-
-/**
- * Compute insider key: HMAC-SHA256(apiKey, "insider")
- * Works for any path, grants full navigation
- */
-export function computeInsiderKey(apiKey: string): string {
-  const hash = crypto
-    .createHmac('sha256', apiKey)
-    .update('insider')
-    .digest('hex');
-  return hash.substring(0, 32);
-}
-
-/**
- * Compute outsider key with expiry: HMAC-SHA256(apiKey, path + "|" + expiry)
- */
-export function computeOutsiderKeyWithExpiry(
-  apiKey: string,
-  urlPath: string,
-  expiry: string | number,
-): string {
-  const normalized = urlPath.toLowerCase().replace(/^\/+|\/+$/g, '');
-  const data = `${normalized}|${String(expiry)}`;
-  const hash = crypto.createHmac('sha256', apiKey).update(data).digest('hex');
-  return hash.substring(0, 32);
-}
+export {
+  computeInsiderKey,
+  computeOutsiderKeyWithExpiry,
+  computePathKey,
+} from '@karmaniverous/jeeves';
 
 /**
  * Deep share key parameters

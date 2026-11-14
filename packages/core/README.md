@@ -14,6 +14,8 @@ Shared workspace package providing cryptographic utilities and API types consume
 | `computeDeepShareKey(seed, path, params)` | HMAC-SHA256 key for deep directory shares with depth/dirs/stack/expiry |
 | `timingSafeEqual(a, b)` | Constant-time string comparison to prevent timing attacks |
 
+`computePathKey`, `computeInsiderKey` and `computeOutsiderKeyWithExpiry` are re-exported from `@karmaniverous/jeeves`, which holds the one implementation; known-vector tests (`src/crypto.test.ts`) pin their output to what this package computed before. `computeDeepShareKey` and `timingSafeEqual` are this package's own.
+
 ### URL Key Parameter
 
 | Export | Description |
