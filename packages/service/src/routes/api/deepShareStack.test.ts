@@ -30,7 +30,7 @@ vi.mock('../../config/index.js', () => ({
 
 const { addAccessHook } = await import('../../api/accessHook.js');
 const { createDeepShare } = await import('../../services/shareLinks.js');
-const { encodeStack } = await import('../../services/deepShareLinks.js');
+const { encodeStack } = await import('../../services/deepShareStack.js');
 const { computeDeepShareKey } = await import('../../util/crypto.js');
 
 let app: FastifyInstance;

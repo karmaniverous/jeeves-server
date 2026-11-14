@@ -183,6 +183,8 @@ A share with a **depth** lets the outsider follow links from the shared document
 
 A share key works on every content route for its path, so swapping `/browse/` for `/api/raw/` in a file's share URL, keeping the whole query string, gives a working raw link. This holds for deep file shares too: the deep key still opens only that one file. `POST /api/share` reports `isDirectory` in its response, and the plugin's `server_share` returns `rawUrl` for file shares (plain or deep) and no `rawUrl` for directory shares.
 
+Add `download=1` beside the share parameters (`/api/raw/<path>?download=1&k=…`) to make the link download the file, with its name, instead of opening it in the browser. `download` is not part of the credential: links in a deep-shared page that carry it keep it when the page rewrites their credentials, and the SDK's `withShareCredential` keeps it too.
+
 ### Link expiration
 
 - **"Never"** links work until the insider rotates their key

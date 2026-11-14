@@ -67,7 +67,8 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
 const { addAccessHook } = await import('../../api/accessHook.js');
 const { directoryHandlers } = await import('./directory.js');
 const { isDirectoryUrlPath } = await import('../../services/contentPath.js');
-const { encodeStack, rewriteLinksForDeepShare } =
+const { encodeStack } = await import('../../services/deepShareStack.js');
+const { rewriteLinksForDeepShare } =
   await import('../../services/deepShareLinks.js');
 
 let app: FastifyInstance;

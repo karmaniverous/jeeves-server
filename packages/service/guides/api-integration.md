@@ -63,8 +63,8 @@ function insiderKey(seed) {
 | Method | Path | Description |
 | --- | --- | --- |
 | `GET` | `/api/file/<path>` | File content (rendered HTML for markdown, raw for others), with the document `title` (front-matter `title`, else the file name) |
-| `GET` | `/api/raw/<path>` | Raw file bytes with appropriate Content-Type |
-| `GET` | `/api/link-info/<path>` | Query available views and export formats for a path |
+| `GET` | `/api/raw/<path>` | Raw file bytes with appropriate Content-Type. Types the browser doesn't show inline download; `?download=1` (or `true`) downloads any type. A download sends `Content-Disposition: attachment; filename="<ASCII fallback>"; filename*=UTF-8''<percent-encoded name>` (RFC 6266) |
+| `GET` | `/api/link-info/<path>` | Query available views and export formats for a path: `pageUrl`, `rawUrl`, `downloadUrl` (`rawUrl?download=1`; null for directories) and `exportLinks` |
 
 ### Directory Access
 

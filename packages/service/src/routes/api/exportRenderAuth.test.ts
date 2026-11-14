@@ -70,7 +70,7 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
 const { addAccessHook } = await import('../../api/accessHook.js');
 const { exportHandlers } = await import('./export.js');
 const { RenderFailedError } = await import('../../services/puppeteer.js');
-const { encodeStack } = await import('../../services/deepShareLinks.js');
+const { encodeStack } = await import('../../services/deepShareStack.js');
 
 let app: FastifyInstance;
 

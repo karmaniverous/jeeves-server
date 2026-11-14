@@ -12,7 +12,7 @@ import {
   computeOutsiderKeyWithExpiry,
   computePathKey,
 } from '../util/crypto.js';
-import { decodeStack } from './deepShareLinks.js';
+import { decodeStack } from './deepShareStack.js';
 import { createDeepShare, createPathShare } from './shareLinks.js';
 
 const SEED = 'share-links-seed';

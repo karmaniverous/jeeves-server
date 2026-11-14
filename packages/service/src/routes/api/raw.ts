@@ -10,13 +10,20 @@ import path from 'node:path';
 import { NotAFile, NotFound } from '../../api/errors.js';
 import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { getConfig } from '../../config/index.js';
+import { attachmentDisposition } from '../../util/contentDisposition.js';
 import { getContentType, isInlineType } from '../../util/fileDetection.js';
 import { getRoots } from '../../util/platform.js';
 import { fsPathOf, NOT_FOUND_MESSAGE, requirePath } from './routePath.js';
 
-/** `raw`: a file's bytes, typed by extension; non-inline types download. */
+/** `download` values that ask for an attachment (#316). */
+const DOWNLOAD_VALUES = new Set(['1', 'true']);
+
+/**
+ * `raw`: a file's bytes, typed by extension. Non-inline types, and any type
+ * with `?download=1` (or `true`), download as an attachment (#316).
+ */
 export const rawHandlers: HandlersFor<'raw'> = {
-  raw: ({ params }) => {
+  raw: ({ params, query }) => {
     const resolved = fsPathOf(
       requirePath(params['*']),
       getRoots(getConfig().roots),
@@ -28,14 +35,18 @@ export const rawHandlers: HandlersFor<'raw'> = {
       );
 
     const contentType = getContentType(path.extname(resolved).toLowerCase());
+    const attachment =
+      DOWNLOAD_VALUES.has(query.download ?? '') || !isInlineType(contentType);
     return Promise.resolve(
       ok(fs.readFileSync(resolved), {
         'content-type': contentType,
-        ...(isInlineType(contentType)
-          ? {}
-          : {
-              'content-disposition': `attachment; filename="${path.basename(resolved)}"`,
-            }),
+        ...(attachment
+          ? {
+              'content-disposition': attachmentDisposition(
+                path.basename(resolved),
+              ),
+            }
+          : {}),
       }),
     );
   },

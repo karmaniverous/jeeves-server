@@ -75,6 +75,8 @@ export const linkInfoHandlers: HandlersFor<'linkInfo'> = {
       isDirectory,
       pageUrl,
       rawUrl,
+      // The raw URL that always downloads (#316).
+      downloadUrl: rawUrl === null ? null : `${rawUrl}?download=1`,
       exportLinks,
     });
   },

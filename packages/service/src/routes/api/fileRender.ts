@@ -12,8 +12,8 @@ import { isDirectoryUrlPath } from '../../services/contentPath.js';
 import {
   rewriteLinksForDeepShare,
   rewriteSimpleImageAuth,
-  toDeepShareContext,
 } from '../../services/deepShareLinks.js';
+import { toDeepShareContext } from '../../services/deepShareStack.js';
 import { renderEmbeddedDiagrams } from '../../services/embeddedDiagrams.js';
 import { registerDiagramHashes } from '../../services/exportCache.js';
 import { parseMarkdown } from '../../services/markdown.js';

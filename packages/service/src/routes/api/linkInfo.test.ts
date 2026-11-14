@@ -109,6 +109,7 @@ describe('GET /api/link-info', () => {
     expect(res.exists).toBe(true);
     expect(res.isDirectory).toBe(true);
     expect(res.rawUrl).toBe(null);
+    expect(res.downloadUrl).toBe(null);
     expect(res.exportLinks).toEqual([
       { format: 'zip', url: '/api/export/test/folder?format=zip' },
     ]);
@@ -149,6 +150,7 @@ describe('GET /api/link-info', () => {
     fs.writeFileSync(path.join(tmpDir, 'data.json'), '{}');
     const res = await callHandler('test/data.json');
     expect(res.rawUrl).toBe('/api/raw/test/data.json');
+    expect(res.downloadUrl).toBe('/api/raw/test/data.json?download=1');
     expect(res.exportLinks).toEqual([]);
   });
 });

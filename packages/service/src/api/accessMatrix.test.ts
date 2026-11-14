@@ -50,7 +50,7 @@ const config = makeRuntimeConfig({
 vi.mock('../config/index.js', () => ({ getConfig: () => config }));
 
 const { addAccessHook } = await import('./accessHook.js');
-const { encodeStack } = await import('../services/deepShareLinks.js');
+const { encodeStack } = await import('../services/deepShareStack.js');
 
 /** What a request carries. */
 interface Cred {

@@ -12,7 +12,7 @@ import {
   type DeepShareParams,
 } from '../util/crypto.js';
 import { deepShareQuery, pathKeyQuery } from '../util/shareQuery.js';
-import { encodeStack } from './deepShareLinks.js';
+import { encodeStack } from './deepShareStack.js';
 
 /** A generated share: the outsider key and its relative browse URL. */
 export interface ShareLink {

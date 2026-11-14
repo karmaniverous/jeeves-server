@@ -12,11 +12,11 @@ import { NotFound, Unauthorized } from '../../api/errors.js';
 import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { canAccessPath, canNavigatePath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
+import { computeEntryLink } from '../../services/deepShareLinks.js';
 import {
   canListDirectory,
-  computeEntryLink,
   toDeepShareContext,
-} from '../../services/deepShareLinks.js';
+} from '../../services/deepShareStack.js';
 import { filterBreadcrumbsForOutsider } from '../../util/breadcrumbs.js';
 import { breadcrumbParts, fsPathToUrl, getRoots } from '../../util/platform.js';
 import { fsPathOf, NOT_FOUND_MESSAGE } from './routePath.js';

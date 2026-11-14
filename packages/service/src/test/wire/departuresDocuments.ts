@@ -1,5 +1,5 @@
 /**
- * Approved wire departures for document titles (#262): each departing scenario, what the branch base sent, and the decision that allows the change. Pure data.
+ * Approved wire departures for document titles (#262) and raw downloads (#316): each departing scenario, what the branch base sent, and the decision that allows the change. Pure data.
  *
  * @packageDocumentation
  */
@@ -9,6 +9,20 @@ import type { WireDeparture } from './departuresCommon.js';
 /** #262: the file API and the SPA shell carry the document title. */
 export const D262 =
   '#262 (Document titles): the file API response gains title; the SPA fallback for a gated /browse/<path> puts it in <title> and og:title';
+
+/** #316: link-info returns `downloadUrl` next to `rawUrl`. */
+export const D316 =
+  '#316 (Raw downloads): linkInfo returns downloadUrl (rawUrl?download=1; null for directories) next to rawUrl';
+
+/** `linkInfo` scenarios whose 200 body gains `downloadUrl` (nothing else). */
+const LINK_INFO_DOWNLOAD = [
+  'session',
+  'machine key',
+  'path share',
+  'directory',
+  'png',
+  'mermaid',
+] as const;
 
 /** `fileContent` scenarios whose 200 body gains `title` (nothing else). */
 const FILE_CONTENT_TITLED = [
@@ -45,6 +59,16 @@ export const DEPARTURES_DOCUMENTS: Readonly<Record<string, WireDeparture>> = {
       {
         before: '200, the same body without title',
         allowedBy: `${D262}: front matter title, else the file name`,
+        status: 200,
+      },
+    ]),
+  ),
+  ...Object.fromEntries(
+    LINK_INFO_DOWNLOAD.map((name) => [
+      `linkInfo ${name}`,
+      {
+        before: '200, the same body without downloadUrl',
+        allowedBy: D316,
         status: 200,
       },
     ]),

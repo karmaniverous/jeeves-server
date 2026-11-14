@@ -39,7 +39,7 @@ const { addAccessHook } = await import('../../api/accessHook.js');
 const { authStatusHandlers } = await import('./auth-status.js');
 const { keysHandlers } = await import('../keys.js');
 const { eventHandlers } = await import('../event.js');
-const { encodeStack } = await import('../../services/deepShareLinks.js');
+const { encodeStack } = await import('../../services/deepShareStack.js');
 
 const echo = (request: FastifyRequest) => ({
   accessMode: request.accessMode ?? null,
