@@ -91,16 +91,16 @@ See the [Setup & Configuration](packages/service/guides/setup.md) guide for full
 jeeves-server start [--config <path>]
 
 # Query running server status
-jeeves-server status
+jeeves-server status [--port <port>]
 
-# Query resolved configuration (supports JSONPath)
-jeeves-server config [jsonpath] [--config <path>]
+# Query resolved configuration (supports JSONPath; needs an admin key)
+jeeves-server config [jsonpath] [--port <port>] [--key <key>] [--config <path>]
 
 # Validate configuration
-jeeves-server config validate [--config <path>]
+jeeves-server config validate --config <path>
 
-# Apply a config patch to the running server
-jeeves-server config apply [--config <path>]
+# Apply a config patch (--file, or JSON on stdin) to the running server (needs an admin key)
+jeeves-server config apply [--file <path>] [--replace] [--port <port>] [--key <key>] [--config <path>]
 
 # Generate a starter config file
 jeeves-server init [--config <path>]
@@ -110,6 +110,8 @@ jeeves-server service install [--config <path>] [--name <service-name>]
 jeeves-server service uninstall [--name <service-name>]
 jeeves-server service start|stop|restart|status [--name <service-name>]
 ```
+
+`status`, `config` and `config apply` call the server at `http://127.0.0.1:<port>` (default 1934) through the [SDK](packages/sdk/). `/config` and `/config/apply` are admin routes, so `config` and `config apply` send a key: `--key <key>` (an unscoped insider or machine key), else the `JEEVES_SERVER_KEY` environment variable, else the insider key derived from `keys._plugin` in the server config file given by `--config`. A failure prints `<code>: <message>` (e.g. `SERVER_UNAUTHORIZED: …`), with a hint on where to supply the key after a 401 or 403.
 
 ## Guides
 
