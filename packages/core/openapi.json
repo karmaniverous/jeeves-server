@@ -3130,7 +3130,8 @@
                   },
                   "required": [
                     "ok",
-                    "keyCreatedAt"
+                    "keyCreatedAt",
+                    "invalidates"
                   ],
                   "additionalProperties": false
                 }

@@ -101,7 +101,7 @@ describe('SERVER_* error bodies', () => {
       'Runner unreachable',
     ],
     [
-      'legacy rotateKey machine key',
+      'rotateKey machine key',
       'SERVER_MACHINE_KEY_NOT_ROTATABLE',
       'Machine keys are rotated in the server config, not through this route',
     ],

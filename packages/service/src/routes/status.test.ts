@@ -85,6 +85,31 @@ describe('status exposure (Decision 22)', () => {
     expect(health.port).toBe(1934);
   });
 
+  it('adds the sign-in redirect URIs to health.auth for anyone (#270)', async () => {
+    const extra = {
+      publicUrl: 'https://docs.example.com',
+      authModes: ['google', 'keys'],
+      oauth: { credentialDir: '/c', providers: { acme: {} } },
+    };
+    Object.assign(mockConfig, extra);
+    try {
+      const health = await statusAs({ query: {}, headers: {} });
+      expect(health.auth).toEqual({
+        modes: ['google', 'keys'],
+        insiderCount: 2,
+        keyCount: 1,
+        googleRedirectUri: 'https://docs.example.com/auth/callback',
+        oauthRedirectUri: 'https://docs.example.com/oauth/callback',
+      });
+    } finally {
+      Object.assign(mockConfig, {
+        publicUrl: undefined,
+        authModes: ['keys'],
+        oauth: undefined,
+      });
+    }
+  });
+
   it('leaves a body without health, chrome or events as it is', () => {
     const bare = { name: 'server', health: undefined };
     expect(withoutAdminDetails(bare)).toBe(bare);

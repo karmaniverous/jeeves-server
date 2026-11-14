@@ -4,13 +4,7 @@
  * @packageDocumentation
  */
 
-import {
-  D4,
-  D4_MACHINE_KEY,
-  D11,
-  D22,
-  type WireDeparture,
-} from './departuresCommon.js';
+import { D4, D11, D17, D22, type WireDeparture } from './departuresCommon.js';
 
 /** Departures of the config, key exchange, legacy, webhook, sign-in, SPA and unknown routes scenarios. */
 export const DEPARTURES_SERVICE: Readonly<Record<string, WireDeparture>> = {
@@ -83,43 +77,6 @@ export const DEPARTURES_SERVICE: Readonly<Record<string, WireDeparture>> = {
     status: 401,
     code: 'SERVER_UNAUTHORIZED',
   },
-  'legacy rotateKey machine key': {
-    before:
-      '501 {"error":"Machine key rotation is not supported with TypeScript config. Update the key manually in jeeves.config.ts and restart the server."}',
-    allowedBy: D4_MACHINE_KEY,
-    status: 403,
-    code: 'SERVER_MACHINE_KEY_NOT_ROTATABLE',
-  },
-  'legacy rotateKey bad key': {
-    before: '401 {"error":"Invalid insider key"}',
-    allowedBy: D4,
-    status: 401,
-    code: 'SERVER_UNAUTHORIZED',
-  },
-  'legacy rotateKey none': {
-    before: '401 {"error":"Invalid insider key"}',
-    allowedBy: D4,
-    status: 401,
-    code: 'SERVER_UNAUTHORIZED',
-  },
-  'legacy share no path': {
-    before: '400 {"error":"path query param required"}',
-    allowedBy: D4,
-    status: 400,
-    code: 'SERVER_INVALID_REQUEST',
-  },
-  'legacy share bad key': {
-    before: '401 {"error":"Invalid insider key"}',
-    allowedBy: D4,
-    status: 401,
-    code: 'SERVER_UNAUTHORIZED',
-  },
-  'legacy share none': {
-    before: '401 {"error":"Invalid insider key"}',
-    allowedBy: D4,
-    status: 401,
-    code: 'SERVER_UNAUTHORIZED',
-  },
   'receiveEvent none': {
     before: '401 {"error":"Unauthorized"}',
     allowedBy: D4,
@@ -187,14 +144,15 @@ export const DEPARTURES_SERVICE: Readonly<Record<string, WireDeparture>> = {
     code: 'SERVER_NOT_FOUND',
   },
   status: {
-    before: '200 with health.events[].cmd and health.chrome.path',
-    allowedBy: D22,
+    before:
+      '200 with health.events[].cmd and health.chrome.path, without redirect URIs',
+    allowedBy: `${D22}; ${D17}`,
     status: 200,
   },
   'status insider key': {
     before:
       '200 with health.events[].cmd and health.chrome.path (an insider-seed key is no identity on public routes)',
-    allowedBy: D22,
+    allowedBy: `${D22}; ${D17}`,
     status: 200,
   },
   config: {

@@ -27,6 +27,7 @@ import { _pathMatchesScopes } from '../../auth/keys.js';
 import { findInsider } from '../../auth/resolve.js';
 import { getConfig, resetConfig } from '../../config/index.js';
 import { isDirectoryUrlPath } from '../../services/contentPath.js';
+import { appendEvent } from '../../services/eventQueue.js';
 import { createDeepShare, createPathShare } from '../../services/shareLinks.js';
 import { writeInsiderSeedToConfig } from '../../util/configPersist.js';
 import { fsPathToUrl, getRoots } from '../../util/platform.js';
@@ -125,9 +126,14 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
     const newSeed = crypto.randomBytes(32).toString('hex');
     const now = new Date().toISOString();
     await writeInsiderSeedToConfig(insider.email, newSeed, now);
+    appendEvent({ kind: 'insider_key_rotated', email: insider.email, at: now });
     resetConfig();
 
-    return reply.send({ ok: true, keyCreatedAt: now });
+    return reply.send({
+      ok: true,
+      keyCreatedAt: now,
+      invalidates: ['insiderKey', 'outsiderLinks'],
+    });
   });
 
   // POST /api/util/share-for

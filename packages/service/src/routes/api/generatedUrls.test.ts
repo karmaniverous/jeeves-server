@@ -13,7 +13,6 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { INSIDER_SEED, makeRuntimeConfig } from '../../testing/authFixture.js';
 import { testApp } from '../../testing/testApp.js';
-import { computeInsiderKey } from '../../util/crypto.js';
 
 const config = makeRuntimeConfig();
 
@@ -129,16 +128,6 @@ describe('generated URLs use k and no OpenClaw-sensitive names', () => {
       url: '/api/util/share-for',
       payload: { path: '/r/a.md', insiders: ['outsider@x.com'], depth },
     });
-    expect(agentProblems(res.json<{ url: string }>().url)).toEqual([]);
-  });
-
-  it.each([
-    ['plain', ''],
-    ['expiring', '&exp=9999999999999'],
-  ])('GET /share %s', async (_label, exp) => {
-    const res = await app.inject(
-      `/share?path=/r/a.md&k=${computeInsiderKey(INSIDER_SEED)}${exp}`,
-    );
     expect(agentProblems(res.json<{ url: string }>().url)).toEqual([]);
   });
 

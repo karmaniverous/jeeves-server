@@ -94,6 +94,8 @@ export type FileMutationAction =
 export interface RotateKeyResponse {
   ok: boolean;
   keyCreatedAt: string;
+  /** What stopped working: the insider key and the insider's outsider links. */
+  invalidates: ('insiderKey' | 'outsiderLinks')[];
 }
 
 /** GET /api/auth/status response. */

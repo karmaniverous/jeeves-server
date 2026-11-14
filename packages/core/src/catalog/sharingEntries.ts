@@ -101,7 +101,7 @@ export const rotateKeyResponseSchema = z.object({
   /** When the new key was created (ISO). */
   keyCreatedAt: z.string(),
   /** What stopped working: the insider key and the insider's outsider links. */
-  invalidates: z.array(z.enum(['insiderKey', 'outsiderLinks'])).optional(),
+  invalidates: z.array(z.enum(['insiderKey', 'outsiderLinks'])),
 });
 
 /** The sharing entries. */

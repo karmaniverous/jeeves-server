@@ -11,7 +11,11 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { clearConfig, getConfig, initConfig } from '../config/index.js';
-import { registerConfigRoute } from './config.js';
+import {
+  redactApplyResult,
+  registerConfigRoute,
+  sanitizeConfig,
+} from './config.js';
 
 const VALID_CONFIG = {
   port: 9999,
@@ -79,6 +83,32 @@ describe('POST /config/apply', () => {
 
     // onConfigApply hot-reloads the singleton from the same file.
     expect(getConfig().port).toBe(4321);
+  });
+
+  it('redacts the config it returns like GET /config (Decision 11)', async () => {
+    const res = await apply({ patch: { port: 4321 } });
+
+    expect(res.statusCode).toBe(200);
+    const { config } = res.json<{
+      config: { port: number; resolvedKeys: { name: string; seed: string }[] };
+    }>();
+    expect(config).toEqual(
+      JSON.parse(JSON.stringify(sanitizeConfig(getConfig()))),
+    );
+    expect(config.port).toBe(4321);
+    expect(config.resolvedKeys.map((k) => k.seed)).toEqual([
+      '[REDACTED]',
+      '[REDACTED]',
+    ]);
+    expect(res.body).not.toContain('a'.repeat(64));
+    expect(res.body).not.toContain('b'.repeat(64));
+  });
+
+  it('passes a failure through unredacted', () => {
+    const failure = { status: 400, body: { message: 'bad' } };
+    expect(redactApplyResult(failure)).toBe(failure);
+    const noConfig = { status: 200, body: { applied: true } };
+    expect(redactApplyResult(noConfig)).toBe(noConfig);
   });
 
   it('merges nested objects instead of replacing them', async () => {

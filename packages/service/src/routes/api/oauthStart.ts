@@ -18,6 +18,7 @@ import {
   publicOriginConfigError,
   trimTrailingSlashes,
 } from '../../util/publicOrigin.js';
+import { OAUTH_CALLBACK_PATH } from '../../util/redirectUris.js';
 import {
   requireOAuthInsider,
   requireValidCredentialNames,
@@ -129,7 +130,7 @@ export function registerOAuthStartRoute(fastify: FastifyInstance): void {
 
       if (!origin) throw publicOriginConfigError();
 
-      const redirectUri = `${trimTrailingSlashes(origin)}/oauth/callback`;
+      const redirectUri = `${trimTrailingSlashes(origin)}${OAUTH_CALLBACK_PATH}`;
 
       // Store pending
       storePending(state, {

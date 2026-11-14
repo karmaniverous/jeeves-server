@@ -15,6 +15,7 @@ import { isAdmin } from '../api/accessHook.js';
 import { getConfig } from '../config/index.js';
 import { DEFAULT_BRANDING } from '../config/schema.js';
 import { packageVersion } from '../util/packageVersion.js';
+import { statusRedirectUris } from '../util/redirectUris.js';
 
 /** Health status of a single downstream service. */
 interface ServiceStatus {
@@ -111,6 +112,24 @@ export function withoutAdminDetails<B extends StatusBody>(body: B): B {
   };
 }
 
+/**
+ * A status body with the sign-in redirect URIs (#270) added to
+ * `health.auth`; they depend on the request when the public origin comes
+ * from trusted proxy headers.
+ *
+ * @param body - The status body.
+ * @param uris - The redirect URIs that apply.
+ * @returns The body with them.
+ */
+export function withRedirectUris<B extends StatusBody>(
+  body: B,
+  uris: ReturnType<typeof statusRedirectUris>,
+): B {
+  const health = body.health as { auth?: object } | undefined;
+  if (!health?.auth) return body;
+  return { ...body, health: { ...health, auth: { ...health.auth, ...uris } } };
+}
+
 const handleStatus = createStatusHandler({
   name: 'server',
   version: packageVersion,
@@ -201,7 +220,11 @@ export const statusRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
 
   fastify.get('/status', async (request) => {
     const { body } = await handleStatus();
-    return isAdmin(request) ? body : withoutAdminDetails(body);
+    const full = withRedirectUris(
+      body,
+      statusRedirectUris(getConfig(), request),
+    );
+    return isAdmin(request) ? full : withoutAdminDetails(full);
   });
 
   // Unauthenticated liveness probe (#259): cheap, no downstream checks.

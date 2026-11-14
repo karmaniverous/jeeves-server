@@ -51,6 +51,25 @@ export function sanitizeConfig(config: RuntimeConfig): unknown {
   };
 }
 
+/**
+ * A config apply result with its `config` redacted like `GET /config`
+ * (Decision 11): the running config, reloaded from the file just written,
+ * through {@link sanitizeConfig}. Failures pass through.
+ *
+ * @param result - The apply handler's result.
+ * @returns The result to send.
+ */
+export function redactApplyResult(result: { status: number; body: unknown }): {
+  status: number;
+  body: unknown;
+} {
+  const { body } = result;
+  if (result.status !== 200 || typeof body !== 'object' || body === null)
+    return result;
+  if (!('config' in body)) return result;
+  return { ...result, body: { ...body, config: sanitizeConfig(getConfig()) } };
+}
+
 /** Register the GET /config and POST /config/apply routes. */
 export function registerConfigRoute(app: FastifyInstance): void {
   const configHandler = createConfigQueryHandler(() =>
@@ -70,8 +89,10 @@ export function registerConfigRoute(app: FastifyInstance): void {
       serverDescriptor,
       getConfig().configPath,
     );
-    const result = await applyHandler(
-      request.body as { patch: Record<string, unknown>; replace?: boolean },
+    const result = redactApplyResult(
+      await applyHandler(
+        request.body as { patch: Record<string, unknown>; replace?: boolean },
+      ),
     );
     return reply.status(result.status).send(result.body);
   });

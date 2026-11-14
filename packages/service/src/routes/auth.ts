@@ -16,19 +16,14 @@ import { COOKIE_NAME, setSessionCookie } from '../auth/session.js';
 import { getConfig, resetConfig } from '../config/index.js';
 import { writeInsiderSeedToConfig } from '../util/configPersist.js';
 import {
-  getPublicOrigin,
   type OriginRequest,
   sendPublicOriginConfigError,
 } from '../util/publicOrigin.js';
+import { googleSignInRedirectUri } from '../util/redirectUris.js';
 
-/**
- * Build the Google redirect URI on the configured public origin, or null
- * when none can be determined (never from untrusted request headers).
- */
-function getRedirectUri(request: OriginRequest): string | null {
-  const origin = getPublicOrigin(getConfig(), request);
-  return origin ? `${origin}/auth/callback` : null;
-}
+/** The Google sign-in redirect URI, or null without a public origin. */
+const getRedirectUri = (request: OriginRequest): string | null =>
+  googleSignInRedirectUri(getConfig(), request);
 
 export const authRoute: FastifyPluginCallback = (fastify, _opts, done) => {
   // GET /auth/login

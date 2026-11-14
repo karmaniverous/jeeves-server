@@ -89,7 +89,9 @@ function insiderKey(seed) {
 | `GET` | `/key?path=<path>` | Compute outsider key for a path |
 | `POST` | `/api/share` | Generate share link (`path`, `expiry` as epoch ms, `depth`, `dirs`); the response reports `isDirectory` |
 | `POST` | `/api/util/share-for` | Generate share link for a specific audience (insiders, enforceOutsiderPolicy) |
-| `POST` | `/api/rotate-key` | Rotate an insider's key (invalidates all their outsider links) |
+| `POST` | `/api/rotate-key` | Rotate an insider's key (session or insider-seed key; machine keys get `403 SERVER_MACHINE_KEY_NOT_ROTATABLE`). Logs `insider_key_rotated`; the response `{ ok, keyCreatedAt, invalidates: ['insiderKey', 'outsiderLinks'] }` says the insider key and every outsider link the insider signed stopped working |
+
+The legacy `POST /rotate-key` and `GET /share` were removed in 3.16.0 (#292): use `POST /api/rotate-key` and `POST /api/share`.
 
 ### Scopes and errors
 

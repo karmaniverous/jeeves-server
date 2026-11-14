@@ -29,9 +29,6 @@ export const D4 =
 export const d4Status = (why: string) =>
   `${D4}; status per the spec's code list: ${why}`;
 
-export const D4_MACHINE_KEY = d4Status(
-  'SERVER_MACHINE_KEY_NOT_ROTATABLE is 403 (the legacy route answered 501)',
-);
 export const D4_CHROME = d4Status('SERVER_CHROME_UNAVAILABLE is 503 (was 500)');
 export const D4_EXPORT_FAILED = d4Status(
   'SERVER_EXPORT_FAILED is 502 (a failed render was 500)',
@@ -58,6 +55,14 @@ export const D8_LOGIN_SEED = `${D8}; the insider-seed insider key authenticates 
 /** Decision 11 (GHSA-pfhj). */
 export const D11 =
   'Decision 11 (GHSA-pfhj): /config and /config/apply are admin routes';
+
+/** Decision 17 (#270): /status adds the sign-in redirect URIs. */
+export const D17 =
+  'Decision 17 (#270): /status adds health.auth.googleRedirectUri and oauthRedirectUri (the wire config has the google mode, OAuth providers and publicUrl)';
+
+/** Decision 20 (#292): one rotation route; the legacy routes are removed. */
+export const D20 =
+  'Decision 20 (#292): POST /api/rotate-key is the one rotation route; POST /rotate-key and GET /share are removed';
 
 /** Decision 12. */
 export const D12 =

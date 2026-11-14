@@ -64,18 +64,29 @@ const REDACTED_STAND_INS: Record<string, unknown> = {
 };
 
 /**
- * A recorded body with its redacted fields replaced by valid stand-ins.
+ * Required fields 3.16.0 adds to a recorded success (the wire departures
+ * list them): appended to the recorded body before it is parsed.
+ */
+const ADDED_FIELDS: Readonly<Partial<Record<string, Record<string, unknown>>>> =
+  {
+    rotateKey: { invalidates: ['insiderKey', 'outsiderLinks'] },
+  };
+
+/**
+ * A recorded body with its redacted fields replaced by valid stand-ins and
+ * the fields 3.16.0 adds appended.
  *
  * @param scenario - Wire scenario.
  * @param body - Recorded body text.
  * @returns The JSON text a schema must reproduce.
  */
 function comparable(scenario: WireScenario, body: string): string {
-  if (!scenario.redact) return body;
+  const added = ADDED_FIELDS[entryOf(scenario)?.name ?? ''];
+  if (!scenario.redact && !added) return body;
   const value = JSON.parse(body) as Record<string, unknown>;
-  for (const field of scenario.redact)
+  for (const field of scenario.redact ?? [])
     if (field in REDACTED_STAND_INS) value[field] = REDACTED_STAND_INS[field];
-  return JSON.stringify(value);
+  return JSON.stringify({ ...value, ...added });
 }
 
 const SUCCESSES = WIRE_SCENARIOS.flatMap((scenario) => {

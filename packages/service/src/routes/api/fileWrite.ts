@@ -12,6 +12,7 @@ import type { FastifyPluginAsync } from 'fastify';
 
 import { InvalidRequest, NotAFile, NotFound } from '../../api/errors.js';
 import { getConfig } from '../../config/index.js';
+import { withFileLock } from '../../util/fileMutex.js';
 import { getRoots } from '../../util/platform.js';
 import { fsPathOf } from './routePath.js';
 import { requireInScope, requireInsider } from './scopeGuard.js';
@@ -38,8 +39,12 @@ export const fileWriteRoutes: FastifyPluginAsync = (fastify) => {
       if (typeof content !== 'string')
         throw new InvalidRequest('Request body must include "content" string');
 
-      // A write failure is a logged, masked 500 (the cause names the path).
-      await fs.promises.writeFile(resolved, content, 'utf8');
+      // Under the per-file lock block mutations take (Decision 15), so a
+      // full-file write (undo/redo) can't interleave with a block edit. A
+      // write failure is a logged, masked 500 (the cause names the path).
+      await withFileLock(resolved, () =>
+        fs.promises.writeFile(resolved, content, 'utf8'),
+      );
       return reply.send({
         ok: true,
         path: resolved,
