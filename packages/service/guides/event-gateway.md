@@ -121,12 +121,14 @@ See the [Insiders, Outsiders & Sharing](sharing.md) guide for full details on th
 
 Events are processed through a **durable JSONL queue**:
 
-1. **Append** — Validated events are appended to the queue file with metadata
-2. **Drain** — A self-scheduling drain loop processes batches with bounded concurrency (no overlapping batches)
-3. **Execute** — For each entry, the `cmd` is spawned with the (optionally mapped) body piped as JSON to stdin
-4. **Timeout** — Commands are killed after `timeoutMs` (per-event or the global `eventTimeoutMs` default)
+1. **Append** — Matched events are appended to the queue file with metadata, one `\n`-terminated line each, under an in-process queue lock
+2. **Drain** — A self-scheduling drain loop reads one batch at a time (no overlapping batches): at most 1 MiB from the cursor, complete lines only; the queue is never read whole
+3. **Execute** — Each entry's `cmd` runs through the shell with the (optionally mapped) body piped as JSON to stdin, in a pool of `eventQueueConcurrency`: the next entry starts as soon as any running one finishes
+4. **Timeout** — Commands are ended, with their process tree, after `timeoutMs` (per-event or the global `eventTimeoutMs` default; see [Timeouts](#timeouts))
 5. **Errors logged** — The command is responsible for its own error handling; the queue processor logs and moves on
-6. **Cursor** — A cursor file (queue path + `.cursor`) tracks the byte offset of the last processed entry, surviving restarts
+6. **Cursor** — Once every entry of the batch has finished, the cursor file (see [Cursor](#cursor)) moves past the batch, surviving restarts
+
+The drain loop sleeps 5 seconds when there is nothing to do and continues at once after a batch.
 
 ### Queue configuration
 
@@ -149,9 +151,61 @@ Events are processed through a **durable JSONL queue**:
 }
 ```
 
-### Durability
+### Delivery: at least once
 
-The queue survives server restarts. On startup, the processor reads the cursor file and resumes from where it left off. If the cursor file is missing, processing starts from the beginning of the queue.
+The queue survives server restarts. On startup, the processor reads the cursor file and resumes from where it left off. The cursor moves once per batch, after every entry in it has finished (success, failure or timeout), so a crash or restart mid-batch runs that batch again: an entry can run more than once. Make event commands idempotent.
+
+### Cursor
+
+The cursor file is the queue path plus `.cursor` (`logs/event-queue.cursor` when `eventQueue` isn't set). It is JSON, replaced atomically (temp file, then rename):
+
+```json
+{ "v": 1, "offset": 2048, "size": 4096, "head": "<sha256 hex>", "headLen": 64 }
+```
+
+| Field | Meaning |
+| --- | --- |
+| `offset` | Byte offset just past the last processed line |
+| `size` | Queue size when the cursor was written |
+| `head`, `headLen` | sha256 of the queue's first `headLen` bytes (`min(64, size)`); a queue that has only grown still matches |
+
+A cursor from an earlier version (a plain byte offset) is still read. On each pass the processor checks the cursor against the queue:
+
+| Cursor | Processing resumes at | Recorded |
+| --- | --- | --- |
+| Missing (new install) | the start of the queue | — |
+| Unreadable, empty or not a cursor | the **end** of the queue: nothing already in it is replayed | error log; `queue_cursor_reset` in `webhook-events.jsonl`; `health.eventQueue.lastCursorReset` |
+| Past the end of the queue (truncated), or the queue's first bytes changed (replaced) | the start of the current queue: nothing in it is lost | warning; `queue_rewound`; `health.eventQueue.lastRewind` |
+
+### Damaged lines
+
+A write cut short (a full disk, a crash) leaves a line without its `\n`. Before the first append after start-up, each JSONL writer (the queue, `webhook-events.jsonl`) checks the file's last byte and ends a torn line first, so the fragment stays on its own line. The processor leaves an unterminated last line for a later pass. A line that isn't a valid queue entry is skipped: a warning with its byte offset, a `queue_parse_error` entry (offset and a 200-character preview) in `webhook-events.jsonl`, and a count in `health.eventQueue.parseErrors`. Later entries run as usual. Readers of the event log (`GET /api/events` and each event log write) skip malformed lines the same way.
+
+### Rotation
+
+When the processor has caught up and the queue is larger than 64 MiB, it renames the queue to `<queue>.1` (replacing any previous `.1`) under the queue lock and resets the cursor; the next append starts a fresh queue. If the rename fails (Windows may refuse while another process has the file open), rotation is tried again on a later idle pass. Only one `.1` generation is kept: processed entries aren't needed for delivery, and the event log keeps the history.
+
+### Timeouts
+
+When an entry's timeout fires:
+
+- **Linux and macOS:** the command runs in its own process group. The group gets `SIGTERM`, then `SIGKILL` 5 seconds later.
+- **Windows:** `taskkill /PID <pid> /T` ends the process tree, then `taskkill /PID <pid> /T /F` 5 seconds later.
+
+The event log entry records `timedOut: true` and the exit code (`null` when the command was killed by a signal). The entry's pool slot frees when the command exits or, at the latest, 5 seconds after the forced kill.
+
+### Status
+
+`GET /status` reports the queue's progress in `health.eventQueue` (counts since the server started; timestamps ISO):
+
+| Field | Meaning |
+| --- | --- |
+| `offset` | Byte offset the processor has reached |
+| `size` | Queue size in bytes |
+| `pendingBytes` | `size - offset` |
+| `parseErrors` | Queue lines skipped as malformed |
+| `lastCursorReset` | Last time an untrustworthy cursor was reset (optional) |
+| `lastRewind` | Last time a truncated or replaced queue was processed from its start (optional) |
 
 ## Event Logging
 
@@ -164,7 +218,7 @@ All events — matched and unmatched — are logged to the event log file (co-lo
 
 ### Log purging
 
-Each log write also purges entries older than `eventLogPurgeMs` (default: 30 days). This keeps the log file from growing unbounded.
+Each log write also purges entries older than `eventLogPurgeMs` (default: 30 days). This keeps the log file from growing unbounded. The purged log replaces the file atomically (temp file, then rename), so a failed write leaves the previous log intact.
 
 ## Writing Event Handlers
 
@@ -206,7 +260,7 @@ process.stdin.on('end', () => {
 curl "http://localhost:1934/api/events?limit=20&k=<machine key>"
 ```
 
-`GET /api/events?limit=N` (1–100, default 20) returns an array of entries, newest first, each with `ts`, `event`, `matched`, `exitCode` and `durationMs`. Unmatched entries also carry the stored body (`bodyPreview`, with `truncated` and `originalBytes` when it was cut at 256 KiB). It is only for insiders with no scopes configured: a machine key or insider session without `scopes`. Any configured scopes refuse access, even `allow: ['/**']`: such insider sessions get 403, and such machine keys are refused. `/status` does not return event log entries.
+`GET /api/events?limit=N` (1–100, default 20) returns an array of entries, newest first, each with `ts`, `event`, `matched`, `exitCode` and `durationMs` (and `timedOut: true` when the command timed out). Unmatched entries also carry the stored body (`bodyPreview`, with `truncated` and `originalBytes` when it was cut at 256 KiB). It is only for insiders with no scopes configured: a machine key or insider session without `scopes`. Any configured scopes refuse access, even `allow: ['/**']`: such insider sessions get 403, and such machine keys are refused. `/status` does not return event log entries.
 
 ### Via log files
 

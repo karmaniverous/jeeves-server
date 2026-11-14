@@ -112,7 +112,7 @@ Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) ret
 
 ## Event Gateway
 
-`POST /event?k=<key>` with a JSON body. The body is matched against each configured event's JSON Schema (ajv); the first match wins. An optional JsonMap transform reshapes the payload, and matched events go to a durable JSONL queue that is processed in order. `server_event_status` shows schemas and recent log entries.
+`POST /event?k=<key>` with a JSON body. The body is matched against each configured event's JSON Schema (ajv); the first match wins. An optional JsonMap transform reshapes the payload, and matched events go to a durable JSONL queue, processed in batches by a pool of `eventQueueConcurrency` commands. Delivery is at least once: a restart mid-batch runs that batch again, so event commands should be idempotent. A timed-out command is killed with its process tree (`timedOut: true` in the event log). Malformed queue lines are skipped, and an untrustworthy cursor resumes at the end of the queue (no replay); `webhook-events.jsonl` records `queue_parse_error`, `queue_cursor_reset` and `queue_rewound`. `server_event_status` shows schemas and recent log entries.
 
 ## Agent Guidance
 
@@ -139,6 +139,7 @@ Run `server_status` to check:
 - Available export formats and diagram languages
 - Auth configuration (insider count, key count)
 - Event gateway schemas
+- Event queue progress (`health.eventQueue`: offset, size, pending bytes, parse errors, last cursor reset or rewind)
 
 Service health for companion services (watcher, runner, meta) is mediated through the server's `/status` endpoint. The plugin queries the server only — never watcher or runner directly.
 
