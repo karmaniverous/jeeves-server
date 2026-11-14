@@ -34,7 +34,7 @@ vi.mock('../../util/configPersist.js', () => ({
   writeInsiderSeedToConfig: vi.fn(),
 }));
 
-const { addAuthMiddleware } = await import('./middleware.js');
+const { addAccessHook } = await import('../../api/accessHook.js');
 const { authStatusRoutes } = await import('./auth-status.js');
 const { keysRoute } = await import('../keys.js');
 const { eventRoute } = await import('../event.js');
@@ -49,7 +49,6 @@ const CONTENT_PREFIXES = [
   '/api/file',
   '/api/raw',
   '/api/export',
-  '/api/export-cache',
   '/api/mermaid-export',
   '/api/plantuml-export',
   '/api/link-info',
@@ -59,8 +58,8 @@ let app: FastifyInstance;
 
 beforeAll(async () => {
   app = testApp();
+  addAccessHook(app);
   await app.register(async (api) => {
-    addAuthMiddleware(api);
     for (const prefix of CONTENT_PREFIXES) api.get(`${prefix}/*`, echo);
     api.post('/api/util/share-for', echo);
     await api.register(authStatusRoutes);

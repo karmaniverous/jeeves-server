@@ -66,7 +66,7 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
   urlPathToFs: () => mdFile,
 }));
 
-const { addAuthMiddleware } = await import('./middleware.js');
+const { addAccessHook } = await import('../../api/accessHook.js');
 const { exportRoutes } = await import('./export.js');
 const { RenderFailedError } = await import('../../services/puppeteer.js');
 const { encodeStack } = await import('../../services/deepShareLinks.js');
@@ -76,7 +76,7 @@ let app: FastifyInstance;
 beforeAll(async () => {
   app = testApp();
   await app.register(async (api) => {
-    addAuthMiddleware(api);
+    addAccessHook(api);
     await api.register(exportRoutes);
   });
   await app.ready();

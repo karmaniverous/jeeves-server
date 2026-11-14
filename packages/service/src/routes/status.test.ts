@@ -37,7 +37,62 @@ vi.mock('../config/index.js', () => ({
 }));
 
 // Must import AFTER mock
-const { statusRoutes } = await import('./status.js');
+const { statusRoutes, withoutAdminDetails } = await import('./status.js');
+
+/** Call the /status handler as `request`, then close its hooks. */
+async function statusAs(request: unknown) {
+  const routes: Record<string, (req: unknown) => Promise<unknown>> = {};
+  const closeHooks: (() => Promise<void>)[] = [];
+  const fakeFastify = {
+    get: (path: string, handler: (req: unknown) => Promise<unknown>) => {
+      routes[path] = handler;
+    },
+    addHook: (hook: string, handler: () => Promise<void>) => {
+      if (hook === 'onClose') closeHooks.push(handler);
+    },
+  };
+  statusRoutes(fakeFastify as never, {}, () => {});
+  const result = await routes['/status'](request);
+  await Promise.all(closeHooks.map((hook) => hook()));
+  return (result as { health: Record<string, unknown> }).health;
+}
+
+describe('status exposure (Decision 22)', () => {
+  const identity = (scopes: unknown) => ({
+    query: {},
+    access: { entry: 'status', class: 'public', identity: { scopes } },
+  });
+
+  it('shows event commands and the Chrome path to an admin', async () => {
+    const health = await statusAs(identity(null));
+    expect(health.events).toEqual([
+      { name: 'deploy', cmd: 'deploy.sh' },
+      { name: 'notify', cmd: 'notify.sh' },
+    ]);
+    expect(health.chrome).toEqual({
+      configured: true,
+      path: '/usr/bin/chromium',
+    });
+  });
+
+  it.each([
+    ['no identity', { query: {} }],
+    ['a scoped identity', identity({ allow: ['/**'], deny: [] })],
+  ])('omits them for %s', async (_label, request) => {
+    const health = await statusAs(request);
+    expect(health.events).toEqual([{ name: 'deploy' }, { name: 'notify' }]);
+    expect(health.chrome).toEqual({ configured: true });
+    expect(health.port).toBe(1934);
+  });
+
+  it('leaves a body without health, chrome or events as it is', () => {
+    const bare = { name: 'server', health: undefined };
+    expect(withoutAdminDetails(bare)).toBe(bare);
+    expect(withoutAdminDetails({ health: { port: 1 } })).toEqual({
+      health: { port: 1 },
+    });
+  });
+});
 
 describe('GET /status', () => {
   it('returns structured status with SDK shape', async () => {

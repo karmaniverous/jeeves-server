@@ -88,7 +88,7 @@ function computeSubLink(
   const key = computeDeepShareKey(seed, targetUrlPath, params);
 
   // Build URL
-  // The key covers the decoded path (what the middleware verifies); the URL
+  // The key covers the decoded path (what the access hook verifies); the URL
   // carries it percent-encoded.
   const encodedPath = targetUrlPath
     .split('/')

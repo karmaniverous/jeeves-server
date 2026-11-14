@@ -16,7 +16,6 @@ import { fileMutationRoutes } from './fileMutations.js';
 import { fileWriteRoutes } from './fileWrite.js';
 import { linkInfoRoutes } from './linkInfo.js';
 import { magicLinkApiRoute } from './magicLink.js';
-import { addAuthMiddleware } from './middleware.js';
 import { oauthApiRoutes } from './oauth.js';
 import { publicContentRoute } from './publicContent.js';
 import { rawRoutes } from './raw.js';
@@ -26,9 +25,7 @@ import { searchRoutes } from './search.js';
 import { sharingRoutes } from './sharing.js';
 
 export const apiRoute: FastifyPluginAsync = async (fastify) => {
-  // Add auth hook directly to this context (not as a child plugin)
-  // so it applies to all routes registered below.
-  addAuthMiddleware(fastify);
+  // Access is enforced by the app-level access hook (api/accessHook.ts).
   await fastify.register(drivesRoutes);
   await fastify.register(directoryRoutes);
   await fastify.register(fileContentRoutes);

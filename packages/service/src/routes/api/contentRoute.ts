@@ -1,41 +1,15 @@
 /**
- * Maps API request URLs to the filesystem content path they address, for
- * auth and scope checks. Pure functions; no I/O.
+ * Maps a request matched to a catalog entry to the filesystem content path it addresses, for access and scope checks: the decoded `*` value of a content or navigation entry, or the entry's fixed `contentPath`. Pure functions; no I/O.
  *
  * @packageDocumentation
  */
 
-/**
- * API route prefixes whose remaining URL path addresses filesystem content.
- * The content path is the URL path with the prefix removed. Longer prefixes
- * sharing a stem (`/api/export-cache`) must precede shorter ones.
- */
-const CONTENT_ROUTE_PREFIXES = [
-  '/api/path',
-  '/api/file',
-  '/api/raw',
-  '/api/export-cache',
-  '/api/export',
-  '/api/mermaid-export',
-  '/api/plantuml-export',
-  '/api/link-info',
-] as const;
+import type { CatalogMatch } from '../../api/catalogMatch.js';
+import { hasContentPath, type RouteAccess } from '../../api/routeAccess.js';
 
-/** A content-addressing API route prefix. */
-export type ContentRoutePrefix = (typeof CONTENT_ROUTE_PREFIXES)[number];
-
-/**
- * Prefixes that only expose directory listings or metadata (no file content),
- * so ancestors of allowed paths may be navigated through them.
- */
-const NAVIGATION_PREFIXES: ReadonlySet<ContentRoutePrefix> = new Set([
-  '/api/path',
-  '/api/link-info',
-]);
-
-/** Parsed content route: the matched prefix and the decoded content path. */
+/** The content path a request addresses. */
 export interface ContentRoute {
-  prefix: ContentRoutePrefix;
+  /** Decoded content path (`/` for the root). */
   path: string;
 }
 
@@ -49,32 +23,19 @@ function decodePath(rawPath: string): string {
 }
 
 /**
- * Map an API request URL to the content path it addresses.
- * Returns null for API routes that do not address filesystem content.
+ * The content path of a request to a catalog entry.
+ *
+ * @param match - The matched entry and its raw `*` value.
+ * @param access - The entry's access.
+ * @returns The content path, or null for entries that address none.
  */
-export function parseContentRoute(url: string): ContentRoute | null {
-  const pathname = url.split('?')[0];
-  for (const prefix of CONTENT_ROUTE_PREFIXES) {
-    if (pathname !== prefix && !pathname.startsWith(prefix + '/')) continue;
-    return { prefix, path: decodePath(pathname.slice(prefix.length)) || '/' };
-  }
-  return null;
-}
-
-/**
- * The path that URL keys are verified against for an API request: the
- * content path for content routes, `/` for `/api/drives`, otherwise the
- * decoded request path itself.
- */
-export function keyAuthPath(url: string, route: ContentRoute | null): string {
-  if (route) return route.path;
-  const pathname = url.split('?')[0];
-  return pathname === '/api/drives' ? '/' : decodePath(pathname);
-}
-
-/** True when `route` only lists or describes content (see NAVIGATION_PREFIXES). */
-export function isNavigationRoute(route: ContentRoute): boolean {
-  return NAVIGATION_PREFIXES.has(route.prefix);
+export function parseContentRoute(
+  match: CatalogMatch,
+  access: RouteAccess,
+): ContentRoute | null {
+  if (!hasContentPath(access)) return null;
+  if (access.contentPath) return { path: access.contentPath };
+  return { path: decodePath(`/${match.wildcard ?? ''}`) };
 }
 
 /**

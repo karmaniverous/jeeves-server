@@ -56,7 +56,7 @@ function insiderKey(seed) {
 | Method | Path | Description |
 | --- | --- | --- |
 | `GET` | `/health` | Liveness check: returns `{ "ok": true }` |
-| `GET` | `/status` | Server metadata: version, uptime, services, capabilities. For recent event log entries, use `GET /api/events?limit=N` (insiders with no scopes configured; see below) |
+| `GET` | `/status` | Server metadata: version, uptime, services, capabilities. Event commands (`health.events[].cmd`) and the Chrome path (`health.chrome.path`) are shown only to admins (a session or insider key with no scopes configured). For recent event log entries, use `GET /api/events?limit=N` (admins; see below) |
 
 ### File Access (auth required)
 
@@ -152,8 +152,8 @@ Directory listings and link info admit ancestors of in-scope paths (for navigati
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/api/resolve-path?fsPath=<absolute path>` | Map a filesystem path to `{ browsePath, browseUrl, publicUrl? }`. Requires a machine key or insider session (401 without credentials, 403 for share keys). |
-| `GET` | `/api/events?limit=N` | Recent event log entries (1–100, default 20). Only for insiders with no scopes configured (a machine key or insider session without `scopes`). Any configured scopes refuse access, even `allow: ['/**']`: such insider sessions get 403, and such machine keys are refused. Unmatched webhook bodies are stored in full up to 256 KiB; larger ones are cut at the cap and carry `truncated: true` and `originalBytes`. |
+| `GET` | `/api/resolve-path?fsPath=<absolute path>` | Map a filesystem path to `{ browsePath, browseUrl, publicUrl? }`. Requires a session or insider key (401 without one; share keys are refused); a scoped caller gets 403 for a path outside its scopes. |
+| `GET` | `/api/events?limit=N` | Recent event log entries (1–100, default 20). Only for insiders with no scopes configured (a machine key or insider session without `scopes`). Any configured scopes refuse access, even `allow: ['/**']` (403 `SERVER_FORBIDDEN`). Unmatched webhook bodies are stored in full up to 256 KiB; larger ones are cut at the cap and carry `truncated: true` and `originalBytes`. |
 
 ## Errors
 

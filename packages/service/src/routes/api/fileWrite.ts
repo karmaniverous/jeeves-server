@@ -25,7 +25,7 @@ export const fileWriteRoutes: FastifyPluginAsync = (fastify) => {
       requireInsider(request);
 
       const reqPath = request.params['*'];
-      // Defence in depth: the auth middleware also enforces scopes.
+      // Defence in depth: the access hook also enforces scopes.
       requireInScope(request, reqPath);
 
       const resolved = fsPathOf(reqPath, roots);

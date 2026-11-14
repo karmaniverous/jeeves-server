@@ -1,5 +1,5 @@
 /**
- * Route-level guards: throw `SERVER_INSIDER_REQUIRED` when a route needs insider access, and `SERVER_OUT_OF_SCOPE` when the authenticated identity's scopes do not cover a content path. Defence in depth behind the auth middleware, and the only check for body-addressed routes.
+ * Route-level guards: throw `SERVER_INSIDER_REQUIRED` when a route needs insider access, and `SERVER_OUT_OF_SCOPE` when the authenticated identity's scopes do not cover a content path. Defence in depth behind the access hook, and the only check for body-addressed routes.
  *
  * @packageDocumentation
  */

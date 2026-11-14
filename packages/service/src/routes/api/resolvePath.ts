@@ -15,7 +15,7 @@ import type { FastifyPluginCallback } from 'fastify';
 import { InvalidPath, InvalidRequest, NotFound } from '../../api/errors.js';
 import { getConfig } from '../../config/index.js';
 import { encodeUrlPath, fsPathToUrl, getRoots } from '../../util/platform.js';
-import { requireInsider } from './scopeGuard.js';
+import { requireInScope, requireInsider } from './scopeGuard.js';
 
 export const resolvePathRoutes: FastifyPluginCallback = (
   fastify,
@@ -23,8 +23,9 @@ export const resolvePathRoutes: FastifyPluginCallback = (
   done,
 ) => {
   fastify.get('/api/resolve-path', async (request, reply) => {
-    // Machine key or insider only: the answer reveals the configured roots
-    // and publicUrl.
+    // An `insider` entry: the answer reveals the configured roots and
+    // publicUrl. The access hook admits identities only; this is defence in
+    // depth.
     requireInsider(request);
 
     const { fsPath } = request.query as { fsPath?: string };
@@ -47,6 +48,8 @@ export const resolvePathRoutes: FastifyPluginCallback = (
 
     // Strip leading slash to produce a browse path (drive-relative)
     const browsePath = urlPath.replace(/^\//, '');
+    // The caller's scopes cover the path it resolves to (#301).
+    requireInScope(request, browsePath);
     const browseUrl = '/browse/' + encodeUrlPath(browsePath);
 
     const response: Record<string, string> = { browsePath, browseUrl };

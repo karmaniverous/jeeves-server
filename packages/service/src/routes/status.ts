@@ -11,6 +11,7 @@
 import { createStatusHandler, getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyPluginCallback } from 'fastify';
 
+import { isAdmin } from '../api/accessHook.js';
 import { getConfig } from '../config/index.js';
 import { DEFAULT_BRANDING } from '../config/schema.js';
 import { packageVersion } from '../util/packageVersion.js';
@@ -73,6 +74,41 @@ async function refreshServiceCache(): Promise<void> {
   } catch (error) {
     console.error('Failed to refresh service status cache:', error);
   }
+}
+
+/** The parts of a status body {@link withoutAdminDetails} reads. */
+interface StatusBody {
+  health?: unknown;
+}
+
+/** The `health` fields only admins see. */
+interface AdminHealth {
+  chrome?: { configured: boolean; path?: unknown };
+  events?: { name: string; cmd?: unknown }[];
+}
+
+/**
+ * A status body for a caller that isn't admin (Decision 22): each
+ * `health.events[].cmd` and `health.chrome.path` omitted, the rest as is.
+ *
+ * @param body - The full status body.
+ * @returns The body without them.
+ */
+export function withoutAdminDetails<B extends StatusBody>(body: B): B {
+  const health = body.health as AdminHealth | undefined;
+  if (!health) return body;
+  return {
+    ...body,
+    health: {
+      ...health,
+      ...(health.chrome
+        ? { chrome: { configured: health.chrome.configured } }
+        : {}),
+      ...(health.events
+        ? { events: health.events.map(({ name }) => ({ name })) }
+        : {}),
+    },
+  };
 }
 
 const handleStatus = createStatusHandler({
@@ -163,9 +199,9 @@ export const statusRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
     }
   });
 
-  fastify.get('/status', async () => {
-    const result = await handleStatus();
-    return result.body;
+  fastify.get('/status', async (request) => {
+    const { body } = await handleStatus();
+    return isAdmin(request) ? body : withoutAdminDetails(body);
   });
 
   // Unauthenticated liveness probe (#259): cheap, no downstream checks.

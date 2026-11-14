@@ -24,7 +24,7 @@ export const fileMutationRoutes: FastifyPluginAsync = (fastify) => {
     requireInsider(request);
     const reqPath = requirePath(request.params['*']);
 
-    // Defence in depth: the auth middleware also enforces scopes.
+    // Defence in depth: the access hook also enforces scopes.
     requireInScope(request, reqPath);
 
     if (!reqPath.endsWith('.md'))

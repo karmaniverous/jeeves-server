@@ -2,7 +2,7 @@
  * `POST /api/share` reports whether the target is a directory, and a file
  * share's raw URL (the page URL with `/browse/` swapped for `/api/raw/`,
  * query unchanged, as the plugin's `server_share` builds it) authenticates
- * on the raw route for that one file only. Real middleware, sharing and raw
+ * on the raw route for that one file only. Real access hook, sharing and raw
  * routes and HMAC keys over a temp tree.
  *
  * @packageDocumentation
@@ -44,7 +44,7 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
     '/' + path.relative(tmpRoot, fsPath).split(path.sep).join('/'),
 }));
 
-const { addAuthMiddleware } = await import('./middleware.js');
+const { addAccessHook } = await import('../../api/accessHook.js');
 const { rawRoutes } = await import('./raw.js');
 const { sharingRoutes } = await import('./sharing.js');
 
@@ -53,7 +53,7 @@ let app: FastifyInstance;
 beforeAll(async () => {
   app = testApp();
   await app.register(async (api) => {
-    addAuthMiddleware(api);
+    addAccessHook(api);
     await api.register(rawRoutes);
     await api.register(sharingRoutes);
   });

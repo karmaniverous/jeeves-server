@@ -2,7 +2,6 @@
  * Event Gateway webhook endpoint
  */
 
-import { getUrlKey } from '@karmaniverous/jeeves-server-core';
 import {
   type Json,
   JsonMap,
@@ -13,8 +12,6 @@ import Ajv from 'ajv';
 import type { FastifyPluginCallback } from 'fastify';
 import * as _ from 'radash';
 
-import { Unauthorized } from '../api/errors.js';
-import { verifyKey } from '../auth/keys.js';
 import { getConfig } from '../config/index.js';
 import { logEvent } from '../services/eventLog.js';
 import { enqueue } from '../services/eventQueue.js';
@@ -24,7 +21,6 @@ const ajv = new Ajv();
 
 interface EventRequest {
   Body: Record<string, unknown>;
-  Querystring: { k?: string; key?: string };
 }
 
 /**
@@ -67,21 +63,7 @@ async function transformBody(
 }
 
 export const eventRoute: FastifyPluginCallback = (fastify, _opts, done) => {
-  // Auth middleware
-  fastify.addHook('preHandler', (request, _reply, hookDone) => {
-    if (request.url.startsWith('/event')) {
-      const result = verifyKey(
-        getConfig().resolvedKeys,
-        '/event',
-        getUrlKey(request.query),
-        undefined,
-      );
-      if (!result.valid) throw new Unauthorized('Unauthorized');
-    }
-    hookDone();
-  });
-
-  // Event endpoint
+  // Event endpoint (`eventKey`: the access hook verifies the key)
   fastify.post<EventRequest>('/event', async (request) => {
     const body = request.body;
 

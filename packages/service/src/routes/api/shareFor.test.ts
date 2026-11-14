@@ -1,7 +1,7 @@
 /**
  * #282: share-for outsider links verify at every depth, including depth 0
  * (which used to omit `d`, so the deep key was never recognised).
- * Real middleware and HMAC keys end to end.
+ * Real access hook and HMAC keys end to end.
  *
  * @packageDocumentation
  */
@@ -23,7 +23,7 @@ vi.mock('../../util/configPersist.js', () => ({
   writeInsiderSeedToConfig: vi.fn(),
 }));
 
-const { addAuthMiddleware } = await import('./middleware.js');
+const { addAccessHook } = await import('../../api/accessHook.js');
 const { sharingRoutes } = await import('./sharing.js');
 
 let app: FastifyInstance;
@@ -31,7 +31,7 @@ let app: FastifyInstance;
 beforeAll(async () => {
   app = testApp();
   await app.register(async (api) => {
-    addAuthMiddleware(api);
+    addAccessHook(api);
     api.get('/api/file/*', (request: FastifyRequest) => ({
       accessMode: request.accessMode ?? null,
     }));

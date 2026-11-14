@@ -2,7 +2,7 @@
  * Deep share traversal: deep keys are bound to one path; a directory
  * reached via a dirs=1 link lists only its immediate entries, each with
  * its own sub-key that consumes depth; nothing else is reachable.
- * Real middleware, directory route and HMAC keys over a temp tree.
+ * Real access hook, directory route and HMAC keys over a temp tree.
  *
  * @packageDocumentation
  */
@@ -63,7 +63,7 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
   breadcrumbParts: () => [],
 }));
 
-const { addAuthMiddleware } = await import('./middleware.js');
+const { addAccessHook } = await import('../../api/accessHook.js');
 const { directoryRoutes } = await import('./directory.js');
 const { isDirectoryUrlPath } = await import('../../services/contentPath.js');
 const { encodeStack, rewriteLinksForDeepShare } =
@@ -77,11 +77,11 @@ const echo = (request: FastifyRequest) => ({
 beforeAll(async () => {
   app = testApp();
   await app.register(async (api) => {
-    addAuthMiddleware(api);
+    addAccessHook(api);
     api.get('/api/file/*', echo);
     api.get('/api/raw/*', echo);
     api.get('/api/events', echo);
-    api.get('/api/search', echo);
+    api.get('/api/search/facets', echo);
     await api.register(directoryRoutes);
   });
   await app.ready();
@@ -212,7 +212,7 @@ describe('path handling', () => {
     ).toBe(400);
   });
 
-  it.each(['/api/events', '/api/search'])(
+  it.each(['/api/events', '/api/search/facets'])(
     'never authenticates the non-content route %s with a deep key',
     async (route) => {
       const q = deepQuery(route, [route], 1, true);

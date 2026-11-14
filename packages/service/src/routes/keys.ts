@@ -1,14 +1,15 @@
 /**
  * Key generation and management endpoints (legacy API-key-header auth).
  *
- * These endpoints use X-API-Key header auth (raw seed) for machine-to-machine
+ * `/key` and `/insider-key` take the raw machine seed in `X-API-Key`
+ * (`machineSeed` entries, verified by the access hook) for machine-to-machine
  * access. The SPA equivalents in api/sharing.ts use cookie/URL-key auth.
  */
 
 import crypto from 'node:crypto';
 
 import { getUrlKey } from '@karmaniverous/jeeves-server-core';
-import type { FastifyPluginCallback } from 'fastify';
+import type { FastifyPluginCallback, FastifyRequest } from 'fastify';
 
 import {
   InvalidRequest,
@@ -33,19 +34,18 @@ import {
 export const keysRoute: FastifyPluginCallback = (fastify, _opts, done) => {
   // GET /key - Compute path-specific outsider key (requires raw API key seed in header)
   fastify.get<{ Querystring: { path?: string } }>('/key', (request) => {
-    const matched = machineSeedFor(request.headers['x-api-key']);
+    const seed = machineSeedOf(request);
 
     const targetPath = request.query.path;
     if (!targetPath) throw new InvalidRequest('path query param required');
 
-    const key = computePathKey(matched.seed, targetPath);
+    const key = computePathKey(seed, targetPath);
     return { path: targetPath, key };
   });
 
   // GET /insider-key - Generate insider key (requires raw API key seed in header)
   fastify.get('/insider-key', (request) => {
-    const matched = machineSeedFor(request.headers['x-api-key']);
-    const key = computeInsiderKey(matched.seed);
+    const key = computeInsiderKey(machineSeedOf(request));
     return { key };
   });
 
@@ -118,21 +118,16 @@ export const keysRoute: FastifyPluginCallback = (fastify, _opts, done) => {
 };
 
 /**
- * The machine key whose raw seed is the `X-API-Key` header.
+ * The seed of the machine key the access hook matched to the `X-API-Key`
+ * header (`machineSeed` entries).
  *
- * @param provided - The header.
- * @returns The key.
- * @throws `SERVER_UNAUTHORIZED` (401) when the header is missing or matches
- *   no key.
+ * @param request - The request.
+ * @returns The seed.
+ * @throws `SERVER_UNAUTHORIZED` (401) when no key was matched.
  */
-function machineSeedFor(provided: string | string[] | undefined) {
-  if (typeof provided !== 'string' || !provided)
-    throw new Unauthorized('X-API-Key header required');
-  const matched = getConfig().resolvedKeys.find((rk) =>
-    timingSafeEqual(provided, rk.seed),
-  );
-  if (!matched) throw new Unauthorized('Invalid API key');
-  return matched;
+export function machineSeedOf(request: FastifyRequest): string {
+  if (!request.authSeed) throw new Unauthorized('X-API-Key header required');
+  return request.authSeed;
 }
 
 async function rotateInsiderSeed(

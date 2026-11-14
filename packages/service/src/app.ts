@@ -8,6 +8,7 @@ import cookie from '@fastify/cookie';
 import { registerErrorHandlers } from '@karmaniverous/jeeves/fastify';
 import type { FastifyInstance } from 'fastify';
 
+import { addAccessHook } from './api/accessHook.js';
 import { apiRoute } from './routes/api/index.js';
 import { authRoute } from './routes/auth.js';
 import { registerConfigRoute } from './routes/config.js';
@@ -32,6 +33,10 @@ export interface ServerAppOptions {
  * Register jeeves-server's plugins, hooks, error handler and routes.
  *
  * @remarks
+ * The access hook (`api/accessHook.ts`) enforces each catalog entry's access
+ * class on the routes registered after it; browser routes keep their own
+ * gate (`resolveAuth`).
+ *
  * Errors (#315): `registerErrorHandlers` answers every JSON route with
  * Fastify's standard error body, logging through the app's own (pino)
  * logger: a `defineError` error (`api/errors.ts`) or a Fastify 4xx keeps
@@ -53,6 +58,9 @@ export async function registerServerApp(
   });
 
   registerErrorHandlers(fastify, { logger: fastify.log });
+
+  // Access model (Decision 8): every catalog route, before it is parsed.
+  addAccessHook(fastify);
 
   await fastify.register(staticRoutes);
   registerConfigRoute(fastify);

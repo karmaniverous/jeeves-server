@@ -2,7 +2,7 @@
  * Unified auth resolution — single function to resolve authentication
  * from any combination of key params, session cookies, and insider seeds.
  *
- * Replaces duplicated auth resolution logic across middleware, keys, sharing,
+ * Replaces duplicated auth resolution logic across the access hook, keys, sharing,
  * and auth-status routes.
  */
 

@@ -43,5 +43,5 @@ jeeves-server service start|stop|restart|status  # Manage system service
 ## Public Endpoints
 
 - `GET /health` — liveness check (`{ "ok": true }`, no auth)
-- `GET /status` — server status (version, health, capabilities)
-- `GET /config [?path=jsonpath]` — query resolved config (auth required)
+- `GET /status` - server status (version, health, capabilities; event commands and the Chrome path for admins only)
+- `GET /config [?path=jsonpath]` - query resolved config (admin: a session or insider key with no scopes)

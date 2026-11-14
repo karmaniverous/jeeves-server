@@ -109,7 +109,7 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
           'Only markdown files support PDF/DOCX export',
         );
 
-      // The middleware has already authorised the caller for this path, so
+      // The access hook has already authorised the caller for this path, so
       // render with the server's _internal key whatever link the caller
       // used (expiring and deep keys don't verify on the render URL; #295).
       const config = getConfig();

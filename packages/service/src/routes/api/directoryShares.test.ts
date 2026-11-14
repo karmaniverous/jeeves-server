@@ -2,7 +2,7 @@
  * Directory shares from `POST /api/share` and `share-for`: without depth or
  * dirs they are tree shares (a plain path key opens anything below the
  * directory); with depth they are deep shares, which list only immediate
- * entries, each with its own sub-key. Real middleware, sharing and
+ * entries, each with its own sub-key. Real access hook, sharing and
  * directory routes and HMAC keys over a temp tree.
  *
  * @packageDocumentation
@@ -50,7 +50,7 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
   breadcrumbParts: () => [],
 }));
 
-const { addAuthMiddleware } = await import('./middleware.js');
+const { addAccessHook } = await import('../../api/accessHook.js');
 const { directoryRoutes } = await import('./directory.js');
 const { sharingRoutes } = await import('./sharing.js');
 
@@ -59,7 +59,7 @@ let app: FastifyInstance;
 beforeAll(async () => {
   app = testApp();
   await app.register(async (api) => {
-    addAuthMiddleware(api);
+    addAccessHook(api);
     api.get('/api/file/*', (request: FastifyRequest) => ({
       accessMode: request.accessMode ?? null,
     }));

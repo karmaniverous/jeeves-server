@@ -28,7 +28,7 @@ vi.mock('../../config/index.js', () => ({
   resetConfig: vi.fn(),
 }));
 
-const { addAuthMiddleware: addAccessHook } = await import('./middleware.js');
+const { addAccessHook } = await import('../../api/accessHook.js');
 const { createDeepShare } = await import('../../services/shareLinks.js');
 const { encodeStack } = await import('../../services/deepShareLinks.js');
 const { computeDeepShareKey } = await import('../../util/crypto.js');

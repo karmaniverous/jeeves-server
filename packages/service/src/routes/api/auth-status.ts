@@ -2,6 +2,10 @@
  * Auth status API route.
  *
  * Handles: /api/auth/status
+ *
+ * A `public` entry: the access hook resolves the caller's session (never
+ * failing the request), which this route reports; otherwise a key in `k` is
+ * checked against the `path` query, as a share link opening that path.
  */
 
 import { getUrlKey } from '@karmaniverous/jeeves-server-core';
@@ -16,7 +20,6 @@ import {
   extractDeepParams,
   findInsider,
   resolveKeyAuth,
-  resolveSessionAuth,
 } from '../../auth/resolve.js';
 import { getConfig } from '../../config/index.js';
 
@@ -30,13 +33,10 @@ export const authStatusRoutes: FastifyPluginCallback = (
     async (request: FastifyRequest, reply: FastifyReply) => {
       const config = getConfig();
 
-      // Try session cookie first
-      const sessionResult = resolveSessionAuth(config, request);
-      if (sessionResult.valid) {
-        const insider = findInsider(
-          config.resolvedInsiders,
-          sessionResult.email!,
-        );
+      // The session the access hook resolved
+      const identity = request.access?.identity;
+      if (identity?.kind === 'session') {
+        const insider = findInsider(config.resolvedInsiders, identity.name);
         // Get picture from session cookie directly
         const cookieValue = (
           request.cookies as Record<string, string> | undefined
@@ -56,7 +56,7 @@ export const authStatusRoutes: FastifyPluginCallback = (
 
         return reply.send({
           authenticated: true,
-          email: sessionResult.email,
+          email: identity.name,
           picture,
           isInsider: !!insider?.seed,
           keyCreatedAt: insider?.keyCreatedAt ?? null,
