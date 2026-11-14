@@ -59,7 +59,9 @@ export function computeRenderState(
   if (needsRendered) {
     if (input.hasFileRendered) return 'ready';
     if (input.renderError)
-      return input.renderError === UNAUTHORIZED_MESSAGE ? 'auth-required' : 'error';
+      return input.renderError === UNAUTHORIZED_MESSAGE
+        ? 'auth-required'
+        : 'error';
     return null;
   }
   return input.hasFileRaw || input.hasFileRendered ? 'ready' : null;

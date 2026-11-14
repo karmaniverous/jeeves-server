@@ -207,9 +207,7 @@ export function MarkdownView({
       const checked = target.checked;
       server
         .fileMutate({ '*': reqPath, action: 'toggle-checkbox', index, checked })
-        .catch(
-        () => console.warn('Checkbox toggle failed for index', index),
-      );
+        .catch(() => console.warn('Checkbox toggle failed for index', index));
     }
 
     el.addEventListener('change', handleChange);

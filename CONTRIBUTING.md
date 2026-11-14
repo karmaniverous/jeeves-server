@@ -46,7 +46,7 @@ From the repo root:
 ```bash
 npm run build        # Builds core + SDK + server + client (Vite) + OpenClaw plugin
 npm run typecheck    # Type-check all packages
-npm run lint         # ESLint
+npm run lint         # ESLint (root and client), then prettier --check (also: npm run format:check)
 ```
 
 ### Running the Dev Server

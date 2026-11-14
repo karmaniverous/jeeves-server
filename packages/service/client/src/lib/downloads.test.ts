@@ -43,11 +43,11 @@ beforeEach(() => {
     return 'blob:download';
   });
   vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
-  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(
-    function (this: HTMLAnchorElement) {
-      if (blob) saved.push({ name: this.download, blob });
-    },
-  );
+  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+    this: HTMLAnchorElement,
+  ) {
+    if (blob) saved.push({ name: this.download, blob });
+  });
 });
 
 afterEach(() => {

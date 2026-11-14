@@ -56,7 +56,10 @@ describe('useFileData', () => {
       Promise.resolve({ fileName: 'a.md', type: input.raw ? 'raw' : 'html' }),
     );
     const hook = await renderHook(useProbe, { path: 'j/a.md', query: '' });
-    expect(server.fileContent).toHaveBeenCalledWith({ '*': 'j/a.md', raw: '1' });
+    expect(server.fileContent).toHaveBeenCalledWith({
+      '*': 'j/a.md',
+      raw: '1',
+    });
     expect(server.fileContent).toHaveBeenCalledWith({ '*': 'j/a.md' });
     expect(hook.result.current?.fileRaw).toEqual({
       fileName: 'a.md',

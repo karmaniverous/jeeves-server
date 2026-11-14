@@ -7,7 +7,8 @@
   ],
   "scripts": {
     "build": "npm run build --workspace=packages/core && npm run build --workspace=packages/sdk && npm run build --workspace=packages/service && npm run build --workspace=packages/openclaw",
-    "lint": "eslint . && npm run lint --workspace=packages/service/client",
+    "lint": "eslint . && npm run lint --workspace=packages/service/client && npm run format:check",
+    "format:check": "prettier --check .",
     "lint:fix": "eslint --fix . && npm run lint:fix --workspace=packages/service/client",
     "test": "npm run test:scripts && npm run test --workspaces --if-present",
     "test:scripts": "node --test scripts/*.test.mjs",
