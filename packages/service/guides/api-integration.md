@@ -252,7 +252,7 @@ See the [Sharing](sharing.md) guide for details on expiring links and directory 
 
 If you're an AI assistant working with Jeeves Server:
 
-1. **Use the OpenClaw plugin** if available — it provides tools for browsing (`server_browse`, `server_link_info`, `server_drives`), sharing (`server_share`), export (`server_export`, `server_export_cache_clear`), file mutation (`server_file_write`, `server_file_mutate`), auth (`server_auth_status`, `server_rotate_key`), events (`server_event_status`), and OAuth credential management (`oauth_authorize`, `oauth_status`, `oauth_token`)
+1. **Use the OpenClaw plugin** if available — it provides tools for browsing (`server_browse`, `server_link_info`, `server_drives`), sharing (`server_share`), export (`server_export`, `server_export_cache_clear`), file mutation (`server_file_write`, `server_file_mutate`), auth (`server_auth_status`), events (`server_event_status`), and OAuth credential management (`oauth_authorize`, `oauth_status`, `oauth_token`)
 2. **Convert Windows paths** to URL paths using the formula above
 3. **Use `/health`** for liveness checks and **`/status`** for details (no auth required for either)
 4. **Prefer `/browse/` routes** for links you share with humans (renders the SPA)

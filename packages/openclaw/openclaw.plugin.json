@@ -32,7 +32,6 @@
       "oauth_authorize",
       "oauth_status",
       "oauth_token",
-      "server_rotate_key",
       "server_file_write",
       "server_file_mutate",
       "server_export_cache_clear",

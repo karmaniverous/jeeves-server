@@ -16,14 +16,13 @@ Operate and interact with a jeeves-server deployment. Use for file browsing, doc
 | `server_browse` | Get file/directory metadata and listings for a browse path |
 | `server_link_info` | Query available link types for a path (page URL, raw URL, export links) |
 | `server_share` | Generate share links with optional expiry, link-following depth and `dirs` |
-| `server_export` | Trigger export (PDF, DOCX, SVG, PNG, ZIP) and get download URL |
+| `server_export` | Download URL for an export (pdf/docx, zip/tar or svg/png by path type); `share: { expiryDays? }` for a URL anyone can open |
 | `server_event_status` | Query event gateway status, active schemas, and recent event log |
 | `server_config` | Query resolved server configuration (supports JSONPath) |
 | `server_config_apply` | Apply a configuration patch to the running server |
 | `server_service` | Manage the system service (install, uninstall, start, stop, restart, status) |
 | `server_file_write` | Overwrite file content (insider-only; file must already exist) |
 | `server_file_mutate` | Apply structured .md mutations: edit-block, delete-block, insert-block, edit-cell, toggle-checkbox |
-| `server_rotate_key` | Rotate the authenticated insider's API key (invalidates all share links) |
 | `server_export_cache_clear` | Clear export and diagram caches for a given path |
 | `server_drives` | List available root drives/labels configured on the server |
 | `server_auth_status` | Check current authentication status |

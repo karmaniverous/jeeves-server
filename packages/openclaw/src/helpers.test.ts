@@ -2,7 +2,7 @@ import type { PluginApi } from '@karmaniverous/jeeves';
 import { computeInsiderKey } from '@karmaniverous/jeeves-server-core';
 import { describe, expect, it } from 'vitest';
 
-import { getPluginKey, withAuth } from './helpers.js';
+import { getPluginInsiderKey, getPluginKey } from './helpers.js';
 
 describe('computeInsiderKey', () => {
   it('produces a hex string', () => {
@@ -32,21 +32,22 @@ describe('computeInsiderKey', () => {
   });
 });
 
-describe('withAuth', () => {
-  it('appends key param to URL without query', () => {
-    const url = withAuth('http://localhost/api', 'seed');
-    expect(url).toContain('?k=');
+describe('getPluginInsiderKey', () => {
+  it('derives the insider key of the configured seed', () => {
+    const api = {
+      config: {
+        plugins: {
+          entries: {
+            'jeeves-server-openclaw': { config: { pluginKey: 'my-seed' } },
+          },
+        },
+      },
+    } as unknown as PluginApi;
+    expect(getPluginInsiderKey(api)).toBe(computeInsiderKey('my-seed'));
   });
 
-  it('appends key param to URL with existing query', () => {
-    const url = withAuth('http://localhost/api?foo=bar', 'seed');
-    expect(url).toContain('&k=');
-  });
-
-  it('returns URL unchanged when no seed', () => {
-    expect(withAuth('http://localhost/api', undefined)).toBe(
-      'http://localhost/api',
-    );
+  it('is undefined without a seed', () => {
+    expect(getPluginInsiderKey({} as PluginApi)).toBeUndefined();
   });
 });
 

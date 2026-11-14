@@ -1,191 +1,118 @@
 /**
- * OAuth2 tool registrations for the OpenClaw plugin.
+ * OAuth2 tools on the SDK (`oauthStart`, `oauthStatus`, `oauthToken`): `oauth_authorize`, `oauth_status`, `oauth_token`, with their 0.15.0 names, parameters and results.
  *
- * Three tools: oauth_authorize, oauth_status, oauth_token.
+ * @packageDocumentation
  */
 
-import {
-  connectionFail,
-  fail,
-  fetchJson,
-  ok,
-  type PluginApi,
-  type ToolResult,
-} from '@karmaniverous/jeeves';
-import type { OAuthStartResponse } from '@karmaniverous/jeeves-server-core';
+import type { ToolDescriptor } from '@karmaniverous/jeeves';
 
-import { PLUGIN_ID } from './constants.js';
-import { withAuth } from './helpers.js';
-import type { PublicUrlResolver } from './toolUtils.js';
+import { runServerCall, type ToolContext } from './sdkCall.js';
 
-/** Register all OAuth tools with the plugin API. */
-export function registerOAuthTools(
-  api: PluginApi,
-  baseUrl: string,
-  keySeed: string | undefined,
-  getPublicUrl: PublicUrlResolver,
-): void {
-  // oauth_authorize — Initiate OAuth2 authorization for a provider/account.
-  api.registerTool(
-    {
-      name: 'oauth_authorize',
-      description:
-        'Initiate OAuth2 authorization for a provider/account. Returns an authorization URL for the user to open in their browser.',
-      parameters: {
-        type: 'object',
-        properties: {
-          provider: {
-            type: 'string',
-            description: 'OAuth provider name (must match server config)',
-          },
-          account: {
-            type: 'string',
-            description: 'Account identifier for credential storage',
-          },
-          clientId: {
-            type: 'string',
-            description: 'OAuth client ID',
-          },
-          clientSecret: {
-            type: 'string',
-            description: 'OAuth client secret',
-          },
-          scopes: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'OAuth scopes to request (optional)',
-          },
+/** `provider` and `account` parameters. */
+const CREDENTIAL_PROPERTIES = {
+  provider: { type: 'string', description: 'OAuth provider name' },
+  account: { type: 'string', description: 'Account identifier' },
+};
+
+/** Parameters of `oauth_status` and `oauth_token`. */
+const CREDENTIAL_PARAMETERS = {
+  type: 'object',
+  properties: CREDENTIAL_PROPERTIES,
+  required: ['provider', 'account'],
+};
+
+/** The provider and account of a call. */
+const credentialOf = (params: Record<string, unknown>) => ({
+  provider: String(params.provider),
+  account: String(params.account),
+});
+
+/** Admin guidance added to a 400 (a provider the config doesn't list). */
+const PROVIDER_GUIDANCE =
+  '\n\nThe server admin should add this provider to the `oauth.providers` config to enable tool-based authorization.';
+
+/** `oauth_authorize`. */
+function authorizeTool(context: ToolContext): ToolDescriptor {
+  return {
+    name: 'oauth_authorize',
+    description:
+      'Initiate OAuth2 authorization for a provider/account. Returns an authorization URL for the user to open in their browser.',
+    parameters: {
+      type: 'object',
+      properties: {
+        provider: {
+          type: 'string',
+          description: 'OAuth provider name (must match server config)',
         },
-        required: ['provider', 'account', 'clientId', 'clientSecret'],
+        account: {
+          type: 'string',
+          description: 'Account identifier for credential storage',
+        },
+        clientId: { type: 'string', description: 'OAuth client ID' },
+        clientSecret: { type: 'string', description: 'OAuth client secret' },
+        scopes: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'OAuth scopes to request (optional)',
+        },
       },
-      execute: async (
-        _id: string,
-        params: Record<string, unknown>,
-      ): Promise<ToolResult> => {
-        const { provider, account, clientId, clientSecret, scopes } = params;
-
-        const body: Record<string, unknown> = {
+      required: ['provider', 'account', 'clientId', 'clientSecret'],
+    },
+    execute: async (_id, params) => {
+      const { provider, account } = credentialOf(params);
+      const publicUrl = context.publicUrl();
+      const result = await runServerCall(context, async (client) => {
+        const { authUrl } = await client.oauthStart({
           provider,
           account,
-          clientId,
-          clientSecret,
-        };
-        if (scopes) body.scopes = scopes;
-        const publicUrl = getPublicUrl();
-        if (publicUrl) body.origin = publicUrl;
-
-        try {
-          const url = withAuth(baseUrl + '/api/oauth/start', keySeed);
-          const data = (await fetchJson(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          })) as OAuthStartResponse;
-
-          const authUrl = data.authUrl;
-          if (!authUrl) {
-            return fail('Server returned no authorization URL.');
+          clientId: String(params.clientId),
+          clientSecret: String(params.clientSecret),
+          ...(Array.isArray(params.scopes)
+            ? { scopes: params.scopes as string[] }
+            : {}),
+          ...(publicUrl ? { origin: publicUrl } : {}),
+        });
+        return `Please open this URL to authorize ${provider} for account ${account}:\n\n${authUrl}\n\nOnce you complete authorization in the browser, the credentials will be saved automatically.`;
+      });
+      const text = result.content[0]?.text ?? '';
+      return result.isError && text.startsWith('Error: HTTP 400')
+        ? {
+            ...result,
+            content: [{ type: 'text', text: text + PROVIDER_GUIDANCE }],
           }
-
-          return ok(
-            `Please open this URL to authorize ${String(provider)} for account ${String(account)}:\n\n${authUrl}\n\nOnce you complete authorization in the browser, the credentials will be saved automatically.`,
-          );
-        } catch (error) {
-          const message =
-            error instanceof Error ? error.message : String(error);
-
-          // Surface 400 errors for unconfigured providers with admin guidance.
-          if (message.startsWith('HTTP 400')) {
-            return fail(
-              message +
-                '\n\nThe server admin should add this provider to the `oauth.providers` config to enable tool-based authorization.',
-            );
-          }
-
-          return connectionFail(error, baseUrl, PLUGIN_ID);
-        }
-      },
+        : result;
     },
-    { optional: true },
-  );
+  };
+}
 
-  // oauth_status — Check if valid OAuth2 credentials exist.
-  api.registerTool(
+/**
+ * Build the OAuth tools.
+ *
+ * @param context - Plugin API and public URL.
+ * @returns `oauth_authorize`, `oauth_status` and `oauth_token`.
+ */
+export function createOAuthTools(context: ToolContext): ToolDescriptor[] {
+  return [
+    authorizeTool(context),
     {
       name: 'oauth_status',
       description:
         'Check if valid OAuth2 credentials exist for a provider/account. Returns whether credentials exist and whether they are expired.',
-      parameters: {
-        type: 'object',
-        properties: {
-          provider: {
-            type: 'string',
-            description: 'OAuth provider name',
-          },
-          account: {
-            type: 'string',
-            description: 'Account identifier',
-          },
-        },
-        required: ['provider', 'account'],
-      },
-      execute: async (
-        _id: string,
-        params: Record<string, unknown>,
-      ): Promise<ToolResult> => {
-        try {
-          const url = withAuth(
-            baseUrl +
-              `/api/oauth/status?provider=${encodeURIComponent(String(params.provider))}&account=${encodeURIComponent(String(params.account))}`,
-            keySeed,
-          );
-          const data = await fetchJson(url);
-          return ok(data);
-        } catch (error) {
-          return connectionFail(error, baseUrl, PLUGIN_ID);
-        }
-      },
+      parameters: CREDENTIAL_PARAMETERS,
+      execute: (_id, params) =>
+        runServerCall(context, (client) =>
+          client.oauthStatus(credentialOf(params)),
+        ),
     },
-    { optional: true },
-  );
-
-  // oauth_token — Retrieve a valid access token.
-  api.registerTool(
     {
       name: 'oauth_token',
       description:
         'Retrieve a valid access token for a provider/account. Automatically refreshes expired tokens when possible.',
-      parameters: {
-        type: 'object',
-        properties: {
-          provider: {
-            type: 'string',
-            description: 'OAuth provider name',
-          },
-          account: {
-            type: 'string',
-            description: 'Account identifier',
-          },
-        },
-        required: ['provider', 'account'],
-      },
-      execute: async (
-        _id: string,
-        params: Record<string, unknown>,
-      ): Promise<ToolResult> => {
-        try {
-          const url = withAuth(
-            baseUrl +
-              `/api/oauth/token?provider=${encodeURIComponent(String(params.provider))}&account=${encodeURIComponent(String(params.account))}`,
-            keySeed,
-          );
-          const data = await fetchJson(url);
-          return ok(data);
-        } catch (error) {
-          return connectionFail(error, baseUrl, PLUGIN_ID);
-        }
-      },
+      parameters: CREDENTIAL_PARAMETERS,
+      execute: (_id, params) =>
+        runServerCall(context, (client) =>
+          client.oauthToken(credentialOf(params)),
+        ),
     },
-    { optional: true },
-  );
+  ];
 }

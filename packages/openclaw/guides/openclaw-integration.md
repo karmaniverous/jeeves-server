@@ -8,6 +8,8 @@ title: 'OpenClaw Integration Guide'
 
 The plugin is a standard OpenClaw plugin built on `@karmaniverous/jeeves` (the shared core library). `register()` only registers tools: it reads no config, starts no timers and writes no workspace files. It ships its guidance as a skill (`openclaw.plugin.json` `skills`). Live server state comes from `server_status`.
 
+Every tool resolves `apiUrl` and the plugin key (the insider key derived from `pluginKey`) when it runs. The standard tools (`server_status`, `server_config`, `server_config_apply`, `server_service`) come from jeeves' toolset over the server's endpoint catalog and send the key as `k` where the route takes it, so the config tools reach the admin-only `/config` routes. The other tools call the server through `@karmaniverous/jeeves-server-sdk`; the catalog tools take their descriptions and parameters from the catalog. No tool returns a URL carrying the plugin key.
+
 ![Plugin Architecture](../../../diagrams/out/openclaw-plugin-architecture.png)
 
 ## Installation
@@ -84,11 +86,10 @@ The plugin reads `publicUrl` from the server’s own config at `{configRoot}/jee
 | `server_link_info` | Query available link types for a path |
 | `server_drives` | List available root drives/labels |
 | `server_share` | Generate share links (with `rawUrl` for file shares, plain or deep; none for directories) with optional expiry (`expiryDays`; omitted, the link never expires), depth, insider audience, and outsider policy enforcement |
-| `server_export` | Trigger export (PDF, DOCX, SVG, PNG, ZIP); waits up to 10 minutes, other tools use the core 120 s default |
+| `server_export` | Download URL for an export (PDF/DOCX for Markdown, ZIP/Tar for directories, SVG/PNG for Mermaid and PlantUML): unkeyed, for an insider's browser session, or with `share: { expiryDays? }` derived from a signed share. Never fetches the export and never carries the plugin key |
 | `server_export_cache_clear` | Clear export and diagram caches for a path |
 | `server_file_write` | Overwrite file content (insider-only) |
 | `server_file_mutate` | Apply structured mutations to `.md` files: edit-block, delete-block, insert-block, edit-cell, toggle-checkbox (insider-only) |
-| `server_rotate_key` | Rotate the authenticated insider's API key |
 | `server_auth_status` | Check current authentication status (no auth required) |
 | `server_event_status` | Query event gateway schemas and recent event log entries |
 | `server_resolve_path` | Convert an absolute filesystem path to a server browse path and optional public URL |
