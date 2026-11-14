@@ -18,4 +18,23 @@ export interface WireDeparture {
 
 /** Approved departures by scenario name. */
 export const WIRE_DEPARTURES: Readonly<Partial<Record<string, WireDeparture>>> =
-  {};
+  {
+    // jeeves-owned handler (`createConfigQueryHandler`): jeeves 0.10.0 sends
+    // Fastify's standard error body for an invalid JSONPath.
+    'config invalid jsonpath': {
+      before:
+        '400 {"error":"Unclosed ( at character 3"} from @karmaniverous/jeeves 0.7.0',
+      allowedBy: 'Decision 4 (all packages on @karmaniverous/jeeves ^0.11.0)',
+      status: 400,
+      code: 'JEEVES_CONFIG_QUERY_INVALID',
+    },
+    // jeeves-owned handler (`createConfigApplyHandler`): jeeves 0.10.0 folds
+    // the Zod issues into `message` of Fastify's standard error body.
+    'configApply invalid config': {
+      before:
+        '400 {"error":"Config validation failed","issues":[{"expected":"number","code":"invalid_type","path":["port"],"message":"Invalid input: expected number, received string"}]} from @karmaniverous/jeeves 0.7.0',
+      allowedBy: 'Decision 4 (all packages on @karmaniverous/jeeves ^0.11.0)',
+      status: 400,
+      code: 'JEEVES_CONFIG_INVALID',
+    },
+  };
