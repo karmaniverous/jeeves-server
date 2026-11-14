@@ -4,18 +4,20 @@
     "@karmaniverous/jeeves": "^0.11.0",
     "zod": "^4.6.7"
   },
-  "description": "Shared cryptographic utilities and API types for jeeves-server packages.",
+  "description": "Endpoint catalog, OpenAPI document, error codes, config schema and shared key utilities for jeeves-server packages.",
   "devDependencies": {
     "@dotenvx/dotenvx": "^2.38.2",
     "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-typescript": "^12.3.1",
+    "@seriousme/openapi-schema-validator": "^2.12.0",
     "cross-env": "^10.1.0",
     "release-it": "^21.1.2",
     "rollup": "^4.68.3",
     "tslib": "^2.9.1",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.0",
+    "zod-openapi": "^6.0.2"
   },
   "engines": {
     "node": ">=24.22.2"
@@ -26,10 +28,18 @@
         "types": "./dist/src/index.d.ts",
         "default": "./dist/src/index.js"
       }
-    }
+    },
+    "./catalog": {
+      "import": {
+        "types": "./dist/src/catalog/index.d.ts",
+        "default": "./dist/src/catalog/index.js"
+      }
+    },
+    "./openapi.json": "./openapi.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "openapi.json"
   ],
   "license": "MIT",
   "name": "@karmaniverous/jeeves-server-core",
@@ -52,7 +62,9 @@
       "after:bump": [
         "npx git-cliff --tag core/${version} -o CHANGELOG.md",
         "npm install --package-lock-only --ignore-scripts",
-        "git add ../../package-lock.json"
+        "npm run openapi",
+        "npm run build",
+        "git add ../../package-lock.json openapi.json"
       ],
       "after:init": [
         "npm run lint",
@@ -83,6 +95,7 @@
     "changelog": "git-cliff -o CHANGELOG.md",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
+    "openapi": "tsx scripts/write-openapi.ts",
     "postbuild": "npx rimraf dist/rollup.config.d.ts dist/rollup.config.d.ts.map",
     "prebuild": "npx rimraf dist",
     "release": "dotenvx run -f .env.local -- release-it",

@@ -1,9 +1,10 @@
 /**
- * Shared utilities and types for jeeves-server packages.
+ * jeeves-server-core's main entry: the endpoint catalog with its schemas and error codes (also on the browser-safe `./catalog` sub-path), the OpenAPI document, the config schema, URL-key helpers and the Node-only link-key functions.
  *
  * @packageDocumentation
  */
 
+export * from './catalog/index.js';
 export {
   computeDeepShareKey,
   computeInsiderKey,
@@ -12,7 +13,7 @@ export {
   type DeepShareParams,
   timingSafeEqual,
 } from './crypto.js';
-export { type EndpointEntry, serverEndpoints } from './endpoints.js';
+export { SERVER_OPENAPI_DOCUMENT } from './openapi.js';
 export {
   type AuthMode,
   authModeSchema,

@@ -1,0 +1,3867 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "jeeves-server",
+    "version": "0.4.0",
+    "description": "Machine API of the jeeves-server service: the routes in its endpoint catalog (SERVER_CATALOG). Credentials: an insider, machine or share key as the k query parameter, or the jeeves_session cookie; the key-exchange routes take the raw machine seed in X-API-Key. Operations marked x-jeeves-insider-only refuse share credentials."
+  },
+  "paths": {
+    "/status": {
+      "get": {
+        "operationId": "status",
+        "description": "Get server service health, version, and uptime.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    },
+                    "uptime": {
+                      "type": "number"
+                    },
+                    "status": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": "healthy"
+                        },
+                        {
+                          "type": "string",
+                          "const": "degraded"
+                        },
+                        {
+                          "type": "string",
+                          "const": "unhealthy"
+                        }
+                      ]
+                    },
+                    "health": {
+                      "type": "object",
+                      "properties": {
+                        "port": {
+                          "type": "number"
+                        },
+                        "chrome": {
+                          "type": "object",
+                          "properties": {
+                            "configured": {
+                              "type": "boolean"
+                            },
+                            "path": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "configured"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "auth": {
+                          "type": "object",
+                          "properties": {
+                            "modes": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "insiderCount": {
+                              "type": "number"
+                            },
+                            "keyCount": {
+                              "type": "number"
+                            },
+                            "googleRedirectUri": {
+                              "type": "string"
+                            },
+                            "oauthRedirectUri": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "modes",
+                            "insiderCount",
+                            "keyCount"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "events": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "cmd": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "name"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "eventQueue": {
+                          "type": "object",
+                          "properties": {
+                            "offset": {
+                              "type": "number"
+                            },
+                            "size": {
+                              "type": "number"
+                            },
+                            "pendingBytes": {
+                              "type": "number"
+                            },
+                            "parseErrors": {
+                              "type": "number"
+                            },
+                            "lastCursorReset": {
+                              "type": "string"
+                            },
+                            "lastRewind": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "offset",
+                            "size",
+                            "pendingBytes",
+                            "parseErrors"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "exports": {
+                          "type": "object",
+                          "properties": {
+                            "documents": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "directories": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "diagrams": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "chromeAvailable": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "documents",
+                            "directories",
+                            "diagrams",
+                            "chromeAvailable"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "diagrams": {
+                          "type": "object",
+                          "properties": {
+                            "mermaid": {
+                              "type": "boolean"
+                            },
+                            "plantuml": {
+                              "type": "object",
+                              "properties": {
+                                "localJar": {
+                                  "type": "boolean"
+                                },
+                                "servers": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "required": [
+                                "localJar",
+                                "servers"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "mermaid",
+                            "plantuml"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "services": {
+                          "type": "object",
+                          "properties": {
+                            "watcher": {
+                              "type": "object",
+                              "properties": {
+                                "url": {
+                                  "type": "string"
+                                },
+                                "reachable": {
+                                  "type": "boolean"
+                                },
+                                "version": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "url",
+                                "reachable"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "runner": {
+                              "type": "object",
+                              "properties": {
+                                "url": {
+                                  "type": "string"
+                                },
+                                "reachable": {
+                                  "type": "boolean"
+                                },
+                                "version": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "url",
+                                "reachable"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "meta": {
+                              "type": "object",
+                              "properties": {
+                                "url": {
+                                  "type": "string"
+                                },
+                                "reachable": {
+                                  "type": "boolean"
+                                },
+                                "version": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "url",
+                                "reachable"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "lastChecked": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "watcher",
+                            "runner",
+                            "meta",
+                            "lastChecked"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "branding": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "emoji": {
+                              "type": "string"
+                            },
+                            "theme": {
+                              "type": "object",
+                              "properties": {
+                                "light": {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  }
+                                },
+                                "dark": {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "port",
+                        "chrome",
+                        "auth",
+                        "events",
+                        "exports",
+                        "diagrams",
+                        "services",
+                        "branding"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "version",
+                    "uptime",
+                    "status",
+                    "health"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config": {
+      "get": {
+        "operationId": "config",
+        "description": "Query server running configuration. Optional JSONPath filter.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "parameters": [
+          {
+            "in": "query",
+            "name": "path",
+            "schema": {
+              "type": "string",
+              "description": "JSONPath expression (optional)"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "result": {
+                          "type": "array",
+                          "items": {}
+                        },
+                        "count": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "count"
+                      ],
+                      "additionalProperties": {}
+                    },
+                    {
+                      "type": "object",
+                      "properties": {},
+                      "additionalProperties": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/apply": {
+      "post": {
+        "operationId": "configApply",
+        "description": "Apply a config patch to the running server service.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "patch": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {},
+                    "description": "Config patch to apply"
+                  },
+                  "replace": {
+                    "type": "boolean",
+                    "description": "Replace the whole config instead of merging"
+                  }
+                },
+                "required": [
+                  "patch"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "applied": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "config": {
+                      "type": "object",
+                      "properties": {},
+                      "additionalProperties": {}
+                    },
+                    "warning": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "applied",
+                    "config"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "description": "Liveness check: returns { ok: true }, with no downstream checks.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/status": {
+      "get": {
+        "operationId": "authStatus",
+        "description": "Check current authentication status. Returns whether authenticated, email, insider status, and key metadata.",
+        "security": [],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "exp",
+            "schema": {
+              "description": "Share link expiry (Unix milliseconds), for expiring keys.",
+              "type": "string"
+            },
+            "description": "Share link expiry (Unix milliseconds), for expiring keys."
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "schema": {
+              "description": "Deep share depth.",
+              "type": "string"
+            },
+            "description": "Deep share depth."
+          },
+          {
+            "in": "query",
+            "name": "dirs",
+            "schema": {
+              "description": "Deep share: 1 when directories below the shared path open.",
+              "type": "string"
+            },
+            "description": "Deep share: 1 when directories below the shared path open."
+          },
+          {
+            "in": "query",
+            "name": "s",
+            "schema": {
+              "description": "Deep share path stack.",
+              "type": "string"
+            },
+            "description": "Deep share path stack."
+          },
+          {
+            "in": "query",
+            "name": "key",
+            "schema": {
+              "description": "Legacy name of the k parameter.",
+              "type": "string"
+            },
+            "description": "Legacy name of the k parameter."
+          },
+          {
+            "in": "query",
+            "name": "path",
+            "schema": {
+              "description": "Path a share credential is verified against (default /).",
+              "type": "string"
+            },
+            "description": "Path a share credential is verified against (default /)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "authenticated": {
+                      "type": "boolean"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "picture": {
+                      "type": "string"
+                    },
+                    "isInsider": {
+                      "type": "boolean"
+                    },
+                    "keyCreatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "searchEnabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "authenticated",
+                    "isInsider"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/magic": {
+      "post": {
+        "operationId": "sendMagicLink",
+        "description": "Request a sign-in link by email. Always answers with a verification URL, whether or not the email belongs to an insider.",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "description": "Email address to sign in with.",
+                    "type": "string"
+                  },
+                  "returnTo": {
+                    "description": "Page to open after sign-in (server-relative).",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "verifyUrl": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "verifyUrl"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/key": {
+      "get": {
+        "operationId": "pathKey",
+        "description": "Compute the outsider path key for a path from the machine seed sent in X-API-Key.",
+        "security": [
+          {
+            "header_X_API_Key": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "path",
+            "schema": {
+              "type": "string",
+              "description": "Path to compute the outsider key for."
+            },
+            "required": true,
+            "description": "Path to compute the outsider key for."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "key": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "key"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/insider-key": {
+      "get": {
+        "operationId": "insiderKey",
+        "description": "Compute the insider key for the machine seed sent in X-API-Key.",
+        "security": [
+          {
+            "header_X_API_Key": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "key"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/search": {
+      "post": {
+        "operationId": "search",
+        "description": "Semantic search through jeeves-watcher, grouped by file and filtered to the scopes of the caller.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "Search text."
+                  },
+                  "limit": {
+                    "description": "Files to return (default 20).",
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "filter": {
+                    "description": "Qdrant filter, passed to jeeves-watcher.",
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "filePath": {
+                            "type": "string"
+                          },
+                          "browsePath": {
+                            "type": "string"
+                          },
+                          "fileName": {
+                            "type": "string"
+                          },
+                          "bestScore": {
+                            "type": "number"
+                          },
+                          "domains": {
+                            "type": "array",
+                            "items": {}
+                          },
+                          "title": {},
+                          "author": {},
+                          "participants": {},
+                          "metadata": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {}
+                          },
+                          "chunks": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "text": {
+                                  "type": "string"
+                                },
+                                "index": {
+                                  "type": "number"
+                                },
+                                "score": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "text",
+                                "index",
+                                "score"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "mtime": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "filePath",
+                          "browsePath",
+                          "fileName",
+                          "bestScore",
+                          "domains",
+                          "metadata",
+                          "chunks"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "properties": {
+                        "domains": {
+                          "type": "array",
+                          "items": {}
+                        },
+                        "authors": {
+                          "type": "array",
+                          "items": {}
+                        },
+                        "participants": {
+                          "type": "array",
+                          "items": {}
+                        }
+                      },
+                      "required": [
+                        "domains",
+                        "authors",
+                        "participants"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "results",
+                    "metadata"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/search/facets": {
+      "get": {
+        "operationId": "searchFacets",
+        "description": "Search facets from jeeves-watcher, passed through unchanged.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/drives": {
+      "get": {
+        "operationId": "drives",
+        "description": "List available root drives/labels configured on the server.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "exp",
+            "schema": {
+              "description": "Share link expiry (Unix milliseconds), for expiring keys.",
+              "type": "string"
+            },
+            "description": "Share link expiry (Unix milliseconds), for expiring keys."
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "schema": {
+              "description": "Deep share depth.",
+              "type": "string"
+            },
+            "description": "Deep share depth."
+          },
+          {
+            "in": "query",
+            "name": "dirs",
+            "schema": {
+              "description": "Deep share: 1 when directories below the shared path open.",
+              "type": "string"
+            },
+            "description": "Deep share: 1 when directories below the shared path open."
+          },
+          {
+            "in": "query",
+            "name": "s",
+            "schema": {
+              "description": "Deep share path stack.",
+              "type": "string"
+            },
+            "description": "Deep share path stack."
+          },
+          {
+            "in": "query",
+            "name": "key",
+            "schema": {
+              "description": "Legacy name of the k parameter.",
+              "type": "string"
+            },
+            "description": "Legacy name of the k parameter."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "letter": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "letter",
+                      "label"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/path/{*}": {
+      "get": {
+        "operationId": "browse",
+        "description": "Get file or directory metadata. For files: size, mtime, content type, rendered HTML availability. For directories: listing of entries.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "*",
+            "schema": {
+              "type": "string",
+              "description": "Browse path (e.g. \"<drive>/path/to/dir\")"
+            },
+            "required": true,
+            "description": "Browse path (e.g. \"<drive>/path/to/dir\")"
+          },
+          {
+            "in": "query",
+            "name": "exp",
+            "schema": {
+              "description": "Share link expiry (Unix milliseconds), for expiring keys.",
+              "type": "string"
+            },
+            "description": "Share link expiry (Unix milliseconds), for expiring keys."
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "schema": {
+              "description": "Deep share depth.",
+              "type": "string"
+            },
+            "description": "Deep share depth."
+          },
+          {
+            "in": "query",
+            "name": "dirs",
+            "schema": {
+              "description": "Deep share: 1 when directories below the shared path open.",
+              "type": "string"
+            },
+            "description": "Deep share: 1 when directories below the shared path open."
+          },
+          {
+            "in": "query",
+            "name": "s",
+            "schema": {
+              "description": "Deep share path stack.",
+              "type": "string"
+            },
+            "description": "Deep share path stack."
+          },
+          {
+            "in": "query",
+            "name": "key",
+            "schema": {
+              "description": "Legacy name of the k parameter.",
+              "type": "string"
+            },
+            "description": "Legacy name of the k parameter."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "file"
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "ext": {
+                          "type": "string"
+                        },
+                        "size": {
+                          "type": "number"
+                        },
+                        "mtime": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "path",
+                        "ext",
+                        "size",
+                        "mtime"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string"
+                        },
+                        "entries": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "directory",
+                                  "file"
+                                ]
+                              },
+                              "ext": {
+                                "type": "string"
+                              },
+                              "size": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "mtime": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "itemCount": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "shareUrl": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "type",
+                              "ext",
+                              "size",
+                              "mtime",
+                              "itemCount"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "breadcrumbs": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "label": {
+                                "type": "string"
+                              },
+                              "path": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "label",
+                              "path"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "isInsider": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "path",
+                        "entries",
+                        "breadcrumbs",
+                        "isInsider"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/file/{*}": {
+      "get": {
+        "operationId": "fileContent",
+        "description": "Get a file with type-specific handling: Markdown, CSV and diagrams rendered to HTML, other text as is, images and binaries by name. `raw=1` skips rendering.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "*",
+            "schema": {
+              "type": "string",
+              "description": "Browse path (e.g. \"<drive>/path/to/file.md\")"
+            },
+            "required": true,
+            "description": "Browse path (e.g. \"<drive>/path/to/file.md\")"
+          },
+          {
+            "in": "query",
+            "name": "exp",
+            "schema": {
+              "description": "Share link expiry (Unix milliseconds), for expiring keys.",
+              "type": "string"
+            },
+            "description": "Share link expiry (Unix milliseconds), for expiring keys."
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "schema": {
+              "description": "Deep share depth.",
+              "type": "string"
+            },
+            "description": "Deep share depth."
+          },
+          {
+            "in": "query",
+            "name": "dirs",
+            "schema": {
+              "description": "Deep share: 1 when directories below the shared path open.",
+              "type": "string"
+            },
+            "description": "Deep share: 1 when directories below the shared path open."
+          },
+          {
+            "in": "query",
+            "name": "s",
+            "schema": {
+              "description": "Deep share path stack.",
+              "type": "string"
+            },
+            "description": "Deep share path stack."
+          },
+          {
+            "in": "query",
+            "name": "key",
+            "schema": {
+              "description": "Legacy name of the k parameter.",
+              "type": "string"
+            },
+            "description": "Legacy name of the k parameter."
+          },
+          {
+            "in": "query",
+            "name": "raw",
+            "schema": {
+              "description": "1: return the source without rendering it.",
+              "type": "string"
+            },
+            "description": "1: return the source without rendering it."
+          },
+          {
+            "in": "query",
+            "name": "render_diagrams",
+            "schema": {
+              "description": "1: render embedded diagrams into the HTML.",
+              "type": "string"
+            },
+            "description": "1: render embedded diagrams into the HTML."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "markdown",
+                        "mermaid",
+                        "plantuml",
+                        "svg",
+                        "csv",
+                        "text",
+                        "image",
+                        "binary"
+                      ]
+                    },
+                    "content": {
+                      "type": "string"
+                    },
+                    "html": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "headings": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "level": {
+                            "type": "number"
+                          },
+                          "text": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "level",
+                          "text",
+                          "slug"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "size": {
+                      "type": "number"
+                    },
+                    "fileName": {
+                      "type": "string"
+                    },
+                    "breadcrumbs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "label",
+                          "path"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "isInsider": {
+                      "type": "boolean"
+                    },
+                    "mtime": {
+                      "type": "number"
+                    },
+                    "renderAs": {
+                      "type": "string"
+                    },
+                    "matchedRules": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "title": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "fileName",
+                    "breadcrumbs",
+                    "isInsider"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "fileWrite",
+        "description": "Overwrite the content of an existing file. Insider-only; the file must already exist.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "*",
+            "schema": {
+              "type": "string",
+              "description": "Browse path (e.g. \"<drive>/path/to/file.md\")"
+            },
+            "required": true,
+            "description": "Browse path (e.g. \"<drive>/path/to/file.md\")"
+          },
+          {
+            "in": "query",
+            "name": "exp",
+            "schema": {
+              "description": "Share link expiry (Unix milliseconds), for expiring keys.",
+              "type": "string"
+            },
+            "description": "Share link expiry (Unix milliseconds), for expiring keys."
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "schema": {
+              "description": "Deep share depth.",
+              "type": "string"
+            },
+            "description": "Deep share depth."
+          },
+          {
+            "in": "query",
+            "name": "dirs",
+            "schema": {
+              "description": "Deep share: 1 when directories below the shared path open.",
+              "type": "string"
+            },
+            "description": "Deep share: 1 when directories below the shared path open."
+          },
+          {
+            "in": "query",
+            "name": "s",
+            "schema": {
+              "description": "Deep share path stack.",
+              "type": "string"
+            },
+            "description": "Deep share path stack."
+          },
+          {
+            "in": "query",
+            "name": "key",
+            "schema": {
+              "description": "Legacy name of the k parameter.",
+              "type": "string"
+            },
+            "description": "Legacy name of the k parameter."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "description": "New file content"
+                  }
+                },
+                "required": [
+                  "content"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "size": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "path",
+                    "size"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "fileMutate",
+        "description": "Apply a structured mutation to a .md file. Insider-only. Supports: edit-block, delete-block, insert-block, edit-cell, toggle-checkbox.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "*",
+            "schema": {
+              "type": "string",
+              "description": "File path (must be a .md file)"
+            },
+            "required": true,
+            "description": "File path (must be a .md file)"
+          },
+          {
+            "in": "query",
+            "name": "exp",
+            "schema": {
+              "description": "Share link expiry (Unix milliseconds), for expiring keys.",
+              "type": "string"
+            },
+            "description": "Share link expiry (Unix milliseconds), for expiring keys."
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "schema": {
+              "description": "Deep share depth.",
+              "type": "string"
+            },
+            "description": "Deep share depth."
+          },
+          {
+            "in": "query",
+            "name": "dirs",
+            "schema": {
+              "description": "Deep share: 1 when directories below the shared path open.",
+              "type": "string"
+            },
+            "description": "Deep share: 1 when directories below the shared path open."
+          },
+          {
+            "in": "query",
+            "name": "s",
+            "schema": {
+              "description": "Deep share path stack.",
+              "type": "string"
+            },
+            "description": "Deep share path stack."
+          },
+          {
+            "in": "query",
+            "name": "key",
+            "schema": {
+              "description": "Legacy name of the k parameter.",
+              "type": "string"
+            },
+            "description": "Legacy name of the k parameter."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "edit-block",
+                      "delete-block",
+                      "insert-block",
+                      "edit-cell",
+                      "toggle-checkbox"
+                    ],
+                    "description": "Mutation action to perform"
+                  },
+                  "startLine": {
+                    "description": "Start line (1-based) for edit-block/delete-block",
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "endLine": {
+                    "description": "End line (1-based) for edit-block/delete-block",
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "content": {
+                    "description": "Content for edit-block, insert-block, or edit-cell",
+                    "type": "string"
+                  },
+                  "atLine": {
+                    "description": "Target line (1-based) for insert-block",
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "position": {
+                    "description": "Insert position for insert-block",
+                    "type": "string",
+                    "enum": [
+                      "before",
+                      "after"
+                    ]
+                  },
+                  "context": {
+                    "description": "Optional context for insert-block (e.g. \"table-row\")",
+                    "type": "string"
+                  },
+                  "line": {
+                    "description": "Line number (1-based) for edit-cell",
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "col": {
+                    "description": "Column index (0-based) for edit-cell",
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "index": {
+                    "description": "Checkbox index (0-based) for toggle-checkbox",
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "checked": {
+                    "description": "Desired checked state for toggle-checkbox",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/raw/{*}": {
+      "get": {
+        "operationId": "raw",
+        "description": "Download a file as is, with its own content type. `download=1` always sends it as an attachment.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "*",
+            "schema": {
+              "type": "string",
+              "description": "Browse path (e.g. \"<drive>/path/to/file.md\")"
+            },
+            "required": true,
+            "description": "Browse path (e.g. \"<drive>/path/to/file.md\")"
+          },
+          {
+            "in": "query",
+            "name": "exp",
+            "schema": {
+              "description": "Share link expiry (Unix milliseconds), for expiring keys.",
+              "type": "string"
+            },
+            "description": "Share link expiry (Unix milliseconds), for expiring keys."
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "schema": {
+              "description": "Deep share depth.",
+              "type": "string"
+            },
+            "description": "Deep share depth."
+          },
+          {
+            "in": "query",
+            "name": "dirs",
+            "schema": {
+              "description": "Deep share: 1 when directories below the shared path open.",
+              "type": "string"
+            },
+            "description": "Deep share: 1 when directories below the shared path open."
+          },
+          {
+            "in": "query",
+            "name": "s",
+            "schema": {
+              "description": "Deep share path stack.",
+              "type": "string"
+            },
+            "description": "Deep share path stack."
+          },
+          {
+            "in": "query",
+            "name": "key",
+            "schema": {
+              "description": "Legacy name of the k parameter.",
+              "type": "string"
+            },
+            "description": "Legacy name of the k parameter."
+          },
+          {
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "description": "1 (or true): send Content-Disposition: attachment for any file type.",
+              "type": "string"
+            },
+            "description": "1 (or true): send Content-Disposition: attachment for any file type."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/export/{*}": {
+      "get": {
+        "operationId": "export",
+        "description": "Export a Markdown document as PDF or DOCX, or a directory as a ZIP or Tar archive (archives for insiders only).",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "*",
+            "schema": {
+              "type": "string",
+              "description": "Browse path (e.g. \"<drive>/path/to/file.md\")"
+            },
+            "required": true,
+            "description": "Browse path (e.g. \"<drive>/path/to/file.md\")"
+          },
+          {
+            "in": "query",
+            "name": "exp",
+            "schema": {
+              "description": "Share link expiry (Unix milliseconds), for expiring keys.",
+              "type": "string"
+            },
+            "description": "Share link expiry (Unix milliseconds), for expiring keys."
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "schema": {
+              "description": "Deep share depth.",
+              "type": "string"
+            },
+            "description": "Deep share depth."
+          },
+          {
+            "in": "query",
+            "name": "dirs",
+            "schema": {
+              "description": "Deep share: 1 when directories below the shared path open.",
+              "type": "string"
+            },
+            "description": "Deep share: 1 when directories below the shared path open."
+          },
+          {
+            "in": "query",
+            "name": "s",
+            "schema": {
+              "description": "Deep share path stack.",
+              "type": "string"
+            },
+            "description": "Deep share path stack."
+          },
+          {
+            "in": "query",
+            "name": "key",
+            "schema": {
+              "description": "Legacy name of the k parameter.",
+              "type": "string"
+            },
+            "description": "Legacy name of the k parameter."
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "description": "pdf (default) or docx for Markdown documents; zip or tar for directories.",
+              "type": "string",
+              "enum": [
+                "pdf",
+                "docx",
+                "zip",
+                "tar"
+              ]
+            },
+            "description": "pdf (default) or docx for Markdown documents; zip or tar for directories."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/export-cache/{*}": {
+      "delete": {
+        "operationId": "exportCacheClear",
+        "description": "Clear the export and diagram caches for a given path.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "*",
+            "schema": {
+              "type": "string",
+              "description": "Browse path to clear caches for"
+            },
+            "required": true,
+            "description": "Browse path to clear caches for"
+          },
+          {
+            "in": "query",
+            "name": "exp",
+            "schema": {
+              "description": "Share link expiry (Unix milliseconds), for expiring keys.",
+              "type": "string"
+            },
+            "description": "Share link expiry (Unix milliseconds), for expiring keys."
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "schema": {
+              "description": "Deep share depth.",
+              "type": "string"
+            },
+            "description": "Deep share depth."
+          },
+          {
+            "in": "query",
+            "name": "dirs",
+            "schema": {
+              "description": "Deep share: 1 when directories below the shared path open.",
+              "type": "string"
+            },
+            "description": "Deep share: 1 when directories below the shared path open."
+          },
+          {
+            "in": "query",
+            "name": "s",
+            "schema": {
+              "description": "Deep share path stack.",
+              "type": "string"
+            },
+            "description": "Deep share path stack."
+          },
+          {
+            "in": "query",
+            "name": "key",
+            "schema": {
+              "description": "Legacy name of the k parameter.",
+              "type": "string"
+            },
+            "description": "Legacy name of the k parameter."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "cleared": {
+                      "type": "object",
+                      "properties": {
+                        "exports": {
+                          "type": "number"
+                        },
+                        "diagrams": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "exports",
+                        "diagrams"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "cleared"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mermaid-export/{*}": {
+      "get": {
+        "operationId": "exportMermaid",
+        "description": "Export a Mermaid diagram file as SVG, PNG or PDF.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "*",
+            "schema": {
+              "type": "string",
+              "description": "Browse path (e.g. \"<drive>/path/to/file.md\")"
+            },
+            "required": true,
+            "description": "Browse path (e.g. \"<drive>/path/to/file.md\")"
+          },
+          {
+            "in": "query",
+            "name": "exp",
+            "schema": {
+              "description": "Share link expiry (Unix milliseconds), for expiring keys.",
+              "type": "string"
+            },
+            "description": "Share link expiry (Unix milliseconds), for expiring keys."
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "schema": {
+              "description": "Deep share depth.",
+              "type": "string"
+            },
+            "description": "Deep share depth."
+          },
+          {
+            "in": "query",
+            "name": "dirs",
+            "schema": {
+              "description": "Deep share: 1 when directories below the shared path open.",
+              "type": "string"
+            },
+            "description": "Deep share: 1 when directories below the shared path open."
+          },
+          {
+            "in": "query",
+            "name": "s",
+            "schema": {
+              "description": "Deep share path stack.",
+              "type": "string"
+            },
+            "description": "Deep share path stack."
+          },
+          {
+            "in": "query",
+            "name": "key",
+            "schema": {
+              "description": "Legacy name of the k parameter.",
+              "type": "string"
+            },
+            "description": "Legacy name of the k parameter."
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "description": "svg (default), png or pdf.",
+              "type": "string"
+            },
+            "description": "svg (default), png or pdf."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plantuml-export/{*}": {
+      "get": {
+        "operationId": "exportPlantUml",
+        "description": "Export a PlantUML diagram file in one of the formats the configured renderers support (SVG, PNG, PDF, EPS).",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "*",
+            "schema": {
+              "type": "string",
+              "description": "Browse path (e.g. \"<drive>/path/to/file.md\")"
+            },
+            "required": true,
+            "description": "Browse path (e.g. \"<drive>/path/to/file.md\")"
+          },
+          {
+            "in": "query",
+            "name": "exp",
+            "schema": {
+              "description": "Share link expiry (Unix milliseconds), for expiring keys.",
+              "type": "string"
+            },
+            "description": "Share link expiry (Unix milliseconds), for expiring keys."
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "schema": {
+              "description": "Deep share depth.",
+              "type": "string"
+            },
+            "description": "Deep share depth."
+          },
+          {
+            "in": "query",
+            "name": "dirs",
+            "schema": {
+              "description": "Deep share: 1 when directories below the shared path open.",
+              "type": "string"
+            },
+            "description": "Deep share: 1 when directories below the shared path open."
+          },
+          {
+            "in": "query",
+            "name": "s",
+            "schema": {
+              "description": "Deep share path stack.",
+              "type": "string"
+            },
+            "description": "Deep share path stack."
+          },
+          {
+            "in": "query",
+            "name": "key",
+            "schema": {
+              "description": "Legacy name of the k parameter.",
+              "type": "string"
+            },
+            "description": "Legacy name of the k parameter."
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "description": "svg (default), or another format the renderers support (png, pdf, eps).",
+              "type": "string"
+            },
+            "description": "svg (default), or another format the renderers support (png, pdf, eps)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/link-info/{*}": {
+      "get": {
+        "operationId": "linkInfo",
+        "description": "Query available link types for a path (exists, page URL, raw URL, export links for PDF/DOCX/SVG/PNG).",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "*",
+            "schema": {
+              "type": "string",
+              "description": "Browse path (e.g. \"<drive>/path/to/file.md\")"
+            },
+            "required": true,
+            "description": "Browse path (e.g. \"<drive>/path/to/file.md\")"
+          },
+          {
+            "in": "query",
+            "name": "exp",
+            "schema": {
+              "description": "Share link expiry (Unix milliseconds), for expiring keys.",
+              "type": "string"
+            },
+            "description": "Share link expiry (Unix milliseconds), for expiring keys."
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "schema": {
+              "description": "Deep share depth.",
+              "type": "string"
+            },
+            "description": "Deep share depth."
+          },
+          {
+            "in": "query",
+            "name": "dirs",
+            "schema": {
+              "description": "Deep share: 1 when directories below the shared path open.",
+              "type": "string"
+            },
+            "description": "Deep share: 1 when directories below the shared path open."
+          },
+          {
+            "in": "query",
+            "name": "s",
+            "schema": {
+              "description": "Deep share path stack.",
+              "type": "string"
+            },
+            "description": "Deep share path stack."
+          },
+          {
+            "in": "query",
+            "name": "key",
+            "schema": {
+              "description": "Legacy name of the k parameter.",
+              "type": "string"
+            },
+            "description": "Legacy name of the k parameter."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "exists": {
+                      "type": "boolean"
+                    },
+                    "isDirectory": {
+                      "type": "boolean"
+                    },
+                    "pageUrl": {
+                      "type": "string"
+                    },
+                    "rawUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "downloadUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "exportLinks": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "format": {
+                            "type": "string"
+                          },
+                          "url": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "format",
+                          "url"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "exists"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/diagram/{type}/{hash}": {
+      "get": {
+        "operationId": "diagram",
+        "description": "Get a diagram embedded in a rendered document, as SVG, by its type and content hash.",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mermaid",
+                "plantuml"
+              ],
+              "description": "Diagram type."
+            },
+            "required": true,
+            "description": "Diagram type."
+          },
+          {
+            "in": "path",
+            "name": "hash",
+            "schema": {
+              "type": "string",
+              "description": "SHA-256 of the diagram source (hex), optionally with .svg."
+            },
+            "required": true,
+            "description": "SHA-256 of the diagram source (hex), optionally with .svg."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public-content/{slug}": {
+      "get": {
+        "operationId": "publicContent",
+        "description": "Get one of the public pages of the server (readme, privacy, terms) rendered as Markdown.",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "type": "string",
+              "description": "Page: readme, privacy or terms."
+            },
+            "required": true,
+            "description": "Page: readme, privacy or terms."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "markdown",
+                        "mermaid",
+                        "plantuml",
+                        "svg",
+                        "csv",
+                        "text",
+                        "image",
+                        "binary"
+                      ]
+                    },
+                    "content": {
+                      "type": "string"
+                    },
+                    "html": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "headings": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "level": {
+                            "type": "number"
+                          },
+                          "text": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "level",
+                          "text",
+                          "slug"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "size": {
+                      "type": "number"
+                    },
+                    "fileName": {
+                      "type": "string"
+                    },
+                    "breadcrumbs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "label",
+                          "path"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "isInsider": {
+                      "type": "boolean"
+                    },
+                    "mtime": {
+                      "type": "number"
+                    },
+                    "renderAs": {
+                      "type": "string"
+                    },
+                    "matchedRules": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "title": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "fileName",
+                    "breadcrumbs",
+                    "isInsider"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/share": {
+      "post": {
+        "operationId": "share",
+        "description": "Sign a share link for a path: a path key, optionally expiring, or a deep share (`depth`, `dirs`). The response reports whether the path is a directory.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Path to share (/<root>/<path>)."
+                  },
+                  "expiry": {
+                    "description": "Expiry (Unix milliseconds); omit for no expiry.",
+                    "type": "string"
+                  },
+                  "depth": {
+                    "description": "Deep share depth.",
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "dirs": {
+                    "description": "Deep share: directories below the path may be opened.",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "exp": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "depth": {
+                      "type": "number"
+                    },
+                    "dirs": {
+                      "type": "boolean"
+                    },
+                    "isDirectory": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "url",
+                    "path",
+                    "exp",
+                    "depth",
+                    "dirs",
+                    "isDirectory"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/util/share-for": {
+      "post": {
+        "operationId": "shareFor",
+        "description": "Sign a share link for a path aimed at named insiders: an insider link when every recipient is an insider with access, else an outsider share checked against the outsider policy.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Path to share (/<root>/<path>)."
+                  },
+                  "insiders": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Recipients: insider emails; anyone else is an outsider."
+                  },
+                  "depth": {
+                    "description": "Deep share depth.",
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "dirs": {
+                    "description": "Deep share: directories below the path may be opened.",
+                    "type": "boolean"
+                  },
+                  "enforceOutsiderPolicy": {
+                    "description": "false: sign even where the outsider policy denies.",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "path",
+                  "insiders"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "insider",
+                        "outsider-share",
+                        "blocked",
+                        "policy-denied"
+                      ]
+                    },
+                    "reason": {
+                      "type": "string"
+                    },
+                    "blocked": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "warning": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "url",
+                    "type"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/content-link/{file}": {
+      "get": {
+        "operationId": "contentLink",
+        "description": "Pre-computed share link for one of the pinned content pages of the server (privacy, terms).",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "file",
+            "schema": {
+              "type": "string",
+              "description": "Content page: privacy or terms."
+            },
+            "required": true,
+            "description": "Content page: privacy or terms."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "url"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/readme-link": {
+      "get": {
+        "operationId": "readmeLink",
+        "description": "Pre-computed share link for the README of the server.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "url"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/resolve-path": {
+      "get": {
+        "operationId": "resolvePath",
+        "description": "Convert an absolute filesystem path to a server browse path and optional public URL.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "parameters": [
+          {
+            "in": "query",
+            "name": "fsPath",
+            "schema": {
+              "type": "string",
+              "description": "Absolute filesystem path to resolve"
+            },
+            "required": true,
+            "description": "Absolute filesystem path to resolve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "browsePath": {
+                      "type": "string"
+                    },
+                    "browseUrl": {
+                      "type": "string"
+                    },
+                    "publicUrl": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "browsePath",
+                    "browseUrl"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rotate-key": {
+      "post": {
+        "operationId": "rotateKey",
+        "description": "Rotate the key of the calling insider. The old insider key and every outsider link the insider signed stop working.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "keyCreatedAt": {
+                      "type": "string"
+                    },
+                    "invalidates": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "insiderKey",
+                          "outsiderLinks"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "keyCreatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/event": {
+      "post": {
+        "operationId": "receiveEvent",
+        "description": "Event gateway webhook receiver: matches a JSON object against the configured event schemas and queues the matching command.",
+        "security": [
+          {
+            "query_k": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "matched": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "matched"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events": {
+      "get": {
+        "operationId": "listEvents",
+        "description": "Recent event log entries, newest last (insiders with no scopes configured; limit capped at 100).",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "description": "Entries to return (default 20, at most 100).",
+              "type": "string"
+            },
+            "description": "Entries to return (default 20, at most 100)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "ts": {
+                        "type": "string"
+                      },
+                      "event": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "matched": {
+                        "type": "boolean"
+                      },
+                      "exitCode": {
+                        "type": "number"
+                      },
+                      "durationMs": {
+                        "type": "number"
+                      },
+                      "bodyPreview": {
+                        "type": "string"
+                      },
+                      "truncated": {
+                        "type": "boolean"
+                      },
+                      "originalBytes": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "ts",
+                      "event",
+                      "matched"
+                    ],
+                    "additionalProperties": {}
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/oauth/start": {
+      "post": {
+        "operationId": "oauthStart",
+        "description": "Start an OAuth2 authorization code flow; returns the URL to open in a browser.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "description": "Provider name."
+                  },
+                  "account": {
+                    "type": "string",
+                    "description": "Account name."
+                  },
+                  "authUrl": {
+                    "description": "Authorization endpoint URL.",
+                    "type": "string"
+                  },
+                  "tokenUrl": {
+                    "description": "Token endpoint URL.",
+                    "type": "string"
+                  },
+                  "clientId": {
+                    "type": "string",
+                    "description": "OAuth client id."
+                  },
+                  "clientSecret": {
+                    "type": "string",
+                    "description": "OAuth client secret."
+                  },
+                  "scopes": {
+                    "description": "Scopes to request.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "pkce": {
+                    "description": "Use PKCE.",
+                    "type": "boolean"
+                  },
+                  "origin": {
+                    "description": "Origin for the redirect URI (default: the public URL).",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "provider",
+                  "account",
+                  "clientId",
+                  "clientSecret"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "authUrl": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "authUrl",
+                    "state"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/oauth/status": {
+      "get": {
+        "operationId": "oauthStatus",
+        "description": "Check whether valid OAuth2 credentials exist for a provider/account.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "parameters": [
+          {
+            "in": "query",
+            "name": "provider",
+            "schema": {
+              "type": "string",
+              "description": "Provider name."
+            },
+            "required": true,
+            "description": "Provider name."
+          },
+          {
+            "in": "query",
+            "name": "account",
+            "schema": {
+              "type": "string",
+              "description": "Account name."
+            },
+            "required": true,
+            "description": "Account name."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "exists": {
+                      "type": "boolean"
+                    },
+                    "expired": {
+                      "type": "boolean"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "account": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "exists",
+                    "expired",
+                    "provider",
+                    "account"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/oauth/token": {
+      "get": {
+        "operationId": "oauthToken",
+        "description": "Get a valid access token for a provider/account, refreshing it when expired.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "parameters": [
+          {
+            "in": "query",
+            "name": "provider",
+            "schema": {
+              "type": "string",
+              "description": "Provider name."
+            },
+            "required": true,
+            "description": "Provider name."
+          },
+          {
+            "in": "query",
+            "name": "account",
+            "schema": {
+              "type": "string",
+              "description": "Account name."
+            },
+            "required": true,
+            "description": "Account name."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    },
+                    "token_type": {
+                      "type": "string"
+                    },
+                    "expires_in_seconds": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "access_token",
+                    "token_type",
+                    "expires_in_seconds"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runner/{*}": {
+      "get": {
+        "operationId": "runnerGet",
+        "description": "Pass-through GET to the jeeves-runner API.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "*",
+            "schema": {
+              "type": "string",
+              "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+            },
+            "required": true,
+            "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "runnerPost",
+        "description": "Pass-through POST to the jeeves-runner API.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "*",
+            "schema": {
+              "type": "string",
+              "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+            },
+            "required": true,
+            "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "runnerPatch",
+        "description": "Pass-through PATCH to the jeeves-runner API.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "*",
+            "schema": {
+              "type": "string",
+              "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+            },
+            "required": true,
+            "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "runnerPut",
+        "description": "Pass-through PUT to the jeeves-runner API.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "*",
+            "schema": {
+              "type": "string",
+              "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+            },
+            "required": true,
+            "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "runnerDelete",
+        "description": "Pass-through DELETE to the jeeves-runner API.",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "*",
+            "schema": {
+              "type": "string",
+              "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+            },
+            "required": true,
+            "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorBody": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "code": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "statusCode",
+          "error",
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "query_k": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "k"
+      },
+      "cookie_jeeves_session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "jeeves_session"
+      },
+      "header_X_API_Key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    }
+  }
+}
