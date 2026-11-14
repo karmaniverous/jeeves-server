@@ -184,6 +184,7 @@ export function buildRuntimeConfig(
     internalInsiderKey: deriveInternalKey(resolvedKeys),
     diagramCachePath: config.diagramCachePath,
     exportCachePath: config.exportCachePath,
+    printStyles: config.printStyles,
     oauth: config.oauth
       ? {
           credentialDir: config.oauth.credentialDir,

@@ -479,6 +479,49 @@ Branding is surfaced via the `/status` endpoint (no auth required) so the React 
 
 ---
 
+## Print Styles
+
+Named print styles restyle PDF exports of the documents that ask for them ([Exporting](exports.md#print-styles)):
+
+```json
+{
+  "printStyles": {
+    "bca-brief": {
+      "css": "/opt/jeeves/config/jeeves-server/print-styles/bca-brief.css",
+      "page": { "format": "Letter", "margin": "14mm 14mm 16mm 14mm" },
+      "headerTemplate": "/opt/jeeves/config/jeeves-server/print-styles/bca-brief.header.html",
+      "footerTemplate": "/opt/jeeves/config/jeeves-server/print-styles/bca-brief.footer.html",
+      "assets": "/opt/jeeves/config/jeeves-server/print-styles/assets"
+    }
+  }
+}
+```
+
+A document selects the style in its front matter:
+
+```yaml
+---
+jeeves:
+  print: bca-brief
+---
+```
+
+| Field | Type | Default | Description |
+| --- | --- | --- | --- |
+| `css` | string | _required_ | Absolute path to the stylesheet, added after the default print CSS |
+| `page.format` | string | `A4` | Paper format: `Letter`, `Legal`, `Tabloid`, `Ledger`, `A0` to `A6` (any case). Not with `width`/`height` |
+| `page.width`, `page.height` | string or number |  | Page size, both together: CSS lengths (`8.5in`) or pixels |
+| `page.margin` | string | `1cm` | CSS margin shorthand, one to four lengths |
+| `headerTemplate`, `footerTemplate` | string |  | Absolute paths to Chromium header/footer templates (HTML; `pageNumber`, `totalPages`, `date` and `title` classes are filled in) |
+| `assets` | string |  | Absolute path to a directory whose files the CSS and templates may use |
+
+- Style names are lower-case letters, digits and hyphens (`^[a-z0-9][a-z0-9-]*$`). Every path must be absolute; otherwise any location the server process can read will do. A `print-styles/` directory beside the server config is a convenient convention, not a requirement.
+- **Assets** are inlined as `data:` URIs when the style is loaded: each `url(...)` in the CSS and each `src="..."` in the templates is resolved relative to `assets`, and inlined if it names a file inside that directory. A reference outside it, a missing file or a remote URL is removed and logged. A style larger than 5 MiB once inlined is refused (default styling, with an error in the log).
+- Files are read when a document uses the style and reloaded when any of them (or the style's config) changes, so no restart is needed.
+- An unregistered name in a document never fails the export: the PDF gets default styling and the server logs a warning.
+
+---
+
 ## Config Reference
 
 | Field | Type | Default | Description |
@@ -503,6 +546,7 @@ Branding is surfaced via the `/status` endpoint (no auth required) so the React 
 | `plantuml` | object | — | PlantUML rendering config |
 | `diagramCachePath` | string | `.diagram-cache` | Cached rendered diagram directory |
 | `exportCachePath` | string | `.export-cache` | Cached PDF/DOCX export directory |
+| `printStyles` | object | `{}` | Named PDF print styles ([Print Styles](#print-styles)) |
 | `publicUrl` | string | — | Public base URL (e.g. `https://docs.example.com`). Origin for login links, share-for links, OAuth redirects and the cookie `secure` flag; API responses include full public URLs. **Required** with email, Google or OAuth login unless `trustProxyHeaders` is `true`. |
 | `trustProxyHeaders` | boolean | `false` | Derive the public origin from forwarding/`Host` headers when `publicUrl` is unset. Only behind a proxy that sets those headers. |
 | `eventQueue` | string | `{installDir}/logs/event-queue.jsonl` | Absolute path to the durable event queue file. Cursor file is `eventQueue + '.cursor'`. |

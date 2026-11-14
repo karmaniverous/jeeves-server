@@ -62,6 +62,8 @@ export interface RuntimeConfig {
   };
   diagramCachePath?: string;
   exportCachePath?: string;
+  /** Named PDF print styles (#316). */
+  printStyles?: JeevesConfig['printStyles'];
   outsiderPolicy: NormalizedScopes | null;
   events: JeevesConfig['events'];
   authModes: AuthMode[];

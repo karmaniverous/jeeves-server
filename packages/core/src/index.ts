@@ -6,6 +6,17 @@
 
 export * from './catalog/index.js';
 export {
+  absolutePathSchema,
+  isAbsolutePath,
+  PRINT_PAPER_FORMATS,
+  PRINT_STYLE_NAME,
+  type PrintPageConfig,
+  printPageSchema,
+  type PrintStyleConfig,
+  printStyleSchema,
+  printStylesSchema,
+} from './configPrintStyles.js';
+export {
   computeDeepShareKey,
   computeInsiderKey,
   computeOutsiderKeyWithExpiry,

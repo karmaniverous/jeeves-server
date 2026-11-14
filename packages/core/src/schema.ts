@@ -16,6 +16,7 @@ import {
   loggingConfigSchema,
   oauthSchema,
 } from './configFeatureSchemas.js';
+import { absolutePathSchema, printStylesSchema } from './configPrintStyles.js';
 
 export {
   authModeSchema,
@@ -96,6 +97,11 @@ export const jeevesConfigSchema = z
      */
     exportCachePath: z.string().optional(),
     /**
+     * Named PDF print styles (#316): absolute paths to a stylesheet and
+     * optional header/footer templates and assets directory, read on use.
+     */
+    printStyles: printStylesSchema.optional(),
+    /**
      * Global outsider policy — constrains which paths are eligible for outsider sharing.
      * Uses the same allow/deny model as insider scopes.
      * If omitted, all paths are shareable with outsiders.
@@ -130,17 +136,7 @@ export const jeevesConfigSchema = z
     /** Instance branding (name, emoji, theme overrides, email template) */
     branding: brandingSchema.optional(),
     /** Absolute path to the durable event queue JSONL file. Cursor file is derived as eventQueue + '.cursor'. */
-    eventQueue: z
-      .string()
-      .min(1)
-      .refine(
-        (p) =>
-          p.startsWith('/') ||
-          /^[A-Za-z]:[\\/]/.test(p) ||
-          p.startsWith('\\\\'),
-        { message: 'eventQueue must be an absolute path' },
-      )
-      .optional(),
+    eventQueue: absolutePathSchema('eventQueue').optional(),
     /** Maximum number of event queue entries processed concurrently. Defaults to 3. */
     eventQueueConcurrency: z.number().int().positive().default(3),
     /** Public base URL (e.g. https://jeeves.johngalt.id). When set, API responses include full public URLs. */

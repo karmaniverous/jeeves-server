@@ -31,6 +31,26 @@ Directory archives (ZIP and Tar) and **Clear Cache** are offered to insiders onl
 
 PDF and DOCX export take any Markdown document: a `.md` or `.markdown` file, or a text file (JSON, for instance) that jeeves-watcher renders as Markdown (`renderAs: 'md'`), exported as the page shows it. Anything else answers `400 SERVER_EXPORT_UNSUPPORTED`, and link-info offers no PDF/DOCX for it. If the watcher can't be reached, exporting a file only it can render answers `502 SERVER_WATCHER_UNAVAILABLE` and nothing is cached. The reserved `jeeves` front-matter mapping is left out of the exported front matter, as on screen.
 
+### Print styles
+
+A PDF can be printed with a named **print style**: a stylesheet (plus optional page size, margins, header and footer) registered in the server's `printStyles` config ([Setup](setup.md#print-styles)). A document chooses one by name in its front matter:
+
+```yaml
+---
+title: Daily Industry Brief
+jeeves:
+  print: bca-brief
+---
+```
+
+- The style's CSS is added **after** the default print CSS, which is unchanged, so PDFs without a style look exactly as before. Where the default sets typography with `!important`, the style overrides it with `!important` of its own.
+- The style's `page` options (`format`, or `width` and `height`, and `margin`) go to Chromium's PDF printer with `preferCSSPageSize`, so the stylesheet may also use `@page`. Unset, the page is A4 with 1 cm margins. A header or footer template turns on Chromium's header and footer (its `pageNumber`, `totalPages`, `date` and `title` classes work); the other one is left blank.
+- Raw HTML is allowed in Markdown, so a document can emit `<div class="story impact-high">` for the stylesheet to target.
+- **PDF only.** DOCX ignores `jeeves.print` and uses the reader's Word styles.
+- Every PDF response names the style it was printed with in `X-Print-Style` (`default` without one), from the cache too.
+- Export never fails because of a style. An unregistered name, a value that isn't a string (or a path or URL: documents can only name a style, never point at a file) gives default styling, `X-Print-Style: default` and one warning per file and name in the server log. A style that can't be loaded (an unreadable file, or more than 5 MiB once its assets are inlined) gives default styling and an error in the log.
+- Style files are read on use and reloaded when one changes, so an edited stylesheet takes effect on the next export without a restart (and is a new cache entry).
+
 ### Export cache
 
 Rendered PDFs and DOCX files are cached in `exportCachePath` (default `.export-cache` in the server's working directory). An entry is keyed by the document's path, the format, the Markdown as loaded (so a changed file, or changed watcher output for a file the watcher renders, is a new render), the print style, the server version, and the path, modification time and size of every local image the Markdown references (`![](…)` or `<img src>`, relative or `/path/…`). Change any of them and the next export renders afresh; old entries are simply never used again. Failed renders are never cached.

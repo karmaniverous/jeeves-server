@@ -34,6 +34,7 @@ import {
   documentExportKey,
 } from '../../services/exportCacheKey.js';
 import { loadMarkdownDocument } from '../../services/markdownDocument.js';
+import { resolvePrintStyle } from '../../services/printStyles.js';
 import { RenderFailedError } from '../../services/puppeteer.js';
 import { getRoots } from '../../util/platform.js';
 import { pathKeyQuery } from '../../util/shareQuery.js';
@@ -133,8 +134,13 @@ export const exportHandlers: HandlersFor<'export' | 'exportCacheClear'> = {
         : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     const fileExt = format === 'pdf' ? 'pdf' : 'docx';
 
+    // Print styles are PDF-only (Decision 18): DOCX ignores `jeeves.print`.
+    const style =
+      format === 'pdf'
+        ? resolvePrintStyle(doc.directives, resolved)
+        : undefined;
+
     // Served from the export cache when there; rendered and cached if not.
-    const style = DEFAULT_PRINT_STYLE;
     const key = documentExportKey(resolved, doc, format, {
       roots: getRoots(config.roots),
       style,
@@ -148,21 +154,24 @@ export const exportHandlers: HandlersFor<'export' | 'exportCacheClear'> = {
           fileName,
           format: format,
           authKey: exportKey,
+          printStyle: style,
         }),
       ));
+    const printStyle = cached?.printStyle ?? style?.name;
     if (!cached)
       cacheExport({
         fsPath: resolved,
         key,
         format,
         buffer,
-        printStyle: style.name,
+        printStyle: style?.name ?? DEFAULT_PRINT_STYLE.name,
       });
 
     return ok(buffer, {
       'content-type': contentType,
       'content-disposition': `attachment; filename="${baseName}.${fileExt}"`,
       'content-length': String(buffer.length),
+      ...(printStyle !== undefined && { 'x-print-style': printStyle }),
     });
   },
   exportCacheClear: async ({ params }, request) => {
