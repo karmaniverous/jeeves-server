@@ -61,7 +61,7 @@ async function start() {
 
     // Initialize caches
     initDiagramCache(config.diagramCachePath);
-    initExportCache();
+    initExportCache(config.exportCachePath);
 
     // Start queue processor
     startQueueProcessor();

@@ -122,6 +122,16 @@ async function markdownSource(
 }
 
 /**
+ * A document's content hash: SHA-256 (hex) of its Markdown source.
+ *
+ * @param source - The Markdown source.
+ * @returns The hash.
+ */
+export function contentHashOf(source: string): string {
+  return createHash('sha256').update(source).digest('hex');
+}
+
+/**
  * Load a file as a Markdown document.
  *
  * @param fsPath - An existing file's path.
@@ -149,6 +159,6 @@ export async function loadMarkdownDocument(
     body,
     directives: frontMatter.directives,
     title: documentTitle(frontMatter.data, path.basename(fsPath)),
-    contentHash: createHash('sha256').update(loaded.source).digest('hex'),
+    contentHash: contentHashOf(loaded.source),
   };
 }

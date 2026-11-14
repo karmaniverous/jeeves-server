@@ -116,7 +116,7 @@ Directory listings and link info admit ancestors of in-scope paths (for navigati
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `DELETE` | `/api/export-cache/<path>` | Clear export and diagram caches for a path (insider only) |
+| `DELETE` | `/api/export-cache/<path>` | Clear export and diagram caches for a path: a file, or every file under a directory (insider only) |
 
 ### Authentication
 

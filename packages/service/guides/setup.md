@@ -502,6 +502,7 @@ Branding is surfaced via the `/status` endpoint (no auth required) so the React 
 | `auth.email` | object | — | Email magic link config (required when modes includes `"email"`) |
 | `plantuml` | object | — | PlantUML rendering config |
 | `diagramCachePath` | string | `.diagram-cache` | Cached rendered diagram directory |
+| `exportCachePath` | string | `.export-cache` | Cached PDF/DOCX export directory |
 | `publicUrl` | string | — | Public base URL (e.g. `https://docs.example.com`). Origin for login links, share-for links, OAuth redirects and the cookie `secure` flag; API responses include full public URLs. **Required** with email, Google or OAuth login unless `trustProxyHeaders` is `true`. |
 | `trustProxyHeaders` | boolean | `false` | Derive the public origin from forwarding/`Host` headers when `publicUrl` is unset. Only behind a proxy that sets those headers. |
 | `eventQueue` | string | `{installDir}/logs/event-queue.jsonl` | Absolute path to the durable event queue file. Cursor file is `eventQueue + '.cursor'`. |

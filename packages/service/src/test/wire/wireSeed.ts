@@ -7,11 +7,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { getConfig } from '../../config/index.js';
 import {
   cacheDiagramBuffer,
   getDiagramCacheDir,
 } from '../../services/diagramCache.js';
 import { cacheExport } from '../../services/exportCache.js';
+import {
+  DEFAULT_PRINT_STYLE,
+  documentExportKey,
+} from '../../services/exportCacheKey.js';
+import { contentHashOf } from '../../services/markdownDocument.js';
+import { getRoots } from '../../util/platform.js';
 import {
   CACHED_EXPORT,
   CACHED_SVG,
@@ -23,7 +30,7 @@ import {
 
 /** Where the seeds go. */
 export interface SeedDirs {
-  /** Content root (the export cache is keyed by file path). */
+  /** Content root (holds the cached document). */
   contentDir: string;
   /** Export cache directory (emptied first). */
   exportCacheDir: string;
@@ -53,8 +60,18 @@ export function seedCaches(dirs: SeedDirs): void {
   empty(dirs.exportCacheDir);
 
   const doc = path.join(dirs.contentDir, 'doc.md');
-  cacheExport(doc, 'pdf', CACHED_EXPORT);
-  cacheExport(doc, 'docx', CACHED_EXPORT);
+  const source = fs.readFileSync(doc, 'utf8');
+  const loaded = { source, contentHash: contentHashOf(source) };
+  const roots = getRoots(getConfig().roots);
+  for (const format of ['pdf', 'docx']) {
+    cacheExport({
+      fsPath: doc,
+      key: documentExportKey(doc, loaded, format, { roots }),
+      format,
+      buffer: CACHED_EXPORT,
+      printStyle: DEFAULT_PRINT_STYLE.name,
+    });
+  }
 
   const svg = Buffer.from(CACHED_SVG);
   cacheDiagramBuffer('mermaid', String(WIRE_CORPUS['flow.mmd']), svg, 'svg');

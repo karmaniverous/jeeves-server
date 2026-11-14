@@ -29,6 +29,10 @@ import {
   clearStandaloneDiagramCache,
   getCachedExport,
 } from '../../services/exportCache.js';
+import {
+  DEFAULT_PRINT_STYLE,
+  documentExportKey,
+} from '../../services/exportCacheKey.js';
 import { loadMarkdownDocument } from '../../services/markdownDocument.js';
 import { RenderFailedError } from '../../services/puppeteer.js';
 import { getRoots } from '../../util/platform.js';
@@ -130,9 +134,14 @@ export const exportHandlers: HandlersFor<'export' | 'exportCacheClear'> = {
     const fileExt = format === 'pdf' ? 'pdf' : 'docx';
 
     // Served from the export cache when there; rendered and cached if not.
-    const cached = getCachedExport(resolved, format);
+    const style = DEFAULT_PRINT_STYLE;
+    const key = documentExportKey(resolved, doc, format, {
+      roots: getRoots(config.roots),
+      style,
+    });
+    const cached = getCachedExport(key, format);
     const buffer =
-      cached ??
+      cached?.buffer ??
       (await renderExport(format, () =>
         exportPage({
           url: exportUrl,
@@ -141,7 +150,14 @@ export const exportHandlers: HandlersFor<'export' | 'exportCacheClear'> = {
           authKey: exportKey,
         }),
       ));
-    if (!cached) cacheExport(resolved, format, buffer);
+    if (!cached)
+      cacheExport({
+        fsPath: resolved,
+        key,
+        format,
+        buffer,
+        printStyle: style.name,
+      });
 
     return ok(buffer, {
       'content-type': contentType,

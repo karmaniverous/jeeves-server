@@ -31,6 +31,12 @@ Directory archives (ZIP and Tar) and **Clear Cache** are offered to insiders onl
 
 PDF and DOCX export take any Markdown document: a `.md` or `.markdown` file, or a text file (JSON, for instance) that jeeves-watcher renders as Markdown (`renderAs: 'md'`), exported as the page shows it. Anything else answers `400 SERVER_EXPORT_UNSUPPORTED`, and link-info offers no PDF/DOCX for it. If the watcher can't be reached, exporting a file only it can render answers `502 SERVER_WATCHER_UNAVAILABLE` and nothing is cached. The reserved `jeeves` front-matter mapping is left out of the exported front matter, as on screen.
 
+### Export cache
+
+Rendered PDFs and DOCX files are cached in `exportCachePath` (default `.export-cache` in the server's working directory). An entry is keyed by the document's path, the format, the Markdown as loaded (so a changed file, or changed watcher output for a file the watcher renders, is a new render), the print style, the server version, and the path, modification time and size of every local image the Markdown references (`![](…)` or `<img src>`, relative or `/path/…`). Change any of them and the next export renders afresh; old entries are simply never used again. Failed renders are never cached.
+
+**Clear Cache** (`DELETE /api/export-cache/<path>`) removes every cached export of a file, or of every file under a directory, plus the file's cached diagrams.
+
 ### Via URL
 
 Export and raw routes take the same path as the page URL, after their own prefix:
