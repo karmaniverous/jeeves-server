@@ -37,8 +37,9 @@ export const settle = (
     await new Promise((resolve) => setTimeout(resolve, ms));
   });
 
-/** A mounted element: re-render it with a new element, or unmount it. */
+/** A mounted element: its container; re-render it with a new element, or unmount it. */
 interface Mounted {
+  container: HTMLElement;
   rerender: (element: ReactElement) => Promise<void>;
   unmount: () => Promise<void>;
 }
@@ -50,13 +51,15 @@ interface Mounted {
  * @returns Re-render and unmount handles.
  */
 async function mount(element: ReactElement): Promise<Mounted> {
-  const root = createRoot(document.createElement('div'));
+  const container = document.createElement('div');
+  const root = createRoot(container);
   const rerender = (next: ReactElement) =>
     settle(() => {
       root.render(next);
     });
   await rerender(element);
   return {
+    container,
     rerender,
     unmount: () =>
       settle(() => {
@@ -65,8 +68,9 @@ async function mount(element: ReactElement): Promise<Mounted> {
   };
 }
 
-/** A mounted component: re-render it with new props, or unmount it. */
+/** A mounted component: its container; re-render it with new props, or unmount it. */
 export interface MountedComponent<P> {
+  container: HTMLElement;
   rerender: (props: P) => Promise<void>;
   unmount: () => Promise<void>;
 }
@@ -84,6 +88,7 @@ export async function mountComponent<P extends object>(
 ): Promise<MountedComponent<P>> {
   const mounted = await mount(createElement(component, props));
   return {
+    container: mounted.container,
     rerender: (next: P) => mounted.rerender(createElement(component, next)),
     unmount: mounted.unmount,
   };

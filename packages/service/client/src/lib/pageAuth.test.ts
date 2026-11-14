@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildAuthSuffix,
   pageAuth,
+  pageRawUrl,
   pageShareCredential,
   withPageCredential,
 } from './pageAuth';
@@ -49,6 +50,15 @@ describe('withPageCredential', () => {
     expect(withPageCredential('/api/raw/j/a.svg', undefined)).toBe(
       '/api/raw/j/a.svg',
     );
+  });
+});
+
+describe('pageRawUrl', () => {
+  it('addresses /api/raw/ with the page credential, or none', () => {
+    expect(pageRawUrl('j/a b.png', { k: 'abc', d: '1' })).toBe(
+      '/api/raw/j/a b.png?k=abc&d=1',
+    );
+    expect(pageRawUrl('j/a.png', undefined)).toBe('/api/raw/j/a.png');
   });
 });
 

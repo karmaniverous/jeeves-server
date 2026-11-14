@@ -78,3 +78,19 @@ export function withPageCredential(
 ): string {
   return share ? withShareCredential(url, share) : url;
 }
+
+/**
+ * The raw-content URL of a browse path as the page uses it (an image's
+ * `src`, a binary's download link): `/api/raw/<path>` with the page's share
+ * credential, so it opens for an outsider viewing a share link.
+ *
+ * @param reqPath - The browse path, as in the page URL.
+ * @param share - The page's share credential, if any.
+ * @returns The URL.
+ */
+export function pageRawUrl(
+  reqPath: string,
+  share: ShareCredential | undefined,
+): string {
+  return withPageCredential(`/api/raw/${reqPath}`, share);
+}
