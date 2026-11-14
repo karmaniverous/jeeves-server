@@ -1,5 +1,3 @@
-/* eslint-disable no-undef */
-
 /**
  * Downloads a pinned PlantUML jar to vendor/plantuml.jar.
  * Run automatically via postinstall, or manually: node scripts/download-plantuml.js
@@ -8,9 +6,11 @@
  * To upgrade PlantUML: bump PLANTUML_VERSION below and run npm install.
  */
 
+import console from 'node:console';
 import fs from 'node:fs';
 import https from 'node:https';
 import path from 'node:path';
+import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 const PLANTUML_VERSION = 'v1.2026.2';

@@ -74,6 +74,8 @@ There is no standalone Vite dev server. The Fastify server serves the built clie
 2. In a second terminal: `npx vite build --watch` (from `packages/service/client/`)
 3. Refresh the browser after each rebuild
 
+Client tests (`packages/service/client/src/**/*.test.ts`) run in the service package's Vitest (`npm test` in `packages/service`) under happy-dom, with the client's `@/` alias. Hooks and components are rendered with the small harness in `client/src/test/reactHarness.ts` (`renderHook`, `mount`, `settle`), with client modules such as `@/lib/api` mocked.
+
 ### Port Conflicts
 
 If port 19340 is already in use from a previous crashed process:

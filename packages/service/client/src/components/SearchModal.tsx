@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react';
 
+import { useRerunSearch } from '@/hooks/useRerunSearch';
 import {
   fetchFacets,
   searchDocuments,
@@ -694,14 +695,10 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     });
   }, []);
 
-  // Re-search when selections change
-  useEffect(() => {
-    if (query.trim())
-      queueMicrotask(() => {
-        void doSearch(query);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [facetSelections, facetTextInputs]);
+  // Re-search when selections change. doSearch changes exactly when the
+  // facet selections or text inputs do; the query is read through a ref so
+  // typing (debounced in handleInputChange) doesn't search twice.
+  useRerunSearch(query, doSearch);
 
   const activeFacets = facets.filter((f) => activeFacetFields.has(f.field));
   const inactiveFacets = facets.filter((f) => !activeFacetFields.has(f.field));

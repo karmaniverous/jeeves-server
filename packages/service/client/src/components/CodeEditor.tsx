@@ -4,6 +4,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useLatestRef } from '@/hooks/useLatestRef';
 import { getLanguageExtension, loadCodeMirror } from '@/lib/codemirror';
 import { useTheme } from '@/lib/theme';
 
@@ -56,8 +57,23 @@ export function CodeEditor({
     }
   }, [onSave]);
 
+  // The editor is built once, from the props it mounted with; its key
+  // bindings call the latest save and cancel handlers through refs.
+  const [initial] = useState(() => ({
+    content,
+    fileName,
+    saveShortcut,
+    hasCancel: onCancel !== undefined,
+    autoFocus,
+    lineWrapping,
+    theme,
+  }));
+  const handleSaveRef = useLatestRef(handleSave);
+  const onCancelRef = useLatestRef(onCancel);
+
   useEffect(() => {
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
     let destroyed = false;
 
     (async () => {
@@ -65,24 +81,24 @@ export function CodeEditor({
         await loadCodeMirror();
       if (destroyed) return;
 
-      const ext = fileName.split('.').pop() ?? '';
+      const ext = initial.fileName.split('.').pop() ?? '';
       const langExt = await getLanguageExtension(ext);
       if (destroyed) return;
 
       const keybindings: { key: string; run: () => boolean }[] = [
         {
-          key: saveShortcut === 'ctrl-enter' ? 'Mod-Enter' : 'Mod-s',
+          key: initial.saveShortcut === 'ctrl-enter' ? 'Mod-Enter' : 'Mod-s',
           run: () => {
-            handleSave();
+            void handleSaveRef.current();
             return true;
           },
         },
       ];
-      if (onCancel) {
+      if (initial.hasCancel) {
         keybindings.push({
           key: 'Escape',
           run: () => {
-            onCancel();
+            onCancelRef.current?.();
             return true;
           },
         });
@@ -109,11 +125,11 @@ export function CodeEditor({
         }),
       ];
 
-      if (lineWrapping) {
+      if (initial.lineWrapping) {
         extensions.push(EditorView.lineWrapping);
       }
 
-      if (theme === 'dark') {
+      if (initial.theme === 'dark') {
         extensions.push(oneDark);
       }
 
@@ -122,17 +138,14 @@ export function CodeEditor({
       }
 
       const state = EditorState.create({
-        doc: content,
+        doc: initial.content,
         extensions,
       });
 
-      const view = new EditorView({
-        state,
-        parent: containerRef.current!,
-      });
+      const view = new EditorView({ state, parent: container });
 
       viewRef.current = view;
-      if (autoFocus) view.focus();
+      if (initial.autoFocus) view.focus();
       setLoading(false);
     })();
 
@@ -143,8 +156,7 @@ export function CodeEditor({
         viewRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [initial, handleSaveRef, onCancelRef]);
 
   return (
     <div

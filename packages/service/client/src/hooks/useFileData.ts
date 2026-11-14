@@ -12,6 +12,8 @@ import {
   saveFile,
 } from '@/lib/api';
 
+import { useLatestRef } from './useLatestRef';
+
 export function useFileData(reqPath: string, searchParams: URLSearchParams) {
   const [drives, setDrives] = useState<DriveEntry[] | null>(null);
   const [directory, setDirectory] = useState<DirectoryListing | null>(null);
@@ -91,13 +93,15 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
     [],
   );
 
-  // Only reload data when the path changes, not when tab params change
+  // Only reload data when the path changes, not when tab params change:
+  // the load reads the params current at that moment through a ref.
+  const searchParamsRef = useLatestRef(searchParams);
   useEffect(() => {
+    const params = searchParamsRef.current;
     queueMicrotask(() => {
-      void loadData(reqPath, searchParams);
+      void loadData(reqPath, params);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadData, reqPath]);
+  }, [loadData, reqPath, searchParamsRef]);
 
   /** Imperatively re-fetch file data without resetting editing/view state. */
   const refetch = useCallback(async () => {
