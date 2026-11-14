@@ -41,6 +41,8 @@ try {
 }
 ```
 
+The methods and their inputs are listed in the server's [API Reference](../service/guides/api-reference.md), generated from the same catalog. The SDK needs jeeves-server 3.16 or later (it replaces core 0.4's `serverEndpoints`; see [Migrating to 3.16](../service/guides/migrating-to-3.16.md)).
+
 ## Client
 
 `createServerClient({ baseUrl, auth?, timeoutMs?, fetch? })` returns a `ServerClient` with one method per catalog entry, named by the entry (`status`, `drives`, `browse`, `fileContent`, `fileWrite`, `fileMutate`, `raw`, `export`, `share`, `shareFor`, `linkInfo`, `search`, `receiveEvent`, `oauthToken`, `runnerGet`, ...). Each method takes the entry's input as one flat object (path parameters, query and body fields; the `*` wildcard is the browse path) and resolves to the parsed response. The input is optional when no field is required. The SDK never retries.

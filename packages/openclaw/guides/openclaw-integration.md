@@ -105,6 +105,8 @@ The plugin reads `publicUrl` from the server’s own config at `{configRoot}/jee
 | `oauth_status` | Check credential existence and expiry for a provider/account |
 | `oauth_token` | Retrieve a valid access token (auto-refreshes if expired) |
 
+The plugin needs jeeves-server 3.16 or later. 0.16.0 removed `server_rotate_key` and made `server_export` return a URL; see [Migrating to 3.16](../../service/guides/migrating-to-3.16.md#openclaw-plugin-0160).
+
 ## Skill and Live State
 
 The plugin writes nothing to TOOLS.md or any other workspace file. Guidance ships in the `jeeves-server` skill (declared in `openclaw.plugin.json`, with `name`/`description` frontmatter checked by a test). For live capabilities (export formats, diagram support, event schemas, insider count), call `server_status`.

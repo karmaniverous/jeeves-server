@@ -51,6 +51,14 @@ jeeves:
 
 A document's title is its front-matter `title` (a non-empty string), else the file name; other files and directories use their name, a drive root its label. `GET /api/file/*` returns it as `title`, the browser tab shows `{title} - {branding.name}`, and the page shell of `/browse/<path>` carries it in `<title>` and `og:title` for link unfurlers, but only for a request that passes the sign-in gate (a share link, a session or a key). A slow watcher never delays that page more than 1.5 s: the file name is used instead.
 
+## Upgrading from 3.15
+
+3.16.0 changes the API in a minor version: every error is Fastify's standard body with a `SERVER_*` code, `POST /rotate-key` and `GET /share` are gone, `/config` and `/config/apply` are admin-only (unscoped insiders and keys), `/status` hides event commands and the Chrome path from non-admins, `POST /event` takes JSON objects only, and Node.js 24.22.2 or later is required. Upgrade the OpenClaw plugin to 0.16.0 at the same time. See [Migrating to 3.16](guides/migrating-to-3.16.md).
+
+## API
+
+Every machine-API route is an entry of the endpoint catalog (`SERVER_CATALOG` in `@karmaniverous/jeeves-server-core`), which also yields `GET /openapi.json` (no auth) and the typed client `@karmaniverous/jeeves-server-sdk`. `GET /health` and `GET /status` need no credentials. The [API Reference](guides/api-reference.md) is generated from the catalog; [API & Integration](guides/api-integration.md) covers credentials, route behaviour and error codes.
+
 ## Docs
 
 - [Setup & Configuration](guides/setup.md)
@@ -59,9 +67,5 @@ A document's title is its front-matter `title` (a non-empty string), else the fi
 - [Exports](guides/exports.md)
 - [Event Gateway](guides/event-gateway.md)
 - [API Integration](guides/api-integration.md)
-
-## Public Endpoints
-
-- `GET /health` — liveness check (`{ "ok": true }`, no auth)
-- `GET /status` - server status (version, health, capabilities; event commands and the Chrome path for admins only)
-- `GET /config [?path=jsonpath]` - query resolved config (admin: a session or insider key with no scopes)
+- [API Reference](guides/api-reference.md)
+- [Migrating to 3.16](guides/migrating-to-3.16.md)

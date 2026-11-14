@@ -53,6 +53,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 - **Markdown Rendering** — Prose with collapsible TOC sidebar, collapsible frontmatter, adjustable reading width, dark/light themes
 - **CSV Table Rendering** — `.csv` files render as HTML tables with a Rendered/Raw tab
 - **PDF & DOCX Export** — One-click, perfectly rendered, business-ready
+- **Print Styles** — Named PDF styles in server config (`printStyles`), chosen per document with a `jeeves: { print: <name> }` front-matter directive (the `jeeves:` mapping is the platform's reserved namespace and is hidden from displayed front matter)
 - **Code Highlighting** — Syntax highlighting with copy and word-wrap toggle
 - **SVG, Mermaid & PlantUML Diagrams** — Rendered inline with pan/zoom; Mermaid is bundled, PlantUML uses a fallback pipeline (local jar → private servers → community server)
 - **Embedded Diagrams in Markdown** — `mermaid` and `plantuml` fenced code blocks render as inline SVGs
@@ -120,8 +121,14 @@ jeeves-server service start|stop|restart|status [--name <service-name>]
 - [Exporting & Downloads](packages/service/guides/exports.md) — PDF, DOCX, SVG, PNG, and ZIP export
 - [Event Gateway](packages/service/guides/event-gateway.md) — Webhook receiving, JSON Schema matching, body mapping, durable queue
 - [Deployment](packages/service/guides/deployment.md) — Running as a service, reverse proxy, HTTPS, updates
-- [API & Integration](packages/service/guides/api-integration.md) — Endpoint reference, path conversion, share link generation
+- [API & Integration](packages/service/guides/api-integration.md) — SDK usage, route behaviour, error codes, path conversion, share link generation
+- [API Reference](packages/service/guides/api-reference.md) — Every route of the endpoint catalog (generated); also `GET /openapi.json`
+- [Migrating to 3.16](packages/service/guides/migrating-to-3.16.md) — Breaking changes in 3.16.0 and plugin 0.16.0
 - [OpenClaw Integration](packages/openclaw/guides/openclaw-integration.md) — Plugin installation, configuration, tool reference
+
+## Upgrading from 3.15
+
+3.16.0 ships breaking API changes in a minor version (4.0.0 is reserved for the release aligned with OpenClaw's stable release): one error body with `SERVER_*` codes, removed `POST /rotate-key` and `GET /share`, admin-only `/config` and `/config/apply`, admin-only fields in `/status`, JSON objects only on `POST /event`, and Node.js 24.22.2 or later. Upgrade the server and the plugin (0.16.0) together. See [Migrating to 3.16](packages/service/guides/migrating-to-3.16.md).
 
 ## Platform Support
 

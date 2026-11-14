@@ -13,6 +13,10 @@ Provides agents with tools for:
 - Event gateway visibility
 - OAuth2 credential management (authorize, status, token retrieval)
 
+## Upgrading from 0.15
+
+0.16.0 needs jeeves-server 3.16 (install both together) and Node.js 24.22.2 or later. `server_rotate_key` is removed (the plugin's machine key can never rotate), `server_export` returns a download URL instead of fetching the export, and `server_config` / `server_config_apply` send the plugin key because `/config` is admin-only (keep the server's `keys._plugin` unscoped). See [Migrating to 3.16](../service/guides/migrating-to-3.16.md#openclaw-plugin-0160).
+
 ## Install
 
 ```bash
@@ -73,4 +77,5 @@ URLs returned by tools are rewritten to the server's `publicUrl`, read from `{co
 
 ## Docs
 
+- [Migrating to 3.16](../service/guides/migrating-to-3.16.md): breaking changes in the server 3.16.0 and this plugin 0.16.0
 - [OpenClaw Integration](./guides/openclaw-integration.md) — Full configuration, tool reference, architecture

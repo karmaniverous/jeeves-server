@@ -100,5 +100,10 @@ import {
 
 ## How Packages Consume It
 
-- **Service** (`packages/service`) — re-exports crypto functions from `src/util/crypto.ts` and uses API types for route handlers.
-- **Plugin** (`packages/openclaw`) — imports crypto functions directly for key derivation and types for tool payloads.
+- **Service** (`packages/service`) — registers its routes from `SERVER_CATALOG`, validates config with `jeevesConfigSchema`, throws the `SERVER_*` errors and serves `openapi.json`; its [API Reference](../service/guides/api-reference.md) is generated from the catalog.
+- **SDK** (`packages/sdk`) — builds its typed client from the browser-safe `./catalog` entry.
+- **Plugin** (`packages/openclaw`) — derives its key with `computeInsiderKey` and builds its catalog tools from `SERVER_CATALOG`.
+
+## Upgrading from 0.4
+
+0.5.0 replaces the `serverEndpoints` table with `SERVER_CATALOG` (built with `defineCatalog` from `@karmaniverous/jeeves`) and adds the error codes, the OpenAPI document and the `./catalog` entry. Code that read `serverEndpoints` uses `SERVER_CATALOG`, or calls the server through `@karmaniverous/jeeves-server-sdk`. See [Migrating to 3.16](../service/guides/migrating-to-3.16.md).
