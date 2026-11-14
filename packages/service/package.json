@@ -139,7 +139,8 @@
     "release:pre": "dotenvx run -f .env.local -- release-it --no-git.requireBranch --github.preRelease --preRelease",
     "start": "node dist/src/server.js",
     "test": "vitest run",
-    "typecheck": "cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc --noEmit"
+    "typecheck": "cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc --noEmit",
+    "wire:capture": "tsx scripts/capture-wire.ts"
   },
   "type": "module",
   "version": "3.15.0"

@@ -99,6 +99,14 @@ kill -9 <pid>
 
 **Never copy config between dev and prod.** Each has its own OAuth credentials, session secrets, and key seeds.
 
+## Wire Baseline
+
+`packages/service/src/api/wireBaseline.test.ts` (part of `npm test`) replays every scenario in `packages/service/src/test/wire/` against the real routes over a temp corpus and config, with every dependency (watcher, runner, SMTP, PlantUML servers, Chrome) unreachable, and compares each reply (status, key headers, normalised body; binary bodies by length and hash) with `wire-baseline.json`, recorded from the release's branch base.
+
+- **Never edit `wire-baseline.json`.** A reply that changes on purpose is listed in `departures.ts` with what the base sent and the decision that allows it; anything else is a regression.
+- New scenarios: add them to the `scenarios*.ts` lists, then re-record from the base: `npm run wire:capture` in `packages/service` (optional `--ref <ref>`, `--out <path>`) checks the ref out into a temporary git worktree, installs it, copies the current harness in and records there. The harness may only import service modules that exist at that ref.
+- Recording runs on Windows and Linux; volatile values (temp and package paths, the content root, keys, deep-share stacks, timestamps, versions, UUIDs) are normalised, and Windows drive listings and breadcrumbs are mapped onto the Linux view.
+
 ## Branch Naming
 
 Enforced by lefthook pre-commit hook:

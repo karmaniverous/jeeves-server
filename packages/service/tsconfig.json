@@ -23,5 +23,5 @@
     "server.js",
     "jeeves.config.template.ts"
   ],
-  "include": ["src/**/*", "*.config.ts", "rollup.config.ts"]
+  "include": ["src/**/*", "scripts/**/*.ts", "*.config.ts", "rollup.config.ts"]
 }
