@@ -136,21 +136,27 @@ function createReply() {
   return reply;
 }
 
+/**
+ * The fileMutate handler as a route handler: the catalog's request
+ * validation is not applied (the wire baseline covers it), so these tests
+ * reach the handler's own checks.
+ */
 async function setupRoute(): Promise<Handler> {
-  const { fileMutationRoutes } = await import('./fileMutations.js');
-  let handler: Handler | undefined;
-
-  const mockFastify = {
-    post: (_path: string, h: Handler) => {
-      handler = h;
-    },
-  };
-
-  await fileMutationRoutes(mockFastify as never, {});
-  return withErrorBody(handler!);
+  const { fileMutationHandlers } = await import('./fileMutations.js');
+  return withErrorBody(async (request, reply) => {
+    const { status, body } = await fileMutationHandlers.fileMutate(
+      {
+        params: request.params,
+        query: {},
+        body: request.body ?? {},
+      } as never,
+      request as never,
+    );
+    return reply.code(status).send(body);
+  });
 }
 
-describe('fileMutationRoutes', () => {
+describe('fileMutationHandlers.fileMutate', () => {
   let tmpDir: string;
   let testFile: string;
 

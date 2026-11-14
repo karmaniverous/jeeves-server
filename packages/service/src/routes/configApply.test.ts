@@ -11,11 +11,9 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { clearConfig, getConfig, initConfig } from '../config/index.js';
-import {
-  redactApplyResult,
-  registerConfigRoute,
-  sanitizeConfig,
-} from './config.js';
+import { catalogRoutes } from '../testing/catalogRoutes.js';
+import { redactApplyResult, sanitizeConfig } from './config.js';
+import { standardServerHandlers } from './standard.js';
 
 const VALID_CONFIG = {
   port: 9999,
@@ -58,7 +56,8 @@ describe('POST /config/apply', () => {
 
     initConfig(configPath);
     app = Fastify();
-    registerConfigRoute(app);
+    const { config, configApply } = standardServerHandlers();
+    await app.register(catalogRoutes({ config, configApply }));
     await app.ready();
   });
 

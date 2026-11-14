@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type { NormalizedScopes } from '../../config/types.js';
 import { makeRuntimeConfig } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { testApp } from '../../testing/testApp.js';
 
 const state = vi.hoisted((): { scopes: unknown } => ({ scopes: null }));
@@ -28,7 +29,7 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
   fsPathToUrl: (fsPath: string) => fsPath,
 }));
 
-const { searchRoutes } = await import('./search.js');
+const { createSearchHandlers } = await import('./search.js');
 
 const INDEXED = [
   '/r/.notes/private-plan.md',
@@ -64,7 +65,7 @@ beforeAll(async () => {
     request.insiderScopes = state.scopes as NormalizedScopes | null;
     done();
   });
-  await app.register(searchRoutes);
+  await app.register(catalogRoutes(createSearchHandlers()));
   await app.ready();
 });
 

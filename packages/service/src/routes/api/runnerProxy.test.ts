@@ -1,183 +1,176 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+/**
+ * The runner pass-through (`/api/runner/*`): method, path, query (without credentials) and body go to the runner; its status, body, content type and Retry-After come back (#315).
+ *
+ * @packageDocumentation
+ */
 
-vi.mock('@karmaniverous/jeeves', () => ({
+import type * as Jeeves from '@karmaniverous/jeeves';
+import type { FastifyInstance } from 'fastify';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
+import { serverError, testApp } from '../../testing/testApp.js';
+
+vi.mock('@karmaniverous/jeeves', async (importOriginal) => ({
+  ...(await importOriginal<JeevesModule>()),
   getServiceUrl: vi.fn(() => 'http://runner.test'),
 }));
 
-vi.mock('./scopeGuard.js', () => ({
-  requireInsider: vi.fn(),
-}));
+type JeevesModule = typeof Jeeves;
 
-type RouteHandler = (
-  request: { params?: Record<string, string>; query?: Record<string, string> },
-  reply: FakeReply,
-) => Promise<void>;
+const { requireInsider } = vi.hoisted(() => ({ requireInsider: vi.fn() }));
+vi.mock('./scopeGuard.js', () => ({ requireInsider }));
 
-interface FakeReply {
-  code: (status: number) => FakeReply;
-  header: (name: string, value: string) => FakeReply;
-  send: (body: string) => FakeReply;
-}
-
-let routes: Record<string, { method: string; handler: RouteHandler }> = {};
-
-const mockFastify = {
-  addHook: () => undefined,
-  get: (path: string, handler: RouteHandler) => {
-    routes[path] = { method: 'GET', handler };
-  },
-  post: (path: string, handler: RouteHandler) => {
-    routes[path] = { method: 'POST', handler };
-  },
-};
-
-function createReply(): FakeReply & {
-  status: number;
-  body: string;
-  headers: Record<string, string>;
-} {
-  const reply = {
-    status: 0,
-    body: '',
-    headers: {} as Record<string, string>,
-    code(status: number) {
-      reply.status = status;
-      return reply;
-    },
-    header(name: string, value: string) {
-      reply.headers[name] = value;
-      return reply;
-    },
-    send(body: string) {
-      reply.body = body;
-      return reply;
-    },
-  };
-  return reply;
-}
+const { runnerHandlers, runnerTarget } = await import('./runner.js');
 
 const fetchMock = vi.fn();
 
-describe('runner proxy routes', () => {
+/** What the runner answers. */
+function runnerAnswers(
+  status: number,
+  body: string,
+  headers: Record<string, string> = { 'content-type': 'application/json' },
+) {
+  fetchMock.mockResolvedValue(new Response(body, { status, headers }));
+}
+
+describe('runnerTarget', () => {
+  it('re-encodes path segments and drops credentials from the query', () => {
+    expect(
+      runnerTarget('jobs/a b/runs', { limit: '5', k: 'secret', key: 'x' }),
+    ).toBe('/jobs/a%20b/runs?limit=5');
+  });
+
+  it('repeats array values and has no ? without a query', () => {
+    expect(runnerTarget('jobs', { tag: ['a', 'b'] })).toBe('/jobs?tag=a&tag=b');
+    expect(runnerTarget('status', {})).toBe('/status');
+  });
+});
+
+describe('runner pass-through', () => {
+  let app: FastifyInstance;
+
   beforeEach(async () => {
     vi.clearAllMocks();
-    routes = {};
-    fetchMock.mockResolvedValue(
-      new Response('{"ok":true}', {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      }),
-    );
+    runnerAnswers(200, '{"ok":true}');
     vi.stubGlobal('fetch', fetchMock);
-    const { runnerRoutes } = await import('./runner.js');
-    runnerRoutes(mockFastify as never, {}, () => undefined);
+    app = testApp();
+    await app.register(catalogRoutes(runnerHandlers));
+    await app.ready();
   });
 
-  it('proxies enable to the runner with PATCH', async () => {
-    const reply = createReply();
-    await routes['/api/runner/jobs/:id/enable'].handler(
-      { params: { id: 'nightly' } },
-      reply,
-    );
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      'http://runner.test/jobs/nightly/enable',
-      { method: 'PATCH' },
-    );
-    expect(reply.status).toBe(200);
-    expect(reply.body).toBe('{"ok":true}');
+  afterEach(async () => {
+    vi.unstubAllGlobals();
+    await app.close();
   });
 
-  it('proxies disable to the runner with PATCH', async () => {
-    const reply = createReply();
-    await routes['/api/runner/jobs/:id/disable'].handler(
-      { params: { id: 'nightly' } },
-      reply,
-    );
+  it.each(['GET', 'DELETE'] as const)(
+    'forwards %s with its path and query, no body',
+    async (method) => {
+      const res = await app.inject({
+        method,
+        url: '/api/runner/jobs/nightly/runs?limit=5&k=secret',
+      });
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      'http://runner.test/jobs/nightly/disable',
-      { method: 'PATCH' },
-    );
-    expect(reply.status).toBe(200);
-  });
-
-  it('keeps run-now as POST', async () => {
-    const reply = createReply();
-    await routes['/api/runner/jobs/:id/run'].handler(
-      { params: { id: 'nightly' } },
-      reply,
-    );
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      'http://runner.test/jobs/nightly/run',
-      { method: 'POST' },
-    );
-  });
-
-  it('keeps job listing as GET', async () => {
-    const reply = createReply();
-    await routes['/api/runner/jobs'].handler({}, reply);
-
-    expect(fetchMock).toHaveBeenCalledWith('http://runner.test/jobs', {
-      method: 'GET',
-    });
-  });
-
-  it('forwards non-2xx runner responses instead of swallowing them', async () => {
-    fetchMock.mockResolvedValue(
-      new Response('{"error":"not found"}', {
-        status: 404,
-        headers: { 'content-type': 'application/json' },
-      }),
-    );
-    const reply = createReply();
-    await routes['/api/runner/jobs/:id/enable'].handler(
-      { params: { id: 'nightly' } },
-      reply,
-    );
-
-    expect(reply.status).toBe(404);
-    expect(reply.body).toBe('{"error":"not found"}');
-    expect(reply.headers).not.toHaveProperty('retry-after');
-  });
-
-  it.each([429, 503])(
-    'forwards a runner %i with its Retry-After',
-    async (status) => {
-      fetchMock.mockResolvedValue(
-        new Response('{"code":"RUNNER_BUSY"}', {
-          status,
-          headers: { 'content-type': 'application/json', 'retry-after': '7' },
-        }),
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://runner.test/jobs/nightly/runs?limit=5',
+        { method },
       );
-      const reply = createReply();
-      await routes['/api/runner/jobs/:id/run'].handler(
-        { params: { id: 'nightly' } },
-        reply,
-      );
-
-      expect(reply.status).toBe(status);
-      expect(reply.headers['retry-after']).toBe('7');
-      expect(reply.body).toBe('{"code":"RUNNER_BUSY"}');
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toEqual({ ok: true });
+      expect(requireInsider).toHaveBeenCalledOnce();
     },
   );
 
-  it('throws SERVER_RUNNER_UNAVAILABLE when the runner is unreachable', async () => {
-    const cause = new Error('connect ECONNREFUSED');
-    fetchMock.mockRejectedValue(cause);
-    const reply = createReply();
-    await expect(
-      routes['/api/runner/jobs/:id/disable'].handler(
-        { params: { id: 'nightly' } },
-        reply,
-      ),
-    ).rejects.toMatchObject({
-      statusCode: 503,
-      code: 'SERVER_RUNNER_UNAVAILABLE',
-      message: 'Runner unreachable',
-      cause,
+  it.each(['POST', 'PATCH', 'PUT'] as const)(
+    'forwards %s with its JSON body',
+    async (method) => {
+      await app.inject({
+        method,
+        url: '/api/runner/jobs/nightly/enable',
+        payload: { reason: 'test' },
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'http://runner.test/jobs/nightly/enable',
+        {
+          method,
+          body: '{"reason":"test"}',
+          headers: { 'content-type': 'application/json' },
+        },
+      );
+    },
+  );
+
+  it('forwards a missing body as {}', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/runner/jobs/nightly/run',
     });
-    expect(reply.status).toBe(0);
+
+    expect(res.statusCode).toBe(200);
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://runner.test/jobs/nightly/run',
+      {
+        method: 'POST',
+        body: '{}',
+        headers: { 'content-type': 'application/json' },
+      },
+    );
+  });
+
+  it('passes a runner error through', async () => {
+    runnerAnswers(
+      404,
+      '{"statusCode":404,"code":"RUNNER_JOB_NOT_FOUND","error":"Not Found","message":"No job nightly"}',
+    );
+    const res = await app.inject({ url: '/api/runner/jobs/nightly' });
+
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toEqual({
+      statusCode: 404,
+      code: 'RUNNER_JOB_NOT_FOUND',
+      error: 'Not Found',
+      message: 'No job nightly',
+    });
+    expect(res.headers).not.toHaveProperty('retry-after');
+  });
+
+  it('passes a non-JSON runner error through as its message', async () => {
+    runnerAnswers(500, 'boom', { 'content-type': 'text/plain' });
+    const res = await app.inject({ url: '/api/runner/status' });
+
+    expect(res.statusCode).toBe(500);
+    expect(res.json()).toMatchObject({ message: 'boom' });
+  });
+
+  it.each([429, 503])(
+    'passes a runner %i through with its Retry-After',
+    async (status) => {
+      runnerAnswers(status, '{"code":"RUNNER_BUSY","message":"busy"}', {
+        'content-type': 'application/json',
+        'retry-after': '7',
+      });
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/runner/jobs/nightly/run',
+      });
+
+      expect(res.statusCode).toBe(status);
+      expect(res.headers['retry-after']).toBe('7');
+      expect(res.json()).toMatchObject({
+        code: 'RUNNER_BUSY',
+        message: 'busy',
+      });
+    },
+  );
+
+  it('answers SERVER_RUNNER_UNAVAILABLE when the runner is unreachable', async () => {
+    fetchMock.mockRejectedValue(new Error('connect ECONNREFUSED'));
+    const res = await app.inject({ url: '/api/runner/jobs' });
+
+    expect(res.json()).toEqual(
+      serverError('SERVER_RUNNER_UNAVAILABLE', 'Runner unreachable'),
+    );
   });
 });

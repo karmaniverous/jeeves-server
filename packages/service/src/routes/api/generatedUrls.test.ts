@@ -12,6 +12,7 @@ import type { Page } from 'puppeteer-core';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { INSIDER_SEED, makeRuntimeConfig } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { testApp } from '../../testing/testApp.js';
 
 const config = makeRuntimeConfig();
@@ -25,8 +26,9 @@ vi.mock('../../util/configPersist.js', () => ({
   writeInsiderSeedToConfig: vi.fn(),
 }));
 
-const { sharingRoutes } = await import('./sharing.js');
-const { keysRoute } = await import('../keys.js');
+const { sharingHandlers } = await import('./sharing.js');
+const { shareForHandlers } = await import('./shareFor.js');
+const { keysHandlers } = await import('../keys.js');
 const { buildRenderUrl } = await import('./export.js');
 const { rewriteLinksForDeepShare, rewriteSimpleImageAuth } =
   await import('../../services/deepShareLinks.js');
@@ -98,8 +100,10 @@ beforeAll(async () => {
     request.insiderScopes = null;
     done();
   });
-  await app.register(sharingRoutes);
-  await app.register(keysRoute);
+  await app.register(
+    catalogRoutes({ ...sharingHandlers, ...shareForHandlers }),
+  );
+  await app.register(catalogRoutes(keysHandlers));
   await app.ready();
 });
 

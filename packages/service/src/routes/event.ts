@@ -9,19 +9,15 @@ import {
   type JsonMapMap,
 } from '@karmaniverous/jsonmap';
 import Ajv from 'ajv';
-import type { FastifyPluginCallback } from 'fastify';
 import * as _ from 'radash';
 
+import { type HandlersFor, ok } from '../api/handlerTypes.js';
 import { getConfig } from '../config/index.js';
 import { logEvent } from '../services/eventLog.js';
 import { enqueue } from '../services/eventQueue.js';
 import { storedBody } from '../util/eventBody.js';
 
 const ajv = new Ajv();
-
-interface EventRequest {
-  Body: Record<string, unknown>;
-}
 
 /**
  * Match request body against configured event schemas
@@ -62,35 +58,28 @@ async function transformBody(
   return result as Record<string, unknown>;
 }
 
-export const eventRoute: FastifyPluginCallback = (fastify, _opts, done) => {
-  // Event endpoint (`eventKey`: the access hook verifies the key)
-  fastify.post<EventRequest>('/event', async (request) => {
-    const body = request.body;
-
-    // Match against configured events
+/**
+ * `receiveEvent` (`POST /event`, `eventKey`: the access hook verifies the
+ * key). The body is a JSON object (an array or scalar is a 400, Decision
+ * 14; a missing body is `{}`). A match is transformed and queued; an
+ * unmatched body is logged (capped) and still answered 200, so webhooks
+ * aren't retried or disabled.
+ */
+export const eventHandlers: HandlersFor<'receiveEvent'> = {
+  receiveEvent: async ({ body }) => {
     const match = matchEvent(body);
-
     if (match) {
-      // Transform body if map is defined
       const transformedBody = await transformBody(body, match.map);
-
-      // Enqueue for processing
       enqueue(match.name, match.cmd, transformedBody, match.timeoutMs);
-
-      return { matched: match.name };
-    } else {
-      // Log unmatched event
-      // Full bodies are kept (they're used to design new event schemas),
-      // capped per entry.
-      logEvent({
-        event: null,
-        matched: false,
-        ...storedBody(JSON.stringify(body)),
-      });
-
-      // Always return 200 for unmatched events (prevents webhook retry/disable)
-      return { matched: null };
+      return ok({ matched: match.name });
     }
-  });
-  done();
+    // Full bodies are kept (they're used to design new event schemas),
+    // capped per entry.
+    logEvent({
+      event: null,
+      matched: false,
+      ...storedBody(JSON.stringify(body)),
+    });
+    return ok({ matched: null });
+  },
 };

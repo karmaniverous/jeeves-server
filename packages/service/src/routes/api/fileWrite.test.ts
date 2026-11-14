@@ -13,6 +13,7 @@ import { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AccessMode, NormalizedScopes } from '../../config/types.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { MASKED_500, serverError, testApp } from '../../testing/testApp.js';
 
 let tmpDir = '';
@@ -26,7 +27,7 @@ vi.mock('../../util/platform.js', () => ({
   },
 }));
 
-const { fileWriteRoutes } = await import('./fileWrite.js');
+const { fileWriteHandlers } = await import('./fileWrite.js');
 const { withFileLock } = await import('../../util/fileMutex.js');
 
 const contentScope: NormalizedScopes = {
@@ -46,7 +47,7 @@ async function buildApp(
     request.insiderScopes = scopes;
     done();
   });
-  await app.register(fileWriteRoutes);
+  await app.register(catalogRoutes(fileWriteHandlers));
   await app.ready();
   return app;
 }

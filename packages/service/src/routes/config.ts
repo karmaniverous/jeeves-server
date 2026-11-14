@@ -1,26 +1,11 @@
 /**
- * GET /config — query service configuration with optional JSONPath.
- * POST /config/apply — deep-merge a patch into the runtime config file.
- *
- * Uses the core SDK's `createConfigQueryHandler()` for JSONPath support and
- * `createConfigApplyHandler()` for merge/validate/write. The apply handler is
- * bound to the config file the service actually loaded
- * (`getConfig().configPath`, from `--config`); core's derived path
- * (`{configRoot}/jeeves-server/config.json`) generally differs from it, which
- * made partial patches validate against an empty config.
+ * The redaction of `GET /config` and of the `POST /config/apply` response (Decision 11): secrets replaced with `[REDACTED]`. The routes themselves are jeeves' standard handlers (`standard.ts`); config apply is bound to the file the service loaded (`getConfig().configPath`, from `--config`).
  *
  * @packageDocumentation
  */
 
-import {
-  createConfigApplyHandler,
-  createConfigQueryHandler,
-} from '@karmaniverous/jeeves';
-import type { FastifyInstance } from 'fastify';
-
 import { getConfig } from '../config/index.js';
 import type { RuntimeConfig } from '../config/types.js';
-import { serverDescriptor } from '../descriptor.js';
 
 /** Return a sanitized copy of the config (redact sensitive fields). */
 export function sanitizeConfig(config: RuntimeConfig): unknown {
@@ -68,32 +53,4 @@ export function redactApplyResult(result: { status: number; body: unknown }): {
     return result;
   if (!('config' in body)) return result;
   return { ...result, body: { ...body, config: sanitizeConfig(getConfig()) } };
-}
-
-/** Register the GET /config and POST /config/apply routes. */
-export function registerConfigRoute(app: FastifyInstance): void {
-  const configHandler = createConfigQueryHandler(() =>
-    sanitizeConfig(getConfig()),
-  );
-
-  app.get('/config', async (request, reply) => {
-    const { path } = request.query as { path?: string };
-    const result = await configHandler({ path });
-    return reply.status(result.status).send(result.body);
-  });
-
-  app.post('/config/apply', async (request, reply) => {
-    // Resolve per request: the runtime path is fixed at startup, but binding
-    // lazily keeps route registration independent of config initialization.
-    const applyHandler = createConfigApplyHandler(
-      serverDescriptor,
-      getConfig().configPath,
-    );
-    const result = redactApplyResult(
-      await applyHandler(
-        request.body as { patch: Record<string, unknown>; replace?: boolean },
-      ),
-    );
-    return reply.status(result.status).send(result.body);
-  });
 }

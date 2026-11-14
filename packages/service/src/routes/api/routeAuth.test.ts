@@ -25,6 +25,7 @@ import {
   makeRuntimeConfig,
   scopes,
 } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { serverError, testApp } from '../../testing/testApp.js';
 import { computeInsiderKey, computePathKey } from '../../util/crypto.js';
 import { storedBody } from '../../util/eventBody.js';
@@ -104,11 +105,11 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
 
 const { addAccessHook, UNSCOPED_INSIDER_REQUIRED_ERROR } =
   await import('../../api/accessHook.js');
-const { resolvePathRoutes } = await import('./resolvePath.js');
-const { eventsRoutes } = await import('./events.js');
+const { resolvePathHandlers } = await import('./resolvePath.js');
+const { eventsHandlers } = await import('./events.js');
 const { INSIDER_REQUIRED_ERROR } = await import('./scopeGuard.js');
-const { exportRoutes } = await import('./export.js');
-const { eventRoute } = await import('../event.js');
+const { exportHandlers } = await import('./export.js');
+const { eventHandlers } = await import('../event.js');
 
 let app: FastifyInstance;
 
@@ -117,11 +118,11 @@ beforeAll(async () => {
   await app.register(cookie);
   addAccessHook(app);
   await app.register(async (api) => {
-    await api.register(resolvePathRoutes);
-    await api.register(eventsRoutes);
-    await api.register(exportRoutes);
+    await api.register(catalogRoutes(resolvePathHandlers));
+    await api.register(catalogRoutes(eventsHandlers));
+    await api.register(catalogRoutes(exportHandlers));
   });
-  await app.register(eventRoute);
+  await app.register(catalogRoutes(eventHandlers));
   await app.ready();
 });
 

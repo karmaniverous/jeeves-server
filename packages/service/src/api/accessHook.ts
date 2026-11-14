@@ -116,7 +116,10 @@ export function authorizeRequest(request: FastifyRequest): void {
   const access = routeAccess(match.name);
   request.access = { entry: match.name, class: access.class };
   const config = getConfig();
+  // Before validation: the query as sent. Kept for handlers that re-check
+  // a credential (authStatus); the validated query has none.
   const query = (request.query ?? {}) as AuthQuery;
+  request.credentialQuery = query;
 
   if (access.class === 'machineSeed') {
     const key = machineSeedFor(config, request.headers['x-api-key']);

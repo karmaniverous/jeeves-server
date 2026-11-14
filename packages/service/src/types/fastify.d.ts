@@ -2,6 +2,7 @@ import type { ServerEntryName } from '@karmaniverous/jeeves-server-core';
 
 import type { AccessClass } from '../api/routeAccess.js';
 import type { Identity } from '../auth/credentials.js';
+import type { AuthQuery } from '../auth/resolve.js';
 import type { AccessMode, NormalizedScopes } from '../config/types.js';
 
 declare module 'fastify' {
@@ -17,6 +18,12 @@ declare module 'fastify' {
       identity?: Identity;
       machineKey?: string;
     };
+    /**
+     * The query string as sent, kept by the access hook before validation
+     * replaces `request.query` with the entry's (credential-free) query:
+     * the credentials and share parameters a handler re-checks.
+     */
+    credentialQuery?: AuthQuery & { path?: string };
     accessMode?: AccessMode;
     authSeed?: string;
     insiderScopes?: NormalizedScopes | null;

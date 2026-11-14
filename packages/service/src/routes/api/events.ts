@@ -1,9 +1,10 @@
 /**
  * GET /api/events — returns recent event log entries.
+ *
+ * @packageDocumentation
  */
 
-import type { FastifyPluginAsync } from 'fastify';
-
+import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { getRecentEvents } from '../../services/eventLog.js';
 
 /** Entries returned when `limit` is missing or not a number. */
@@ -19,13 +20,16 @@ function parseEventsLimit(raw: string | undefined): number {
   return Math.min(Math.max(requested, 1), MAX_EVENTS_LIMIT);
 }
 
-export const eventsRoutes: FastifyPluginAsync = (fastify) => {
-  // An `admin` entry (the access hook admits only identities with no scopes,
-  // Decision 12): unmatched webhook bodies are stored in full and belong to
-  // no path a scoped caller could be checked against.
-  fastify.get<{ Querystring: { limit?: string } }>('/api/events', (request) =>
-    getRecentEvents(parseEventsLimit(request.query.limit)),
-  );
-
-  return Promise.resolve();
+/**
+ * `listEvents`: recent event log entries. An `admin` entry (the access
+ * hook admits only identities with no scopes, Decision 12): unmatched
+ * webhook bodies are stored in full and belong to no path a scoped caller
+ * could be checked against.
+ */
+export const eventsHandlers: HandlersFor<'listEvents'> = {
+  listEvents: ({ query }) =>
+    Promise.resolve(
+      // Copied to plain objects: the response schema is open (looseObject).
+      ok(getRecentEvents(parseEventsLimit(query.limit)).map((e) => ({ ...e }))),
+    ),
 };

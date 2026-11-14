@@ -20,6 +20,7 @@ import {
   makeRuntimeConfig,
   scopes,
 } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { testApp } from '../../testing/testApp.js';
 import { computeDeepShareKey } from '../../util/crypto.js';
 
@@ -64,7 +65,7 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
 }));
 
 const { addAccessHook } = await import('../../api/accessHook.js');
-const { directoryRoutes } = await import('./directory.js');
+const { directoryHandlers } = await import('./directory.js');
 const { isDirectoryUrlPath } = await import('../../services/contentPath.js');
 const { encodeStack, rewriteLinksForDeepShare } =
   await import('../../services/deepShareLinks.js');
@@ -82,7 +83,7 @@ beforeAll(async () => {
     api.get('/api/raw/*', echo);
     api.get('/api/events', echo);
     api.get('/api/search/facets', echo);
-    await api.register(directoryRoutes);
+    await api.register(catalogRoutes(directoryHandlers));
   });
   await app.ready();
 });

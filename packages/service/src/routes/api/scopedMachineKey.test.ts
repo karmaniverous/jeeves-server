@@ -8,6 +8,7 @@ import { type FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { makeRuntimeConfig, scopes } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { serverError, testApp } from '../../testing/testApp.js';
 import { computeInsiderKey } from '../../util/crypto.js';
 
@@ -32,8 +33,9 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
 }));
 
 const { addAccessHook } = await import('../../api/accessHook.js');
-const { searchRoutes } = await import('./search.js');
-const { sharingRoutes } = await import('./sharing.js');
+const { createSearchHandlers } = await import('./search.js');
+const { sharingHandlers } = await import('./sharing.js');
+const { shareForHandlers } = await import('./shareFor.js');
 
 const INDEXED = ['/r/docs/a.md', '/r/secret/b.md'];
 
@@ -58,8 +60,10 @@ beforeAll(async () => {
   );
   app = testApp();
   addAccessHook(app);
-  await app.register(searchRoutes);
-  await app.register(sharingRoutes);
+  await app.register(catalogRoutes(createSearchHandlers()));
+  await app.register(
+    catalogRoutes({ ...sharingHandlers, ...shareForHandlers }),
+  );
   await app.ready();
 });
 

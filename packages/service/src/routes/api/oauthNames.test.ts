@@ -11,6 +11,7 @@ import { type FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { makeRuntimeConfig } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { serverError, testApp } from '../../testing/testApp.js';
 
 const CRED_DIR = path.resolve('/srv/jeeves/credentials');
@@ -25,7 +26,7 @@ vi.mock('../../config/index.js', () => ({
     }),
 }));
 
-const { oauthApiRoutes } = await import('./oauth.js');
+const { oauthApiHandlers } = await import('./oauth.js');
 const { credentialPath, INVALID_CREDENTIAL_NAME_ERROR, isValidCredentialName } =
   await import('../../services/oauthState.js');
 
@@ -37,7 +38,7 @@ beforeAll(async () => {
     request.accessMode = 'insider';
     done();
   });
-  await app.register(oauthApiRoutes);
+  await app.register(catalogRoutes(oauthApiHandlers));
   await app.ready();
 });
 

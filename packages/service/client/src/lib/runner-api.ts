@@ -1,6 +1,8 @@
 /**
  * API client for jeeves-runner proxy endpoints.
- * Unwraps runner API responses and maps snake_case to camelCase.
+ * Unwraps runner API responses and maps snake_case to camelCase. The
+ * server passes `/api/runner/*` through unchanged, so methods are the
+ * runner's own (enable/disable are PATCH).
  */
 
 import { withKey } from './api';
@@ -164,13 +166,13 @@ export async function triggerJobRun(id: string): Promise<{ ok: boolean }> {
 export async function enableJob(id: string): Promise<{ ok: boolean }> {
   return runnerFetch<{ ok: boolean }>(
     `/jobs/${encodeURIComponent(id)}/enable`,
-    { method: 'POST' },
+    { method: 'PATCH' },
   );
 }
 
 export async function disableJob(id: string): Promise<{ ok: boolean }> {
   return runnerFetch<{ ok: boolean }>(
     `/jobs/${encodeURIComponent(id)}/disable`,
-    { method: 'POST' },
+    { method: 'PATCH' },
   );
 }

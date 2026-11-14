@@ -44,7 +44,15 @@ export const SERVICE_DIR = path.resolve(
 );
 
 /** A started wire app. */
+/** A route the app registered. */
+export interface RegisteredRoute {
+  method: string;
+  url: string;
+}
+
 export interface WireApp extends WireDirs {
+  /** Every route the app registered (method, URL pattern). */
+  routes: RegisteredRoute[];
   /** The Fastify app. */
   app: FastifyInstance;
   /** The service package directory. */
@@ -59,13 +67,21 @@ export interface WireApp extends WireDirs {
 
 /**
  * Build the app as `server.ts` does (`registerServerApp`), with the SPA
- * over `clientDir`.
+ * over `clientDir`, recording every route it registers.
  *
  * @param clientDir - SPA directory.
+ * @param routes - Receives each registered route.
  * @returns The app, not yet ready.
  */
-async function buildApp(clientDir: string): Promise<FastifyInstance> {
+async function buildApp(
+  clientDir: string,
+  routes: RegisteredRoute[],
+): Promise<FastifyInstance> {
   const fastify = Fastify({ logger: { level: 'silent' } });
+  fastify.addHook('onRoute', ({ method, url }) => {
+    for (const m of Array.isArray(method) ? method : [method])
+      routes.push({ method: m, url });
+  });
   await registerServerApp(fastify, { clientDir });
   return fastify;
 }
@@ -144,13 +160,15 @@ export async function startWireApp(): Promise<WireApp> {
   const cfg = getConfig();
   if (cfg.authModes.includes('email') && cfg.emailAuth)
     initTransport(cfg.emailAuth.smtpUrl);
-  const app = await buildApp(clientDir);
+  const routes: RegisteredRoute[] = [];
+  const app = await buildApp(clientDir, routes);
   await app.ready();
   await awaitServiceProbe(app);
 
   return {
     ...dirs,
     app,
+    routes,
     serviceDir: SERVICE_DIR,
     serviceUrl: fsPathToUrl(SERVICE_DIR, getRoots(cfg.roots)),
     reset,

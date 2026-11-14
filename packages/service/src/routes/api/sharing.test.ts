@@ -9,6 +9,7 @@ import { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { NormalizedScopes } from '../../config/types.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { serverError, testApp } from '../../testing/testApp.js';
 
 vi.mock('../../config/index.js', () => ({
@@ -16,7 +17,8 @@ vi.mock('../../config/index.js', () => ({
   resetConfig: vi.fn(),
 }));
 
-const { sharingRoutes } = await import('./sharing.js');
+const { sharingHandlers } = await import('./sharing.js');
+const { shareForHandlers } = await import('./shareFor.js');
 
 const contentScope: NormalizedScopes = {
   allow: ['/j/content/**'],
@@ -43,7 +45,9 @@ async function buildApp(
     request.insiderScopes = scopes;
     done();
   });
-  await app.register(sharingRoutes);
+  await app.register(
+    catalogRoutes({ ...sharingHandlers, ...shareForHandlers }),
+  );
   await app.ready();
   return app;
 }

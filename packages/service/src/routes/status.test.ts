@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
 import { describe, expect, it, vi } from 'vitest';
 
+import { catalogRoutes } from '../testing/catalogRoutes.js';
+
 vi.mock('@karmaniverous/jeeves', async (importOriginal) => {
   const mod = await importOriginal<Record<string, unknown>>();
   return {
@@ -37,23 +39,21 @@ vi.mock('../config/index.js', () => ({
 }));
 
 // Must import AFTER mock
-const { statusRoutes, withoutAdminDetails } = await import('./status.js');
+const { healthHandlers, withoutAdminDetails } = await import('./status.js');
+const { standardServerHandlers } = await import('./standard.js');
+
+/** The status handler's body for `request`. */
+async function callStatus(request: unknown): Promise<unknown> {
+  const { body } = await standardServerHandlers().status(
+    { params: {}, query: {}, body: {} },
+    request as never,
+  );
+  return body;
+}
 
 /** Call the /status handler as `request`, then close its hooks. */
 async function statusAs(request: unknown) {
-  const routes: Record<string, (req: unknown) => Promise<unknown>> = {};
-  const closeHooks: (() => Promise<void>)[] = [];
-  const fakeFastify = {
-    get: (path: string, handler: (req: unknown) => Promise<unknown>) => {
-      routes[path] = handler;
-    },
-    addHook: (hook: string, handler: () => Promise<void>) => {
-      if (hook === 'onClose') closeHooks.push(handler);
-    },
-  };
-  statusRoutes(fakeFastify as never, {}, () => {});
-  const result = await routes['/status'](request);
-  await Promise.all(closeHooks.map((hook) => hook()));
+  const result = await callStatus(request);
   return (result as { health: Record<string, unknown> }).health;
 }
 
@@ -121,24 +121,7 @@ describe('status exposure (Decision 22)', () => {
 
 describe('GET /status', () => {
   it('returns structured status with SDK shape', async () => {
-    // Create a minimal Fastify-like test harness
-    const routes: Record<string, (req: unknown) => Promise<unknown>> = {};
-    const closeHooks: (() => Promise<void>)[] = [];
-    const fakeFastify = {
-      get: (path: string, handler: (req: unknown) => Promise<unknown>) => {
-        routes[path] = handler;
-      },
-      addHook: (hook: string, handler: () => Promise<void>) => {
-        if (hook === 'onClose') closeHooks.push(handler);
-      },
-    };
-
-    statusRoutes(fakeFastify as never, {}, () => {});
-
-    const handler = routes['/status'];
-    expect(handler).toBeDefined();
-
-    const result = await handler({ accessMode: 'insider', query: {} });
+    const result = await callStatus({ accessMode: 'insider', query: {} });
     const status = result as Record<string, unknown>;
 
     // Standard SDK fields at top level
@@ -171,16 +154,13 @@ describe('GET /status', () => {
     expect(services).toHaveProperty('watcher');
     expect(services).toHaveProperty('runner');
     expect(services).toHaveProperty('meta');
-
-    // Clean up background interval
-    await Promise.all(closeHooks.map((hook) => hook()));
   });
 });
 
 describe('GET /health (#259)', () => {
   it('returns { ok: true } without any credentials', async () => {
     const app = Fastify();
-    await app.register(statusRoutes);
+    await app.register(catalogRoutes(healthHandlers));
 
     const res = await app.inject('/health');
     await app.close();

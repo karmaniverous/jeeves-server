@@ -1,35 +1,32 @@
 /**
  * Resolve-path API route.
  *
- * Handles: GET /api/resolve-path?fsPath=<absolute-fs-path>
+ * Handler: `resolvePath` (GET /api/resolve-path?fsPath=<absolute-fs-path>).
  *
  * Converts an absolute filesystem path to a server browse path and optional
  * public URL. Useful for tools and integrations that hold filesystem paths
  * but need server-addressable URLs.
+ *
+ * @packageDocumentation
  */
 
 import path from 'node:path';
 
-import type { FastifyPluginCallback } from 'fastify';
-
-import { InvalidPath, InvalidRequest, NotFound } from '../../api/errors.js';
+import { InvalidPath, NotFound } from '../../api/errors.js';
+import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { getConfig } from '../../config/index.js';
 import { encodeUrlPath, fsPathToUrl, getRoots } from '../../util/platform.js';
 import { requireInScope, requireInsider } from './scopeGuard.js';
 
-export const resolvePathRoutes: FastifyPluginCallback = (
-  fastify,
-  _opts,
-  done,
-) => {
-  fastify.get('/api/resolve-path', async (request, reply) => {
+/** `resolvePath`: a filesystem path's browse path and URLs. */
+export const resolvePathHandlers: HandlersFor<'resolvePath'> = {
+  resolvePath: ({ query }, request) => {
     // An `insider` entry: the answer reveals the configured roots and
     // publicUrl. The access hook admits identities only; this is defence in
     // depth.
     requireInsider(request);
 
-    const { fsPath } = request.query as { fsPath?: string };
-    if (!fsPath) throw new InvalidRequest('fsPath query parameter required');
+    const { fsPath } = query;
 
     // Reject non-absolute paths
     if (!path.isAbsolute(fsPath))
@@ -52,15 +49,13 @@ export const resolvePathRoutes: FastifyPluginCallback = (
     requireInScope(request, browsePath);
     const browseUrl = '/browse/' + encodeUrlPath(browsePath);
 
-    const response: Record<string, string> = { browsePath, browseUrl };
-
-    if (config.publicUrl) {
-      const base = config.publicUrl.replace(/\/+$/, '');
-      response.publicUrl = base + browseUrl;
-    }
-
-    return reply.send(response);
-  });
-
-  done();
+    const base = config.publicUrl?.replace(/\/+$/, '');
+    return Promise.resolve(
+      ok({
+        browsePath,
+        browseUrl,
+        ...(base ? { publicUrl: base + browseUrl } : {}),
+      }),
+    );
+  },
 };

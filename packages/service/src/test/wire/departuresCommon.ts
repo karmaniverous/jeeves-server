@@ -56,6 +56,14 @@ export const D8_LOGIN_SEED = `${D8}; the insider-seed insider key authenticates 
 export const D11 =
   'Decision 11 (GHSA-pfhj): /config and /config/apply are admin routes';
 
+/** The catalog validates requests (T9): Fastify's validation error. */
+export const D_VALIDATION =
+  "routes from the catalog: the request is validated against the entry's schemas before its handler, so a malformed request is Fastify's FST_ERR_VALIDATION (400)";
+
+/** Decision 14: the webhook body is a JSON object. */
+export const D14 =
+  'Decision 14: receiveEvent takes a JSON object (looseObject); an array, scalar or text body is a 400';
+
 /** Decision 17 (#270): /status adds the sign-in redirect URIs. */
 export const D17 =
   'Decision 17 (#270): /status adds health.auth.googleRedirectUri and oauthRedirectUri (the wire config has the google mode, OAuth providers and publicUrl)';

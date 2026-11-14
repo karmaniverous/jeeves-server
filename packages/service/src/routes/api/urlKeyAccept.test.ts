@@ -12,6 +12,7 @@ import {
   MACHINE_SEED,
   makeRuntimeConfig,
 } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { testApp } from '../../testing/testApp.js';
 import {
   computeDeepShareKey,
@@ -35,9 +36,9 @@ vi.mock('../../util/configPersist.js', () => ({
 }));
 
 const { addAccessHook } = await import('../../api/accessHook.js');
-const { authStatusRoutes } = await import('./auth-status.js');
-const { keysRoute } = await import('../keys.js');
-const { eventRoute } = await import('../event.js');
+const { authStatusHandlers } = await import('./auth-status.js');
+const { keysHandlers } = await import('../keys.js');
+const { eventHandlers } = await import('../event.js');
 const { encodeStack } = await import('../../services/deepShareLinks.js');
 
 const echo = (request: FastifyRequest) => ({
@@ -62,11 +63,11 @@ beforeAll(async () => {
   await app.register(async (api) => {
     for (const prefix of CONTENT_PREFIXES) api.get(`${prefix}/*`, echo);
     api.post('/api/util/share-for', echo);
-    await api.register(authStatusRoutes);
+    await api.register(catalogRoutes(authStatusHandlers));
     api.post('/api/rotate-key', echo);
   });
-  await app.register(keysRoute);
-  await app.register(eventRoute);
+  await app.register(catalogRoutes(keysHandlers));
+  await app.register(catalogRoutes(eventHandlers));
   await app.ready();
 });
 

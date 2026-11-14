@@ -17,7 +17,7 @@ import { serverError, testApp } from '../../testing/testApp.js';
 const config = { maxZipSizeMb: 1 };
 vi.mock('../../config/index.js', () => ({ getConfig: () => config }));
 
-const { isArchiveFormat, sendDirectoryArchive } =
+const { directoryArchive, isArchiveFormat } =
   await import('./archiveExport.js');
 
 const noSecrets: NormalizedScopes = {
@@ -44,13 +44,13 @@ async function buildApp(
   app.get('/archive', async (request, reply) => {
     request.accessMode = accessMode;
     request.insiderScopes = scopes;
-    return sendDirectoryArchive(
+    const { body, headers } = directoryArchive(
       request,
-      reply,
       path.join(tmpDir, 'docs'),
       'j/docs',
       format,
     );
+    return reply.headers(headers ?? {}).send(body);
   });
   await app.ready();
   return app;
@@ -67,7 +67,7 @@ describe('isArchiveFormat', () => {
   });
 });
 
-describe('sendDirectoryArchive', () => {
+describe('directoryArchive', () => {
   let app: FastifyInstance;
 
   beforeEach(() => {

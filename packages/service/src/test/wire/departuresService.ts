@@ -4,7 +4,14 @@
  * @packageDocumentation
  */
 
-import { D4, D11, D17, D22, type WireDeparture } from './departuresCommon.js';
+import {
+  D_VALIDATION,
+  D4,
+  D11,
+  D17,
+  D22,
+  type WireDeparture,
+} from './departuresCommon.js';
 
 /** Departures of the config, key exchange, legacy, webhook, sign-in, SPA and unknown routes scenarios. */
 export const DEPARTURES_SERVICE: Readonly<Record<string, WireDeparture>> = {
@@ -43,9 +50,9 @@ export const DEPARTURES_SERVICE: Readonly<Record<string, WireDeparture>> = {
   },
   'pathKey no path': {
     before: '400 {"error":"path query param required"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'pathKey unknown key': {
     before: '401 {"error":"Invalid API key"}',

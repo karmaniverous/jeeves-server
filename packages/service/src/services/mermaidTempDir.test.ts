@@ -11,6 +11,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { catalogRoutes } from '../testing/catalogRoutes.js';
 import { testApp } from '../testing/testApp.js';
 
 const runMock = vi.hoisted(() => vi.fn());
@@ -32,7 +33,8 @@ vi.mock('../util/platform.js', async (importOriginal) => ({
 }));
 
 const { renderMermaidToBuffer } = await import('./mermaid.js');
-const { diagramExportRoutes } = await import('../routes/api/diagramExport.js');
+const { diagramExportHandlers } =
+  await import('../routes/api/diagramExport.js');
 
 /** Fake mermaid-cli run: writes `rendered-<format>` to the output path. */
 function renderOk() {
@@ -100,7 +102,7 @@ describe('GET /api/mermaid-export (#281)', () => {
     renderOk();
     const before = fs.readFileSync(path.join(srcDir, 'x.svg'));
     const app = testApp();
-    await app.register(diagramExportRoutes);
+    await app.register(catalogRoutes(diagramExportHandlers));
 
     const res = await app.inject('/api/mermaid-export/r/x.mmd?format=svg');
     await app.close();

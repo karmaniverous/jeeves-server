@@ -9,6 +9,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { clearAllPending, consumePending } from '../../services/oauthState.js';
+import { asRouteHandler } from '../../testing/catalogRoutes.js';
 import {
   MASKED_500,
   serverError,
@@ -22,24 +23,24 @@ vi.mock('../../config/index.js', () => ({
   getConfig: () => mockConfig,
 }));
 
-const { oauthApiRoutes } = await import('./oauth.js');
+const { oauthApiHandlers } = await import('./oauth.js');
 
 type Handler = (req: unknown, reply: unknown) => Promise<unknown>;
 
-function buildFastify(): {
-  routes: Record<string, { method: string; handler: Handler }>;
-  instance: unknown;
-} {
-  const routes: Record<string, { method: string; handler: Handler }> = {};
-  const instance = {
-    post: (routePath: string, handler: Handler) => {
-      routes[routePath] = { method: 'POST', handler: withErrorBody(handler) };
-    },
-    get: (routePath: string, handler: Handler) => {
-      routes[routePath] = { method: 'GET', handler: withErrorBody(handler) };
-    },
+/** The OAuth handlers by path, as route-style handlers (no validation). */
+function buildRoutes(): Record<string, { method: string; handler: Handler }> {
+  const route = (
+    method: string,
+    handler: Parameters<typeof asRouteHandler>[0],
+  ) => ({
+    method,
+    handler: withErrorBody(asRouteHandler(handler)),
+  });
+  return {
+    '/api/oauth/start': route('POST', oauthApiHandlers.oauthStart),
+    '/api/oauth/status': route('GET', oauthApiHandlers.oauthStatus),
+    '/api/oauth/token': route('GET', oauthApiHandlers.oauthToken),
   };
-  return { routes, instance };
 }
 
 interface ReplyCapture {
@@ -99,10 +100,8 @@ describe('OAuth API routes', () => {
   });
 
   // Helper to get route handlers
-  async function getHandlers() {
-    const { routes, instance } = buildFastify();
-    await oauthApiRoutes(instance as never, {});
-    return routes;
+  function getHandlers() {
+    return Promise.resolve(buildRoutes());
   }
 
   // ─── POST /oauth/start ───

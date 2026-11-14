@@ -5,6 +5,7 @@
  */
 
 import {
+  D_VALIDATION,
   D4,
   D8,
   D8_INSIDER,
@@ -42,9 +43,9 @@ export const DEPARTURES_SHARING: Readonly<Record<string, WireDeparture>> = {
   },
   'share missing path': {
     before: '400 {"error":"path is required"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'share scoped session out of scope': {
     before: '403 {"error":"Path is outside your access scope"}',
@@ -66,15 +67,15 @@ export const DEPARTURES_SHARING: Readonly<Record<string, WireDeparture>> = {
   },
   'shareFor missing path': {
     before: '400 {"error":"path is required"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'shareFor insiders not an array': {
     before: '400 {"error":"insiders array is required"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'contentLink unknown': {
     before: '404 {"error":"nope.md not found"}',
@@ -119,9 +120,9 @@ export const DEPARTURES_SHARING: Readonly<Record<string, WireDeparture>> = {
   },
   'resolvePath missing fsPath': {
     before: '400 {"error":"fsPath query parameter required"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'resolvePath relative': {
     before: '400 {"error":"fsPath must be an absolute path"}',
@@ -208,9 +209,9 @@ export const DEPARTURES_SHARING: Readonly<Record<string, WireDeparture>> = {
   },
   'search missing query': {
     before: '400 {"error":"query is required"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'searchFacets none': {
     before: '401 {"error":"Unauthorized"}',

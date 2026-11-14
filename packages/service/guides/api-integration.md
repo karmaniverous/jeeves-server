@@ -196,7 +196,7 @@ Branch on `code`, never on `message` (it is for people and may change). The code
 | `503` | `SERVER_CHROME_UNAVAILABLE` | No usable Chrome for an export (check `chromePath`) |
 | `503` | `SERVER_RUNNER_UNAVAILABLE` | jeeves-runner could not be reached |
 
-Any other failure is a `500` with no `code` and a generic message; the details go to the server log only. Errors from jeeves-runner pass through `/api/runner/*` exactly as the runner sent them, `Retry-After` included. Browser routes (the SPA, `/auth/*`, magic link pages, `/oauth/callback`, `/go`) answer with pages and redirects instead.
+Any other failure is a `500` with no `code` and a generic message; the details go to the server log only. `/api/runner/*` passes every method (GET, POST, PATCH, PUT, DELETE), path, query (credentials removed) and JSON body through to jeeves-runner, so its methods are the runner's own (enabling a job is `PATCH /api/runner/jobs/:id/enable`). Runner errors come back with the runner's status, code, message and `Retry-After`; the `error` text follows the status. Request validation failures are `400 FST_ERR_VALIDATION`. Browser routes (the SPA, `/auth/*`, magic link pages, `/oauth/callback`, `/go`) answer with pages and redirects instead.
 
 ## Converting Windows Paths to URLs
 

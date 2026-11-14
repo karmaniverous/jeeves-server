@@ -8,20 +8,17 @@ import cookie from '@fastify/cookie';
 import { registerErrorHandlers } from '@karmaniverous/jeeves/fastify';
 import type { FastifyInstance } from 'fastify';
 
-import { addAccessHook } from './api/accessHook.js';
-import { apiRoute } from './routes/api/index.js';
+import { registerApiRoutes } from './api/routes.js';
+import { createServerHandlers } from './routes/api/index.js';
 import { authRoute } from './routes/auth.js';
-import { registerConfigRoute } from './routes/config.js';
-import { eventRoute } from './routes/event.js';
 import { goRoute } from './routes/go.js';
-import { keysRoute } from './routes/keys.js';
 import { magicCallbackRoute } from './routes/magicCallback.js';
 import { magicVerifyRoute } from './routes/magicVerify.js';
 import { oauthRoute } from './routes/oauth.js';
 import { pathRoute } from './routes/path/index.js';
 import { registerSpa } from './routes/spa.js';
 import { staticRoutes } from './routes/static.js';
-import { statusRoutes } from './routes/status.js';
+import { serviceProbe } from './routes/status.js';
 
 /** Options for {@link registerServerApp}. */
 export interface ServerAppOptions {
@@ -33,9 +30,10 @@ export interface ServerAppOptions {
  * Register jeeves-server's plugins, hooks, error handler and routes.
  *
  * @remarks
- * The access hook (`api/accessHook.ts`) enforces each catalog entry's access
- * class on the routes registered after it; browser routes keep their own
- * gate (`resolveAuth`).
+ * Every catalog entry is registered from `SERVER_CATALOG`
+ * (`api/routes.ts`) in a child plugin whose access hook
+ * (`api/accessHook.ts`) enforces the entry's access class; browser routes
+ * keep their own gate (`resolveAuth`).
  *
  * Errors (#315): `registerErrorHandlers` answers every JSON route with
  * Fastify's standard error body, logging through the app's own (pino)
@@ -59,20 +57,14 @@ export async function registerServerApp(
 
   registerErrorHandlers(fastify, { logger: fastify.log });
 
-  // Access model (Decision 8): every catalog route, before it is parsed.
-  addAccessHook(fastify);
-
+  await registerApiRoutes(fastify, { handlers: createServerHandlers() });
+  await fastify.register(serviceProbe);
   await fastify.register(staticRoutes);
-  registerConfigRoute(fastify);
-  await fastify.register(statusRoutes);
   await fastify.register(authRoute);
   await fastify.register(magicCallbackRoute);
   await fastify.register(magicVerifyRoute);
   await fastify.register(oauthRoute);
-  await fastify.register(keysRoute);
-  await fastify.register(eventRoute);
   await fastify.register(goRoute);
-  await fastify.register(apiRoute);
   await fastify.register(pathRoute);
 
   if (options.clientDir) await registerSpa(fastify, options.clientDir);

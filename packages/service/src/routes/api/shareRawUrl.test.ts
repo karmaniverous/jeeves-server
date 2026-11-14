@@ -16,6 +16,7 @@ import { type FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { MACHINE_SEED, makeRuntimeConfig } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { testApp } from '../../testing/testApp.js';
 import { computeInsiderKey } from '../../util/crypto.js';
 
@@ -45,8 +46,9 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
 }));
 
 const { addAccessHook } = await import('../../api/accessHook.js');
-const { rawRoutes } = await import('./raw.js');
-const { sharingRoutes } = await import('./sharing.js');
+const { rawHandlers } = await import('./raw.js');
+const { sharingHandlers } = await import('./sharing.js');
+const { shareForHandlers } = await import('./shareFor.js');
 
 let app: FastifyInstance;
 
@@ -54,8 +56,10 @@ beforeAll(async () => {
   app = testApp();
   await app.register(async (api) => {
     addAccessHook(api);
-    await api.register(rawRoutes);
-    await api.register(sharingRoutes);
+    await api.register(catalogRoutes(rawHandlers));
+    await api.register(
+      catalogRoutes({ ...sharingHandlers, ...shareForHandlers }),
+    );
   });
   await app.ready();
 });

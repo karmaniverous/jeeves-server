@@ -11,6 +11,7 @@ import { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { makeRuntimeConfig } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { serverError, testApp } from '../../testing/testApp.js';
 
 const search = vi.hoisted(() => vi.fn());
@@ -37,7 +38,7 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
 }));
 
 const { WatcherError } = await import('@karmaniverous/jeeves-watcher-sdk');
-const { searchRoutes } = await import('./search.js');
+const { createSearchHandlers } = await import('./search.js');
 
 const unreachable = new WatcherError({
   code: 'network_error',
@@ -60,7 +61,7 @@ beforeEach(async () => {
     request.insiderScopes = null;
     done();
   });
-  await app.register(searchRoutes);
+  await app.register(catalogRoutes(createSearchHandlers()));
   await app.ready();
 });
 
@@ -113,9 +114,8 @@ describe('POST /api/search', () => {
   it('rejects a missing query without calling the watcher', async () => {
     const res = await postSearch({});
     expect(res.statusCode).toBe(400);
-    expect(res.json()).toEqual(
-      serverError('SERVER_INVALID_REQUEST', 'query is required'),
-    );
+    // The catalog's request validation refuses it before the handler.
+    expect(res.json()).toMatchObject({ code: 'FST_ERR_VALIDATION' });
     expect(search).not.toHaveBeenCalled();
   });
 
@@ -141,7 +141,8 @@ describe('POST /api/search', () => {
     search.mockRejectedValue(
       new WatcherError({ code: 'invalid_request', message: 'bad limit' }),
     );
-    const res = await postSearch({ query: 'q', limit: 0 });
+    // A limit the catalog admits but the watcher refuses.
+    const res = await postSearch({ query: 'q', limit: 7 });
     expect(res.json()).toEqual(
       serverError(
         'SERVER_WATCHER_UNAVAILABLE',

@@ -13,6 +13,7 @@ import { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AccessMode } from '../../config/types.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { testApp } from '../../testing/testApp.js';
 
 let tmpDir = '';
@@ -49,7 +50,7 @@ vi.mock('../../services/plantuml.js', () => ({
   renderPlantUmlSvg: () => '<svg>plantuml</svg>',
 }));
 
-const { fileContentRoutes } = await import('./fileContent.js');
+const { fileContentHandlers } = await import('./fileContent.js');
 
 async function buildApp(accessMode: AccessMode): Promise<FastifyInstance> {
   const app = testApp();
@@ -58,7 +59,7 @@ async function buildApp(accessMode: AccessMode): Promise<FastifyInstance> {
     request.authMatchedPath = '/j/doc';
     done();
   });
-  await app.register(fileContentRoutes);
+  await app.register(catalogRoutes(fileContentHandlers));
   await app.ready();
   return app;
 }

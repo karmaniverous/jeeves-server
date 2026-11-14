@@ -7,6 +7,7 @@
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { serverError, testApp } from '../../testing/testApp.js';
 
 const writeSeed = vi.fn(() => Promise.resolve());
@@ -28,7 +29,8 @@ vi.mock('../../util/configPersist.js', () => ({
 }));
 vi.mock('../../services/eventQueue.js', () => ({ appendEvent }));
 
-const { sharingRoutes } = await import('./sharing.js');
+const { sharingHandlers } = await import('./sharing.js');
+const { shareForHandlers } = await import('./shareFor.js');
 
 async function buildApp(email: string | undefined): Promise<FastifyInstance> {
   const app = testApp();
@@ -36,7 +38,9 @@ async function buildApp(email: string | undefined): Promise<FastifyInstance> {
     if (email !== undefined) request.insiderEmail = email;
     done();
   });
-  await app.register(sharingRoutes);
+  await app.register(
+    catalogRoutes({ ...sharingHandlers, ...shareForHandlers }),
+  );
   await app.ready();
   return app;
 }

@@ -1,83 +1,80 @@
 /**
- * Link availability query endpoint.
- * Returns what views and exports are available for a given path.
+ * Link availability: the `linkInfo` handler (`GET /api/link-info/*`), what views and exports are available for a path.
+ *
+ * @packageDocumentation
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 
-import type { FastifyPluginCallback } from 'fastify';
-
+import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { getConfig } from '../../config/index.js';
 import { getPlantUmlFormats } from '../../services/plantuml.js';
 import { getRoots } from '../../util/platform.js';
 import { fsPathOf, requirePath } from './routePath.js';
 import { requireInScope } from './scopeGuard.js';
 
-export const linkInfoRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
-  const roots = getRoots(getConfig().roots);
+/** `linkInfo`: what views and exports exist for a path. */
+export const linkInfoHandlers: HandlersFor<'linkInfo'> = {
+  linkInfo: ({ params }, request) => {
+    const reqPath = requirePath(params['*']);
+    const resolved = fsPathOf(reqPath, getRoots(getConfig().roots));
 
-  fastify.get<{ Params: { '*': string } }>(
-    '/api/link-info/*',
-    async (request, reply) => {
-      const reqPath = requirePath(request.params['*']);
-      const resolved = fsPathOf(reqPath, roots);
+    let stats: ReturnType<typeof fs.statSync>;
+    try {
+      stats = fs.statSync(resolved);
+    } catch {
+      return Promise.resolve(ok({ exists: false as const }));
+    }
+    const isDirectory = stats.isDirectory();
+    // Navigation access covers directories; files must be in scope.
+    if (!isDirectory) requireInScope(request, reqPath);
+    const ext = path.extname(resolved).toLowerCase();
 
-      let stats: ReturnType<typeof fs.statSync>;
-      try {
-        stats = fs.statSync(resolved);
-      } catch {
-        return reply.send({ exists: false });
+    const pageUrl = `/browse/${reqPath}`;
+    let rawUrl: string | null = null;
+    const exportLinks: { format: string; url: string }[] = [];
+
+    if (isDirectory) {
+      if (request.accessMode === 'insider') {
+        exportLinks.push({
+          format: 'zip',
+          url: `/api/export/${reqPath}?format=zip`,
+        });
       }
-      const isDirectory = stats.isDirectory();
-      // Navigation access covers directories; files must be in scope.
-      if (!isDirectory) requireInScope(request, reqPath);
-      const ext = path.extname(resolved).toLowerCase();
+    } else {
+      rawUrl = `/api/raw/${reqPath}`;
 
-      const pageUrl = `/browse/${reqPath}`;
-      let rawUrl: string | null = null;
-      const exportLinks: { format: string; url: string }[] = [];
-
-      if (isDirectory) {
-        if (request.accessMode === 'insider') {
+      if (ext === '.md' || ext === '.markdown') {
+        exportLinks.push(
+          { format: 'pdf', url: `/api/export/${reqPath}?format=pdf` },
+          { format: 'docx', url: `/api/export/${reqPath}?format=docx` },
+        );
+      } else if (ext === '.mmd') {
+        for (const fmt of ['svg', 'png', 'pdf']) {
           exportLinks.push({
-            format: 'zip',
-            url: `/api/export/${reqPath}?format=zip`,
+            format: fmt,
+            url: `/api/mermaid-export/${reqPath}?format=${fmt}`,
           });
         }
-      } else {
-        rawUrl = `/api/raw/${reqPath}`;
-
-        if (ext === '.md' || ext === '.markdown') {
-          exportLinks.push(
-            { format: 'pdf', url: `/api/export/${reqPath}?format=pdf` },
-            { format: 'docx', url: `/api/export/${reqPath}?format=docx` },
-          );
-        } else if (ext === '.mmd') {
-          for (const fmt of ['svg', 'png', 'pdf']) {
-            exportLinks.push({
-              format: fmt,
-              url: `/api/mermaid-export/${reqPath}?format=${fmt}`,
-            });
-          }
-        } else if (['.puml', '.plantuml', '.pu'].includes(ext)) {
-          for (const fmt of getPlantUmlFormats()) {
-            exportLinks.push({
-              format: fmt,
-              url: `/api/plantuml-export/${reqPath}?format=${fmt}`,
-            });
-          }
+      } else if (['.puml', '.plantuml', '.pu'].includes(ext)) {
+        for (const fmt of getPlantUmlFormats()) {
+          exportLinks.push({
+            format: fmt,
+            url: `/api/plantuml-export/${reqPath}?format=${fmt}`,
+          });
         }
       }
+    }
 
-      return reply.send({
-        exists: true,
+    return Promise.resolve(
+      ok({
+        exists: true as const,
         isDirectory,
         pageUrl,
         rawUrl,
         exportLinks,
-      });
-    },
-  );
-  done();
+      }),
+    );
+  },
 };

@@ -49,50 +49,21 @@ const { urlPathToFs } = await import('../../util/platform.js');
 const mockedFs = vi.mocked(fs);
 const mockedUrlPathToFs = vi.mocked(urlPathToFs);
 
-// Capture registered routes
-type RouteHandler = (
-  request: Record<string, unknown>,
-  reply: Record<string, unknown>,
-) => Promise<unknown>;
-
-const registeredRoutes: Record<string, RouteHandler> = {};
-
-const mockFastify = {
-  get: (path: string, ...args: unknown[]) => {
-    const handler = args[args.length - 1] as RouteHandler;
-    registeredRoutes[`GET ${path}`] = handler;
-  },
-  delete: (path: string, ...args: unknown[]) => {
-    const handler = args[args.length - 1] as RouteHandler;
-    registeredRoutes[`DELETE ${path}`] = handler;
-  },
-};
-
-function mockReply() {
-  const reply: Record<string, unknown> = {};
-  reply.code = vi.fn().mockReturnValue(reply);
-  reply.send = vi.fn().mockReturnValue(reply);
-  reply.header = vi.fn().mockReturnValue(reply);
-  reply.type = vi.fn().mockReturnValue(reply);
-  return reply;
-}
-
 /** Call the export handler. */
-function exportGet(reqPath: string, query: object, accessMode = 'insider') {
-  return registeredRoutes['GET /api/export/*'](
-    { params: { '*': reqPath }, query, accessMode },
-    mockReply(),
-  );
+async function exportGet(
+  reqPath: string,
+  query: object,
+  accessMode = 'insider',
+) {
+  const { exportHandlers } = await import('./export.js');
+  return exportHandlers.export({ params: { '*': reqPath }, query, body: {} }, {
+    accessMode,
+  } as never);
 }
 
-describe('exportRoutes — directory archive format validation', () => {
-  beforeEach(async () => {
+describe('exportHandlers.export — directory archive format validation', () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    for (const key of Object.keys(registeredRoutes)) {
-      registeredRoutes[key] = undefined as never;
-    }
-    const { exportRoutes } = await import('./export.js');
-    exportRoutes(mockFastify as never, {}, () => {});
   });
 
   it.each(['pdf', 'docx'])(

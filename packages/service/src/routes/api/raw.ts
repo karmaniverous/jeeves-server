@@ -7,42 +7,36 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import type { FastifyPluginCallback } from 'fastify';
-
 import { NotAFile, NotFound } from '../../api/errors.js';
+import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { getConfig } from '../../config/index.js';
 import { getContentType, isInlineType } from '../../util/fileDetection.js';
 import { getRoots } from '../../util/platform.js';
 import { fsPathOf, NOT_FOUND_MESSAGE, requirePath } from './routePath.js';
 
-export const rawRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
-  const roots = getRoots(getConfig().roots);
+/** `raw`: a file's bytes, typed by extension; non-inline types download. */
+export const rawHandlers: HandlersFor<'raw'> = {
+  raw: ({ params }) => {
+    const resolved = fsPathOf(
+      requirePath(params['*']),
+      getRoots(getConfig().roots),
+    );
+    if (!fs.existsSync(resolved)) throw new NotFound(NOT_FOUND_MESSAGE);
+    if (fs.statSync(resolved).isDirectory())
+      throw new NotAFile(
+        'Cannot serve directory as raw — use /api/export for ZIP',
+      );
 
-  fastify.get<{ Params: { '*': string } }>(
-    '/api/raw/*',
-    async (request, reply) => {
-      const resolved = fsPathOf(requirePath(request.params['*']), roots);
-      if (!fs.existsSync(resolved)) throw new NotFound(NOT_FOUND_MESSAGE);
-
-      const stats = fs.statSync(resolved);
-      if (stats.isDirectory())
-        throw new NotAFile(
-          'Cannot serve directory as raw — use /api/export for ZIP',
-        );
-
-      const ext = path.extname(resolved).toLowerCase();
-      const contentType = getContentType(ext);
-      reply.header('Content-Type', contentType);
-
-      if (!isInlineType(contentType)) {
-        reply.header(
-          'Content-Disposition',
-          `attachment; filename="${path.basename(resolved)}"`,
-        );
-      }
-
-      return reply.send(fs.readFileSync(resolved));
-    },
-  );
-  done();
+    const contentType = getContentType(path.extname(resolved).toLowerCase());
+    return Promise.resolve(
+      ok(fs.readFileSync(resolved), {
+        'content-type': contentType,
+        ...(isInlineType(contentType)
+          ? {}
+          : {
+              'content-disposition': `attachment; filename="${path.basename(resolved)}"`,
+            }),
+      }),
+    );
+  },
 };

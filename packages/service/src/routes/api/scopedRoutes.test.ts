@@ -13,6 +13,7 @@ import { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { NormalizedScopes } from '../../config/types.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { testApp } from '../../testing/testApp.js';
 import type * as PlatformModule from '../../util/platform.js';
 
@@ -43,8 +44,8 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
   breadcrumbParts: () => [],
 }));
 
-const { drivesRoutes } = await import('./drives.js');
-const { directoryRoutes } = await import('./directory.js');
+const { drivesHandlers } = await import('./drives.js');
+const { directoryHandlers } = await import('./directory.js');
 
 const husin: NormalizedScopes = {
   allow: ['/j/domains/projects/jeeves-*/**'],
@@ -60,8 +61,8 @@ async function buildApp(scopes: NormalizedScopes | null) {
     request.insiderScopes = scopes;
     done();
   });
-  await app.register(drivesRoutes);
-  await app.register(directoryRoutes);
+  await app.register(catalogRoutes(drivesHandlers));
+  await app.register(catalogRoutes(directoryHandlers));
   await app.ready();
   return app;
 }

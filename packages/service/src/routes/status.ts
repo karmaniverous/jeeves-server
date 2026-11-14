@@ -9,9 +9,10 @@
  */
 
 import { createStatusHandler, getServiceUrl } from '@karmaniverous/jeeves';
-import type { FastifyPluginCallback } from 'fastify';
+import type { FastifyPluginCallback, FastifyRequest } from 'fastify';
 
 import { isAdmin } from '../api/accessHook.js';
+import { type HandlersFor, ok } from '../api/handlerTypes.js';
 import { getConfig } from '../config/index.js';
 import { DEFAULT_BRANDING } from '../config/schema.js';
 import { packageVersion } from '../util/packageVersion.js';
@@ -199,35 +200,47 @@ const handleStatus = createStatusHandler({
   },
 });
 
-export const statusRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
-  let refreshTimer: ReturnType<typeof setInterval> | null = null;
-
-  // Fire-and-forget initial cache population.
+/**
+ * Probe the downstream services in the background (now, then every 60
+ * seconds) for `/status`, until the app closes.
+ *
+ * @param fastify - The app.
+ * @param _opts - Unused.
+ * @param done - Plugin callback.
+ */
+export const serviceProbe: FastifyPluginCallback = (fastify, _opts, done) => {
   void refreshServiceCache();
-
-  // Refresh every 60 seconds.
-  refreshTimer = setInterval(() => {
+  const refreshTimer = setInterval(() => {
     void refreshServiceCache();
   }, 60_000);
-
-  // Clean up on shutdown.
-  fastify.addHook('onClose', () => {
-    if (refreshTimer) {
-      clearInterval(refreshTimer);
-      refreshTimer = null;
-    }
+  fastify.addHook('onClose', (_app, closed) => {
+    clearInterval(refreshTimer);
+    closed();
   });
-
-  fastify.get('/status', async (request) => {
-    const { body } = await handleStatus();
-    const full = withRedirectUris(
-      body,
-      statusRedirectUris(getConfig(), request),
-    );
-    return isAdmin(request) ? full : withoutAdminDetails(full);
-  });
-
-  // Unauthenticated liveness probe (#259): cheap, no downstream checks.
-  fastify.get('/health', () => ({ ok: true }));
   done();
+};
+
+/**
+ * The `status` body for a request: the redirect URIs added (#270), and
+ * the admin-only details omitted for callers that aren't admin (Decision
+ * 22).
+ *
+ * @param body - The full status body.
+ * @param request - The request.
+ * @returns The body to send.
+ */
+export function statusBodyFor<B extends StatusBody>(
+  body: B,
+  request: FastifyRequest,
+): B {
+  const full = withRedirectUris(body, statusRedirectUris(getConfig(), request));
+  return isAdmin(request) ? full : withoutAdminDetails(full);
+}
+
+/** The core status handler (`createStatusHandler`). */
+export { handleStatus };
+
+/** `health`: the unauthenticated liveness probe (#259), no downstream checks. */
+export const healthHandlers: HandlersFor<'health'> = {
+  health: () => Promise.resolve(ok({ ok: true as const })),
 };

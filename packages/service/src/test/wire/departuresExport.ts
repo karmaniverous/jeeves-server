@@ -5,6 +5,7 @@
  */
 
 import {
+  D_VALIDATION,
   D4,
   D4_CHROME,
   D4_EXPORT_FAILED,
@@ -180,9 +181,9 @@ export const DEPARTURES_EXPORT: Readonly<Record<string, WireDeparture>> = {
   },
   'diagram invalid type': {
     before: '400 {"error":"Invalid diagram type"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'diagram invalid hash': {
     before: '400 {"error":"Invalid hash"}',

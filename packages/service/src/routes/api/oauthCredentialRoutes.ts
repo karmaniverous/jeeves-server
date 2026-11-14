@@ -7,13 +7,10 @@
  * @packageDocumentation
  */
 
-import type { FastifyInstance, FastifyRequest } from 'fastify';
+import type { FastifyRequest } from 'fastify';
 
-import {
-  InvalidRequest,
-  NotFound,
-  OAuthRefreshFailed,
-} from '../../api/errors.js';
+import { NotFound, OAuthRefreshFailed } from '../../api/errors.js';
+import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import {
   credentialExists,
   type CredentialFile,
@@ -38,20 +35,19 @@ interface CredentialQuery {
 
 /**
  * Shared preamble of the credential routes: OAuth configured, insider
- * caller, provider and account present and valid.
+ * caller, provider and account valid (present: the catalog checks).
  *
+ * @param request - The request.
+ * @param query - Its validated query.
  * @returns The credential file path.
  * @throws `SERVER_NOT_CONFIGURED`, `SERVER_UNAUTHORIZED` or
- *   `SERVER_INVALID_REQUEST`.
+ *   `SERVER_INVALID_REQUEST` (an invalid name).
  */
 function resolveCredentialFile(
-  request: FastifyRequest<{ Querystring: CredentialQuery }>,
+  request: FastifyRequest,
+  { provider, account }: CredentialQuery,
 ): string {
   const oauth = requireOAuthInsider(request);
-
-  const { provider, account } = request.query;
-  if (!provider || !account)
-    throw new InvalidRequest('provider and account query params required');
   requireValidCredentialNames(provider, account);
 
   return credentialPath(oauth.credentialDir, provider, account);
@@ -66,60 +62,53 @@ function tokenBody(cred: CredentialFile) {
   };
 }
 
-/** Register `GET /api/oauth/status` and `GET /api/oauth/token`. */
-export function registerOAuthCredentialRoutes(fastify: FastifyInstance): void {
-  // GET /api/oauth/status
-  fastify.get<{ Querystring: CredentialQuery }>(
-    '/api/oauth/status',
-    async (request, reply) => {
-      const filePath = resolveCredentialFile(request);
-      const { provider, account } = request.query;
+/** The `oauthStatus` and `oauthToken` handlers. */
+export const oauthCredentialHandlers: HandlersFor<
+  'oauthStatus' | 'oauthToken'
+> = {
+  oauthStatus: async ({ query }, request) => {
+    const { provider, account } = query;
+    const filePath = resolveCredentialFile(request, query);
 
-      const exists = await credentialExists(filePath);
+    const exists = await credentialExists(filePath);
 
-      let expired = false;
-      if (exists) {
-        try {
-          expired = isExpired(await readCredential(filePath));
-        } catch {
-          expired = true;
-        }
+    let expired = false;
+    if (exists) {
+      try {
+        expired = isExpired(await readCredential(filePath));
+      } catch {
+        expired = true;
       }
+    }
 
-      return reply.send({ exists, expired, provider, account });
-    },
-  );
+    return ok({ exists, expired, provider, account });
+  },
+  oauthToken: async ({ query }, request) => {
+    const filePath = resolveCredentialFile(request, query);
 
-  // GET /api/oauth/token
-  fastify.get<{ Querystring: CredentialQuery }>(
-    '/api/oauth/token',
-    async (request, reply) => {
-      const filePath = resolveCredentialFile(request);
+    if (!(await credentialExists(filePath)))
+      throw new NotFound('Credential file not found');
 
-      if (!(await credentialExists(filePath)))
-        throw new NotFound('Credential file not found');
+    // An unreadable credential file is a logged, masked 500.
+    const cred = await readCredential(filePath);
 
-      // An unreadable credential file is a logged, masked 500.
-      const cred = await readCredential(filePath);
+    // Not expired: return token
+    if (!isExpired(cred)) return ok(tokenBody(cred));
 
-      // Not expired: return token
-      if (!isExpired(cred)) return reply.send(tokenBody(cred));
+    // Expired: attempt refresh
+    const refreshToken = cred.refresh_token;
+    if (!refreshToken) throw new OAuthRefreshFailed();
 
-      // Expired: attempt refresh
-      const refreshToken = cred.refresh_token;
-      if (!refreshToken) throw new OAuthRefreshFailed();
-
-      const updated = await withFileLock(filePath, async () => {
-        const refreshed = await refreshCredential(cred, refreshToken).catch(
-          (cause: unknown) => {
-            throw Object.assign(new OAuthRefreshFailed(), { cause });
-          },
-        );
-        if (!refreshed) throw new OAuthRefreshFailed();
-        await writeCredential(filePath, refreshed);
-        return refreshed;
-      });
-      return reply.send(tokenBody(updated));
-    },
-  );
-}
+    const updated = await withFileLock(filePath, async () => {
+      const refreshed = await refreshCredential(cred, refreshToken).catch(
+        (cause: unknown) => {
+          throw Object.assign(new OAuthRefreshFailed(), { cause });
+        },
+      );
+      if (!refreshed) throw new OAuthRefreshFailed();
+      await writeCredential(filePath, refreshed);
+      return refreshed;
+    });
+    return ok(tokenBody(updated));
+  },
+};

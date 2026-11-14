@@ -28,7 +28,7 @@ vi.mock('../../util/platform.js', () => ({
   },
 }));
 
-const { linkInfoRoutes } = await import('./linkInfo.js');
+const { linkInfoHandlers } = await import('./linkInfo.js');
 
 describe('GET /api/link-info', () => {
   beforeEach(() => {
@@ -44,46 +44,17 @@ describe('GET /api/link-info', () => {
     accessMode = 'insider',
     insiderScopes: NormalizedScopes | null = null,
   ): Promise<Record<string, unknown>> {
-    const routes: Record<
-      string,
-      (req: unknown, reply: unknown) => Promise<unknown>
-    > = {};
-    const fakeFastify = {
-      get: (
-        routePath: string,
-        handler: (req: unknown, reply: unknown) => Promise<unknown>,
-      ) => {
-        routes[routePath] = handler;
-      },
-    };
-    linkInfoRoutes(fakeFastify as never, {}, () => {});
-    const handler = routes['/api/link-info/*'];
-
-    let result: unknown;
-    const fakeReply = {
-      code: (status: number) => ({
-        send: (d: unknown) => {
-          result = { status, ...(d as object) };
-          return d;
-        },
-      }),
-      send: (d: unknown) => {
-        result = d;
-        return d;
-      },
-    };
-    const fakeRequest = {
-      params: { '*': urlPath },
-      accessMode,
-      insiderScopes,
-    };
+    const fakeRequest = { accessMode, insiderScopes };
     try {
-      await handler(fakeRequest, fakeReply);
+      const { body } = await linkInfoHandlers.linkInfo(
+        { params: { '*': urlPath }, query: {}, body: {} },
+        fakeRequest as never,
+      );
+      return body;
     } catch (err) {
       const { statusCode, code, message } = err as FastifyError;
       return { status: statusCode, code, message };
     }
-    return result as Record<string, unknown>;
   }
 
   describe('scoped insider', () => {

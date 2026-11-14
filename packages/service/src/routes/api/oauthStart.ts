@@ -8,9 +8,8 @@
 
 import crypto from 'node:crypto';
 
-import type { FastifyInstance } from 'fastify';
-
 import { InvalidRequest } from '../../api/errors.js';
+import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { getConfig } from '../../config/index.js';
 import { storePending } from '../../services/oauthState.js';
 import {
@@ -23,18 +22,6 @@ import {
   requireOAuthInsider,
   requireValidCredentialNames,
 } from './oauthGuards.js';
-
-interface StartBody {
-  provider: string;
-  account: string;
-  authUrl?: string;
-  tokenUrl?: string;
-  clientId: string;
-  clientSecret: string;
-  scopes?: string[];
-  pkce?: boolean;
-  origin?: string;
-}
 
 /**
  * Why an explicit `origin` is unacceptable for a redirect URI, or null when
@@ -73,91 +60,86 @@ function originParamError(origin: string): string | null {
   return null;
 }
 
-/** Register `POST /api/oauth/start`. */
-export function registerOAuthStartRoute(fastify: FastifyInstance): void {
-  fastify.post<{ Body: StartBody }>(
-    '/api/oauth/start',
-    async (request, reply) => {
-      const oauth = requireOAuthInsider(request);
+/** `oauthStart`: begin an OAuth2 authorization code flow. */
+export const oauthStartHandlers: HandlersFor<'oauthStart'> = {
+  oauthStart: ({ body }, request) => {
+    const oauth = requireOAuthInsider(request);
 
-      const { provider, account, clientId, clientSecret } = request.body;
+    const { provider, account, clientId, clientSecret } = body;
 
-      if (!provider || !account || !clientId || !clientSecret)
-        throw new InvalidRequest(
-          'provider, account, clientId, and clientSecret are required',
-        );
+    if (!provider || !account || !clientId || !clientSecret)
+      throw new InvalidRequest(
+        'provider, account, clientId, and clientSecret are required',
+      );
 
-      requireValidCredentialNames(provider, account);
+    requireValidCredentialNames(provider, account);
 
-      // Merge named provider defaults (request fields override)
-      const namedProvider = oauth.providers[provider] as
-        (typeof oauth.providers)[string] | undefined;
-      const body = request.body as Partial<StartBody>;
-      const authUrl = body.authUrl ?? namedProvider?.authUrl;
-      const tokenUrl = body.tokenUrl ?? namedProvider?.tokenUrl;
-      const pkce = body.pkce ?? namedProvider?.pkce ?? false;
-      const scopes = body.scopes ?? namedProvider?.defaultScopes ?? [];
+    // Merge named provider defaults (request fields override)
+    const namedProvider = oauth.providers[provider] as
+      (typeof oauth.providers)[string] | undefined;
+    const authUrl = body.authUrl ?? namedProvider?.authUrl;
+    const tokenUrl = body.tokenUrl ?? namedProvider?.tokenUrl;
+    const pkce = body.pkce ?? namedProvider?.pkce ?? false;
+    const scopes = body.scopes ?? namedProvider?.defaultScopes ?? [];
 
-      if (!authUrl || !tokenUrl)
-        throw new InvalidRequest(
-          'authUrl and tokenUrl are required (either in request body or via named provider config)',
-        );
+    if (!authUrl || !tokenUrl)
+      throw new InvalidRequest(
+        'authUrl and tokenUrl are required (either in request body or via named provider config)',
+      );
 
-      // Generate state
-      const state = crypto.randomBytes(32).toString('hex');
+    // Generate state
+    const state = crypto.randomBytes(32).toString('hex');
 
-      // PKCE
-      let codeVerifier: string | undefined;
-      let codeChallenge: string | undefined;
-      if (pkce) {
-        codeVerifier = crypto.randomBytes(32).toString('base64url');
-        codeChallenge = crypto
-          .createHash('sha256')
-          .update(codeVerifier)
-          .digest('base64url');
-      }
+    // PKCE
+    let codeVerifier: string | undefined;
+    let codeChallenge: string | undefined;
+    if (pkce) {
+      codeVerifier = crypto.randomBytes(32).toString('base64url');
+      codeChallenge = crypto
+        .createHash('sha256')
+        .update(codeVerifier)
+        .digest('base64url');
+    }
 
-      // Validate origin param if provided
-      if (request.body.origin !== undefined) {
-        const error = originParamError(request.body.origin);
-        if (error) throw new InvalidRequest(error);
-      }
+    // Validate origin param if provided
+    if (body.origin !== undefined) {
+      const error = originParamError(body.origin);
+      if (error) throw new InvalidRequest(error);
+    }
 
-      // Derive redirect_uri: the caller's validated origin, else the
-      // configured public origin (never untrusted request headers).
-      const origin =
-        request.body.origin ?? getPublicOrigin(getConfig(), request);
+    // Derive redirect_uri: the caller's validated origin, else the
+    // configured public origin (never untrusted request headers).
+    const origin = body.origin ?? getPublicOrigin(getConfig(), request);
 
-      if (!origin) throw publicOriginConfigError();
+    if (!origin) throw publicOriginConfigError();
 
-      const redirectUri = `${trimTrailingSlashes(origin)}${OAUTH_CALLBACK_PATH}`;
+    const redirectUri = `${trimTrailingSlashes(origin)}${OAUTH_CALLBACK_PATH}`;
 
-      // Store pending
-      storePending(state, {
-        codeVerifier,
-        tokenUrl,
-        clientId,
-        clientSecret,
-        redirectUri,
-        provider,
-        account,
-      });
+    // Store pending
+    storePending(state, {
+      codeVerifier,
+      tokenUrl,
+      clientId,
+      clientSecret,
+      redirectUri,
+      provider,
+      account,
+    });
 
-      // Build auth URL
-      const authUrlObj = new URL(authUrl);
-      authUrlObj.searchParams.set('response_type', 'code');
-      authUrlObj.searchParams.set('client_id', clientId);
-      authUrlObj.searchParams.set('redirect_uri', redirectUri);
-      if (scopes.length > 0) {
-        authUrlObj.searchParams.set('scope', scopes.join(' '));
-      }
-      authUrlObj.searchParams.set('state', state);
-      if (pkce && codeChallenge) {
-        authUrlObj.searchParams.set('code_challenge', codeChallenge);
-        authUrlObj.searchParams.set('code_challenge_method', 'S256');
-      }
+    // Build auth URL
+    const authUrlObj = new URL(authUrl);
+    authUrlObj.searchParams.set('response_type', 'code');
+    authUrlObj.searchParams.set('client_id', clientId);
+    authUrlObj.searchParams.set('redirect_uri', redirectUri);
+    if (scopes.length > 0) {
+      authUrlObj.searchParams.set('scope', scopes.join(' '));
+    }
+    authUrlObj.searchParams.set('state', state);
+    if (pkce && codeChallenge) {
+      authUrlObj.searchParams.set('code_challenge', codeChallenge);
+      authUrlObj.searchParams.set('code_challenge_method', 'S256');
+    }
 
-      return reply.send({ authUrl: authUrlObj.toString(), state });
-    },
-  );
-}
+    return Promise.resolve(ok({ authUrl: authUrlObj.toString(), state }));
+  },
+};

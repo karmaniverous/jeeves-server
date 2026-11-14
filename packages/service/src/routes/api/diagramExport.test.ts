@@ -14,6 +14,7 @@ import path from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { serverError, testApp } from '../../testing/testApp.js';
 
 // Mock config before importing the module under test
@@ -51,7 +52,7 @@ vi.mock('../../services/plantuml.js', () => ({
   renderPlantUmlToBuffer: vi.fn(),
 }));
 
-const { diagramExportRoutes } = await import('./diagramExport.js');
+const { diagramExportHandlers } = await import('./diagramExport.js');
 const { renderMermaidToBuffer } = await import('../../services/mermaid.js');
 const { renderPlantUmlToBuffer } = await import('../../services/plantuml.js');
 const platformMod = await import('../../util/platform.js');
@@ -62,7 +63,7 @@ beforeEach(async () => {
   fs.mkdirSync(tmpDir, { recursive: true });
   chromePath = process.execPath;
   app = testApp();
-  await app.register(diagramExportRoutes);
+  await app.register(catalogRoutes(diagramExportHandlers));
   await app.ready();
 });
 

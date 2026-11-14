@@ -106,11 +106,6 @@ describe('SERVER_* error bodies', () => {
       'Machine keys are rotated in the server config, not through this route',
     ],
     [
-      'fileMutate unknown action',
-      'SERVER_INVALID_REQUEST',
-      'Unknown action: explode',
-    ],
-    [
       'oauthToken expired',
       'SERVER_OAUTH_REFRESH_FAILED',
       'Re-authorization required',
@@ -142,7 +137,9 @@ describe('runner errors through the proxy', () => {
       const runnerBody = JSON.stringify({
         statusCode: status,
         code: 'RUNNER_BUSY',
-        error: 'Busy',
+        // Error bodies are rebuilt from the status (jeeves), so the
+        // runner's own are standard too.
+        error: status === 429 ? 'Too Many Requests' : 'Service Unavailable',
         message: 'try later',
       });
       const original = globalThis.fetch;

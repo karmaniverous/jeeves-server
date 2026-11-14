@@ -1,10 +1,15 @@
 /**
- * Approved wire departures for the removed legacy routes (`POST /rotate-key`, `GET /share`; #292, Decision 20), now unknown routes (404), and for the one rotation route's added `invalidates`. Pure data.
+ * Approved wire departures for the removed legacy routes (`POST /rotate-key`, `GET /share`; #292, Decision 20), now unknown routes (404), for the one rotation route's added `invalidates`, and for webhook bodies that aren't JSON objects (Decision 14). Pure data.
  *
  * @packageDocumentation
  */
 
-import { D20, type WireDeparture } from './departuresCommon.js';
+import {
+  D_VALIDATION,
+  D14,
+  D20,
+  type WireDeparture,
+} from './departuresCommon.js';
 
 /** A legacy scenario: what the base sent; now an unknown route. */
 const removed = (before: string): WireDeparture => ({
@@ -26,7 +31,15 @@ const rotated: WireDeparture = {
   status: 200,
 };
 
-/** Departures of the legacy route scenarios and of rotateKey's successes. */
+/** A webhook body that isn't a JSON object (was matched against nothing). */
+const notAnObject: WireDeparture = {
+  before: '200 {"matched":null}',
+  allowedBy: `${D14}; ${D_VALIDATION}`,
+  status: 400,
+  code: 'FST_ERR_VALIDATION',
+};
+
+/** Departures of the legacy, rotateKey success and non-object webhook scenarios. */
 export const DEPARTURES_LEGACY: Readonly<Record<string, WireDeparture>> = {
   'legacy rotateKey insider key': removed(ROTATED),
   'legacy rotateKey session': removed(ROTATED),
@@ -45,6 +58,9 @@ export const DEPARTURES_LEGACY: Readonly<Record<string, WireDeparture>> = {
   'legacy share no path': removed('400 {"error":"path query param required"}'),
   'legacy share bad key': removed(UNAUTHORIZED),
   'legacy share none': removed(UNAUTHORIZED),
+  'receiveEvent array body': notAnObject,
+  'receiveEvent scalar body': notAnObject,
+  'receiveEvent text body': notAnObject,
   'rotateKey session': rotated,
   'rotateKey scoped session': rotated,
 };

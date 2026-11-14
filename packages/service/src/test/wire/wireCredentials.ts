@@ -26,7 +26,7 @@ export interface WireCredential {
 }
 
 /** Seed of each machine key. */
-const MACHINE_SEEDS: Record<WireMachine, string> = {
+export const MACHINE_SEEDS: Record<WireMachine, string> = {
   primary: WIRE_SEEDS.primary,
   scoped: WIRE_SEEDS.scopedKey,
   internal: WIRE_SEEDS.internal,

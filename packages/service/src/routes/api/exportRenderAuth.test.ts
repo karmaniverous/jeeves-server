@@ -25,6 +25,7 @@ import {
   MACHINE_SEED,
   makeRuntimeConfig,
 } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { serverError, testApp } from '../../testing/testApp.js';
 import {
   computeDeepShareKey,
@@ -67,7 +68,7 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
 }));
 
 const { addAccessHook } = await import('../../api/accessHook.js');
-const { exportRoutes } = await import('./export.js');
+const { exportHandlers } = await import('./export.js');
 const { RenderFailedError } = await import('../../services/puppeteer.js');
 const { encodeStack } = await import('../../services/deepShareLinks.js');
 
@@ -77,7 +78,7 @@ beforeAll(async () => {
   app = testApp();
   await app.register(async (api) => {
     addAccessHook(api);
-    await api.register(exportRoutes);
+    await api.register(catalogRoutes(exportHandlers));
   });
   await app.ready();
 });

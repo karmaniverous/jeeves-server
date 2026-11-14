@@ -15,6 +15,7 @@ import {
   INSIDER_SEED,
   makeRuntimeConfig,
 } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { MASKED_500, testApp } from '../../testing/testApp.js';
 
 const state = vi.hoisted((): { config: unknown } => ({ config: null }));
@@ -30,8 +31,9 @@ vi.mock('../../util/configPersist.js', () => ({
   writeInsiderSeedToConfig: vi.fn(),
 }));
 
-const { magicLinkApiRoute } = await import('./magicLink.js');
-const { sharingRoutes } = await import('./sharing.js');
+const { magicLinkHandlers } = await import('./magicLink.js');
+const { sharingHandlers } = await import('./sharing.js');
+const { shareForHandlers } = await import('./shareFor.js');
 const { authRoute } = await import('../auth.js');
 const { setSessionCookie } = await import('../../auth/session.js');
 
@@ -62,8 +64,10 @@ async function buildApp(): Promise<FastifyInstance> {
     request.insiderScopes = null;
     done();
   });
-  await app.register(magicLinkApiRoute);
-  await app.register(sharingRoutes);
+  await app.register(catalogRoutes(magicLinkHandlers));
+  await app.register(
+    catalogRoutes({ ...sharingHandlers, ...shareForHandlers }),
+  );
   await app.register(authRoute);
   app.get('/set-cookie', (request, reply) => {
     setSessionCookie(reply, request, INSIDER_EMAIL, 's'.repeat(64));

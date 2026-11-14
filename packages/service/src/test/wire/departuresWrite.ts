@@ -4,7 +4,7 @@
  * @packageDocumentation
  */
 
-import { D4, type WireDeparture } from './departuresCommon.js';
+import { D_VALIDATION, D4, type WireDeparture } from './departuresCommon.js';
 
 /** Departures of the file writes and block mutations scenarios. */
 export const DEPARTURES_WRITE: Readonly<Record<string, WireDeparture>> = {
@@ -28,15 +28,15 @@ export const DEPARTURES_WRITE: Readonly<Record<string, WireDeparture>> = {
   },
   'fileWrite no content': {
     before: '400 {"error":"Request body must include \\"content\\" string"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'fileWrite non-string content': {
     before: '400 {"error":"Request body must include \\"content\\" string"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'fileWrite directory': {
     before: '400 {"error":"Can only write to files"}',
@@ -65,9 +65,9 @@ export const DEPARTURES_WRITE: Readonly<Record<string, WireDeparture>> = {
   'fileMutate toggle-checkbox bad body': {
     before:
       '400 {"error":"toggle-checkbox requires index (number) and checked (boolean)"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'fileMutate edit-block reversed': {
     before: '400 {"error":"startLine must not exceed endLine"}',
@@ -90,22 +90,22 @@ export const DEPARTURES_WRITE: Readonly<Record<string, WireDeparture>> = {
   'fileMutate edit-block missing fields': {
     before:
       '400 {"error":"edit-block requires startLine, endLine, and content"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'fileMutate delete-block missing fields': {
     before: '400 {"error":"delete-block requires startLine and endLine"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'fileMutate insert-block bad position': {
     before:
       '400 {"error":"insert-block requires atLine, content, and position (before|after)"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'fileMutate insert-block out of bounds': {
     before: '400 {"error":"atLine out of bounds"}',
@@ -127,27 +127,27 @@ export const DEPARTURES_WRITE: Readonly<Record<string, WireDeparture>> = {
   },
   'fileMutate edit-cell missing fields': {
     before: '400 {"error":"edit-cell requires line, col, and content"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'fileMutate no action': {
     before: '400 {"error":"Missing action field"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'fileMutate unknown action': {
     before: '400 {"error":"Unknown action: explode"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'fileMutate array body': {
     before: '400 {"error":"Missing action field"}',
-    allowedBy: D4,
+    allowedBy: `${D4}; ${D_VALIDATION}`,
     status: 400,
-    code: 'SERVER_INVALID_REQUEST',
+    code: 'FST_ERR_VALIDATION',
   },
   'fileMutate not markdown': {
     before: '400 {"error":"Only .md files are supported"}',

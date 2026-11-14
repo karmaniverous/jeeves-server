@@ -5,6 +5,7 @@
  */
 
 import {
+  D_VALIDATION,
   D4,
   D4_RUNNER,
   D8_INSIDER,
@@ -40,9 +41,9 @@ export const DEPARTURES_INTEGRATIONS: Readonly<Record<string, WireDeparture>> =
     'oauthStart no client credentials': {
       before:
         '400 {"error":"provider, account, clientId, and clientSecret are required"}',
-      allowedBy: D4,
+      allowedBy: `${D4}; ${D_VALIDATION}`,
       status: 400,
-      code: 'SERVER_INVALID_REQUEST',
+      code: 'FST_ERR_VALIDATION',
     },
     'oauthStart unknown provider': {
       before:
@@ -54,9 +55,9 @@ export const DEPARTURES_INTEGRATIONS: Readonly<Record<string, WireDeparture>> =
     'oauthStart missing fields': {
       before:
         '400 {"error":"provider, account, clientId, and clientSecret are required"}',
-      allowedBy: D4,
+      allowedBy: `${D4}; ${D_VALIDATION}`,
       status: 400,
-      code: 'SERVER_INVALID_REQUEST',
+      code: 'FST_ERR_VALIDATION',
     },
     'oauthStart invalid name': {
       before:
@@ -86,15 +87,15 @@ export const DEPARTURES_INTEGRATIONS: Readonly<Record<string, WireDeparture>> =
     },
     'oauthStatus missing params': {
       before: '400 {"error":"provider and account query params required"}',
-      allowedBy: D4,
+      allowedBy: `${D4}; ${D_VALIDATION}`,
       status: 400,
-      code: 'SERVER_INVALID_REQUEST',
+      code: 'FST_ERR_VALIDATION',
     },
     'oauthToken missing params': {
       before: '400 {"error":"provider and account query params required"}',
-      allowedBy: D4,
+      allowedBy: `${D4}; ${D_VALIDATION}`,
       status: 400,
-      code: 'SERVER_INVALID_REQUEST',
+      code: 'FST_ERR_VALIDATION',
     },
     'oauthStatus invalid name': {
       before:
@@ -207,8 +208,8 @@ export const DEPARTURES_INTEGRATIONS: Readonly<Record<string, WireDeparture>> =
     },
     'runner unknown route': {
       before: '404 {"error":"Not found"}',
-      allowedBy: D4,
-      status: 404,
-      code: 'SERVER_NOT_FOUND',
+      allowedBy: `${D4}; the catalog's runner entries pass every /api/runner/* path through, so an unknown path is the runner's answer (here: runner unreachable)`,
+      status: 503,
+      code: 'SERVER_RUNNER_UNAVAILABLE',
     },
   };
