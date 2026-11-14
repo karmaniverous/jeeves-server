@@ -11,9 +11,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { FastifyPluginCallback, FastifyReply } from 'fastify';
+import type { FastifyPluginCallback } from 'fastify';
 import { packageDirectorySync } from 'package-directory';
 
+import {
+  capArg,
+  Forbidden,
+  InternalKeyMissing,
+  InvalidRequest,
+  MachineKeyNotRotatable,
+  NotFound,
+  Unauthorized,
+} from '../../api/errors.js';
 import { _pathMatchesScopes } from '../../auth/keys.js';
 import { findInsider } from '../../auth/resolve.js';
 import { getConfig, resetConfig } from '../../config/index.js';
@@ -22,7 +31,7 @@ import { createDeepShare, createPathShare } from '../../services/shareLinks.js';
 import { writeInsiderSeedToConfig } from '../../util/configPersist.js';
 import { fsPathToUrl, getRoots } from '../../util/platform.js';
 import { getPublicOrigin } from '../../util/publicOrigin.js';
-import { rejectOutOfScope } from './scopeGuard.js';
+import { requireInScope } from './scopeGuard.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -35,26 +44,21 @@ const serverRoot = packageDirectorySync({ cwd: __dirname }) ?? __dirname;
 export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   const roots = getRoots(getConfig().roots);
 
-  /** Resolve the _internal key seed, or send a 503 error. */
-  function getInternalSeed(reply: FastifyReply): string | null {
+  /** The _internal key seed (`SERVER_INTERNAL_KEY_MISSING` without one). */
+  function getInternalSeed(): string {
     const internalKey = getConfig().resolvedKeys.find(
       (k) => k.name === '_internal',
     );
-    if (!internalKey?.seed) {
-      void reply.code(503).send({ error: 'No _internal key configured' });
-      return null;
-    }
+    if (!internalKey?.seed) throw new InternalKeyMissing();
     return internalKey.seed;
   }
 
   // GET /api/readme-link
   fastify.get('/api/readme-link', async (_request, reply) => {
-    const seed = getInternalSeed(reply);
-    if (!seed) return;
+    const seed = getInternalSeed();
 
     const readmePath = path.join(serverRoot, 'README.md');
-    if (!fs.existsSync(readmePath))
-      return reply.code(404).send({ error: 'README.md not found' });
+    if (!fs.existsSync(readmePath)) throw new NotFound('README.md not found');
 
     const urlPath = fsPathToUrl(readmePath, roots);
     const { url } = createDeepShare(seed, urlPath, { depth: 2, dirs: false });
@@ -63,16 +67,14 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
 
   // GET /api/content-link/:file — share link for content/*.md (terms, privacy)
   fastify.get('/api/content-link/:file', async (request, reply) => {
-    const seed = getInternalSeed(reply);
-    if (!seed) return;
+    const seed = getInternalSeed();
 
     const { file } = request.params as { file: string };
-    if (!/^[\w-]+$/.test(file))
-      return reply.code(400).send({ error: 'Invalid file name' });
+    if (!/^[\w-]+$/.test(file)) throw new InvalidRequest('Invalid file name');
 
     const contentPath = path.join(serverRoot, 'content', `${file}.md`);
     if (!fs.existsSync(contentPath))
-      return reply.code(404).send({ error: `${file}.md not found` });
+      throw new NotFound(`${capArg(file)}.md not found`);
 
     const urlPath = fsPathToUrl(contentPath, roots);
     const { url } = createDeepShare(seed, urlPath, { depth: 0, dirs: false });
@@ -84,12 +86,12 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
     Body: { path: string; expiry?: string; depth?: number; dirs?: boolean };
   }>('/api/share', async (request, reply) => {
     const seed = request.authSeed;
-    if (!seed) return reply.code(401).send({ error: 'Insider auth required' });
+    if (!seed) throw new Unauthorized('Insider auth required');
 
     const { path: targetPath, expiry, depth, dirs } = request.body;
-    if (!targetPath) return reply.code(400).send({ error: 'path is required' });
+    if (!targetPath) throw new InvalidRequest('path is required');
 
-    if (rejectOutOfScope(request, reply, targetPath)) return reply;
+    requireInScope(request, targetPath);
 
     const share =
       (depth && depth > 0) || dirs
@@ -113,12 +115,12 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   // POST /api/rotate-key
   fastify.post('/api/rotate-key', async (request, reply) => {
     const insiderEmail = request.insiderEmail;
-    if (!insiderEmail)
-      return reply.code(403).send({ error: 'Insider auth required' });
+    // Machine keys reach here without an email: they rotate through config.
+    if (!insiderEmail) throw new MachineKeyNotRotatable();
 
     const config = getConfig();
     const insider = findInsider(config.resolvedInsiders, insiderEmail);
-    if (!insider) return reply.code(403).send({ error: 'Not an insider' });
+    if (!insider) throw new Forbidden('Not an insider');
 
     const newSeed = crypto.randomBytes(32).toString('hex');
     const now = new Date().toISOString();
@@ -141,8 +143,7 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
     const config = getConfig();
     const sharerSeed = request.authSeed;
     const sharerScopes = request.insiderScopes ?? null;
-    if (!sharerSeed)
-      return reply.code(401).send({ error: 'Authentication required' });
+    if (!sharerSeed) throw new Unauthorized('Authentication required');
 
     const {
       path: targetPath,
@@ -151,9 +152,9 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       dirs,
       enforceOutsiderPolicy,
     } = request.body;
-    if (!targetPath) return reply.code(400).send({ error: 'path is required' });
+    if (!targetPath) throw new InvalidRequest('path is required');
     if (!Array.isArray(audienceIds))
-      return reply.code(400).send({ error: 'insiders array is required' });
+      throw new InvalidRequest('insiders array is required');
 
     if (sharerScopes && !_pathMatchesScopes(targetPath, sharerScopes)) {
       return reply.send({

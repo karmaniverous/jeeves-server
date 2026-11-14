@@ -16,7 +16,7 @@ All API requests (except `/health` and `/status`) authenticate via `?k=<insider-
 
 When an unauthenticated browser hits a SPA route (`/`, `/browse/*`, `/runner/*`), the server returns a branded sign-in page instead of the SPA. The page shows an email login form as the primary action (when email auth is configured), with a "Sign in with Google" button below (when Google OAuth is also configured). When only Google auth is active, the Google button is shown alone. When only key auth is active, an API key required message is displayed. The page reflects instance branding (name, emoji) when configured. After successful sign-in, the user is redirected back to the originally requested page.
 
-API routes continue returning JSON `{ error: 'Unauthorized' }` for programmatic clients — the sign-in page only applies to browser-navigated SPA paths.
+API routes continue returning a JSON 401 (`SERVER_UNAUTHORIZED`, see [Errors](#errors)) for programmatic clients — the sign-in page only applies to browser-navigated SPA paths.
 
 ```json
 {
@@ -95,11 +95,11 @@ function insiderKey(seed) {
 
 Content routes (`/api/path`, `/api/file`, `/api/raw`, `/api/export`, `/api/export-cache`, `/api/mermaid-export`, `/api/plantuml-export`, `/api/link-info`) verify `?k=` against the content path after the route prefix, so share keys work on all of them except `DELETE /api/export-cache`, which is insider only (403 for share keys). For scoped identities:
 
-| Status | Body | When |
+| Status | Code | When |
 | --- | --- | --- |
-| `400` | `{ "error": "Invalid path" }` | The content path contains a `..` segment |
-| `401` | `{ "error": "Unauthorized" }` | No valid session or key |
-| `403` | `{ "error": "Path is outside your access scope" }` | Authenticated, but the path is outside the identity's scopes |
+| `400` | `SERVER_INVALID_PATH` | The content path contains a `..` segment |
+| `401` | `SERVER_UNAUTHORIZED` | No valid session or key |
+| `403` | `SERVER_OUT_OF_SCOPE` | Authenticated, but the path is outside the identity's scopes |
 
 Directory listings and link info admit ancestors of in-scope paths (for navigation) and only list reachable entries; every other content route requires the path itself to be in scope. See [Sharing → How scopes are enforced](sharing.md#how-scopes-are-enforced).
 
@@ -133,7 +133,7 @@ Directory listings and link info admit ancestors of in-scope paths (for navigati
 | `GET` | `/api/oauth/status?provider=&account=` | Check credential existence and expiry |
 | `GET` | `/api/oauth/token?provider=&account=` | Retrieve valid access token (auto-refreshes if expired) |
 
-`provider` and `account` may only contain letters, digits, `.`, `_`, `-`, `@` and `+` (so `jason@johngalt.id` works), and may not be `.` or `..`. Path separators, control characters and empty values are rejected with 400.
+`provider` and `account` may only contain letters, digits, `.`, `_`, `-`, `@` and `+` (so `jason@johngalt.id` works), and may not be `.` or `..`. Path separators, control characters and empty values are rejected with 400 (`SERVER_INVALID_REQUEST`).
 
 ### Event Gateway
 
@@ -154,6 +154,47 @@ Directory listings and link info admit ancestors of in-scope paths (for navigati
 | --- | --- | --- |
 | `GET` | `/api/resolve-path?fsPath=<absolute path>` | Map a filesystem path to `{ browsePath, browseUrl, publicUrl? }`. Requires a machine key or insider session (401 without credentials, 403 for share keys). |
 | `GET` | `/api/events?limit=N` | Recent event log entries (1–100, default 20). Only for insiders with no scopes configured (a machine key or insider session without `scopes`). Any configured scopes refuse access, even `allow: ['/**']`: such insider sessions get 403, and such machine keys are refused. Unmatched webhook bodies are stored in full up to 256 KiB; larger ones are cut at the cap and carry `truncated: true` and `originalBytes`. |
+
+## Errors
+
+Since 3.16.0 every JSON route answers an error with Fastify's standard error body:
+
+```json
+{
+  "statusCode": 404,
+  "code": "SERVER_NOT_FOUND",
+  "error": "Not Found",
+  "message": "File not found"
+}
+```
+
+Branch on `code`, never on `message` (it is for people and may change). The codes and their statuses are exported by `@karmaniverous/jeeves-server-core` as `SERVER_ERROR_CODES` and `SERVER_ERROR_STATUS`:
+
+| Status | Code | When |
+| --- | --- | --- |
+| `400` | `SERVER_INVALID_PATH` | A path that is empty, has a `..` segment, or isn't absolute where it must be |
+| `400` | `SERVER_INVALID_REQUEST` | A request field is missing or invalid (a line range, a mutation's fields, an OAuth origin) |
+| `400` | `SERVER_NOT_A_FILE` / `SERVER_NOT_A_DIRECTORY` | A file route addressed a directory, or the reverse |
+| `400` | `SERVER_EXPORT_UNSUPPORTED` | No export in that format for that path |
+| `401` | `SERVER_UNAUTHORIZED` | No valid credential for the route |
+| `401` | `SERVER_OAUTH_REFRESH_FAILED` | A stored OAuth credential expired and could not be refreshed: authorize again |
+| `403` | `SERVER_FORBIDDEN` | Known caller, but not allowed (e.g. `/api/events` for a scoped insider) |
+| `403` | `SERVER_OUT_OF_SCOPE` | The path is outside the caller's scopes |
+| `403` | `SERVER_INSIDER_REQUIRED` | A share key on an insider-only route |
+| `403` | `SERVER_MACHINE_KEY_NOT_ROTATABLE` | Key rotation with a machine key (machine seeds rotate in config) |
+| `403` | `SERVER_SIGN_IN_REJECTED` | Sign-in refused for that account |
+| `404` | `SERVER_NOT_FOUND` | Nothing there (file, directory, page, route, credential, or a path under no root) |
+| `409` | `SERVER_CONFLICT` | A change raced another change to the same file |
+| `413` | `SERVER_ARCHIVE_TOO_LARGE` | The directory exceeds `maxZipSizeMb` |
+| `500` | `SERVER_INTERNAL_KEY_MISSING` | The server has no `_internal` key, which the route needs |
+| `500` | `SERVER_EMAIL_UNAVAILABLE` | The sign-in email could not be sent |
+| `501` | `SERVER_NOT_CONFIGURED` | The feature (OAuth) is not configured on this server |
+| `502` | `SERVER_EXPORT_FAILED` | The document or diagram did not render |
+| `502` | `SERVER_WATCHER_UNAVAILABLE` | jeeves-watcher failed or could not be reached |
+| `503` | `SERVER_CHROME_UNAVAILABLE` | No usable Chrome for an export (check `chromePath`) |
+| `503` | `SERVER_RUNNER_UNAVAILABLE` | jeeves-runner could not be reached |
+
+Any other failure is a `500` with no `code` and a generic message; the details go to the server log only. Errors from jeeves-runner pass through `/api/runner/*` exactly as the runner sent them, `Retry-After` included. Browser routes (the SPA, `/auth/*`, magic link pages, `/oauth/callback`, `/go`) answer with pages and redirects instead.
 
 ## Converting Windows Paths to URLs
 

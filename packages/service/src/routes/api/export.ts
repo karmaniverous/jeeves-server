@@ -13,6 +13,12 @@ import path from 'node:path';
 import { getBindAddress } from '@karmaniverous/jeeves';
 import type { FastifyPluginCallback } from 'fastify';
 
+import {
+  ExportFailed,
+  ExportUnsupported,
+  InternalKeyMissing,
+  NotFound,
+} from '../../api/errors.js';
 import { getConfig } from '../../config/index.js';
 import { appendEvent } from '../../services/eventQueue.js';
 import { exportPage } from '../../services/export.js';
@@ -24,10 +30,11 @@ import {
   getCachedExport,
 } from '../../services/exportCache.js';
 import { RenderFailedError } from '../../services/puppeteer.js';
-import { getRoots, urlPathToFs } from '../../util/platform.js';
+import { getRoots } from '../../util/platform.js';
 import { pathKeyQuery } from '../../util/shareQuery.js';
 import { isArchiveFormat, sendDirectoryArchive } from './archiveExport.js';
-import { rejectNonInsider } from './scopeGuard.js';
+import { fsPathOf, NOT_FOUND_MESSAGE, requirePath } from './routePath.js';
+import { requireInsider } from './scopeGuard.js';
 
 /**
  * Build the loopback URL Puppeteer renders for a document export. The key
@@ -42,6 +49,33 @@ export function buildRenderUrl(
   return `http://${host}:${String(port)}/browse/${reqPath}?${pathKeyQuery(key)}&render_diagrams=1&plain_code=1`;
 }
 
+/**
+ * Render a PDF or DOCX export, logging a failure to the event log. A render
+ * that did not complete (sign-in page, SPA error, timeout) is
+ * `SERVER_EXPORT_FAILED`; `SERVER_CHROME_UNAVAILABLE` from the browser
+ * launch passes through; anything else is a masked 500.
+ *
+ * @param format - The export format.
+ * @param render - Renders the document.
+ * @returns The rendered bytes.
+ */
+export async function renderExport(
+  format: 'pdf' | 'docx',
+  render: () => Promise<Buffer>,
+): Promise<Buffer> {
+  try {
+    return await render();
+  } catch (err) {
+    appendEvent({ kind: `${format}_export_error`, error: String(err) });
+    // Sign-in, error or timed-out render: nothing was cached.
+    if (err instanceof RenderFailedError)
+      throw new ExportFailed(
+        `${format.toUpperCase()} export failed: document did not render`,
+      );
+    throw err;
+  }
+}
+
 export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   const roots = getRoots(getConfig().roots);
 
@@ -49,15 +83,9 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   fastify.get<{ Params: { '*': string }; Querystring: { format?: string } }>(
     '/api/export/*',
     async (request, reply) => {
-      const reqPath = request.params['*'];
-      if (!reqPath) return reply.code(400).send({ error: 'Path required' });
-
-      const exportFsPath = urlPathToFs(reqPath, roots);
-      if (!exportFsPath) return reply.code(404).send({ error: 'Invalid path' });
-      const resolved = path.resolve(exportFsPath);
-
-      if (!fs.existsSync(resolved))
-        return reply.code(404).send({ error: 'Not found', path: resolved });
+      const reqPath = requirePath(request.params['*']);
+      const resolved = fsPathOf(reqPath, roots);
+      if (!fs.existsSync(resolved)) throw new NotFound(NOT_FOUND_MESSAGE);
 
       const format = request.query.format ?? 'pdf';
       const stats = fs.statSync(resolved);
@@ -65,24 +93,21 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       // ZIP/tar export for directories
       if (stats.isDirectory()) {
         if (!isArchiveFormat(format))
-          return reply
-            .code(400)
-            .send({ error: 'Directories only support zip or tar export' });
+          throw new ExportUnsupported(
+            'Directories only support zip or tar export',
+          );
         return sendDirectoryArchive(request, reply, resolved, reqPath, format);
       }
 
       // PDF/DOCX export for files
-      if (format !== 'pdf' && format !== 'docx') {
-        return reply
-          .code(400)
-          .send({ error: 'Files support pdf or docx export' });
-      }
+      if (format !== 'pdf' && format !== 'docx')
+        throw new ExportUnsupported('Files support pdf or docx export');
 
       const ext = path.extname(resolved).toLowerCase();
       if (ext !== '.md')
-        return reply
-          .code(400)
-          .send({ error: 'Only markdown files support PDF/DOCX export' });
+        throw new ExportUnsupported(
+          'Only markdown files support PDF/DOCX export',
+        );
 
       // The middleware has already authorised the caller for this path, so
       // render with the server's _internal key whatever link the caller
@@ -90,10 +115,7 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       const config = getConfig();
       const { port } = config;
       const exportKey = config.internalInsiderKey;
-      if (!exportKey)
-        return reply
-          .code(500)
-          .send({ error: 'Export unavailable — no internal key configured' });
+      if (!exportKey) throw new InternalKeyMissing();
 
       const bindAddr = getBindAddress('server');
       // Use loopback if bound to all interfaces (0.0.0.0 is not a valid request target)
@@ -102,58 +124,34 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       const fileName = path.basename(resolved);
       const baseName = fileName.replace(/\.md$/i, '');
 
-      try {
-        const contentType =
-          format === 'pdf'
-            ? 'application/pdf'
-            : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-        const fileExt = format === 'pdf' ? 'pdf' : 'docx';
+      const contentType =
+        format === 'pdf'
+          ? 'application/pdf'
+          : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      const fileExt = format === 'pdf' ? 'pdf' : 'docx';
 
-        // Check export cache
-        const cached = getCachedExport(resolved, format);
-        if (cached) {
-          return await reply
-            .header('Content-Type', contentType)
-            .header(
-              'Content-Disposition',
-              `attachment; filename="${baseName}.${fileExt}"`,
-            )
-            .header('Content-Length', cached.length)
-            .send(cached);
-        }
+      // Served from the export cache when there; rendered and cached if not.
+      const cached = getCachedExport(resolved, format);
+      const buffer =
+        cached ??
+        (await renderExport(format, () =>
+          exportPage({
+            url: exportUrl,
+            fileName,
+            format: format,
+            authKey: exportKey,
+          }),
+        ));
+      if (!cached) cacheExport(resolved, format, buffer);
 
-        const buffer = await exportPage({
-          url: exportUrl,
-          fileName,
-          format: format,
-          authKey: exportKey,
-        });
-
-        // Cache the result
-        cacheExport(resolved, format, buffer);
-
-        return await reply
-          .header('Content-Type', contentType)
-          .header(
-            'Content-Disposition',
-            `attachment; filename="${baseName}.${fileExt}"`,
-          )
-          .header('Content-Length', buffer.length)
-          .send(buffer);
-      } catch (err) {
-        appendEvent({ kind: `${format}_export_error`, error: String(err) });
-        if (err instanceof RenderFailedError) {
-          // Sign-in, error or timed-out render: nothing was cached.
-          return reply.code(502).send({
-            error: `${format.toUpperCase()} export failed: document did not render`,
-            renderState: err.renderState,
-          });
-        }
-        return reply.code(500).send({
-          error: `${format.toUpperCase()} export failed`,
-          details: String(err),
-        });
-      }
+      return reply
+        .header('Content-Type', contentType)
+        .header(
+          'Content-Disposition',
+          `attachment; filename="${baseName}.${fileExt}"`,
+        )
+        .header('Content-Length', buffer.length)
+        .send(buffer);
     },
   );
 
@@ -162,13 +160,8 @@ export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
     '/api/export-cache/*',
     async (request, reply) => {
       // Insider only: clearing caches is not something a share link grants.
-      if (rejectNonInsider(request, reply)) return reply;
-      const reqPath = request.params['*'];
-      if (!reqPath) return reply.code(400).send({ error: 'Path required' });
-
-      const fsPath = urlPathToFs(reqPath, roots);
-      if (!fsPath) return reply.code(404).send({ error: 'Invalid path' });
-      const resolved = path.resolve(fsPath);
+      requireInsider(request);
+      const resolved = fsPathOf(requirePath(request.params['*']), roots);
 
       const { getDiagramCacheDir } =
         await import('../../services/diagramCache.js');

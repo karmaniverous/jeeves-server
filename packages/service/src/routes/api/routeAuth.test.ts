@@ -13,7 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import cookie from '@fastify/cookie';
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { COOKIE_NAME, createSessionCookie } from '../../auth/session.js';
@@ -25,6 +25,7 @@ import {
   makeRuntimeConfig,
   scopes,
 } from '../../testing/authFixture.js';
+import { serverError, testApp } from '../../testing/testApp.js';
 import { computeInsiderKey, computePathKey } from '../../util/crypto.js';
 import { storedBody } from '../../util/eventBody.js';
 
@@ -107,7 +108,7 @@ const { eventRoute } = await import('../event.js');
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  app = Fastify({ bodyLimit: 4 * 1024 * 1024 });
+  app = testApp({ bodyLimit: 4 * 1024 * 1024 });
   await app.register(cookie);
   await app.register(async (api) => {
     addAuthMiddleware(api);
@@ -154,7 +155,9 @@ describe('GET /api/resolve-path', () => {
       `${url}&k=${outsiderKey('/api/resolve-path')}`,
     );
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: INSIDER_REQUIRED_ERROR });
+    expect(res.json()).toEqual(
+      serverError('SERVER_INSIDER_REQUIRED', INSIDER_REQUIRED_ERROR),
+    );
   });
 
   it('answers a machine key', async () => {
@@ -176,7 +179,9 @@ describe('GET /api/events', () => {
   it('refuses an outsider key that verifies for the route path', async () => {
     const res = await app.inject(`/api/events?k=${outsiderKey('/api/events')}`);
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: UNSCOPED_INSIDER_REQUIRED_ERROR });
+    expect(res.json()).toEqual(
+      serverError('SERVER_FORBIDDEN', UNSCOPED_INSIDER_REQUIRED_ERROR),
+    );
   });
 
   it("refuses a machine key scoped to allow '/**'", async () => {
@@ -184,7 +189,9 @@ describe('GET /api/events', () => {
       `/api/events?k=${computeInsiderKey(ALL_SCOPED_MACHINE_SEED)}`,
     );
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: UNSCOPED_INSIDER_REQUIRED_ERROR });
+    expect(res.json()).toEqual(
+      serverError('SERVER_FORBIDDEN', UNSCOPED_INSIDER_REQUIRED_ERROR),
+    );
   });
 
   it('answers an unscoped machine key', async () => {
@@ -212,7 +219,9 @@ describe('GET /api/events', () => {
   ])('refuses %s', async (_label, email) => {
     const res = await withSession(email);
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: UNSCOPED_INSIDER_REQUIRED_ERROR });
+    expect(res.json()).toEqual(
+      serverError('SERVER_FORBIDDEN', UNSCOPED_INSIDER_REQUIRED_ERROR),
+    );
   });
 });
 
@@ -223,7 +232,9 @@ describe('DELETE /api/export-cache', () => {
       url: `/api/export-cache/r/a.md?k=${outsiderKey('/r/a.md')}`,
     });
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: INSIDER_REQUIRED_ERROR });
+    expect(res.json()).toEqual(
+      serverError('SERVER_INSIDER_REQUIRED', INSIDER_REQUIRED_ERROR),
+    );
   });
 
   it('lets an insider clear the cache', async () => {

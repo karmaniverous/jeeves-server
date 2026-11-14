@@ -13,6 +13,7 @@ import Ajv from 'ajv';
 import type { FastifyPluginCallback } from 'fastify';
 import * as _ from 'radash';
 
+import { Unauthorized } from '../api/errors.js';
 import { verifyKey } from '../auth/keys.js';
 import { getConfig } from '../config/index.js';
 import { logEvent } from '../services/eventLog.js';
@@ -67,22 +68,17 @@ async function transformBody(
 
 export const eventRoute: FastifyPluginCallback = (fastify, _opts, done) => {
   // Auth middleware
-  fastify.addHook('preHandler', async (request, reply) => {
-    if (!request.url.startsWith('/event')) return;
-
-    const provided = getUrlKey(request.query);
-    const config = getConfig();
-
-    const result = verifyKey(
-      config.resolvedKeys,
-      '/event',
-      provided,
-      undefined,
-    );
-
-    if (!result.valid) {
-      reply.code(401).send({ error: 'Unauthorized' });
+  fastify.addHook('preHandler', (request, _reply, hookDone) => {
+    if (request.url.startsWith('/event')) {
+      const result = verifyKey(
+        getConfig().resolvedKeys,
+        '/event',
+        getUrlKey(request.query),
+        undefined,
+      );
+      if (!result.valid) throw new Unauthorized('Unauthorized');
     }
+    hookDone();
   });
 
   // Event endpoint

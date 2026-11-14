@@ -32,6 +32,9 @@ describe('server error codes', () => {
       SERVER_INTERNAL_KEY_MISSING: 500,
       SERVER_CONFLICT: 409,
       SERVER_SIGN_IN_REJECTED: 403,
+      SERVER_INVALID_REQUEST: 400,
+      SERVER_NOT_CONFIGURED: 501,
+      SERVER_OAUTH_REFRESH_FAILED: 401,
     });
     expect(new Set(SERVER_ERROR_CODES).size).toBe(SERVER_ERROR_CODES.length);
   });

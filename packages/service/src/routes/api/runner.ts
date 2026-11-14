@@ -8,36 +8,49 @@
 import { getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyPluginCallback, FastifyReply } from 'fastify';
 
-import { rejectNonInsider } from './scopeGuard.js';
+import { RunnerUnavailable } from '../../api/errors.js';
+import { requireInsider } from './scopeGuard.js';
 
 function getRunnerUrl(): string {
   return getServiceUrl('runner');
 }
 
-/** Proxy a request to the runner and send the response via reply. */
+/**
+ * Proxy a request to the runner and send its response via reply, unchanged:
+ * status, body, `content-type` and `Retry-After` (runner errors pass
+ * through as the runner sent them, #315).
+ *
+ * @throws `SERVER_RUNNER_UNAVAILABLE` (503) when the runner can't be
+ *   reached (the transport error is its `cause`, logged, never sent).
+ */
 async function proxyToRunner(
   reply: FastifyReply,
   path: string,
   method: 'GET' | 'POST' | 'PATCH' = 'GET',
 ): Promise<void> {
+  let res: Response;
+  let text: string;
   try {
-    const res = await fetch(`${getRunnerUrl()}${path}`, { method });
-    const text = await res.text();
-    void reply
-      .code(res.status)
-      .header(
-        'content-type',
-        res.headers.get('content-type') ?? 'application/json',
-      )
-      .send(text);
-  } catch {
-    void reply.code(502).send(JSON.stringify({ error: 'Runner unreachable' }));
+    res = await fetch(`${getRunnerUrl()}${path}`, { method });
+    text = await res.text();
+  } catch (cause) {
+    throw Object.assign(new RunnerUnavailable(), { cause });
   }
+  const retryAfter = res.headers.get('retry-after');
+  if (retryAfter !== null) void reply.header('retry-after', retryAfter);
+  void reply
+    .code(res.status)
+    .header(
+      'content-type',
+      res.headers.get('content-type') ?? 'application/json',
+    )
+    .send(text);
 }
 
 export const runnerRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
-  fastify.addHook('preHandler', async (request, reply) => {
-    if (rejectNonInsider(request, reply)) return reply;
+  fastify.addHook('preHandler', (request, _reply, hookDone) => {
+    requireInsider(request);
+    hookDone();
   });
 
   fastify.get('/api/runner/jobs', async (_req, reply) => {

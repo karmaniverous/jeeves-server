@@ -9,10 +9,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AccessMode, NormalizedScopes } from '../../config/types.js';
+import { MASKED_500, serverError, testApp } from '../../testing/testApp.js';
 
 let tmpDir = '';
 
@@ -38,7 +39,7 @@ async function buildApp(
   accessMode: AccessMode,
   scopes: NormalizedScopes | null = null,
 ): Promise<FastifyInstance> {
-  const app = Fastify();
+  const app = testApp();
   app.addHook('preHandler', (request, _reply, done) => {
     request.accessMode = accessMode;
     request.insiderScopes = scopes;
@@ -83,7 +84,9 @@ describe('PUT /api/file/*', () => {
       content: 'pwned',
     });
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: 'Path is outside your access scope' });
+    expect(res.json()).toEqual(
+      serverError('SERVER_OUT_OF_SCOPE', 'Path is outside your access scope'),
+    );
     expect(read('config/x.json')).toBe('secret');
   });
 
@@ -122,6 +125,7 @@ describe('PUT /api/file/*', () => {
     const res = await put(app, '/api/file/j/content/a.md', { content: 'x' });
     spy.mockRestore();
     expect(res.statusCode).toBe(500);
-    expect(res.json()).toEqual({ error: 'Write failed: disk full' });
+    // A file system error is masked: its message names the path.
+    expect(res.json()).toEqual(MASKED_500);
   });
 });

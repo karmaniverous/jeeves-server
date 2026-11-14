@@ -11,6 +11,11 @@ import { getUrlKey } from '@karmaniverous/jeeves-server-core';
 import type { FastifyPluginCallback } from 'fastify';
 
 import {
+  InvalidRequest,
+  MachineKeyNotRotatable,
+  Unauthorized,
+} from '../api/errors.js';
+import {
   findInsider,
   resolveInsiderKeyAuth,
   resolveSessionAuth,
@@ -27,49 +32,19 @@ import {
 
 export const keysRoute: FastifyPluginCallback = (fastify, _opts, done) => {
   // GET /key - Compute path-specific outsider key (requires raw API key seed in header)
-  fastify.get<{ Querystring: { path?: string } }>(
-    '/key',
-    async (request, reply) => {
-      const provided = request.headers['x-api-key'] as string;
-      const config = getConfig();
+  fastify.get<{ Querystring: { path?: string } }>('/key', (request) => {
+    const matched = machineSeedFor(request.headers['x-api-key']);
 
-      if (!provided) {
-        return reply.code(401).send({ error: 'X-API-Key header required' });
-      }
+    const targetPath = request.query.path;
+    if (!targetPath) throw new InvalidRequest('path query param required');
 
-      const matched = config.resolvedKeys.find((rk) =>
-        timingSafeEqual(provided, rk.seed),
-      );
-      if (!matched) {
-        return reply.code(401).send({ error: 'Invalid API key' });
-      }
-
-      const targetPath = request.query.path;
-      if (!targetPath) {
-        return reply.code(400).send({ error: 'path query param required' });
-      }
-
-      const key = computePathKey(matched.seed, targetPath);
-      return { path: targetPath, key };
-    },
-  );
+    const key = computePathKey(matched.seed, targetPath);
+    return { path: targetPath, key };
+  });
 
   // GET /insider-key - Generate insider key (requires raw API key seed in header)
-  fastify.get('/insider-key', async (request, reply) => {
-    const provided = request.headers['x-api-key'] as string;
-    const config = getConfig();
-
-    if (!provided) {
-      return reply.code(401).send({ error: 'X-API-Key header required' });
-    }
-
-    const matched = config.resolvedKeys.find((rk) =>
-      timingSafeEqual(provided, rk.seed),
-    );
-    if (!matched) {
-      return reply.code(401).send({ error: 'Invalid API key' });
-    }
-
+  fastify.get('/insider-key', (request) => {
+    const matched = machineSeedFor(request.headers['x-api-key']);
     const key = computeInsiderKey(matched.seed);
     return { key };
   });
@@ -77,7 +52,7 @@ export const keysRoute: FastifyPluginCallback = (fastify, _opts, done) => {
   // POST /rotate-key - Rotate key (insider key or session cookie)
   fastify.post<{ Querystring: { k?: string; key?: string } }>(
     '/rotate-key',
-    async (request, reply) => {
+    async (request) => {
       const provided = getUrlKey(request.query);
       const config = getConfig();
 
@@ -93,13 +68,7 @@ export const keysRoute: FastifyPluginCallback = (fastify, _opts, done) => {
         const matched = config.resolvedKeys.find((rk) =>
           timingSafeEqual(provided, computeInsiderKey(rk.seed)),
         );
-        if (matched) {
-          return reply.code(501).send({
-            error:
-              'Machine key rotation is not supported with TypeScript config. ' +
-              'Update the key manually in jeeves.config.ts and restart the server.',
-          });
-        }
+        if (matched) throw new MachineKeyNotRotatable();
       }
 
       // Try session-based auth
@@ -108,19 +77,17 @@ export const keysRoute: FastifyPluginCallback = (fastify, _opts, done) => {
         return await rotateInsiderSeed(sessionResult.email, config);
       }
 
-      return reply.code(401).send({ error: 'Invalid insider key' });
+      throw new Unauthorized('Invalid insider key');
     },
   );
 
   // GET /share - Generate outsider link (insider key or session cookie)
   fastify.get<{
     Querystring: { k?: string; key?: string; path?: string; exp?: string };
-  }>('/share', async (request, reply) => {
+  }>('/share', (request) => {
     const config = getConfig();
     const targetPath = request.query.path;
-    if (!targetPath) {
-      return reply.code(400).send({ error: 'path query param required' });
-    }
+    if (!targetPath) throw new InvalidRequest('path query param required');
 
     // Try provided key
     const providedKey = getUrlKey(request.query);
@@ -145,10 +112,28 @@ export const keysRoute: FastifyPluginCallback = (fastify, _opts, done) => {
       );
     }
 
-    return reply.code(401).send({ error: 'Invalid insider key' });
+    throw new Unauthorized('Invalid insider key');
   });
   done();
 };
+
+/**
+ * The machine key whose raw seed is the `X-API-Key` header.
+ *
+ * @param provided - The header.
+ * @returns The key.
+ * @throws `SERVER_UNAUTHORIZED` (401) when the header is missing or matches
+ *   no key.
+ */
+function machineSeedFor(provided: string | string[] | undefined) {
+  if (typeof provided !== 'string' || !provided)
+    throw new Unauthorized('X-API-Key header required');
+  const matched = getConfig().resolvedKeys.find((rk) =>
+    timingSafeEqual(provided, rk.seed),
+  );
+  if (!matched) throw new Unauthorized('Invalid API key');
+  return matched;
+}
 
 async function rotateInsiderSeed(
   email: string,

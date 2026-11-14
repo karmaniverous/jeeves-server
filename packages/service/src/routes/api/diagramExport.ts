@@ -13,6 +13,7 @@ import path from 'node:path';
 
 import type { FastifyPluginCallback, FastifyReply } from 'fastify';
 
+import { ExportFailed, NotFound } from '../../api/errors.js';
 import { getConfig } from '../../config/index.js';
 import {
   cacheDiagramBuffer,
@@ -26,29 +27,19 @@ import {
   getPlantUmlFormats,
   renderPlantUmlToBuffer,
 } from '../../services/plantuml.js';
+import { requireChrome } from '../../services/puppeteer.js';
 import { DIAGRAM_CONTENT_TYPES } from '../../util/fileDetection.js';
-import { getRoots, type RootEntry, urlPathToFs } from '../../util/platform.js';
+import { getRoots } from '../../util/platform.js';
+import { fsPathOf, requirePath } from './routePath.js';
 
 /** Diagram engine identifier for cache keys. */
 type DiagramEngine = 'mermaid' | 'plantuml';
 
-/** Resolve a URL path to a validated filesystem path, or send an error reply. */
-function resolveExportPath(
-  reqPath: string | undefined,
-  roots: RootEntry[],
-  reply: FastifyReply,
-): string | null {
-  if (!reqPath) {
-    void reply.code(400).send({ error: 'Path required' });
-    return null;
-  }
-  const fsPath = urlPathToFs(reqPath, roots);
-  if (!fsPath) {
-    void reply.code(404).send({ error: 'Invalid path' });
-    return null;
-  }
-  return path.resolve(fsPath);
-}
+/** Capitalised engine names for messages. */
+const ENGINE_NAMES: Record<DiagramEngine, string> = {
+  mermaid: 'Mermaid',
+  plantuml: 'Plantuml',
+};
 
 /** Send a diagram buffer with appropriate content-type and disposition. */
 function sendDiagram(
@@ -91,13 +82,10 @@ async function serveDiagramExport(
     return;
   }
 
+  // Mermaid renders in Chrome; its renderer reports any failure as null.
+  if (engine === 'mermaid') requireChrome();
   const buffer = await render(resolved, format);
-  if (!buffer) {
-    void reply.code(500).send({
-      error: `${engine.charAt(0).toUpperCase() + engine.slice(1)} render failed`,
-    });
-    return;
-  }
+  if (!buffer) throw new ExportFailed(`${ENGINE_NAMES[engine]} render failed`);
 
   cacheDiagramBuffer(engine, source, buffer, format);
   sendDiagram(reply, buffer, format, downloadName);
@@ -114,15 +102,9 @@ export const diagramExportRoutes: FastifyPluginCallback = (
   fastify.get<{ Params: { '*': string }; Querystring: { format?: string } }>(
     '/api/mermaid-export/*',
     async (request, reply) => {
-      const resolved = resolveExportPath(request.params['*'], roots, reply);
-      if (!resolved) return;
-
-      if (
-        !fs.existsSync(resolved) ||
-        !resolved.toLowerCase().endsWith('.mmd')
-      ) {
-        return reply.code(404).send({ error: 'Mermaid file not found' });
-      }
+      const resolved = fsPathOf(requirePath(request.params['*']), roots);
+      if (!fs.existsSync(resolved) || !resolved.toLowerCase().endsWith('.mmd'))
+        throw new NotFound('Mermaid file not found');
 
       const mermaidFormats = ['svg', 'png', 'pdf'];
       const format = mermaidFormats.includes(request.query.format ?? '')
@@ -145,16 +127,13 @@ export const diagramExportRoutes: FastifyPluginCallback = (
   fastify.get<{ Params: { '*': string }; Querystring: { format?: string } }>(
     '/api/plantuml-export/*',
     async (request, reply) => {
-      const resolved = resolveExportPath(request.params['*'], roots, reply);
-      if (!resolved) return;
-
+      const resolved = fsPathOf(requirePath(request.params['*']), roots);
       const ext = path.extname(resolved).toLowerCase();
       if (
         !fs.existsSync(resolved) ||
         !['.puml', '.plantuml', '.pu'].includes(ext)
-      ) {
-        return reply.code(404).send({ error: 'PlantUML file not found' });
-      }
+      )
+        throw new NotFound('PlantUML file not found');
 
       const supported = getPlantUmlFormats();
       const format = supported.includes(request.query.format ?? '')

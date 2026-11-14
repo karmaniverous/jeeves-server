@@ -32,7 +32,7 @@ import {
 } from '../../util/magicToken.js';
 import {
   getPublicOrigin,
-  sendPublicOriginConfigError,
+  publicOriginConfigError,
 } from '../../util/publicOrigin.js';
 
 export const magicLinkApiRoute: FastifyPluginCallback = (
@@ -51,9 +51,7 @@ export const magicLinkApiRoute: FastifyPluginCallback = (
       const emailLoginConfigured =
         config.authModes.includes('email') && !!config.emailAuth;
       const origin = getPublicOrigin(config, request);
-      if (emailLoginConfigured && !origin) {
-        return sendPublicOriginConfigError(reply);
-      }
+      if (emailLoginConfigured && !origin) throw publicOriginConfigError();
 
       const email = request.body.email?.toLowerCase().trim();
       const returnTo = request.body.returnTo

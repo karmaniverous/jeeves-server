@@ -4,8 +4,7 @@
  *
  * @packageDocumentation
  */
-
-import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
+import { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -13,6 +12,7 @@ import {
   MACHINE_SEED,
   makeRuntimeConfig,
 } from '../../testing/authFixture.js';
+import { serverError, testApp } from '../../testing/testApp.js';
 import {
   computeDeepShareKey,
   computeInsiderKey,
@@ -58,7 +58,7 @@ const CONTENT_PREFIXES = [
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  app = Fastify();
+  app = testApp();
   await app.register(async (api) => {
     addAuthMiddleware(api);
     for (const prefix of CONTENT_PREFIXES) api.get(`${prefix}/*`, echo);
@@ -159,8 +159,13 @@ describe('POST /rotate-key accepts k and key', () => {
       method: 'POST',
       url: `/rotate-key?${name}=${computeInsiderKey(MACHINE_SEED)}`,
     });
-    // Machine-key rotation is refused with 501 once the key is recognised.
-    expect(res.statusCode).toBe(501);
+    // Machine-key rotation is refused once the key is recognised.
+    expect(res.json()).toEqual(
+      serverError(
+        'SERVER_MACHINE_KEY_NOT_ROTATABLE',
+        'Machine keys are rotated in the server config, not through this route',
+      ),
+    );
   });
 });
 

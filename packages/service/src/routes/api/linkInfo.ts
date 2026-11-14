@@ -10,8 +10,9 @@ import type { FastifyPluginCallback } from 'fastify';
 
 import { getConfig } from '../../config/index.js';
 import { getPlantUmlFormats } from '../../services/plantuml.js';
-import { getRoots, urlPathToFs } from '../../util/platform.js';
-import { rejectOutOfScope } from './scopeGuard.js';
+import { getRoots } from '../../util/platform.js';
+import { fsPathOf, requirePath } from './routePath.js';
+import { requireInScope } from './scopeGuard.js';
 
 export const linkInfoRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   const roots = getRoots(getConfig().roots);
@@ -19,12 +20,8 @@ export const linkInfoRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   fastify.get<{ Params: { '*': string } }>(
     '/api/link-info/*',
     async (request, reply) => {
-      const reqPath = request.params['*'];
-      if (!reqPath) return reply.code(400).send({ error: 'Path required' });
-
-      const fsPath = urlPathToFs(reqPath, roots);
-      if (!fsPath) return reply.code(404).send({ error: 'Invalid path' });
-      const resolved = path.resolve(fsPath);
+      const reqPath = requirePath(request.params['*']);
+      const resolved = fsPathOf(reqPath, roots);
 
       let stats: ReturnType<typeof fs.statSync>;
       try {
@@ -34,8 +31,7 @@ export const linkInfoRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       }
       const isDirectory = stats.isDirectory();
       // Navigation access covers directories; files must be in scope.
-      if (!isDirectory && rejectOutOfScope(request, reply, reqPath))
-        return reply;
+      if (!isDirectory) requireInScope(request, reqPath);
       const ext = path.extname(resolved).toLowerCase();
 
       const pageUrl = `/browse/${reqPath}`;

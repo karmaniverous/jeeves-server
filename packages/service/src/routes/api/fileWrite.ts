@@ -7,13 +7,14 @@
  */
 
 import fs from 'node:fs';
-import path from 'node:path';
 
 import type { FastifyPluginAsync } from 'fastify';
 
+import { InvalidRequest, NotAFile, NotFound } from '../../api/errors.js';
 import { getConfig } from '../../config/index.js';
-import { getRoots, urlPathToFs } from '../../util/platform.js';
-import { rejectNonInsider, rejectOutOfScope } from './scopeGuard.js';
+import { getRoots } from '../../util/platform.js';
+import { fsPathOf } from './routePath.js';
+import { requireInScope, requireInsider } from './scopeGuard.js';
 
 export const fileWriteRoutes: FastifyPluginAsync = (fastify) => {
   const roots = getRoots(getConfig().roots);
@@ -21,45 +22,29 @@ export const fileWriteRoutes: FastifyPluginAsync = (fastify) => {
   fastify.put<{ Params: { '*': string }; Body: { content?: unknown } | null }>(
     '/api/file/*',
     async (request, reply) => {
-      if (rejectNonInsider(request, reply)) return reply;
+      requireInsider(request);
 
       const reqPath = request.params['*'];
       // Defence in depth: the auth middleware also enforces scopes.
-      if (rejectOutOfScope(request, reply, reqPath)) return reply;
+      requireInScope(request, reqPath);
 
-      const fsPath = urlPathToFs(reqPath, roots);
-      if (!fsPath) return reply.code(404).send({ error: 'Invalid path' });
-      const resolved = path.resolve(fsPath);
+      const resolved = fsPathOf(reqPath, roots);
 
-      try {
-        const stat = await fs.promises.stat(resolved);
-        if (!stat.isFile())
-          return await reply
-            .code(400)
-            .send({ error: 'Can only write to files' });
-      } catch {
-        return reply.code(404).send({ error: 'File not found' });
-      }
+      const stat = await fs.promises.stat(resolved).catch(() => null);
+      if (!stat) throw new NotFound('File not found');
+      if (!stat.isFile()) throw new NotAFile('Can only write to files');
 
       const content = request.body?.content;
-      if (typeof content !== 'string') {
-        return reply
-          .code(400)
-          .send({ error: 'Request body must include "content" string' });
-      }
+      if (typeof content !== 'string')
+        throw new InvalidRequest('Request body must include "content" string');
 
-      try {
-        await fs.promises.writeFile(resolved, content, 'utf8');
-        return await reply.send({
-          ok: true,
-          path: resolved,
-          size: Buffer.byteLength(content, 'utf8'),
-        });
-      } catch (err) {
-        return reply
-          .code(500)
-          .send({ error: `Write failed: ${(err as Error).message}` });
-      }
+      // A write failure is a logged, masked 500 (the cause names the path).
+      await fs.promises.writeFile(resolved, content, 'utf8');
+      return reply.send({
+        ok: true,
+        path: resolved,
+        size: Buffer.byteLength(content, 'utf8'),
+      });
     },
   );
 

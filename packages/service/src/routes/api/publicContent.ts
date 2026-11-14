@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import type { FastifyPluginCallback } from 'fastify';
 import { packageDirectorySync } from 'package-directory';
 
+import { InvalidRequest, NotFound } from '../../api/errors.js';
 import { parseMarkdown } from '../../services/markdown.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -30,9 +31,7 @@ export const publicContentRoute: FastifyPluginCallback = (
     async (request, reply) => {
       const { slug } = request.params;
 
-      if (!SLUG_RE.test(slug)) {
-        return reply.code(400).send({ error: 'Invalid slug' });
-      }
+      if (!SLUG_RE.test(slug)) throw new InvalidRequest('Invalid slug');
 
       // readme → guides/user-guide.md; everything else → content/{slug}.md
       const filePath =
@@ -44,7 +43,7 @@ export const publicContentRoute: FastifyPluginCallback = (
       try {
         markdown = await fs.readFile(filePath, 'utf8');
       } catch {
-        return reply.code(404).send({ error: 'Not found' });
+        throw new NotFound('Not found');
       }
 
       const { html, headings } = parseMarkdown(markdown, {

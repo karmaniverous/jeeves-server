@@ -7,10 +7,11 @@
  */
 
 import { CatalogClientError } from '@karmaniverous/jeeves/catalog';
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { makeRuntimeConfig } from '../../testing/authFixture.js';
+import { serverError, testApp } from '../../testing/testApp.js';
 
 const search = vi.hoisted(() => vi.fn());
 const listFacets = vi.hoisted(() => vi.fn());
@@ -53,7 +54,7 @@ beforeEach(async () => {
   search.mockReset();
   listFacets.mockReset();
   createWatcherClient.mockClear();
-  app = Fastify();
+  app = testApp();
   app.addHook('preHandler', (request, _reply, done) => {
     request.accessMode = 'insider';
     request.insiderScopes = null;
@@ -112,7 +113,9 @@ describe('POST /api/search', () => {
   it('rejects a missing query without calling the watcher', async () => {
     const res = await postSearch({});
     expect(res.statusCode).toBe(400);
-    expect(res.json()).toEqual({ error: 'query is required' });
+    expect(res.json()).toEqual(
+      serverError('SERVER_INVALID_REQUEST', 'query is required'),
+    );
     expect(search).not.toHaveBeenCalled();
   });
 
@@ -126,7 +129,12 @@ describe('POST /api/search', () => {
     );
     const res = await postSearch({ query: 'q' });
     expect(res.statusCode).toBe(502);
-    expect(res.json()).toEqual({ error: 'Watcher search failed: index down' });
+    expect(res.json()).toEqual(
+      serverError(
+        'SERVER_WATCHER_UNAVAILABLE',
+        'Watcher search failed: index down',
+      ),
+    );
   });
 
   it('reports a request the SDK refused as a failed search', async () => {
@@ -134,16 +142,21 @@ describe('POST /api/search', () => {
       new WatcherError({ code: 'invalid_request', message: 'bad limit' }),
     );
     const res = await postSearch({ query: 'q', limit: 0 });
-    expect(res.json()).toEqual({ error: 'Watcher search failed: bad limit' });
+    expect(res.json()).toEqual(
+      serverError(
+        'SERVER_WATCHER_UNAVAILABLE',
+        'Watcher search failed: bad limit',
+      ),
+    );
   });
 
-  it("reports an unreachable watcher with fetch's error, as before the SDK", async () => {
+  it('reports an unreachable watcher, keeping the transport error internal', async () => {
     search.mockRejectedValue(unreachable);
     const res = await postSearch({ query: 'q' });
     expect(res.statusCode).toBe(502);
-    expect(res.json()).toEqual({
-      error: 'Watcher unreachable: TypeError: fetch failed',
-    });
+    expect(res.json()).toEqual(
+      serverError('SERVER_WATCHER_UNAVAILABLE', 'Watcher unreachable'),
+    );
   });
 });
 
@@ -165,7 +178,7 @@ describe('GET /api/search/facets', () => {
     [
       'an HTTP error',
       new WatcherError({ code: 'http_503', message: 'busy', status: 503 }),
-      'HTTP 503',
+      'Watcher facets failed: busy',
     ],
     [
       'an unparseable answer',
@@ -174,14 +187,16 @@ describe('GET /api/search/facets', () => {
         message: 'listFacets response did not match the expected shape',
         status: 200,
       }),
-      'listFacets response did not match the expected shape',
+      'Watcher facets failed: listFacets response did not match the expected shape',
     ],
-    ['an unreachable watcher', unreachable, 'fetch failed'],
+    ['an unreachable watcher', unreachable, 'Watcher unreachable'],
   ])('answers 502 on %s', async (_label, err, detail) => {
     listFacets.mockRejectedValue(err);
     const res = await getFacets();
     expect(res.statusCode).toBe(502);
-    expect(res.json()).toEqual({ error: 'Failed to reach watcher', detail });
+    expect(res.json()).toEqual(
+      serverError('SERVER_WATCHER_UNAVAILABLE', detail),
+    );
   });
 
   it('retries after a failure instead of caching it', async () => {

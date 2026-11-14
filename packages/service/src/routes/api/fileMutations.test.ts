@@ -4,7 +4,8 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { toggleCheckbox } from './fileMutations.js';
+import { serverError, withErrorBody } from '../../testing/testApp.js';
+import { toggleCheckbox } from './fileMutationActions.js';
 
 // ─── Pure function tests (ported from toggleCheckbox.test.ts) ───
 
@@ -146,7 +147,7 @@ async function setupRoute(): Promise<Handler> {
   };
 
   await fileMutationRoutes(mockFastify as never, {});
-  return handler!;
+  return withErrorBody(handler!);
 }
 
 describe('fileMutationRoutes', () => {
@@ -234,8 +235,9 @@ describe('fileMutationRoutes', () => {
     );
 
     expect(reply.statusCode).toBe(400);
-    expect(reply.sentData).toHaveProperty('error');
-    expect((reply.sentData as { error: string }).error).toContain('.md');
+    expect(reply.sentData).toEqual(
+      serverError('SERVER_INVALID_REQUEST', 'Only .md files are supported'),
+    );
   });
 
   it('rejects unknown action with 400', async () => {
@@ -277,7 +279,9 @@ describe('fileMutationRoutes', () => {
     );
 
     expect(reply.statusCode).toBe(404);
-    expect((reply.sentData as { error: string }).error).toBe('File not found');
+    expect((reply.sentData as { message: string }).message).toBe(
+      'File not found',
+    );
   });
 
   it('delete-block on non-existent file returns 404', async () => {
@@ -295,7 +299,9 @@ describe('fileMutationRoutes', () => {
     );
 
     expect(reply.statusCode).toBe(404);
-    expect((reply.sentData as { error: string }).error).toBe('File not found');
+    expect((reply.sentData as { message: string }).message).toBe(
+      'File not found',
+    );
   });
 
   // ── edit-block ──
@@ -740,7 +746,9 @@ describe('fileMutationRoutes', () => {
       );
 
       expect(reply.statusCode).toBe(400);
-      expect((reply.sentData as { error: string }).error).toContain('position');
+      expect((reply.sentData as { message: string }).message).toContain(
+        'position',
+      );
     });
 
     it('rejects out-of-range atLine', async () => {
@@ -888,7 +896,7 @@ describe('fileMutationRoutes', () => {
       );
 
       expect(reply.statusCode).toBe(400);
-      expect((reply.sentData as { error: string }).error).toContain(
+      expect((reply.sentData as { message: string }).message).toContain(
         'separator',
       );
     });
@@ -908,7 +916,7 @@ describe('fileMutationRoutes', () => {
       );
 
       expect(reply.statusCode).toBe(400);
-      expect((reply.sentData as { error: string }).error).toContain(
+      expect((reply.sentData as { message: string }).message).toContain(
         'separator',
       );
     });
@@ -992,8 +1000,8 @@ describe('fileMutationRoutes', () => {
       );
 
       expect(reply.statusCode).toBe(400);
-      expect(reply.sentData).toHaveProperty('error');
-      const err = (reply.sentData as { error: string }).error;
+      expect(reply.sentData).toHaveProperty('code', 'SERVER_INVALID_REQUEST');
+      const err = (reply.sentData as { message: string }).message;
       expect(err).toContain('out of range');
     });
   });

@@ -9,15 +9,17 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Fastify from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { testApp } from '../testing/testApp.js';
 
 const runMock = vi.hoisted(() => vi.fn());
 const state = vi.hoisted(() => ({ mmdPath: '' }));
 
 vi.mock('@mermaid-js/mermaid-cli', () => ({ run: runMock }));
 vi.mock('../config/index.js', () => ({
-  getConfig: () => ({ chromePath: 'chrome', roots: {} }),
+  // Any existing file passes the Chrome check; the renderer is mocked.
+  getConfig: () => ({ chromePath: process.execPath, roots: {} }),
 }));
 vi.mock('./diagramCache.js', () => ({
   getCachedDiagramBuffer: () => null,
@@ -97,7 +99,7 @@ describe('GET /api/mermaid-export (#281)', () => {
   it('leaves an existing x.svg beside x.mmd byte-identical', async () => {
     renderOk();
     const before = fs.readFileSync(path.join(srcDir, 'x.svg'));
-    const app = Fastify();
+    const app = testApp();
     await app.register(diagramExportRoutes);
 
     const res = await app.inject('/api/mermaid-export/r/x.mmd?format=svg');

@@ -11,8 +11,12 @@
  * Usage (from packages/service):
  * `npx tsx scripts/capture-wire.ts [--ref <ref>] [--out <path>]`
  *
- * The harness must stay portable to the ref: it may only import service
- * modules that already exist there.
+ * The harness must be portable to the ref: it may only import service
+ * modules that already exist there. Since 3.16.0 T7 `wireApp.ts` builds the
+ * app with `registerServerApp` (`src/app.ts`), which the branch base lacks;
+ * the portable harness is the one at commit `a80c55e` (restore its
+ * `wireApp.ts` before capturing). The baseline is never re-recorded in
+ * normal work: changes go in `departures.ts`.
  *
  * @packageDocumentation
  */

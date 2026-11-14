@@ -5,7 +5,7 @@ vi.mock('@karmaniverous/jeeves', () => ({
 }));
 
 vi.mock('./scopeGuard.js', () => ({
-  rejectNonInsider: vi.fn(() => false),
+  requireInsider: vi.fn(),
 }));
 
 type RouteHandler = (
@@ -31,15 +31,21 @@ const mockFastify = {
   },
 };
 
-function createReply(): FakeReply & { status: number; body: string } {
+function createReply(): FakeReply & {
+  status: number;
+  body: string;
+  headers: Record<string, string>;
+} {
   const reply = {
     status: 0,
     body: '',
+    headers: {} as Record<string, string>,
     code(status: number) {
       reply.status = status;
       return reply;
     },
-    header() {
+    header(name: string, value: string) {
+      reply.headers[name] = value;
       return reply;
     },
     send(body: string) {
@@ -133,17 +139,45 @@ describe('runner proxy routes', () => {
 
     expect(reply.status).toBe(404);
     expect(reply.body).toBe('{"error":"not found"}');
+    expect(reply.headers).not.toHaveProperty('retry-after');
   });
 
-  it('answers 502 when the runner is unreachable', async () => {
-    fetchMock.mockRejectedValue(new Error('connect ECONNREFUSED'));
-    const reply = createReply();
-    await routes['/api/runner/jobs/:id/disable'].handler(
-      { params: { id: 'nightly' } },
-      reply,
-    );
+  it.each([429, 503])(
+    'forwards a runner %i with its Retry-After',
+    async (status) => {
+      fetchMock.mockResolvedValue(
+        new Response('{"code":"RUNNER_BUSY"}', {
+          status,
+          headers: { 'content-type': 'application/json', 'retry-after': '7' },
+        }),
+      );
+      const reply = createReply();
+      await routes['/api/runner/jobs/:id/run'].handler(
+        { params: { id: 'nightly' } },
+        reply,
+      );
 
-    expect(reply.status).toBe(502);
-    expect(reply.body).toContain('Runner unreachable');
+      expect(reply.status).toBe(status);
+      expect(reply.headers['retry-after']).toBe('7');
+      expect(reply.body).toBe('{"code":"RUNNER_BUSY"}');
+    },
+  );
+
+  it('throws SERVER_RUNNER_UNAVAILABLE when the runner is unreachable', async () => {
+    const cause = new Error('connect ECONNREFUSED');
+    fetchMock.mockRejectedValue(cause);
+    const reply = createReply();
+    await expect(
+      routes['/api/runner/jobs/:id/disable'].handler(
+        { params: { id: 'nightly' } },
+        reply,
+      ),
+    ).rejects.toMatchObject({
+      statusCode: 503,
+      code: 'SERVER_RUNNER_UNAVAILABLE',
+      message: 'Runner unreachable',
+      cause,
+    });
+    expect(reply.status).toBe(0);
   });
 });

@@ -5,10 +5,11 @@
  * @packageDocumentation
  */
 
-import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
+import { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { NormalizedScopes } from '../../config/types.js';
+import { serverError, testApp } from '../../testing/testApp.js';
 
 vi.mock('../../config/index.js', () => ({
   getConfig: () => ({ resolvedKeys: [], resolvedInsiders: [] }),
@@ -65,7 +66,7 @@ const echo = (request: FastifyRequest) => ({
 });
 
 async function buildApp(): Promise<FastifyInstance> {
-  const app = Fastify();
+  const app = testApp();
   addAuthMiddleware(app);
   for (const prefix of [
     '/api/path',
@@ -135,9 +136,9 @@ describe('auth middleware', () => {
     ] as const)('%s %s outside scope → 403', async (method, url) => {
       const res = await app.inject({ method, url, payload: {} });
       expect(res.statusCode).toBe(403);
-      expect(res.json()).toEqual({
-        error: 'Path is outside your access scope',
-      });
+      expect(res.json()).toEqual(
+        serverError('SERVER_OUT_OF_SCOPE', 'Path is outside your access scope'),
+      );
     });
 
     it.each([

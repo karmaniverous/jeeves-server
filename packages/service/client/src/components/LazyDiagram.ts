@@ -44,10 +44,11 @@ async function loadDiagram(
     const url = withKey(`/api/diagram/${type}/${hash}.svg`);
     const resp = await fetch(url);
     if (!resp.ok) {
+      // Fastify's standard error body: the caller-facing text is `message`.
       const err = (await resp
         .json()
-        .catch(() => ({ error: 'Render failed' }))) as { error?: string };
-      throw new Error(err.error ?? `HTTP ${String(resp.status)}`);
+        .catch(() => ({ message: 'Render failed' }))) as { message?: string };
+      throw new Error(err.message ?? `HTTP ${String(resp.status)}`);
     }
     const svgText = await resp.text();
 

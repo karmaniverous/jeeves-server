@@ -7,10 +7,11 @@
 
 import path from 'node:path';
 
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { makeRuntimeConfig } from '../../testing/authFixture.js';
+import { serverError, testApp } from '../../testing/testApp.js';
 
 const CRED_DIR = path.resolve('/srv/jeeves/credentials');
 
@@ -31,7 +32,7 @@ const { credentialPath, INVALID_CREDENTIAL_NAME_ERROR, isValidCredentialName } =
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  app = Fastify();
+  app = testApp();
   app.addHook('preHandler', (request, _reply, done) => {
     request.accessMode = 'insider';
     done();
@@ -121,7 +122,7 @@ describe('OAuth API routes reject invalid names with 400', () => {
   /** The name-rule 400 (not some other 400). */
   const NAME_REJECTED = {
     statusCode: 400,
-    body: { error: INVALID_CREDENTIAL_NAME_ERROR },
+    body: serverError('SERVER_INVALID_REQUEST', INVALID_CREDENTIAL_NAME_ERROR),
   };
   const outcome = (res: { statusCode: number; json: () => unknown }) => ({
     statusCode: res.statusCode,

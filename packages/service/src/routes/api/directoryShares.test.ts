@@ -12,10 +12,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
+import { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { MACHINE_SEED, makeRuntimeConfig } from '../../testing/authFixture.js';
+import { testApp } from '../../testing/testApp.js';
 import { computeInsiderKey } from '../../util/crypto.js';
 
 const config = makeRuntimeConfig();
@@ -56,7 +57,7 @@ const { sharingRoutes } = await import('./sharing.js');
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  app = Fastify();
+  app = testApp();
   await app.register(async (api) => {
     addAuthMiddleware(api);
     api.get('/api/file/*', (request: FastifyRequest) => ({

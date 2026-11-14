@@ -9,10 +9,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AccessMode } from '../../config/types.js';
+import { testApp } from '../../testing/testApp.js';
 
 let tmpDir = '';
 
@@ -51,7 +52,7 @@ vi.mock('../../services/plantuml.js', () => ({
 const { fileContentRoutes } = await import('./fileContent.js');
 
 async function buildApp(accessMode: AccessMode): Promise<FastifyInstance> {
-  const app = Fastify();
+  const app = testApp();
   app.addHook('preHandler', (request, _reply, done) => {
     request.accessMode = accessMode;
     request.authMatchedPath = '/j/doc';

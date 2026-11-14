@@ -10,14 +10,18 @@ import crypto from 'node:crypto';
 
 import type { FastifyInstance } from 'fastify';
 
+import { InvalidRequest } from '../../api/errors.js';
 import { getConfig } from '../../config/index.js';
 import { storePending } from '../../services/oauthState.js';
 import {
   getPublicOrigin,
-  sendPublicOriginConfigError,
+  publicOriginConfigError,
   trimTrailingSlashes,
 } from '../../util/publicOrigin.js';
-import { rejectInvalidCredentialNames } from './oauthGuards.js';
+import {
+  requireOAuthInsider,
+  requireValidCredentialNames,
+} from './oauthGuards.js';
 
 interface StartBody {
   provider: string;
@@ -73,40 +77,30 @@ export function registerOAuthStartRoute(fastify: FastifyInstance): void {
   fastify.post<{ Body: StartBody }>(
     '/api/oauth/start',
     async (request, reply) => {
-      const config = getConfig();
-      if (!config.oauth) {
-        return reply.code(501).send({ error: 'OAuth not configured' });
-      }
-
-      if (request.accessMode !== 'insider') {
-        return reply.code(401).send({ error: 'Insider auth required' });
-      }
+      const oauth = requireOAuthInsider(request);
 
       const { provider, account, clientId, clientSecret } = request.body;
 
-      if (!provider || !account || !clientId || !clientSecret) {
-        return reply.code(400).send({
-          error: 'provider, account, clientId, and clientSecret are required',
-        });
-      }
+      if (!provider || !account || !clientId || !clientSecret)
+        throw new InvalidRequest(
+          'provider, account, clientId, and clientSecret are required',
+        );
 
-      if (rejectInvalidCredentialNames(reply, provider, account)) return reply;
+      requireValidCredentialNames(provider, account);
 
       // Merge named provider defaults (request fields override)
-      const namedProvider = config.oauth.providers[provider] as
-        (typeof config.oauth.providers)[string] | undefined;
+      const namedProvider = oauth.providers[provider] as
+        (typeof oauth.providers)[string] | undefined;
       const body = request.body as Partial<StartBody>;
       const authUrl = body.authUrl ?? namedProvider?.authUrl;
       const tokenUrl = body.tokenUrl ?? namedProvider?.tokenUrl;
       const pkce = body.pkce ?? namedProvider?.pkce ?? false;
       const scopes = body.scopes ?? namedProvider?.defaultScopes ?? [];
 
-      if (!authUrl || !tokenUrl) {
-        return reply.code(400).send({
-          error:
-            'authUrl and tokenUrl are required (either in request body or via named provider config)',
-        });
-      }
+      if (!authUrl || !tokenUrl)
+        throw new InvalidRequest(
+          'authUrl and tokenUrl are required (either in request body or via named provider config)',
+        );
 
       // Generate state
       const state = crypto.randomBytes(32).toString('hex');
@@ -125,7 +119,7 @@ export function registerOAuthStartRoute(fastify: FastifyInstance): void {
       // Validate origin param if provided
       if (request.body.origin !== undefined) {
         const error = originParamError(request.body.origin);
-        if (error) return reply.code(400).send({ error });
+        if (error) throw new InvalidRequest(error);
       }
 
       // Derive redirect_uri: the caller's validated origin, else the
@@ -133,7 +127,7 @@ export function registerOAuthStartRoute(fastify: FastifyInstance): void {
       const origin =
         request.body.origin ?? getPublicOrigin(getConfig(), request);
 
-      if (!origin) return sendPublicOriginConfigError(reply);
+      if (!origin) throw publicOriginConfigError();
 
       const redirectUri = `${trimTrailingSlashes(origin)}/oauth/callback`;
 

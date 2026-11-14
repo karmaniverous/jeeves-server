@@ -6,6 +6,7 @@
 
 import type { FastifyPluginCallback } from 'fastify';
 
+import { ExportFailed, InvalidRequest, NotFound } from '../../api/errors.js';
 import {
   getDiagramSource,
   renderDiagramToSvg,
@@ -18,26 +19,17 @@ export const diagramsRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       const { type, hash: hashWithExt } = request.params;
       const hash = hashWithExt.replace(/\.svg$/, '');
 
-      if (!['mermaid', 'plantuml'].includes(type)) {
-        return reply.code(400).send({ error: 'Invalid diagram type' });
-      }
-      if (!/^[a-f0-9]{64}$/.test(hash)) {
-        return reply.code(400).send({ error: 'Invalid hash' });
-      }
+      if (!['mermaid', 'plantuml'].includes(type))
+        throw new InvalidRequest('Invalid diagram type');
+      if (!/^[a-f0-9]{64}$/.test(hash))
+        throw new InvalidRequest('Invalid hash');
 
       const entry = getDiagramSource(hash);
-      if (!entry) {
-        return reply
-          .code(404)
-          .send({ error: 'Diagram source not found (may have expired)' });
-      }
+      if (!entry)
+        throw new NotFound('Diagram source not found (may have expired)');
 
       const svg = await renderDiagramToSvg(type, entry.source);
-      if (!svg) {
-        return reply
-          .code(500)
-          .send({ error: 'Renderer returned empty result' });
-      }
+      if (!svg) throw new ExportFailed('Renderer returned empty result');
 
       return reply
         .header('Content-Type', 'image/svg+xml')

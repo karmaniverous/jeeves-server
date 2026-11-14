@@ -1,14 +1,18 @@
 /**
  * The real jeeves-server routes, registered as `server.ts` registers them, over a temp fixture corpus and config, for the wire baseline. Writes temp files; every dependency (watcher, runner, meta, SMTP, PlantUML servers, Chrome) is unreachable, so replies are deterministic.
  *
- * The harness must stay portable to the branch base (`scripts/capture-wire.ts`
- * copies it there): it may only import service modules that exist at that
- * commit. `server.ts` at the base has no app factory (its `start()` listens
- * and exits on failure), so {@link startWireApp} repeats its registration
- * sequence; it differs only where a test can't follow it: the app is
- * injected rather than listening, the event queue processor isn't started
- * (its commands never run), the export cache lives in the temp directory
- * instead of the working directory, and the SPA is a one-file stub.
+ * The app is built by `registerServerApp` (`src/app.ts`), as `server.ts`
+ * builds it; the harness differs only where a test can't follow `server.ts`:
+ * the app is injected rather than listening, the event queue processor isn't
+ * started (its commands never run), the export cache lives in the temp
+ * directory instead of the working directory, and the SPA is a one-file
+ * stub.
+ *
+ * Portability: the branch base has no `src/app.ts` (its `server.ts` repeated
+ * the registration inline), so this file no longer runs there. The baseline
+ * was recorded with the harness as of commit `a80c55e`, which inlined the
+ * base's registration; re-recording (never needed: the baseline is never
+ * edited) would start from that version of this file.
  *
  * @packageDocumentation
  */
@@ -18,30 +22,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import cookie from '@fastify/cookie';
-import fastifyStatic from '@fastify/static';
 import { init } from '@karmaniverous/jeeves';
-import Fastify, {
-  type FastifyInstance,
-  type FastifyReply,
-  type FastifyRequest,
-} from 'fastify';
+import Fastify, { type FastifyInstance } from 'fastify';
 
-import { resolveAuth } from '../../auth/resolve.js';
-import { renderSignInPage } from '../../auth/signInPage.js';
+import { registerServerApp } from '../../app.js';
 import { getConfig, initConfig } from '../../config/index.js';
-import { apiRoute } from '../../routes/api/index.js';
-import { authRoute } from '../../routes/auth.js';
-import { registerConfigRoute } from '../../routes/config.js';
-import { eventRoute } from '../../routes/event.js';
-import { goRoute } from '../../routes/go.js';
-import { keysRoute } from '../../routes/keys.js';
-import { magicCallbackRoute } from '../../routes/magicCallback.js';
-import { magicVerifyRoute } from '../../routes/magicVerify.js';
-import { oauthRoute } from '../../routes/oauth.js';
-import { pathRoute } from '../../routes/path/index.js';
-import { staticRoutes } from '../../routes/static.js';
-import { statusRoutes } from '../../routes/status.js';
 import { initDiagramCache } from '../../services/diagramCache.js';
 import { initTransport } from '../../services/email.js';
 import { initExportCache } from '../../services/exportCache.js';
@@ -73,74 +58,15 @@ export interface WireApp extends WireDirs {
 }
 
 /**
- * Register the SPA exactly as `server.ts` does, over `clientDir`.
- *
- * @param fastify - The app.
- * @param clientDir - Directory holding `index.html`.
- */
-async function registerSpa(
-  fastify: FastifyInstance,
-  clientDir: string,
-): Promise<void> {
-  await fastify.register(fastifyStatic, { root: clientDir, prefix: '/app/' });
-  const spaFallback = async (request: FastifyRequest, reply: FastifyReply) => {
-    const cfg = getConfig();
-    const auth = resolveAuth(cfg, request);
-    if (auth.type === 'none') {
-      return reply
-        .type('text/html')
-        .send(renderSignInPage(request.url, cfg.authModes, cfg.branding));
-    }
-    return reply.sendFile('index.html', clientDir);
-  };
-  for (const route of [
-    '/',
-    '/browse',
-    '/browse/*',
-    '/runner',
-    '/runner/*',
-    '/readme',
-    '/privacy',
-    '/terms',
-  ]) {
-    fastify.get(route, spaFallback);
-  }
-  fastify.setNotFoundHandler(async (request, reply) => {
-    if (
-      request.method === 'GET' &&
-      (request.url.startsWith('/browse') || request.url.startsWith('/runner'))
-    ) {
-      return spaFallback(request, reply);
-    }
-    return reply.code(404).send({ error: 'Not found' });
-  });
-}
-
-/**
- * Build the app with `server.ts`'s plugins, hooks and routes, in its order.
+ * Build the app as `server.ts` does (`registerServerApp`), with the SPA
+ * over `clientDir`.
  *
  * @param clientDir - SPA directory.
  * @returns The app, not yet ready.
  */
 async function buildApp(clientDir: string): Promise<FastifyInstance> {
   const fastify = Fastify({ logger: { level: 'silent' } });
-  await fastify.register(cookie);
-  fastify.addHook('onSend', async (_request, reply) => {
-    void reply.header('X-Robots-Tag', 'noindex, nofollow');
-  });
-  await fastify.register(staticRoutes);
-  registerConfigRoute(fastify);
-  await fastify.register(statusRoutes);
-  await fastify.register(authRoute);
-  await fastify.register(magicCallbackRoute);
-  await fastify.register(magicVerifyRoute);
-  await fastify.register(oauthRoute);
-  await fastify.register(keysRoute);
-  await fastify.register(eventRoute);
-  await fastify.register(goRoute);
-  await fastify.register(apiRoute);
-  await fastify.register(pathRoute);
-  await registerSpa(fastify, clientDir);
+  await registerServerApp(fastify, { clientDir });
   return fastify;
 }
 

@@ -9,6 +9,11 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { clearAllPending, consumePending } from '../../services/oauthState.js';
+import {
+  MASKED_500,
+  serverError,
+  withErrorBody,
+} from '../../testing/testApp.js';
 
 let tmpDir: string;
 let mockConfig: Record<string, unknown> | null = null;
@@ -28,10 +33,10 @@ function buildFastify(): {
   const routes: Record<string, { method: string; handler: Handler }> = {};
   const instance = {
     post: (routePath: string, handler: Handler) => {
-      routes[routePath] = { method: 'POST', handler };
+      routes[routePath] = { method: 'POST', handler: withErrorBody(handler) };
     },
     get: (routePath: string, handler: Handler) => {
-      routes[routePath] = { method: 'GET', handler };
+      routes[routePath] = { method: 'GET', handler: withErrorBody(handler) };
     },
   };
   return { routes, instance };
@@ -160,8 +165,11 @@ describe('OAuth API routes', () => {
         reply,
       );
       expect(capture.statusCode).toBe(400);
-      expect((capture.body as Record<string, string>).error).toMatch(
-        /authUrl and tokenUrl/,
+      expect(capture.body).toEqual(
+        serverError(
+          'SERVER_INVALID_REQUEST',
+          'authUrl and tokenUrl are required (either in request body or via named provider config)',
+        ),
       );
     });
 
@@ -327,7 +335,9 @@ describe('OAuth API routes', () => {
         reply,
       );
       expect(capture.statusCode).toBe(400);
-      expect(capture.body).toEqual({ error });
+      expect(capture.body).toEqual(
+        serverError('SERVER_INVALID_REQUEST', error),
+      );
     });
 
     it.each([
@@ -359,8 +369,9 @@ describe('OAuth API routes', () => {
         },
         reply,
       );
+      // A config error: masked for the caller, logged for the operator.
       expect(capture.statusCode).toBe(500);
-      expect((capture.body as { error: string }).error).toMatch(/publicUrl/);
+      expect(capture.body).toEqual(MASKED_500);
     });
 
     it('uses forwarding headers only with trustProxyHeaders', async () => {
@@ -586,8 +597,8 @@ describe('OAuth API routes', () => {
         reply,
       );
       expect(capture.statusCode).toBe(401);
-      expect((capture.body as Record<string, string>).error).toBe(
-        'refresh_failed',
+      expect(capture.body).toEqual(
+        serverError('SERVER_OAUTH_REFRESH_FAILED', 'Re-authorization required'),
       );
     });
 
@@ -742,7 +753,16 @@ describe('OAuth API routes', () => {
       vi.unstubAllGlobals();
     });
 
-    it('returns 401 when refresh fails', async () => {
+    it.each([
+      [
+        'the provider refuses',
+        () => Promise.resolve({ ok: false, status: 400 }),
+      ],
+      [
+        'the provider is unreachable',
+        () => Promise.reject(new TypeError('fetch failed')),
+      ],
+    ])('returns 401 when refresh fails (%s)', async (_label, answer) => {
       const credPath = path.join(tmpDir, 'github-me-oauth2.json');
       fs.writeFileSync(
         credPath,
@@ -758,10 +778,7 @@ describe('OAuth API routes', () => {
         }),
       );
 
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({ ok: false, status: 400 }),
-      );
+      vi.stubGlobal('fetch', vi.fn(answer));
 
       const routes = await getHandlers();
       const { reply, capture } = buildReply();
@@ -770,8 +787,8 @@ describe('OAuth API routes', () => {
         reply,
       );
       expect(capture.statusCode).toBe(401);
-      expect((capture.body as Record<string, string>).error).toBe(
-        'refresh_failed',
+      expect(capture.body).toEqual(
+        serverError('SERVER_OAUTH_REFRESH_FAILED', 'Re-authorization required'),
       );
 
       vi.unstubAllGlobals();

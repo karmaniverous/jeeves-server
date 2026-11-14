@@ -2,7 +2,7 @@
  * Tests for diagram export route handlers.
  *
  * Validates the cache-first rendering pipeline shared by Mermaid and PlantUML
- * handlers, and the path resolution + error handling for both routes.
+ * handlers, and the path resolution + error bodies for both routes.
  *
  * @packageDocumentation
  */
@@ -11,28 +11,26 @@ import fs from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { serverError, testApp } from '../../testing/testApp.js';
 
 // Mock config before importing the module under test
 const tmpDir = path.join(tmpdir(), `diagramExport-test-${String(Date.now())}`);
 
+/** Chrome path for the next test: any existing file passes the check. */
+let chromePath = process.execPath;
+
 vi.mock('../../config/index.js', () => ({
-  getConfig: () => ({
-    roots: {},
-  }),
+  getConfig: () => ({ roots: {}, chromePath }),
 }));
 
 vi.mock('../../services/diagramCache.js', () => {
-  let cache: Record<string, Buffer> = {};
+  const cache: Record<string, Buffer> = {};
   return {
-    getCachedDiagramBuffer: (
-      engine: string,
-      source: string,
-      format: string,
-    ) => {
-      const key = `${engine}:${source}:${format}`;
-      return cache[key] ?? null;
-    },
+    getCachedDiagramBuffer: (engine: string, source: string, format: string) =>
+      cache[`${engine}:${source}:${format}`] ?? null,
     cacheDiagramBuffer: (
       engine: string,
       source: string,
@@ -40,9 +38,6 @@ vi.mock('../../services/diagramCache.js', () => {
       format: string,
     ) => {
       cache[`${engine}:${source}:${format}`] = buffer;
-    },
-    _reset: () => {
-      cache = {};
     },
   };
 });
@@ -59,142 +54,112 @@ vi.mock('../../services/plantuml.js', () => ({
 const { diagramExportRoutes } = await import('./diagramExport.js');
 const { renderMermaidToBuffer } = await import('../../services/mermaid.js');
 const { renderPlantUmlToBuffer } = await import('../../services/plantuml.js');
+const platformMod = await import('../../util/platform.js');
 
-/** Minimal Fastify reply mock that captures sent data. */
-function createReplyMock() {
-  const headers: Record<string, string> = {};
-  let sentData: unknown = null;
-  let statusCode = 200;
-  const reply = {
-    code: (c: number) => {
-      statusCode = c;
-      return reply;
-    },
-    header: (key: string, value: string) => {
-      headers[key.toLowerCase()] = value;
-      return reply;
-    },
-    send: (data: unknown) => {
-      sentData = data;
-      return reply;
-    },
-    get statusCode() {
-      return statusCode;
-    },
-    get headers() {
-      return headers;
-    },
-    get sentData() {
-      return sentData;
-    },
-  };
-  return reply;
+let app: FastifyInstance;
+
+beforeEach(async () => {
+  fs.mkdirSync(tmpDir, { recursive: true });
+  chromePath = process.execPath;
+  app = testApp();
+  await app.register(diagramExportRoutes);
+  await app.ready();
+});
+
+afterEach(async () => {
+  await app.close();
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+  vi.restoreAllMocks();
+});
+
+/** GET a route; status and parsed body. */
+async function get(url: string) {
+  const res = await app.inject({ method: 'GET', url });
+  return { status: res.statusCode, body: res.json<unknown>() };
+}
+
+/** Write a diagram source in the temp dir and resolve every path to it. */
+function diagramFile(name: string, source: string): void {
+  const filePath = path.join(tmpDir, name);
+  fs.writeFileSync(filePath, source);
+  vi.spyOn(platformMod, 'urlPathToFs').mockReturnValue(filePath);
 }
 
 describe('diagramExportRoutes', () => {
-  const routes: Record<
-    string,
-    (
-      req: { params: Record<string, string>; query: Record<string, string> },
-      reply: ReturnType<typeof createReplyMock>,
-    ) => Promise<void>
-  > = {};
+  it.each(['mermaid', 'plantuml'])(
+    'answers SERVER_INVALID_PATH when no path is provided (%s)',
+    async (engine) => {
+      expect(await get(`/api/${engine}-export/`)).toEqual({
+        status: 400,
+        body: serverError('SERVER_INVALID_PATH', 'Path required'),
+      });
+    },
+  );
 
-  beforeEach(() => {
-    fs.mkdirSync(tmpDir, { recursive: true });
+  it.each([
+    ['mermaid', 'nonexistent.mmd', 'Mermaid file not found'],
+    ['plantuml', 'nonexistent.puml', 'PlantUML file not found'],
+  ])(
+    'answers SERVER_NOT_FOUND for a missing file (%s)',
+    async (engine, file, message) => {
+      vi.spyOn(platformMod, 'urlPathToFs').mockReturnValue(
+        path.join(tmpDir, file),
+      );
+      expect(await get(`/api/${engine}-export/${file}`)).toEqual({
+        status: 404,
+        body: serverError('SERVER_NOT_FOUND', message),
+      });
+    },
+  );
 
-    const fakeFastify = {
-      get: (
-        routePath: string,
-        handler: (req: unknown, reply: unknown) => Promise<void>,
-      ) => {
-        routes[routePath] = handler;
-      },
-    };
-
-    diagramExportRoutes(fakeFastify as never, {}, () => {});
+  it('answers SERVER_NOT_FOUND for a path under no root', async () => {
+    vi.spyOn(platformMod, 'urlPathToFs').mockReturnValue(null);
+    expect(await get('/api/mermaid-export/x.mmd')).toEqual({
+      status: 404,
+      body: serverError('SERVER_NOT_FOUND', 'Not found'),
+    });
   });
 
-  afterEach(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
-    vi.restoreAllMocks();
-  });
-
-  it('returns 400 when no path is provided for mermaid export', async () => {
-    const reply = createReplyMock();
-    await routes['/api/mermaid-export/*'](
-      { params: { '*': '' }, query: {} },
-      reply,
-    );
-    expect(reply.statusCode).toBe(400);
-  });
-
-  it('returns 404 for non-existent mermaid file', async () => {
-    const reply = createReplyMock();
-    await routes['/api/mermaid-export/*'](
-      { params: { '*': 'nonexistent.mmd' }, query: {} },
-      reply,
-    );
-    expect(reply.statusCode).toBe(404);
-  });
-
-  it('returns 400 when no path is provided for plantuml export', async () => {
-    const reply = createReplyMock();
-    await routes['/api/plantuml-export/*'](
-      { params: { '*': '' }, query: {} },
-      reply,
-    );
-    expect(reply.statusCode).toBe(400);
-  });
-
-  it('returns 404 for non-existent plantuml file', async () => {
-    const reply = createReplyMock();
-    await routes['/api/plantuml-export/*'](
-      { params: { '*': 'nonexistent.puml' }, query: {} },
-      reply,
-    );
-    expect(reply.statusCode).toBe(404);
-  });
-
-  it('sends 500 when mermaid render returns null', async () => {
-    // Create a real .mmd file
-    const mmdPath = path.join(tmpDir, 'test.mmd');
-    fs.writeFileSync(mmdPath, 'graph TD; A-->B');
-
-    // Mock urlPathToFs to resolve our temp path
-    const platformMod = await import('../../util/platform.js');
-    vi.spyOn(platformMod, 'urlPathToFs').mockReturnValue(mmdPath);
-
+  it('answers SERVER_EXPORT_FAILED when the mermaid render returns null', async () => {
+    diagramFile('test.mmd', 'graph TD; A-->B');
     vi.mocked(renderMermaidToBuffer).mockResolvedValue(null);
-
-    const reply = createReplyMock();
-    await routes['/api/mermaid-export/*'](
-      { params: { '*': 'test.mmd' }, query: { format: 'svg' } },
-      reply,
-    );
-    expect(reply.statusCode).toBe(500);
-    expect((reply.sentData as Record<string, string>).error).toContain(
-      'render failed',
-    );
+    expect(await get('/api/mermaid-export/test.mmd?format=svg')).toEqual({
+      status: 502,
+      body: serverError('SERVER_EXPORT_FAILED', 'Mermaid render failed'),
+    });
   });
 
-  it('sends 500 when plantuml render returns null', async () => {
-    const pumlPath = path.join(tmpDir, 'test.puml');
-    fs.writeFileSync(pumlPath, '@startuml\nA -> B\n@enduml');
+  it('answers SERVER_CHROME_UNAVAILABLE for mermaid without Chrome, rendering nothing', async () => {
+    chromePath = path.join(tmpDir, 'no-chrome');
+    diagramFile('nochrome.mmd', 'graph TD; C-->D');
+    expect(await get('/api/mermaid-export/nochrome.mmd?format=svg')).toEqual({
+      status: 503,
+      body: serverError(
+        'SERVER_CHROME_UNAVAILABLE',
+        'Export unavailable: Chrome could not be started (check chromePath)',
+      ),
+    });
+    expect(renderMermaidToBuffer).not.toHaveBeenCalled();
+  });
 
-    const platformMod = await import('../../util/platform.js');
-    vi.spyOn(platformMod, 'urlPathToFs').mockReturnValue(pumlPath);
-
+  it('answers SERVER_EXPORT_FAILED when the plantuml render returns null', async () => {
+    diagramFile('test.puml', '@startuml\nA -> B\n@enduml');
     vi.mocked(renderPlantUmlToBuffer).mockResolvedValue(null);
+    expect(await get('/api/plantuml-export/test.puml?format=svg')).toEqual({
+      status: 502,
+      body: serverError('SERVER_EXPORT_FAILED', 'Plantuml render failed'),
+    });
+  });
 
-    const reply = createReplyMock();
-    await routes['/api/plantuml-export/*'](
-      { params: { '*': 'test.puml' }, query: { format: 'svg' } },
-      reply,
-    );
-    expect(reply.statusCode).toBe(500);
-    expect((reply.sentData as Record<string, string>).error).toContain(
-      'render failed',
-    );
+  it('serves PlantUML without Chrome (it renders on a PlantUML server)', async () => {
+    chromePath = path.join(tmpDir, 'no-chrome');
+    diagramFile('ok.puml', '@startuml\nE -> F\n@enduml');
+    vi.mocked(renderPlantUmlToBuffer).mockResolvedValue(Buffer.from('<svg/>'));
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/plantuml-export/ok.puml?format=svg',
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toBe('<svg/>');
   });
 });

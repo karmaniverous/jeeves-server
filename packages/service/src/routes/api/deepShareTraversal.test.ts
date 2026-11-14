@@ -12,7 +12,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import * as cheerio from 'cheerio';
-import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
+import { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -20,6 +20,7 @@ import {
   makeRuntimeConfig,
   scopes,
 } from '../../testing/authFixture.js';
+import { testApp } from '../../testing/testApp.js';
 import { computeDeepShareKey } from '../../util/crypto.js';
 
 const SCOPED_SEED = 'scoped-insider-seed-0123456789';
@@ -74,7 +75,7 @@ const echo = (request: FastifyRequest) => ({
 });
 
 beforeAll(async () => {
-  app = Fastify();
+  app = testApp();
   await app.register(async (api) => {
     addAuthMiddleware(api);
     api.get('/api/file/*', echo);

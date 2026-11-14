@@ -5,10 +5,11 @@
  * @packageDocumentation
  */
 
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { NormalizedScopes } from '../../config/types.js';
+import { serverError, testApp } from '../../testing/testApp.js';
 
 vi.mock('../../config/index.js', () => ({
   getConfig: () => ({ roots: {}, resolvedKeys: [], resolvedInsiders: [] }),
@@ -36,7 +37,7 @@ async function buildApp(
   seed: string | undefined,
   scopes: NormalizedScopes | null,
 ): Promise<FastifyInstance> {
-  const app = Fastify();
+  const app = testApp();
   app.addHook('preHandler', (request, _reply, done) => {
     request.authSeed = seed;
     request.insiderScopes = scopes;
@@ -77,9 +78,9 @@ describe('POST /api/share', () => {
     it('refuses an out-of-scope target with 403', async () => {
       const res = await share(app, { path: '/j/config/secret.json' });
       expect(res.statusCode).toBe(403);
-      expect(res.json()).toEqual({
-        error: 'Path is outside your access scope',
-      });
+      expect(res.json()).toEqual(
+        serverError('SERVER_OUT_OF_SCOPE', 'Path is outside your access scope'),
+      );
     });
 
     it('shares an in-scope target', async () => {

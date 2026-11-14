@@ -7,8 +7,9 @@
  */
 
 import { getUrlKey } from '@karmaniverous/jeeves-server-core';
-import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 
+import { InvalidPath, OutOfScope, Unauthorized } from '../../api/errors.js';
 import {
   type AuthQuery,
   extractDeepParams,
@@ -26,7 +27,6 @@ import {
   keyAuthPath,
   parseContentRoute,
 } from './contentRoute.js';
-import { OUT_OF_SCOPE_ERROR } from './scopeGuard.js';
 
 /**
  * API routes that authenticate themselves or are public. An entry ending in
@@ -74,7 +74,6 @@ export function scopesAllowRoute(
 function authenticateUtility(
   config: RuntimeConfig,
   request: FastifyRequest,
-  reply: FastifyReply,
 ): void {
   const { exp } = request.query as { exp?: string };
   const key = getUrlKey(request.query);
@@ -107,9 +106,7 @@ function authenticateUtility(
     return;
   }
 
-  void reply
-    .code(401)
-    .send({ error: 'Insider auth required for utility endpoints' });
+  throw new Unauthorized('Insider auth required for utility endpoints');
 }
 
 /**
@@ -142,62 +139,71 @@ function resolveUrlKey(
  * applies to all sibling and child routes.
  */
 export function addAuthMiddleware(fastify: FastifyInstance): void {
-  fastify.addHook('preHandler', async (request, reply) => {
-    if (!request.url.startsWith('/api')) return;
-    if (isUnauthenticatedApiPath(request.url)) return;
-
-    const config = getConfig();
-
-    if (request.url.startsWith('/api/util/')) {
-      authenticateUtility(config, request, reply);
-      return;
-    }
-
-    // Reject `..` segments outright: they can resolve outside the path that
-    // scope and key checks evaluate.
-    const contentRoute = parseContentRoute(request.url);
-    if (contentRoute && hasTraversalSegment(contentRoute.path)) {
-      void reply.code(400).send({ error: 'Invalid path' });
-      return;
-    }
-
-    const urlPath = keyAuthPath(request.url, contentRoute);
-    const keyResult = resolveUrlKey(
-      config,
-      urlPath,
-      request.query as AuthQuery,
-      contentRoute,
-    );
-
-    // Always check the session: insiders visiting outsider links are upgraded
-    // to insider access, provided the path is within their own scopes.
-    const sessionResult = resolveSessionAuth(config, request);
-    if (
-      sessionResult.valid &&
-      scopesAllowRoute(contentRoute, sessionResult.scopes)
-    ) {
-      request.accessMode = 'insider';
-      request.authSeed = sessionResult.seed;
-      request.insiderEmail = sessionResult.email;
-      request.insiderScopes = sessionResult.scopes ?? null;
-      request.keyAge = sessionResult.keyAge;
-      return;
-    }
-
-    if (keyResult.valid) {
-      request.accessMode = keyResult.mode;
-      request.authSeed = keyResult.seed;
-      request.insiderScopes = keyResult.scopes ?? null;
-      request.deepShareParams = keyResult.deepShareParams;
-      request.authMatchedPath = keyResult.matchedPath;
-      return;
-    }
-
-    if (sessionResult.valid) {
-      void reply.code(403).send({ error: OUT_OF_SCOPE_ERROR });
-      return;
-    }
-
-    void reply.code(401).send({ error: 'Unauthorized' });
+  fastify.addHook('preHandler', (request, _reply, done) => {
+    authenticateApiRequest(request);
+    done();
   });
+}
+
+/**
+ * Authenticate an `/api` request, setting its access mode, seed and scopes.
+ *
+ * @param request - The request.
+ * @throws `SERVER_INVALID_PATH` (400) for a `..` segment,
+ *   `SERVER_OUT_OF_SCOPE` (403) for a session outside its scopes,
+ *   `SERVER_UNAUTHORIZED` (401) without a valid credential.
+ */
+function authenticateApiRequest(request: FastifyRequest): void {
+  if (!request.url.startsWith('/api')) return;
+  if (isUnauthenticatedApiPath(request.url)) return;
+
+  const config = getConfig();
+
+  if (request.url.startsWith('/api/util/')) {
+    authenticateUtility(config, request);
+    return;
+  }
+
+  // Reject `..` segments outright: they can resolve outside the path that
+  // scope and key checks evaluate.
+  const contentRoute = parseContentRoute(request.url);
+  if (contentRoute && hasTraversalSegment(contentRoute.path)) {
+    throw new InvalidPath('Invalid path');
+  }
+
+  const urlPath = keyAuthPath(request.url, contentRoute);
+  const keyResult = resolveUrlKey(
+    config,
+    urlPath,
+    request.query as AuthQuery,
+    contentRoute,
+  );
+
+  // Always check the session: insiders visiting outsider links are upgraded
+  // to insider access, provided the path is within their own scopes.
+  const sessionResult = resolveSessionAuth(config, request);
+  if (
+    sessionResult.valid &&
+    scopesAllowRoute(contentRoute, sessionResult.scopes)
+  ) {
+    request.accessMode = 'insider';
+    request.authSeed = sessionResult.seed;
+    request.insiderEmail = sessionResult.email;
+    request.insiderScopes = sessionResult.scopes ?? null;
+    request.keyAge = sessionResult.keyAge;
+    return;
+  }
+
+  if (keyResult.valid) {
+    request.accessMode = keyResult.mode;
+    request.authSeed = keyResult.seed;
+    request.insiderScopes = keyResult.scopes ?? null;
+    request.deepShareParams = keyResult.deepShareParams;
+    request.authMatchedPath = keyResult.matchedPath;
+    return;
+  }
+
+  if (sessionResult.valid) throw new OutOfScope();
+
+  throw new Unauthorized('Unauthorized');
 }

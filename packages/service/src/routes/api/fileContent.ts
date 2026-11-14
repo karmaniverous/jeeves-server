@@ -12,6 +12,7 @@ import path from 'node:path';
 
 import type { FastifyPluginAsync } from 'fastify';
 
+import { NotAFile, NotFound } from '../../api/errors.js';
 import { getConfig } from '../../config/index.js';
 import { csvToHtmlTable } from '../../services/csv.js';
 import { getOrRenderDiagram } from '../../services/diagramCache.js';
@@ -19,8 +20,9 @@ import { renderMermaidSvg } from '../../services/mermaid.js';
 import { renderPlantUmlSvg } from '../../services/plantuml.js';
 import { filterBreadcrumbsForOutsider } from '../../util/breadcrumbs.js';
 import { looksLikeText } from '../../util/fileDetection.js';
-import { breadcrumbParts, getRoots, urlPathToFs } from '../../util/platform.js';
+import { breadcrumbParts, getRoots } from '../../util/platform.js';
 import { renderMarkdownContent, tryWatcherRender } from './fileRender.js';
+import { fsPathOf, NOT_FOUND_MESSAGE, requirePath } from './routePath.js';
 
 /** Image extensions recognized for type detection. */
 const IMAGE_EXTS = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.ico'];
@@ -35,21 +37,13 @@ export const fileContentRoutes: FastifyPluginAsync = (fastify) => {
     '/api/file/*',
     async (request, reply) => {
       const rawOnly = request.query.raw === '1';
-      const reqPath = request.params['*'];
-      if (!reqPath) return reply.code(400).send({ error: 'Path required' });
-
-      const fsFilePath = urlPathToFs(reqPath, roots);
-      if (!fsFilePath) return reply.code(404).send({ error: 'Invalid path' });
-      const resolved = path.resolve(fsFilePath);
-
-      if (!fs.existsSync(resolved))
-        return reply.code(404).send({ error: 'Not found' });
+      const reqPath = requirePath(request.params['*']);
+      const resolved = fsPathOf(reqPath, roots);
+      if (!fs.existsSync(resolved)) throw new NotFound(NOT_FOUND_MESSAGE);
 
       const stats = fs.statSync(resolved);
       if (stats.isDirectory())
-        return reply
-          .code(400)
-          .send({ error: 'Use /api/path/ for directories' });
+        throw new NotAFile('Use /api/path/ for directories');
 
       const ext = path.extname(resolved).toLowerCase();
       const isInsider = request.accessMode === 'insider';

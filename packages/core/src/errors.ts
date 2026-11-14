@@ -18,8 +18,9 @@
  * - `SERVER_INSIDER_REQUIRED` (403): a share credential on a route that
  *   needs an insider.
  * - `SERVER_INVALID_PATH` (400): a path that is empty, has a `..` segment or
- *   isn't under a root.
- * - `SERVER_NOT_FOUND` (404): no file, directory, page or credential there.
+ *   is not absolute where an absolute path is required.
+ * - `SERVER_NOT_FOUND` (404): no file, directory, page, route or credential
+ *   there (a path under no configured root included).
  * - `SERVER_NOT_A_FILE` (400): a file route addressed a directory.
  * - `SERVER_NOT_A_DIRECTORY` (400): a directory route addressed a file.
  * - `SERVER_EXPORT_UNSUPPORTED` (400): no export in that format for that
@@ -36,6 +37,13 @@
  * - `SERVER_INTERNAL_KEY_MISSING` (500): no `_internal` key is configured.
  * - `SERVER_CONFLICT` (409): a block edit raced another change.
  * - `SERVER_SIGN_IN_REJECTED` (403): sign-in refused for that account.
+ * - `SERVER_INVALID_REQUEST` (400): a request field is missing or invalid in
+ *   a way the route checks itself (a line range, an action's fields, an
+ *   OAuth origin).
+ * - `SERVER_NOT_CONFIGURED` (501): the feature the route serves is not
+ *   configured on this server (OAuth).
+ * - `SERVER_OAUTH_REFRESH_FAILED` (401): a stored OAuth credential expired
+ *   and could not be refreshed; the account must be authorized again.
  */
 export const SERVER_ERROR_CODES = [
   'SERVER_UNAUTHORIZED',
@@ -57,6 +65,9 @@ export const SERVER_ERROR_CODES = [
   'SERVER_INTERNAL_KEY_MISSING',
   'SERVER_CONFLICT',
   'SERVER_SIGN_IN_REJECTED',
+  'SERVER_INVALID_REQUEST',
+  'SERVER_NOT_CONFIGURED',
+  'SERVER_OAUTH_REFRESH_FAILED',
 ] as const;
 
 /** A `SERVER_*` error code. */
@@ -83,4 +94,7 @@ export const SERVER_ERROR_STATUS: Readonly<Record<ServerErrorCode, number>> = {
   SERVER_INTERNAL_KEY_MISSING: 500,
   SERVER_CONFLICT: 409,
   SERVER_SIGN_IN_REJECTED: 403,
+  SERVER_INVALID_REQUEST: 400,
+  SERVER_NOT_CONFIGURED: 501,
+  SERVER_OAUTH_REFRESH_FAILED: 401,
 };

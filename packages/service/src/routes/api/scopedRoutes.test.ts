@@ -9,10 +9,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { NormalizedScopes } from '../../config/types.js';
+import { testApp } from '../../testing/testApp.js';
 import type * as PlatformModule from '../../util/platform.js';
 
 let tmpDir = '';
@@ -53,7 +54,7 @@ const husin: NormalizedScopes = {
 };
 
 async function buildApp(scopes: NormalizedScopes | null) {
-  const app = Fastify();
+  const app = testApp();
   app.addHook('preHandler', (request, _reply, done) => {
     request.accessMode = 'insider';
     request.insiderScopes = scopes;

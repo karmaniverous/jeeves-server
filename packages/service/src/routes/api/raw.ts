@@ -9,9 +9,11 @@ import path from 'node:path';
 
 import type { FastifyPluginCallback } from 'fastify';
 
+import { NotAFile, NotFound } from '../../api/errors.js';
 import { getConfig } from '../../config/index.js';
 import { getContentType, isInlineType } from '../../util/fileDetection.js';
-import { getRoots, urlPathToFs } from '../../util/platform.js';
+import { getRoots } from '../../util/platform.js';
+import { fsPathOf, NOT_FOUND_MESSAGE, requirePath } from './routePath.js';
 
 export const rawRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   const roots = getRoots(getConfig().roots);
@@ -19,22 +21,14 @@ export const rawRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
   fastify.get<{ Params: { '*': string } }>(
     '/api/raw/*',
     async (request, reply) => {
-      const reqPath = request.params['*'];
-      if (!reqPath) return reply.code(400).send({ error: 'Path required' });
-
-      const rawFsPath = urlPathToFs(reqPath, roots);
-      if (!rawFsPath) return reply.code(404).send({ error: 'Invalid path' });
-      const resolved = path.resolve(rawFsPath);
-
-      if (!fs.existsSync(resolved))
-        return reply.code(404).send({ error: 'Not found', path: resolved });
+      const resolved = fsPathOf(requirePath(request.params['*']), roots);
+      if (!fs.existsSync(resolved)) throw new NotFound(NOT_FOUND_MESSAGE);
 
       const stats = fs.statSync(resolved);
-      if (stats.isDirectory()) {
-        return reply.code(400).send({
-          error: 'Cannot serve directory as raw — use /api/export for ZIP',
-        });
-      }
+      if (stats.isDirectory())
+        throw new NotAFile(
+          'Cannot serve directory as raw — use /api/export for ZIP',
+        );
 
       const ext = path.extname(resolved).toLowerCase();
       const contentType = getContentType(ext);

@@ -6,7 +6,7 @@
  */
 
 import cookie from '@fastify/cookie';
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { RuntimeConfig } from '../../config/types.js';
@@ -15,6 +15,7 @@ import {
   INSIDER_SEED,
   makeRuntimeConfig,
 } from '../../testing/authFixture.js';
+import { MASKED_500, testApp } from '../../testing/testApp.js';
 
 const state = vi.hoisted((): { config: unknown } => ({ config: null }));
 const sendMock = vi.hoisted(() => vi.fn(() => Promise.resolve()));
@@ -54,7 +55,7 @@ function useConfig(overrides: Partial<RuntimeConfig> = {}): void {
 }
 
 async function buildApp(): Promise<FastifyInstance> {
-  const app = Fastify();
+  const app = testApp();
   await app.register(cookie);
   app.addHook('preHandler', (request, _reply, done) => {
     request.authSeed = INSIDER_SEED;
@@ -110,7 +111,8 @@ describe('magic link origin', () => {
       await app.close();
 
       expect(res.statusCode).toBe(500);
-      expect(res.json<{ error: string }>().error).toMatch(/publicUrl/);
+      // A config error: masked for the caller, logged for the operator.
+      expect(res.json()).toEqual(MASKED_500);
       expect(sendMock).not.toHaveBeenCalled();
     },
   );
@@ -186,6 +188,7 @@ describe('Google redirect URI', () => {
     const res = await app.inject({ url: '/auth/login', headers: FORGED });
     await app.close();
 
+    // A browser sign-in route: it keeps its own reply.
     expect(res.statusCode).toBe(500);
     expect(res.json<{ error: string }>().error).toMatch(/publicUrl/);
   });

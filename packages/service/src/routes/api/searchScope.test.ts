@@ -5,11 +5,12 @@
  * @packageDocumentation
  */
 
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type { NormalizedScopes } from '../../config/types.js';
 import { makeRuntimeConfig } from '../../testing/authFixture.js';
+import { testApp } from '../../testing/testApp.js';
 
 const state = vi.hoisted((): { scopes: unknown } => ({ scopes: null }));
 
@@ -57,7 +58,7 @@ beforeAll(async () => {
       ),
     ),
   );
-  app = Fastify();
+  app = testApp();
   app.addHook('preHandler', (request, _reply, done) => {
     request.accessMode = 'insider';
     request.insiderScopes = state.scopes as NormalizedScopes | null;

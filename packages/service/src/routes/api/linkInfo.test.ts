@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import type { FastifyError } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { NormalizedScopes } from '../../config/types.js';
@@ -76,7 +77,12 @@ describe('GET /api/link-info', () => {
       accessMode,
       insiderScopes,
     };
-    await handler(fakeRequest, fakeReply);
+    try {
+      await handler(fakeRequest, fakeReply);
+    } catch (err) {
+      const { statusCode, code, message } = err as FastifyError;
+      return { status: statusCode, code, message };
+    }
     return result as Record<string, unknown>;
   }
 
@@ -94,7 +100,8 @@ describe('GET /api/link-info', () => {
       const res = await callHandler('test/secret.md', 'insider', scopes);
       expect(res).toEqual({
         status: 403,
-        error: 'Path is outside your access scope',
+        code: 'SERVER_OUT_OF_SCOPE',
+        message: 'Path is outside your access scope',
       });
     });
 

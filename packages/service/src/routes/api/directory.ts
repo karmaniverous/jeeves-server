@@ -10,6 +10,7 @@ import path from 'node:path';
 
 import type { FastifyPluginCallback } from 'fastify';
 
+import { NotFound, Unauthorized } from '../../api/errors.js';
 import { canAccessPath, canNavigatePath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
 import {
@@ -18,13 +19,9 @@ import {
   toDeepShareContext,
 } from '../../services/deepShareLinks.js';
 import { filterBreadcrumbsForOutsider } from '../../util/breadcrumbs.js';
-import {
-  breadcrumbParts,
-  fsPathToUrl,
-  getRoots,
-  urlPathToFs,
-} from '../../util/platform.js';
-import { rejectOutOfScope } from './scopeGuard.js';
+import { breadcrumbParts, fsPathToUrl, getRoots } from '../../util/platform.js';
+import { fsPathOf, NOT_FOUND_MESSAGE } from './routePath.js';
+import { requireInScope } from './scopeGuard.js';
 
 /** Result shape returned by {@link mapDirectoryEntry}. */
 export interface DirectoryEntryInfo {
@@ -95,20 +92,15 @@ export const directoryRoutes: FastifyPluginCallback = (
       const reqPath = request.params['*'];
       if (!reqPath) return reply.redirect('/api/drives');
 
-      const fsPath = urlPathToFs(reqPath, roots);
-      if (!fsPath) return reply.code(404).send({ error: 'Invalid path' });
-      const resolved = path.resolve(fsPath);
-
-      if (!fs.existsSync(resolved)) {
-        return reply.code(404).send({ error: 'Not found', path: resolved });
-      }
+      const resolved = fsPathOf(reqPath, roots);
+      if (!fs.existsSync(resolved)) throw new NotFound(NOT_FOUND_MESSAGE);
 
       const insiderScopes = request.insiderScopes ?? null;
       const stats = await fsp.stat(resolved);
       if (!stats.isDirectory()) {
         // Navigation access (ancestor of an allowed path) is not enough
         // for file metadata: the file itself must be in scope.
-        if (rejectOutOfScope(request, reply, reqPath)) return reply;
+        requireInScope(request, reqPath);
         const ext = path.extname(resolved).toLowerCase();
         return reply.send({
           type: 'file',
@@ -131,7 +123,7 @@ export const directoryRoutes: FastifyPluginCallback = (
           : null;
       const dirPath = `/${reqPath.replace(/\/+$/u, '')}`;
       if (deepContext && !canListDirectory(deepContext, dirPath)) {
-        return reply.code(401).send({ error: 'Unauthorized' });
+        throw new Unauthorized('Unauthorized');
       }
 
       const allEntries = await fsp.readdir(resolved, {

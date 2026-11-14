@@ -5,12 +5,11 @@
  *
  * @packageDocumentation
  */
-
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import {
   afterAll,
   afterEach,
@@ -26,6 +25,7 @@ import {
   MACHINE_SEED,
   makeRuntimeConfig,
 } from '../../testing/authFixture.js';
+import { serverError, testApp } from '../../testing/testApp.js';
 import {
   computeDeepShareKey,
   computeInsiderKey,
@@ -74,7 +74,7 @@ const { encodeStack } = await import('../../services/deepShareLinks.js');
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  app = Fastify();
+  app = testApp();
   await app.register(async (api) => {
     addAuthMiddleware(api);
     await api.register(exportRoutes);
@@ -146,7 +146,13 @@ describe('export render auth (#295)', () => {
       );
 
       expect(res.statusCode).toBe(502);
-      expect(res.json<{ renderState: string }>().renderState).toBe(state);
+      expect(res.json()).toEqual(
+        serverError(
+          'SERVER_EXPORT_FAILED',
+          'PDF export failed: document did not render',
+        ),
+      );
+      expect(state).toBeTruthy();
       expect(cacheExportMock).not.toHaveBeenCalled();
     },
   );

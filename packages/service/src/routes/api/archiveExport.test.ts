@@ -8,10 +8,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AccessMode, NormalizedScopes } from '../../config/types.js';
+import { serverError, testApp } from '../../testing/testApp.js';
 
 const config = { maxZipSizeMb: 1 };
 vi.mock('../../config/index.js', () => ({ getConfig: () => config }));
@@ -39,7 +40,7 @@ async function buildApp(
   scopes: NormalizedScopes | null,
   format: 'zip' | 'tar' = 'tar',
 ): Promise<FastifyInstance> {
-  const app = Fastify();
+  const app = testApp();
   app.get('/archive', async (request, reply) => {
     request.accessMode = accessMode;
     request.insiderScopes = scopes;
@@ -126,7 +127,12 @@ describe('sendDirectoryArchive', () => {
       app = await buildApp('insider', null);
       const res = await app.inject({ url: '/archive' });
       expect(res.statusCode).toBe(413);
-      expect(res.json<{ error: string }>().error).toContain('2MB, max 1MB');
+      expect(res.json()).toEqual(
+        serverError(
+          'SERVER_ARCHIVE_TOO_LARGE',
+          'Directory too large for archive export (2MB, max 1MB)',
+        ),
+      );
     });
 
     it('counts only in-scope content, so denied bulk neither blocks nor leaks', async () => {

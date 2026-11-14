@@ -7,11 +7,12 @@
  */
 
 import * as cheerio from 'cheerio';
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import type { Page } from 'puppeteer-core';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { INSIDER_SEED, makeRuntimeConfig } from '../../testing/authFixture.js';
+import { testApp } from '../../testing/testApp.js';
 import { computeInsiderKey } from '../../util/crypto.js';
 
 const config = makeRuntimeConfig();
@@ -92,7 +93,7 @@ function agentProblems(url: string): string[] {
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  app = Fastify();
+  app = testApp();
   app.addHook('preHandler', (request, _reply, done) => {
     request.authSeed = INSIDER_SEED;
     request.insiderScopes = null;
