@@ -5,6 +5,7 @@
  */
 
 import {
+  D_DOCUMENT,
   D4,
   D8,
   D8_NAVIGATION,
@@ -118,6 +119,12 @@ export const DEPARTURES_CONTENT: Readonly<Record<string, WireDeparture>> = {
     allowedBy: D4,
     status: 400,
     code: 'SERVER_INVALID_PATH',
+  },
+  'fileContent dot-markdown': {
+    before:
+      '200 {"type":"text","content":"# Notes…"} (a .markdown file was plain text)',
+    allowedBy: `${D_DOCUMENT}: a .markdown file is a native Markdown document (type markdown, rendered)`,
+    status: 200,
   },
   'fileContent directory': {
     before: '400 {"error":"Use /api/path/ for directories"}',

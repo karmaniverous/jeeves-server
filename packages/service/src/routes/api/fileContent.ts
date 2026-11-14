@@ -15,19 +15,20 @@ import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { getConfig } from '../../config/index.js';
 import { csvToHtmlTable } from '../../services/csv.js';
 import { getOrRenderDiagram } from '../../services/diagramCache.js';
+import {
+  isNativeMarkdown,
+  loadMarkdownDocument,
+} from '../../services/markdownDocument.js';
 import { renderMermaidSvg } from '../../services/mermaid.js';
 import { renderPlantUmlSvg } from '../../services/plantuml.js';
 import { filterBreadcrumbsForOutsider } from '../../util/breadcrumbs.js';
-import { looksLikeText } from '../../util/fileDetection.js';
+import { looksLikeText, PLANTUML_EXTS } from '../../util/fileDetection.js';
 import { breadcrumbParts, getRoots } from '../../util/platform.js';
-import { renderMarkdownContent, tryWatcherRender } from './fileRender.js';
+import { renderMarkdownContent } from './fileRender.js';
 import { fsPathOf, NOT_FOUND_MESSAGE, requirePath } from './routePath.js';
 
 /** Image extensions recognized for type detection. */
 const IMAGE_EXTS = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.ico'];
-
-/** PlantUML file extensions. */
-const PLANTUML_EXTS = ['.puml', '.plantuml', '.pu'];
 
 /** `fileContent`: a file's content and, where supported, its rendering. */
 export const fileContentHandlers: HandlersFor<'fileContent'> = {
@@ -56,24 +57,11 @@ export const fileContentHandlers: HandlersFor<'fileContent'> = {
       isInsider,
     };
 
-    // Markdown
-    if (ext === '.md') {
+    // Native Markdown, raw: no rendering (rendered below with the loader).
+    const native = isNativeMarkdown(resolved);
+    if (native && rawOnly) {
       const content = fs.readFileSync(resolved, 'utf8');
-      if (rawOnly) return ok({ type: 'markdown' as const, content, ...base });
-      const rendered = await renderMarkdownContent(
-        content,
-        request,
-        resolved,
-        reqPath,
-        isInsider,
-      );
-      return ok({
-        type: 'markdown' as const,
-        content,
-        ...rendered,
-        ...base,
-        mtime: stats.mtimeMs,
-      });
+      return ok({ type: 'markdown' as const, content, ...base });
     }
 
     // Diagrams
@@ -108,14 +96,14 @@ export const fileContentHandlers: HandlersFor<'fileContent'> = {
       return ok({ type: 'csv' as const, content, html, ...base });
     }
 
-    // Text files (optionally rendered by jeeves-watcher)
+    // Markdown documents (native, or text rendered by jeeves-watcher)
     const buffer = fs.readFileSync(resolved);
-    if (looksLikeText(buffer)) {
+    if (native || looksLikeText(buffer)) {
       const content = buffer.toString('utf8');
-      const renderResult = rawOnly ? null : await tryWatcherRender(resolved);
-      if (renderResult?.renderAs === 'md') {
+      const doc = rawOnly ? null : await loadMarkdownDocument(resolved);
+      if (doc) {
         const rendered = await renderMarkdownContent(
-          renderResult.content,
+          doc.source,
           request,
           resolved,
           reqPath,
@@ -127,8 +115,9 @@ export const fileContentHandlers: HandlersFor<'fileContent'> = {
           ...rendered,
           ...base,
           mtime: stats.mtimeMs,
-          renderAs: renderResult.renderAs,
-          matchedRules: renderResult.rules,
+          // Watcher documents only (undefined fields are not sent).
+          renderAs: doc.renderAs,
+          matchedRules: doc.matchedRules,
         });
       }
       return ok({ type: 'text' as const, content, ...base });

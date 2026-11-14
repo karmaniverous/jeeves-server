@@ -29,6 +29,7 @@ import {
   clearStandaloneDiagramCache,
   getCachedExport,
 } from '../../services/exportCache.js';
+import { loadMarkdownDocument } from '../../services/markdownDocument.js';
 import { RenderFailedError } from '../../services/puppeteer.js';
 import { getRoots } from '../../util/platform.js';
 import { pathKeyQuery } from '../../util/shareQuery.js';
@@ -99,8 +100,10 @@ export const exportHandlers: HandlersFor<'export' | 'exportCacheClear'> = {
     if (format !== 'pdf' && format !== 'docx')
       throw new ExportUnsupported('Files support pdf or docx export');
 
-    const ext = path.extname(resolved).toLowerCase();
-    if (ext !== '.md')
+    // A Markdown document: native, or rendered as Markdown by the watcher
+    // (unreachable watcher: SERVER_WATCHER_UNAVAILABLE, nothing cached).
+    const doc = await loadMarkdownDocument(resolved, { requireWatcher: true });
+    if (!doc)
       throw new ExportUnsupported(
         'Only markdown files support PDF/DOCX export',
       );
@@ -118,7 +121,7 @@ export const exportHandlers: HandlersFor<'export' | 'exportCacheClear'> = {
     const renderHost = bindAddr === '0.0.0.0' ? '127.0.0.1' : bindAddr;
     const exportUrl = buildRenderUrl(renderHost, port, reqPath, exportKey);
     const fileName = path.basename(resolved);
-    const baseName = fileName.replace(/\.md$/i, '');
+    const baseName = path.parse(fileName).name;
 
     const contentType =
       format === 'pdf'

@@ -13,7 +13,7 @@ But in the business world, you can't share `.md` files — people expect PDFs an
 ## Features
 
 - **File Browser** — Navigate your filesystem through a modern web interface
-- **Markdown Rendering** — `.md` files render as styled HTML with table of contents
+- **Markdown Rendering** — `.md` and `.markdown` files (and text files jeeves-watcher renders as Markdown) render as styled HTML with table of contents
 - **PDF & DOCX Export** — One-click export for business-ready documents
 - **Code Highlighting** — Source files display with syntax highlighting
 - **Mermaid & PlantUML Diagrams** — Rendered inline with pan/zoom

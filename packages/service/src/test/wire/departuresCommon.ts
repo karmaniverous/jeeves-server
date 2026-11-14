@@ -83,3 +83,7 @@ export const D22 =
 export const D4_RUNNER = d4Status(
   'SERVER_RUNNER_UNAVAILABLE is 503 (an unreachable runner was 502)',
 );
+
+/** One notion of a Markdown document (#284, #316, Decision 2): the loader. */
+export const D_DOCUMENT =
+  "#284 / #316 / Decision 2: one Markdown document loader (loadMarkdownDocument) for the file API, export and link-info; native .md and .markdown, watcher renderAs 'md'";

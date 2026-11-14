@@ -1,24 +1,13 @@
 /**
- * Tests for the file content rendering helpers: watcher render proxy and
- * the Markdown pipeline (diagram hashes, embedded diagrams, outsider link
- * rewriting).
+ * Tests for the file content rendering helper: the Markdown pipeline
+ * (diagram hashes, embedded diagrams, outsider link rewriting).
  *
  * @packageDocumentation
  */
 
 import type { FastifyRequest } from 'fastify';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@karmaniverous/jeeves', async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  getServiceUrl: () => 'http://watcher:1936',
-}));
-const render = vi.hoisted(() => vi.fn());
-const createWatcherClient = vi.hoisted(() => vi.fn(() => ({ render })));
-vi.mock('@karmaniverous/jeeves-watcher-sdk', async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  createWatcherClient,
-}));
 vi.mock('../../config/index.js', () => ({
   getConfig: () => ({ roots: {} }),
 }));
@@ -56,68 +45,8 @@ vi.mock('../../services/deepShareLinks.js', async (importOriginal) => ({
     rewriteSimpleImageAuth(...a),
 }));
 
-const { WatcherError } = await import('@karmaniverous/jeeves-watcher-sdk');
-const { renderMarkdownContent, tryWatcherRender } =
-  await import('./fileRender.js');
+const { renderMarkdownContent } = await import('./fileRender.js');
 const { isDirectoryUrlPath } = await import('../../services/contentPath.js');
-
-describe('tryWatcherRender', () => {
-  let warn: ReturnType<typeof vi.spyOn>;
-
-  beforeEach(() => {
-    render.mockReset();
-    createWatcherClient.mockClear();
-    warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('renders a normalised path within the 5 s budget', async () => {
-    const data = { renderAs: 'md', content: 'x', rules: ['r'], metadata: {} };
-    render.mockResolvedValue(data);
-    await expect(tryWatcherRender('J:\\docs\\a.json')).resolves.toEqual(data);
-    expect(createWatcherClient).toHaveBeenCalledWith({
-      baseUrl: 'http://watcher:1936',
-      timeoutMs: 5000,
-    });
-    expect(render).toHaveBeenCalledWith({ path: 'j:/docs/a.json' });
-  });
-
-  it('returns null when no rules match', async () => {
-    render.mockResolvedValue({
-      renderAs: 'md',
-      content: '',
-      rules: [],
-      metadata: {},
-    });
-    await expect(tryWatcherRender('/a')).resolves.toBeNull();
-  });
-
-  it('returns null without logging when the watcher answers an error', async () => {
-    render.mockRejectedValue(
-      new WatcherError({ code: 'http_500', message: 'boom', status: 500 }),
-    );
-    await expect(tryWatcherRender('/a')).resolves.toBeNull();
-    expect(warn).not.toHaveBeenCalled();
-  });
-
-  it('returns null and logs when the watcher is unreachable', async () => {
-    const err = new WatcherError({ code: 'network_error', message: 'down' });
-    render.mockRejectedValue(err);
-    await expect(tryWatcherRender('/a')).resolves.toBeNull();
-    expect(warn).toHaveBeenCalledWith('Watcher render failed for /a:', err);
-  });
-
-  it('returns null when the client cannot be built', async () => {
-    createWatcherClient.mockImplementationOnce(() => {
-      throw new WatcherError({ code: 'invalid_options', message: 'bad url' });
-    });
-    await expect(tryWatcherRender('/a')).resolves.toBeNull();
-    expect(warn).toHaveBeenCalledOnce();
-  });
-});
 
 describe('renderMarkdownContent', () => {
   beforeEach(() => {

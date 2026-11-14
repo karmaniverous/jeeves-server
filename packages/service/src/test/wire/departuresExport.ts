@@ -5,6 +5,7 @@
  */
 
 import {
+  D_DOCUMENT,
   D_VALIDATION,
   D4,
   D4_CHROME,
@@ -31,15 +32,15 @@ export const DEPARTURES_EXPORT: Readonly<Record<string, WireDeparture>> = {
   },
   'export dot-markdown pdf': {
     before: '400 {"error":"Only markdown files support PDF/DOCX export"}',
-    allowedBy: D4,
-    status: 400,
-    code: 'SERVER_EXPORT_UNSUPPORTED',
+    allowedBy: `${D_DOCUMENT}: a .markdown file exports, so the wire app (no Chrome) answers as for .md; ${D4_CHROME}`,
+    status: 503,
+    code: 'SERVER_CHROME_UNAVAILABLE',
   },
   'export json pdf': {
     before: '400 {"error":"Only markdown files support PDF/DOCX export"}',
-    allowedBy: D4,
-    status: 400,
-    code: 'SERVER_EXPORT_UNSUPPORTED',
+    allowedBy: `${D_DOCUMENT}: a text file only the watcher can render, with the watcher unreachable, is SERVER_WATCHER_UNAVAILABLE (502)`,
+    status: 502,
+    code: 'SERVER_WATCHER_UNAVAILABLE',
   },
   'export file zip': {
     before: '400 {"error":"Files support pdf or docx export"}',

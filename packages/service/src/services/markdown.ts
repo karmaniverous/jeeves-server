@@ -10,6 +10,8 @@ import anchor from 'markdown-it-anchor';
 import taskLists from 'markdown-it-task-lists';
 
 import { registerDiagram } from './embeddedDiagrams.js';
+import { parseFrontMatter } from './frontMatter.js';
+import { frontMatterBlock } from './frontMatterBlock.js';
 
 interface Heading {
   level: number;
@@ -74,19 +76,6 @@ function linkifyFilesystemPaths(markdown: string): string {
 }
 
 /**
- * Extract YAML frontmatter from markdown if present.
- * Returns the frontmatter content (without delimiters) and the remaining markdown.
- */
-function extractFrontmatter(markdown: string): {
-  frontmatter: string | null;
-  body: string;
-} {
-  const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
-  if (!match) return { frontmatter: null, body: markdown };
-  return { frontmatter: match[1], body: markdown.slice(match[0].length) };
-}
-
-/**
  * Custom slugify matching the current algorithm:
  * lowercase → strip HTML tags → remove non-word/non-space/non-dash → whitespace to dash → collapse dashes → trim dashes
  */
@@ -107,15 +96,11 @@ export function parseMarkdown(
   markdown: string,
   options: { linkWindowsPaths?: boolean; basePath?: string } = {},
 ): { html: string; headings: Heading[] } {
-  // Extract frontmatter before processing
-  const { frontmatter, body } = extractFrontmatter(markdown);
+  // Front matter is shown as YAML (less the `jeeves` namespace); source
+  // mapping counts lines of the original text, so offset by its block.
+  const { frontMatter, body } = parseFrontMatter(markdown);
   let processedMarkdown = body;
-
-  // Compute frontmatter line count for source mapping offset
-  const frontmatterMatch = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
-  const frontmatterLineCount = frontmatterMatch
-    ? frontmatterMatch[0].split('\n').length - 1
-    : 0;
+  const frontmatterLineCount = frontMatter.lineCount;
 
   // Optionally linkify Windows paths
   if (options.linkWindowsPaths) {
@@ -272,34 +257,8 @@ export function parseMarkdown(
     html = $('body').html() ?? html;
   }
 
-  // Prepend frontmatter as a rendered YAML code block
-  if (frontmatter) {
-    const FRONTMATTER_COLLAPSE_THRESHOLD = 10;
-    const escaped = frontmatter
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-    const lines = frontmatter.split('\n');
-
-    if (lines.length > FRONTMATTER_COLLAPSE_THRESHOLD) {
-      const previewEscaped = lines
-        .slice(0, FRONTMATTER_COLLAPSE_THRESHOLD)
-        .join('\n')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-      html =
-        `<div class="frontmatter-block frontmatter-collapsible">` +
-        `<div class="frontmatter-preview"><pre><code class="language-yaml">${previewEscaped}</code></pre></div>` +
-        `<div class="frontmatter-full"><pre><code class="language-yaml">${escaped}</code></pre></div>` +
-        `<button class="frontmatter-toggle" onclick="this.parentElement.classList.toggle('frontmatter-expanded'); ` +
-        `this.textContent = this.parentElement.classList.contains('frontmatter-expanded') ` +
-        `? 'Show less' : 'Show all (${String(lines.length)} lines)'">Show all (${String(lines.length)} lines)</button>` +
-        `</div>\n${html}`;
-    } else {
-      html = `<div class="frontmatter-block"><pre><code class="language-yaml">${escaped}</code></pre></div>\n${html}`;
-    }
-  }
+  // Prepend the displayed front matter as a YAML code block
+  html = frontMatterBlock(frontMatter.display) + html;
 
   return { html, headings };
 }

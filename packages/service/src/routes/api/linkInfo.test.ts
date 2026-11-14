@@ -18,6 +18,11 @@ vi.mock('../../services/plantuml.js', () => ({
   getPlantUmlFormats: () => ['svg', 'png', 'pdf'],
 }));
 
+// Text files go to the watcher through the loader: no rendering here.
+vi.mock('../../services/watcherRender.js', () => ({
+  renderViaWatcher: () => Promise.resolve({ status: 'none' }),
+}));
+
 vi.mock('../../util/platform.js', () => ({
   getRoots: () => ({}),
   urlPathToFs: (reqPath: string) => {

@@ -1,13 +1,11 @@
 /**
  * Markdown rendering for the file content API: parses Markdown to HTML,
  * registers diagram hashes, optionally renders embedded diagrams and
- * rewrites links for outsider shares; also asks jeeves-watcher (through
- * its SDK) to render other text formats.
+ * rewrites links for outsider shares.
  *
  * @packageDocumentation
  */
 
-import type { RenderResponse } from '@karmaniverous/jeeves-watcher-sdk';
 import type { FastifyRequest } from 'fastify';
 
 import { isDirectoryUrlPath } from '../../services/contentPath.js';
@@ -19,39 +17,11 @@ import {
 import { renderEmbeddedDiagrams } from '../../services/embeddedDiagrams.js';
 import { registerDiagramHashes } from '../../services/exportCache.js';
 import { parseMarkdown } from '../../services/markdown.js';
-import {
-  toWatcherPath,
-  WATCHER_TIMEOUT_MS,
-  watcherAnswered,
-  watcherClient,
-} from '../../services/watcher.js';
 
 /** Rendered Markdown: HTML plus heading outline. */
 export interface RenderedMarkdown {
   html: string;
   headings: { level: number; text: string; slug: string }[];
-}
-
-/**
- * Try to render a file via the watcher's render endpoint (5 s budget).
- * Returns null if the watcher is unreachable, answers with an error, or no
- * rules match: the caller then shows the file raw. Only an unreached
- * watcher is logged.
- */
-export async function tryWatcherRender(
-  fsPath: string,
-): Promise<RenderResponse | null> {
-  try {
-    const data = await watcherClient(WATCHER_TIMEOUT_MS.render).render({
-      path: toWatcherPath(fsPath),
-    });
-    return data.rules.length === 0 ? null : data;
-  } catch (err) {
-    if (!watcherAnswered(err)) {
-      console.warn('Watcher render failed for ' + fsPath + ':', err);
-    }
-    return null;
-  }
 }
 
 /**

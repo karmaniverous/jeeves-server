@@ -11,7 +11,7 @@ Jeeves Server can export files as PDF, DOCX, ZIP, or tar — turning Markdown in
 | Format | Available For | How It Works |
 | --- | --- | --- |
 | **PDF** | Markdown, Mermaid, PlantUML | Puppeteer (Markdown) or diagram renderer (Mermaid/PlantUML) |
-| **DOCX** | Markdown files | HTML converted via `@turbodocx/html-to-docx` |
+| **DOCX** | Markdown documents | HTML converted via `@turbodocx/html-to-docx` |
 | **SVG** | Mermaid (`.mmd`), PlantUML (`.puml`, `.pu`, `.plantuml`) | Rendered via Mermaid CLI or PlantUML jar/server |
 | **PNG** | Mermaid, PlantUML | Rendered via Mermaid CLI or PlantUML jar/server |
 | **EPS** | PlantUML (jar only) | Vector export via PlantUML jar |
@@ -26,6 +26,10 @@ Jeeves Server can export files as PDF, DOCX, ZIP, or tar — turning Markdown in
 The **Download dropdown** (⬇️ icon) in the header shows available export options based on the current file type. Click an option and the file downloads directly — a spinner shows during generation, replaced by a checkmark on completion.
 
 Directory archives (ZIP and Tar) and **Clear Cache** are offered to insiders only; outsiders get the formats of the file they were shared. In a directory listing reached through a deep share link, entries have no Download menu: open the entry (which uses one level of the share's depth) and download from its page.
+
+### Markdown documents
+
+PDF and DOCX export take any Markdown document: a `.md` or `.markdown` file, or a text file (JSON, for instance) that jeeves-watcher renders as Markdown (`renderAs: 'md'`), exported as the page shows it. Anything else answers `400 SERVER_EXPORT_UNSUPPORTED`, and link-info offers no PDF/DOCX for it. If the watcher can't be reached, exporting a file only it can render answers `502 SERVER_WATCHER_UNAVAILABLE` and nothing is cached. The reserved `jeeves` front-matter mapping is left out of the exported front matter, as on screen.
 
 ### Via URL
 

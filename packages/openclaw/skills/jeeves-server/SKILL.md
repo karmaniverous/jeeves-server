@@ -64,6 +64,7 @@ Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) ret
 - **Directory item counts:** Subdirectory rows display a nonrecursive item count in the Size column.
 - **CSV table rendering:** `.csv` files render as HTML tables (Rendered tab) with raw source in the Raw tab.
 - **Collapsible frontmatter:** YAML frontmatter blocks exceeding 10 lines are collapsed by default with a "Show all" toggle.
+- **Markdown documents:** `.md`, `.markdown` and text files jeeves-watcher renders as Markdown (`renderAs: 'md'`) render, export to PDF/DOCX and get PDF/DOCX link-info alike. A top-level front-matter `jeeves:` mapping is the platform's reserved directive namespace (e.g. `jeeves.print`) and is hidden from displayed front matter. Export of a watcher-rendered file with the watcher down: `502 SERVER_WATCHER_UNAVAILABLE`.
 - **Collapsible TOC:** The table of contents sidebar uses a tree structure with expand/collapse chevrons on headings that have children. Active headings auto-expand their ancestor chain.
 
 ## Sharing
