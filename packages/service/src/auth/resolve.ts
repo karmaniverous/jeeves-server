@@ -163,12 +163,16 @@ export interface AuthQuery {
 /**
  * Extract deep share params from a parsed query object.
  * Returns undefined when no deep share context is present.
+ *
+ * A stack never contains a space but its alphabet includes `+`, which a
+ * query string decodes as a space: links written before stacks were
+ * percent-encoded carry it raw, so spaces are read back as `+`.
  */
 export function extractDeepParams(
   query: AuthQuery,
 ): { d: string; dirs: string; s: string } | undefined {
   return query.d !== undefined && query.s !== undefined
-    ? { d: query.d, dirs: query.dirs ?? '0', s: query.s }
+    ? { d: query.d, dirs: query.dirs ?? '0', s: query.s.replace(/ /g, '+') }
     : undefined;
 }
 

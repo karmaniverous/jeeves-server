@@ -12,6 +12,8 @@ import type {
 } from 'fastify';
 
 import {
+  type AuthQuery,
+  extractDeepParams,
   findInsider,
   resolveKeyAuth,
   resolveSessionAuth,
@@ -64,11 +66,8 @@ export const authStatusRoutes: FastifyPluginCallback = (
 
       // Try key-based auth
       if (config.authModes.includes('keys')) {
-        const query = request.query as Record<string, string | undefined>;
-        const deepParams =
-          query.d !== undefined && query.s !== undefined
-            ? { d: query.d, dirs: query.dirs ?? '0', s: query.s }
-            : undefined;
+        const query = request.query as AuthQuery & { path?: string };
+        const deepParams = extractDeepParams(query);
 
         const keyResult = resolveKeyAuth(
           config,

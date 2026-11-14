@@ -3,7 +3,9 @@
  *
  * Every generated URL carries its key as `k` (`URL_KEY_PARAM`, #279). Deep
  * share URLs always carry `d` (also `d=0`), which verification needs to
- * recognise a deep key (#282).
+ * recognise a deep key (#282), and their stack `s` percent-encoded: the
+ * lz-string URL alphabet includes `+`, which a query string decodes as a
+ * space.
  *
  * @packageDocumentation
  */
@@ -27,7 +29,7 @@ export function deepShareQuery(key: string, params: DeepShareParams): string {
     `${URL_KEY_PARAM}=${key}`,
     `d=${String(params.depth)}`,
     `dirs=${params.dirs ? '1' : '0'}`,
-    `s=${params.stack}`,
+    `s=${encodeURIComponent(params.stack)}`,
   ];
   if (params.exp) parts.push(`exp=${params.exp}`);
   return parts.join('&');

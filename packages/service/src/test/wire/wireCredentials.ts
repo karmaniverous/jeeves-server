@@ -39,19 +39,16 @@ const INSIDER_SEEDS: Record<WireInsider, string> = {
 };
 
 /**
- * The query string of a generated `/browse` share URL, with `+` (which the
- * deep-share stack alphabet contains) percent-encoded as a URL-encoding
- * client sends it. The server writes the stack raw, and a raw `+` decodes
- * to a space, so the stack no longer matches its signature: a share whose
- * path compresses to a stack with `+` fails today. The content root's path
- * (and so the stack) differs per host on Windows, so the baseline sends
- * the encoded form to stay deterministic.
+ * The query string of a generated `/browse` share URL. The deep-share stack
+ * alphabet contains `+`, which the server writes percent-encoded (the
+ * branch base wrote it raw, and the baseline was recorded with it encoded,
+ * as a URL-encoding client sends it, so it is deterministic on hosts whose
+ * content root path compresses to a stack with `+`).
  *
  * @param url - Share URL.
  * @returns Everything after `?`.
  */
-const queryOf = (url: string): string =>
-  url.slice(url.indexOf('?') + 1).replace(/\+/g, '%2B');
+const queryOf = (url: string): string => url.slice(url.indexOf('?') + 1);
 
 /**
  * The request parts for a credential.
