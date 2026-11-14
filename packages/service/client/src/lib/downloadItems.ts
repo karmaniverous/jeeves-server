@@ -1,12 +1,38 @@
 /**
- * Download menu contents for files and directories (pure).
+ * Download menu contents for files and directories (pure): each entry names
+ * the SDK binary entry that fetches it and the file name it is saved as
+ * (`<base name>.<format>`, or `<directory name>.zip`/`.tar`).
  */
+
+/** The SDK binary entry (and format) a download fetches. */
+export type DownloadRequest =
+  | { entry: 'raw' }
+  | { entry: 'export'; format: 'pdf' | 'docx' | 'zip' | 'tar' }
+  | { entry: 'exportMermaid' | 'exportPlantUml'; format: string };
 
 /** One entry of the Download menu. */
 export interface DownloadItem {
   label: string;
-  href: string;
+  request: DownloadRequest;
   filename: string;
+}
+
+/** Diagram download formats, by source kind. */
+const DIAGRAM_DOWNLOADS = {
+  exportMermaid: ['svg', 'png', 'pdf'],
+  exportPlantUml: ['svg', 'png', 'pdf', 'eps'],
+} as const;
+
+/** Menu entries for a diagram source's export formats. */
+function diagramItems(
+  entry: keyof typeof DIAGRAM_DOWNLOADS,
+  baseName: string,
+): DownloadItem[] {
+  return DIAGRAM_DOWNLOADS[entry].map((format) => ({
+    label: format.toUpperCase(),
+    request: { entry, format },
+    filename: `${baseName}.${format}`,
+  }));
 }
 
 /**
@@ -19,87 +45,51 @@ export function getDownloadItems(
   isDirectory: boolean | undefined,
   isInsider: boolean,
 ): DownloadItem[] {
-  const items: DownloadItem[] = [];
-
   if (isDirectory || !file) {
-    if (!isInsider) return items;
+    if (!isInsider) return [];
     const baseDirName = reqPath.split('/').pop() ?? 'archive';
-    items.push({
-      label: 'ZIP',
-      href: `/api/export/${reqPath}?format=zip`,
-      filename: `${baseDirName}.zip`,
-    });
-    items.push({
-      label: 'Tar',
-      href: `/api/export/${reqPath}?format=tar`,
-      filename: `${baseDirName}.tar`,
-    });
-    return items;
+    return [
+      {
+        label: 'ZIP',
+        request: { entry: 'export', format: 'zip' },
+        filename: `${baseDirName}.zip`,
+      },
+      {
+        label: 'Tar',
+        request: { entry: 'export', format: 'tar' },
+        filename: `${baseDirName}.tar`,
+      },
+    ];
   }
 
   const baseName = file.fileName.replace(/\.[^.]+$/, '');
-  items.push({
-    label: 'Raw',
-    href: `/api/raw/${reqPath}`,
-    filename: file.fileName,
-  });
+  const items: DownloadItem[] = [
+    { label: 'Raw', request: { entry: 'raw' }, filename: file.fileName },
+  ];
 
   if (file.type === 'markdown' || file.type === '.md') {
-    items.push({
-      label: 'PDF',
-      href: `/api/export/${reqPath}?format=pdf`,
-      filename: `${baseName}.pdf`,
-    });
-    items.push({
-      label: 'DOCX',
-      href: `/api/export/${reqPath}?format=docx`,
-      filename: `${baseName}.docx`,
-    });
+    items.push(
+      {
+        label: 'PDF',
+        request: { entry: 'export', format: 'pdf' },
+        filename: `${baseName}.pdf`,
+      },
+      {
+        label: 'DOCX',
+        request: { entry: 'export', format: 'docx' },
+        filename: `${baseName}.docx`,
+      },
+    );
   }
 
-  if (file.type === 'mermaid' || file.type === '.mmd') {
-    items.push({
-      label: 'SVG',
-      href: `/api/mermaid-export/${reqPath}?format=svg`,
-      filename: `${baseName}.svg`,
-    });
-    items.push({
-      label: 'PNG',
-      href: `/api/mermaid-export/${reqPath}?format=png`,
-      filename: `${baseName}.png`,
-    });
-    items.push({
-      label: 'PDF',
-      href: `/api/mermaid-export/${reqPath}?format=pdf`,
-      filename: `${baseName}.pdf`,
-    });
-  }
+  if (file.type === 'mermaid' || file.type === '.mmd')
+    items.push(...diagramItems('exportMermaid', baseName));
 
   if (
     file.type === 'plantuml' ||
     ['.puml', '.plantuml', '.pu'].includes(file.type)
-  ) {
-    items.push({
-      label: 'SVG',
-      href: `/api/plantuml-export/${reqPath}?format=svg`,
-      filename: `${baseName}.svg`,
-    });
-    items.push({
-      label: 'PNG',
-      href: `/api/plantuml-export/${reqPath}?format=png`,
-      filename: `${baseName}.png`,
-    });
-    items.push({
-      label: 'PDF',
-      href: `/api/plantuml-export/${reqPath}?format=pdf`,
-      filename: `${baseName}.pdf`,
-    });
-    items.push({
-      label: 'EPS',
-      href: `/api/plantuml-export/${reqPath}?format=eps`,
-      filename: `${baseName}.eps`,
-    });
-  }
+  )
+    items.push(...diagramItems('exportPlantUml', baseName));
 
   return items;
 }

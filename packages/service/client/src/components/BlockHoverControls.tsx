@@ -15,8 +15,9 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { BlockEditPopup } from '@/components/BlockEditPopup';
 import type { BlockEditMode } from '@/components/BlockEditPopup';
 import { blockLabel, blockLanguage } from '@/components/blockUtils';
-import { fileMutate } from '@/lib/api';
-import type { FileContent } from '@/lib/api';
+import type { FileContent } from '@/lib/apiTypes';
+import { errorMessage } from '@/lib/serverErrors';
+import { server } from '@/lib/server';
 import { useUndo } from '@/lib/useUndo';
 
 /** Padding (px) inside the hover border highlight. */
@@ -364,7 +365,8 @@ export function BlockHoverControls({
     if (!deleteTarget) return;
     setDeleteTarget(null);
     try {
-      await fileMutate(reqPath, {
+      await server.fileMutate({
+        '*': reqPath,
         action: 'delete-block',
         startLine: deleteTarget.startLine,
         endLine: deleteTarget.endLine,
@@ -374,7 +376,7 @@ export function BlockHoverControls({
       setHoverRect(null);
       await refetch();
     } catch (e: unknown) {
-      setErrorMsg((e as Error).message);
+      setErrorMsg(errorMessage(e));
     }
   }, [deleteTarget, reqPath, rawContent, pushUndo, refetch]);
 

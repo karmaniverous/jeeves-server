@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 
 import { LinkDropdown } from '@/components/LinkDropdown';
-import type { DriveEntry, ShareSettings } from '@/lib/api';
+import type { DriveEntry } from '@/lib/apiTypes';
+import type { ShareSettings } from '@/lib/shareLinks';
 
 interface DriveListProps {
   drives: DriveEntry[];

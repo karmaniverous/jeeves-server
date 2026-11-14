@@ -10,9 +10,10 @@ import {
   type ActionState,
 } from '@/components/ActionDropdown';
 import { useActionState } from '@/components/useActionState';
-import { clearCache, withKey } from '@/lib/api';
 import { useAuthStatus } from '@/lib/AuthStatusContext';
 import { getDownloadItems, showClearCache } from '@/lib/downloadItems';
+import { download } from '@/lib/downloads';
+import { client, server } from '@/lib/server';
 
 interface DownloadDropdownProps {
   reqPath: string;
@@ -22,23 +23,6 @@ interface DownloadDropdownProps {
   variant?: 'header' | 'default' | 'menuItem';
   onError?: (error: string) => void;
   onStateChange?: (state: ActionState) => void;
-}
-
-async function downloadBlob(href: string, filename: string) {
-  const res = await fetch(withKey(href), { credentials: 'include' });
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(body || `Download failed (${String(res.status)})`);
-  }
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
 
 export function DownloadDropdown({
@@ -77,7 +61,7 @@ export function DownloadDropdown({
         <DropdownMenuItem
           key={item.label}
           onSelect={() =>
-            void handleAction(() => downloadBlob(item.href, item.filename))
+            void handleAction(() => download(client, reqPath, item))
           }
           className="cursor-pointer"
         >
@@ -90,7 +74,7 @@ export function DownloadDropdown({
           <DropdownMenuItem
             onSelect={() =>
               void handleAction(async () => {
-                await clearCache(reqPath);
+                await server.exportCacheClear({ '*': reqPath });
               })
             }
             className="cursor-pointer text-muted-foreground"

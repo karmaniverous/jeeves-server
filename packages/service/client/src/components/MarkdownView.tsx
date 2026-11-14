@@ -16,8 +16,8 @@ import { initLazyDiagrams } from '@/components/LazyDiagram';
 import { initInlineSvgPanzoom } from '@/components/InlineSvgPanzoom';
 import { TocSection } from '@/components/TocSection';
 import { buildTocTree, findAncestorSlugs } from '@/components/tocUtils';
-import type { FileContent } from '@/lib/api';
-import { fileMutate, saveFile } from '@/lib/api';
+import type { FileContent } from '@/lib/apiTypes';
+import { server } from '@/lib/server';
 import { useUndo } from '@/lib/useUndo';
 import { initCodeBlockCm6 } from '@/lib/codeBlockCm6';
 import { useTheme } from '@/lib/theme';
@@ -84,7 +84,7 @@ export function MarkdownView({
   const handleUndo = useCallback(async () => {
     const restored = peekUndo(reqPath);
     if (!restored) return;
-    await saveFile(reqPath, restored);
+    await server.fileWrite({ '*': reqPath, content: restored });
     confirmUndo(reqPath, currentContent);
     await refetch();
   }, [reqPath, currentContent, peekUndo, confirmUndo, refetch]);
@@ -92,7 +92,7 @@ export function MarkdownView({
   const handleRedo = useCallback(async () => {
     const restored = peekRedo(reqPath);
     if (!restored) return;
-    await saveFile(reqPath, restored);
+    await server.fileWrite({ '*': reqPath, content: restored });
     confirmRedo(reqPath, currentContent);
     await refetch();
   }, [reqPath, currentContent, peekRedo, confirmRedo, refetch]);
@@ -205,7 +205,9 @@ export function MarkdownView({
       if (indexAttr === null) return;
       const index = parseInt(indexAttr, 10);
       const checked = target.checked;
-      fileMutate(reqPath, { action: 'toggle-checkbox', index, checked }).catch(
+      server
+        .fileMutate({ '*': reqPath, action: 'toggle-checkbox', index, checked })
+        .catch(
         () => console.warn('Checkbox toggle failed for index', index),
       );
     }

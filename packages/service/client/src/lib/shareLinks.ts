@@ -1,10 +1,21 @@
 /**
  * Derive the copyable page, raw and event URLs from a server-generated
  * share URL. Pure URL parsing; the auth query (`k`, deep share params,
- * `exp`) is carried over unchanged.
+ * `exp`) is carried over unchanged. The raw URL comes from the SDK's link
+ * helper.
  */
 
-import type { ShareSettings } from './api';
+import { toRawUrl } from '@karmaniverous/jeeves-server-sdk';
+
+/** The Link menu's share options. */
+export interface ShareSettings {
+  /** Expiry (`1h`, `24h`, `7d`, `30d`), or empty for none. */
+  expiry: string;
+  /** Deep share depth (documents only). */
+  depth: number;
+  /** Deep share: directories below open too. */
+  dirs: boolean;
+}
 
 /** Kind of link the Link dropdown copies. */
 export type LinkType = 'page' | 'raw' | 'event';
@@ -19,9 +30,8 @@ export function deriveShareLink(
   type: LinkType,
 ): string {
   const url = new URL(shareUrl, origin);
-  if (type === 'raw') {
-    url.pathname = url.pathname.replace(/^\/browse\//, '/api/raw/');
-  } else if (type === 'event') {
+  if (type === 'raw') return toRawUrl(url.href);
+  if (type === 'event') {
     url.pathname = '/event';
     url.hash = '';
   }

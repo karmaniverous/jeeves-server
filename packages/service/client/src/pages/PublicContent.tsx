@@ -7,7 +7,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { MarkdownView } from '@/components/MarkdownView';
 import { useTopBar } from '@/hooks/useTopBar';
-import type { FileContent } from '@/lib/api';
+import type { FileContent } from '@/lib/apiTypes';
+import { client } from '@/lib/server';
+import { errorMessage } from '@/lib/serverErrors';
 import { useTheme } from '@/lib/theme';
 
 interface PublicContentProps {
@@ -37,9 +39,7 @@ export function PublicContent({ slug }: PublicContentProps) {
     let cancelled = false;
     const load = async () => {
       try {
-        const r = await fetch(`/api/public-content/${slug}`);
-        if (!r.ok) throw new Error(`HTTP ${String(r.status)}`);
-        const data = (await r.json()) as FileContent;
+        const data = await client.publicContent({ slug });
         if (!cancelled) {
           setFile(data);
           setError(null);
@@ -48,9 +48,7 @@ export function PublicContent({ slug }: PublicContentProps) {
       } catch (err: unknown) {
         if (!cancelled) {
           setFile(null);
-          setError(
-            err instanceof Error ? err.message : 'Failed to load content',
-          );
+          setError(errorMessage(err, 'Failed to load content'));
           setLoading(false);
         }
       }

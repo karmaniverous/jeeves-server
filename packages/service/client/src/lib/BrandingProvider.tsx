@@ -5,20 +5,16 @@ import {
   DEFAULT_BRANDING,
   type BrandingData,
 } from './BrandingContext';
+import { client } from './server';
 
 export function BrandingProvider({ children }: { children: ReactNode }) {
   const [branding, setBranding] = useState<BrandingData>(DEFAULT_BRANDING);
 
   useEffect(() => {
-    fetch('/status')
-      .then((r) =>
-        r.ok
-          ? (r.json() as Promise<{ health?: { branding?: BrandingData } }>)
-          : null,
-      )
-      .then((data) => {
-        const b = data?.health?.branding;
-        if (b) setBranding({ ...DEFAULT_BRANDING, ...b });
+    client
+      .status()
+      .then(({ health }) => {
+        setBranding({ ...DEFAULT_BRANDING, ...health.branding });
       })
       .catch(() => {});
   }, []);

@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
-import type { BreadcrumbItem } from '@/lib/api';
+import type { BreadcrumbItem } from '@/lib/apiTypes';
 import { useAuthStatus } from '@/lib/AuthStatusContext';
 import { applyRenderState, computeRenderState } from '@/lib/renderState';
 import { useTheme } from '@/lib/theme';

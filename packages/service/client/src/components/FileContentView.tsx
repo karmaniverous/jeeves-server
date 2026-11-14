@@ -17,7 +17,7 @@ import { MarkdownView } from '@/components/MarkdownView';
 import { scrollToIdInContainer } from '@/components/scrollUtils';
 import { isRenderable } from '@/components/renderableUtils';
 import { useScrollAnchor } from '@/hooks/useScrollAnchor';
-import type { FileContent } from '@/lib/api';
+import type { FileContent } from '@/lib/apiTypes';
 
 interface FileContentViewProps {
   reqPath: string;

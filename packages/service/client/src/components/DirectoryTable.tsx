@@ -1,5 +1,6 @@
 import { DirectoryRow } from '@/components/DirectoryRow';
-import type { DirectoryEntry, ShareSettings } from '@/lib/api';
+import type { DirectoryEntry } from '@/lib/apiTypes';
+import type { ShareSettings } from '@/lib/shareLinks';
 
 interface DirectoryTableProps {
   entries: DirectoryEntry[];

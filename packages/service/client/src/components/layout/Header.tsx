@@ -20,7 +20,7 @@ import { AccountMenu, type CollapsedItem } from '@/components/AccountMenu';
 import { SearchModal } from '@/components/SearchModal';
 import { useBranding } from '@/lib/BrandingContext';
 import { Button } from '@/components/ui/button';
-import type { BreadcrumbItem } from '@/lib/api';
+import type { BreadcrumbItem } from '@/lib/apiTypes';
 
 const GITHUB_URL = 'https://github.com/karmaniverous/jeeves-server';
 

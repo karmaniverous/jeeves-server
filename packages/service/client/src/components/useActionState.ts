@@ -3,6 +3,8 @@
  */
 import { useState } from 'react';
 
+import { errorMessage } from '@/lib/serverErrors';
+
 import type { ActionState } from './ActionDropdown';
 
 export function useActionState(
@@ -25,7 +27,7 @@ export function useActionState(
       setState('done');
       setTimeout(() => setState('idle'), 1500);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Action failed';
+      const msg = errorMessage(err, 'Action failed');
       setErrorMsg(msg);
       setState('error');
       onError?.(msg);

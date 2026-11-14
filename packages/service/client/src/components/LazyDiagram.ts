@@ -5,7 +5,8 @@
  * via /api/diagram/:type/:hash.svg when they scroll into view.
  * After loading, initializes panzoom on the diagram.
  */
-import { withKey } from '@/lib/api';
+import { client } from '@/lib/server';
+import { errorMessage } from '@/lib/serverErrors';
 import { normalizeSvg } from '@/lib/svg';
 import { createPanzoomWrapper } from './panzoom';
 
@@ -41,16 +42,10 @@ async function loadDiagram(
   if (!type || !hash) return;
 
   try {
-    const url = withKey(`/api/diagram/${type}/${hash}.svg`);
-    const resp = await fetch(url);
-    if (!resp.ok) {
-      // Fastify's standard error body: the caller-facing text is `message`.
-      const err = (await resp
-        .json()
-        .catch(() => ({ message: 'Render failed' }))) as { message?: string };
-      throw new Error(err.message ?? `HTTP ${String(resp.status)}`);
-    }
-    const svgText = await resp.text();
+    if (type !== 'mermaid' && type !== 'plantuml')
+      throw new Error(`Unknown diagram type: ${type}`);
+    const bytes = await client.diagram({ type, hash: `${hash}.svg` });
+    const svgText = new TextDecoder().decode(bytes);
 
     // Normalize SVG for responsive display
     const normalizedSvg = normalizeSvg(svgText);
@@ -92,7 +87,7 @@ async function loadDiagram(
     initPanzoom();
     cleanups.push(cleanup);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
+    const message = errorMessage(err, 'Unknown error');
     const label = type
       ? type.charAt(0).toUpperCase() + type.slice(1)
       : 'Diagram';

@@ -3,7 +3,7 @@
  */
 import { useEffect, useState } from 'react';
 
-import type { ShareSettings } from '@/lib/api';
+import type { ShareSettings } from '@/lib/shareLinks';
 
 function loadShareSettings(): ShareSettings {
   const saved = localStorage.getItem('jeeves-share-settings');

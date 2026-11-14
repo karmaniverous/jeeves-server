@@ -11,12 +11,13 @@ import {
 } from 'lucide-react';
 
 import { useRerunSearch } from '@/hooks/useRerunSearch';
-import {
-  fetchFacets,
-  searchDocuments,
-  type SearchFacet,
-  type SearchResult,
-} from '@/lib/api';
+import type {
+  FacetsResponse,
+  SearchFacet,
+  SearchResult,
+} from '@/lib/apiTypes';
+import { server } from '@/lib/server';
+import { searchErrorMessage } from '@/lib/serverErrors';
 
 /** Enumerated facets with ≤ this many values render as chips; above → searchable dropdown */
 const CHIP_THRESHOLD = 8;
@@ -502,7 +503,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     facetsLoadedRef.current = true;
     setFacetsLoading(true);
     try {
-      const res = await fetchFacets();
+      const res = (await server.searchFacets()) as FacetsResponse;
       const cleaned: SearchFacet[] = [];
       const garbage: GarbageEntry[] = [];
       for (const f of res.facets) {
@@ -606,19 +607,14 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
         }
         const filter =
           mustClauses.length > 0 ? { must: mustClauses } : undefined;
-        const res = await searchDocuments(q, 30, filter);
+        const res = await server.search({
+          query: q,
+          limit: 30,
+          ...(filter ? { filter } : {}),
+        });
         setResults(res.results);
       } catch (err) {
-        const raw = String(err);
-        if (raw.includes('502') || raw.includes('Watcher unreachable'))
-          setError('Search service is unavailable. Please try again later.');
-        else if (raw.includes('501') || raw.includes('not configured'))
-          setError('Search is not configured on this server.');
-        else if (raw.includes('403'))
-          setError('You do not have permission to search.');
-        else if (raw.includes('400'))
-          setError('Invalid search query. Please revise and try again.');
-        else setError('Search failed. Please try again later.');
+        setError(searchErrorMessage(err));
       } finally {
         setLoading(false);
       }

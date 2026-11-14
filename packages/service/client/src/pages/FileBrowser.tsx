@@ -13,7 +13,7 @@ import { Header } from '@/components/layout/Header';
 import { LinkDropdown } from '@/components/LinkDropdown';
 import { TabBar } from '@/components/TabBar';
 import { useFileBrowser } from '@/hooks/useFileBrowser';
-import { saveFile } from '@/lib/api';
+import { server } from '@/lib/server';
 import { useUndo } from '@/lib/useUndo';
 
 export function FileBrowser() {
@@ -64,7 +64,7 @@ export function FileBrowser() {
     if (!restored) return;
     setUndoSaving(true);
     try {
-      await saveFile(reqPath, restored);
+      await server.fileWrite({ '*': reqPath, content: restored });
       confirmUndo(reqPath, currentContent);
       await refetch();
     } finally {
@@ -77,7 +77,7 @@ export function FileBrowser() {
     if (!restored) return;
     setUndoSaving(true);
     try {
-      await saveFile(reqPath, restored);
+      await server.fileWrite({ '*': reqPath, content: restored });
       confirmRedo(reqPath, currentContent);
       await refetch();
     } finally {

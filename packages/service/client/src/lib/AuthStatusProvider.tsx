@@ -8,8 +8,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { getAuthStatus, rotateKey as apiRotateKey } from './api';
 import { AuthStatusContext } from './AuthStatusContext';
+import { client, server } from './server';
 
 export function AuthStatusProvider({ children }: { children: ReactNode }) {
   const [email, setEmail] = useState<string | undefined>();
@@ -20,7 +20,9 @@ export function AuthStatusProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const browsePath = window.location.pathname.replace(/^\/browse/, '') || '/';
-    getAuthStatus(browsePath)
+    // `client`, not `server`: no credential is a status, not a sign-in.
+    client
+      .authStatus({ path: browsePath })
       .then((status) => {
         setEmail(status.email);
         setPicture(status.picture);
@@ -32,10 +34,8 @@ export function AuthStatusProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const rotateKey = useCallback(async () => {
-    const result = await apiRotateKey();
-    if (result.ok && result.keyCreatedAt) {
-      setKeyCreatedAt(result.keyCreatedAt);
-    }
+    const result = await server.rotateKey();
+    setKeyCreatedAt(result.keyCreatedAt);
   }, []);
 
   return (

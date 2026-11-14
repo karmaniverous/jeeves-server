@@ -4,7 +4,8 @@
  * Finds <img> elements with .svg sources, fetches the SVG content,
  * and replaces them with interactive Panzoom containers with fullscreen support.
  */
-import { withKey } from '@/lib/api';
+import { withPageCredential } from '@/lib/pageAuth';
+import { pageCredential } from '@/lib/server';
 import { createPanzoomWrapper } from './panzoom';
 
 export function initInlineSvgPanzoom(article: HTMLElement): () => void {
@@ -34,7 +35,7 @@ export function initInlineSvgPanzoom(article: HTMLElement): () => void {
     img.parentElement?.replaceChild(placeholder, img);
 
     // Fetch SVG content and init Panzoom
-    fetch(withKey(rawSrc))
+    fetch(withPageCredential(rawSrc, pageCredential))
       .then((r) => {
         if (!r.ok) throw new Error(`Failed to fetch SVG: ${String(r.status)}`);
         return r.text();
