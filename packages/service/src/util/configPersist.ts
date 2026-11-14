@@ -47,12 +47,12 @@ export async function writeInsiderSeedToConfig(
     );
     if (!matchingKey) return; // Insider not in config — skip
 
+    // In place: `insiders` is the object inside `rawConfig`.
     insiders[matchingKey] = {
       ...insiders[matchingKey],
       seed,
       keyCreatedAt: createdAt,
     };
-    rawConfig.insiders = insiders;
 
     try {
       writeFileAtomic(configPath, JSON.stringify(rawConfig, null, 2));
