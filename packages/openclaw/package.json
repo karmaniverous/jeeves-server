@@ -67,7 +67,8 @@
     },
     "hooks": {
       "before:init": [
-        "node ../../scripts/check-core-range.mjs"
+        "node ../../scripts/check-core-range.mjs",
+        "node ../../scripts/check-core-range.mjs --sibling ../sdk/package.json"
       ],
       "after:bump": [
         "npx git-cliff --tag openclaw/${version} -o CHANGELOG.md",

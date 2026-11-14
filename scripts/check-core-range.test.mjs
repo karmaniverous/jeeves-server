@@ -47,8 +47,8 @@ function run(coreVersion, deps, cwdManifest = true) {
     ...deps,
   });
   const args = cwdManifest
-    ? [script, '--core', core]
-    : [script, '--core', core, '--package', pkg];
+    ? [script, '--sibling', core]
+    : [script, '--sibling', core, '--package', pkg];
   return spawnSync(process.execPath, args, {
     cwd: cwdManifest ? path.dirname(pkg) : tmp,
     encoding: 'utf8',
@@ -100,20 +100,56 @@ describe('check-core-range CLI', () => {
 });
 
 describe('release-it wiring', () => {
-  for (const dir of ['service', 'openclaw']) {
-    it(`runs the guard first in ${dir}'s before:init hook`, () => {
-      const pkg = JSON.parse(
-        fs.readFileSync(
-          new URL(`../packages/${dir}/package.json`, import.meta.url),
-          'utf8',
-        ),
-      );
+  /** The before:init hooks of a package. */
+  const beforeInit = (dir) =>
+    JSON.parse(
+      fs.readFileSync(
+        new URL(`../packages/${dir}/package.json`, import.meta.url),
+        'utf8',
+      ),
+    )['release-it'].hooks['before:init'];
+
+  for (const dir of ['sdk', 'service', 'openclaw']) {
+    it(`runs the core guard first in ${dir}'s before:init hook`, () => {
       assert.equal(
-        pkg['release-it'].hooks['before:init'][0],
+        beforeInit(dir)[0],
         'node ../../scripts/check-core-range.mjs',
       );
     });
   }
+
+  for (const dir of ['service', 'openclaw']) {
+    it(`runs the SDK guard second in ${dir}'s before:init hook`, () => {
+      assert.equal(
+        beforeInit(dir)[1],
+        'node ../../scripts/check-core-range.mjs --sibling ../sdk/package.json',
+      );
+    });
+  }
+});
+
+describe('the SDK guard', () => {
+  const sdk = path.resolve(
+    fileURLToPath(new URL('../packages/sdk/package.json', import.meta.url)),
+  );
+
+  it('checks the declared SDK range against the SDK version', () => {
+    const pkg = manifest('sdk-dependent', {
+      name: 'dependent',
+      version: '1.0.0',
+      dependencies: { '@karmaniverous/jeeves-server-sdk': '^99.0.0' },
+    });
+    const res = spawnSync(
+      process.execPath,
+      [script, '--sibling', sdk, '--package', pkg],
+      { encoding: 'utf8' },
+    );
+    assert.equal(res.status, 1);
+    assert.match(
+      res.stderr,
+      /jeeves-server-sdk \^99\.0\.0 .*does not admit the workspace version/u,
+    );
+  });
 });
 
 describe('checkCoreRange', () => {

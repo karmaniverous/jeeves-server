@@ -1,15 +1,17 @@
 /**
- * Release guard: fail when a package's declared range for the workspace core
- * package does not admit core's current version.
+ * Release guard: fail when a package's declared range for a sibling workspace
+ * package (core by default, or the SDK) does not admit the sibling's current
+ * version.
  *
- * The server and plugin bundles import core at runtime, so publishing them
- * with a range that excludes the core they were built against installs a core
- * without the exports they need. Run from the package being released (the
- * release-it `before:init` hook does this):
+ * The SDK, server and plugin bundles import core (and the server and plugin
+ * the SDK) at runtime, so publishing them with a range that excludes the
+ * sibling they were built against installs one without the exports they
+ * need. Run from the package being released (the release-it `before:init`
+ * hook does this):
  *
- *   node ../../scripts/check-core-range.mjs [--core <core package.json>] [--package <package.json>]
+ *   node ../../scripts/check-core-range.mjs [--sibling <sibling package.json>] [--package <package.json>]
  *
- * `--core` defaults to `packages/core/package.json` in this repository and
+ * `--sibling` defaults to `packages/core/package.json` in this repository and
  * `--package` to `package.json` in the working directory.
  */
 
@@ -39,8 +41,9 @@ function readJson(file) {
 }
 
 /**
- * Check a package manifest's declared range for core against core's version.
- * Returns `{ ok, message }`.
+ * Check a package manifest's declared range for a sibling workspace package
+ * (`core`: the sibling's manifest) against the sibling's version. Returns
+ * `{ ok, message }`.
  */
 export function checkCoreRange(core, pkg) {
   const field = DEPENDENCY_FIELDS.find((f) => pkg[f]?.[core.name]);
@@ -62,22 +65,22 @@ export function checkCoreRange(core, pkg) {
   return {
     ok: false,
     message: [
-      `${pkg.name} declares ${core.name} ${range} (${field}), which does not admit the workspace core version ${core.version}.`,
+      `${pkg.name} declares ${core.name} ${range} (${field}), which does not admit the workspace version ${core.version}.`,
       `Raise the range (e.g. ^${core.version}) in the release commit, and release ${core.name} first.`,
     ].join('\n'),
   };
 }
 
-/** Parse `--core` and `--package` options. */
+/** Parse `--sibling` and `--package` options. */
 function parseArgs(argv) {
   const options = {
-    core: defaultCorePath,
+    sibling: defaultCorePath,
     package: path.resolve('package.json'),
   };
   for (let i = 0; i < argv.length; i += 2) {
     const name = argv[i]?.replace(/^--/u, '');
     const value = argv[i + 1];
-    if (!(name === 'core' || name === 'package') || value === undefined) {
+    if (!(name === 'sibling' || name === 'package') || value === undefined) {
       throw new Error(`Unknown or incomplete option: ${String(argv[i])}`);
     }
     options[name] = path.resolve(value);
@@ -85,12 +88,12 @@ function parseArgs(argv) {
   return options;
 }
 
-/** CLI entry: exit 0 when the range admits core, 1 otherwise. */
+/** CLI entry: exit 0 when the range admits the sibling, 1 otherwise. */
 function main() {
   try {
     const options = parseArgs(process.argv.slice(2));
     const result = checkCoreRange(
-      readJson(options.core),
+      readJson(options.sibling),
       readJson(options.package),
     );
     if (result.ok) {

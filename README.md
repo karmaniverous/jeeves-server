@@ -6,13 +6,14 @@ A self-hosted file browser, document viewer, and webhook gateway. Author documen
 
 ## Packages
 
-This is a monorepo with three packages:
+This is a monorepo with four packages:
 
 | Package | Description |
 | --- | --- |
 | [`@karmaniverous/jeeves-server`](packages/service/) | The server — file browser, document renderer, export engine, event gateway |
 | [`@karmaniverous/jeeves-server-openclaw`](packages/openclaw/) | OpenClaw plugin — gives AI agents tools for browsing, sharing, and exporting |
-| [`@karmaniverous/jeeves-server-core`](packages/core/) | Shared crypto utilities and API types consumed by service and plugin |
+| [`@karmaniverous/jeeves-server-sdk`](packages/sdk/) | Typed, browser-safe client for the server's HTTP API, built from the endpoint catalog |
+| [`@karmaniverous/jeeves-server-core`](packages/core/) | Endpoint catalog and schemas, error codes, OpenAPI document, config schema and key utilities, shared by the other packages |
 
 ## Quick Start
 
@@ -151,9 +152,10 @@ The monorepo uses npm workspaces. The dev server runs on port 19340 by default.
 Each package is released separately with release-it (`npm run release` in its directory), in this order:
 
 1. **Core** (`packages/core`) first, whenever it has changed.
-2. **Server** (`packages/service`) and **plugin** (`packages/openclaw`) together, after core is published. If core's version changed, raise their `@karmaniverous/jeeves-server-core` range to the new version (e.g. `^0.4.0`) in the release commit.
+2. **SDK** (`packages/sdk`), after core is published. If core's version changed, raise its `@karmaniverous/jeeves-server-core` range to the new version (e.g. `^0.4.0`) in the release commit.
+3. **Server** (`packages/service`) and **plugin** (`packages/openclaw`) together, after core and the SDK are published. Raise their `@karmaniverous/jeeves-server-core` and `@karmaniverous/jeeves-server-sdk` ranges to the versions just released in the release commit.
 
-The server and plugin bundles import core at runtime, so a range that excludes the new core would install an older core without the exports they need. A `before:init` hook (`scripts/check-core-range.mjs`) stops the server or plugin release when its declared core range doesn't admit the version in `packages/core`.
+The SDK, server and plugin bundles import core (and the server and plugin the SDK) at runtime, so a range that excludes the new version would install an older one without the exports they need. `before:init` hooks (`scripts/check-core-range.mjs`) stop a release when its declared core range, or its SDK range (`--sibling ../sdk/package.json`), doesn't admit the version in the workspace.
 
 ## License
 

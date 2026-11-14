@@ -12,7 +12,8 @@ This is a monorepo with four packages:
 
 ```
 packages/
-  shared/           # Shared crypto utilities and API types
+  core/             # Endpoint catalog, schemas, error codes, OpenAPI document, config schema, key utilities
+  sdk/              # Typed, browser-safe API client built from the catalog
   service/          # The Fastify server + React SPA client
     client/         # Vite + React client source
     src/            # Server TypeScript source
@@ -43,7 +44,7 @@ Set these before running the dev server if your paths differ from the defaults.
 From the repo root:
 
 ```bash
-npm run build        # Builds shared (tsc) + server (tsc) + client (Vite) + OpenClaw plugin
+npm run build        # Builds core + SDK + server + client (Vite) + OpenClaw plugin
 npm run typecheck    # Type-check all packages
 npm run lint         # ESLint
 ```
