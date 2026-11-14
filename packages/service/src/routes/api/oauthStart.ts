@@ -35,9 +35,12 @@ interface StartBody {
  * Why an explicit `origin` is unacceptable for a redirect URI, or null when
  * it is fine: https (or http on localhost), no credentials, no path, no
  * query, no fragment. A bare `@`, `?` or `#` counts too: the URL parser
- * drops it, but it would still be pasted into the redirect URI.
+ * drops it, but it would still be pasted into the redirect URI. Any `\` is
+ * refused before parsing: the parser reads it as `/` in http(s) URLs, so
+ * `https://host\evil` would otherwise pass with a path the check never saw.
  */
 function originParamError(origin: string): string | null {
+  if (origin.includes('\\')) return 'origin must be a valid URL';
   let originUrl: URL;
   try {
     originUrl = new URL(origin);

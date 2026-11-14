@@ -293,6 +293,10 @@ describe('OAuth API routes', () => {
 
     it.each([
       ['not a url', 'origin must be a valid URL'],
+      // The URL parser reads `\` as `/`; refused before parsing (#300).
+      ['https://public.example.com\\', 'origin must be a valid URL'],
+      ['https://public.example.com\\evil', 'origin must be a valid URL'],
+      ['https:\\\\public.example.com', 'origin must be a valid URL'],
       [
         'http://public.example.com',
         'origin scheme must be https (or http for localhost)',
