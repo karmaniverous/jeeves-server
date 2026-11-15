@@ -142,11 +142,13 @@ describe('catalog response schemas against the wire baseline', () => {
     expect(uncovered).toEqual([
       'search',
       'searchFacets',
-      'runnerGet',
-      'runnerPost',
-      'runnerPatch',
-      'runnerPut',
-      'runnerDelete',
+      'runnerListJobs',
+      'runnerGetJob',
+      'runnerListRuns',
+      'runnerRunJob',
+      'runnerEnableJob',
+      'runnerDisableJob',
+      'runnerStatus',
     ]);
   });
 

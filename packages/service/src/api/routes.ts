@@ -19,14 +19,8 @@ import { addAccessHook } from './accessHook.js';
 import { matchCatalogRequest } from './catalogMatch.js';
 import type { ServerHandlers } from './handlerTypes.js';
 
-/**
- * Entries whose body may be missing (a webhook, a runner call with no
- * payload): validated as `{}`.
- */
+/** Entries whose body may be missing (the webhook): validated as `{}`. */
 const EMPTY_BODY_ENTRIES: ReadonlySet<ServerEntryName> = new Set([
-  'runnerPost',
-  'runnerPatch',
-  'runnerPut',
   'receiveEvent',
 ]);
 

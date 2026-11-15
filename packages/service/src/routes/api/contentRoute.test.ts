@@ -39,7 +39,7 @@ describe('parseContentRoute', () => {
     'search',
     'share',
     'resolvePath',
-    'runnerGet',
+    'runnerGetJob',
     'authStatus',
     'config',
   ] as const)('returns null for %s, which addresses no content', (name) => {

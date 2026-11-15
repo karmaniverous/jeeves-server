@@ -1,5 +1,5 @@
 /**
- * The runner pass-through (`/api/runner/*`): method, path, query (without credentials) and body go to the runner; its status, body, content type and Retry-After come back (#315).
+ * The runner proxy handlers (Decision 28): each entry calls its one runner route (fixed method and path, the job ID encoded as one segment, only the runs `limit` forwarded, never a credential or a body); the runner's status, body, content type and Retry-After come back (#315).
  *
  * @packageDocumentation
  */
@@ -21,7 +21,7 @@ type JeevesModule = typeof Jeeves;
 const { requireInsider } = vi.hoisted(() => ({ requireInsider: vi.fn() }));
 vi.mock('./scopeGuard.js', () => ({ requireInsider }));
 
-const { runnerHandlers, runnerTarget } = await import('./runner.js');
+const { runnerHandlers } = await import('./runner.js');
 
 const fetchMock = vi.fn();
 
@@ -34,20 +34,7 @@ function runnerAnswers(
   fetchMock.mockResolvedValue(new Response(body, { status, headers }));
 }
 
-describe('runnerTarget', () => {
-  it('re-encodes path segments and drops credentials from the query', () => {
-    expect(
-      runnerTarget('jobs/a b/runs', { limit: '5', k: 'secret', key: 'x' }),
-    ).toBe('/jobs/a%20b/runs?limit=5');
-  });
-
-  it('repeats array values and has no ? without a query', () => {
-    expect(runnerTarget('jobs', { tag: ['a', 'b'] })).toBe('/jobs?tag=a&tag=b');
-    expect(runnerTarget('status', {})).toBe('/status');
-  });
-});
-
-describe('runner pass-through', () => {
+describe('runner proxy', () => {
   let app: FastifyInstance;
 
   beforeEach(async () => {
@@ -64,60 +51,53 @@ describe('runner pass-through', () => {
     await app.close();
   });
 
-  it.each(['GET', 'DELETE'] as const)(
-    'forwards %s with its path and query, no body',
-    async (method) => {
+  it.each([
+    ['GET', '/api/runner/jobs?k=secret', 'GET', '/jobs'],
+    ['GET', '/api/runner/jobs/a%20b?key=x', 'GET', '/jobs/a%20b'],
+    [
+      'GET',
+      '/api/runner/jobs/a%2Fb/runs?limit=5&k=secret&tag=x',
+      'GET',
+      '/jobs/a%2Fb/runs?limit=5',
+    ],
+    [
+      'GET',
+      '/api/runner/jobs/nightly/runs',
+      'GET',
+      '/jobs/nightly/runs?limit=20',
+    ],
+    ['POST', '/api/runner/jobs/nightly/run', 'POST', '/jobs/nightly/run'],
+    [
+      'PATCH',
+      '/api/runner/jobs/nightly/enable',
+      'PATCH',
+      '/jobs/nightly/enable',
+    ],
+    [
+      'PATCH',
+      '/api/runner/jobs/nightly/disable',
+      'PATCH',
+      '/jobs/nightly/disable',
+    ],
+    ['GET', '/api/runner/status', 'GET', '/status'],
+  ] as const)(
+    '%s %s calls runner %s %s, with no credential or body',
+    async (method, url, runnerMethod, runnerPath) => {
       const res = await app.inject({
         method,
-        url: '/api/runner/jobs/nightly/runs?limit=5&k=secret',
+        url,
+        ...(method === 'GET' ? {} : { payload: { reason: 'x' } }),
       });
 
-      expect(fetchMock).toHaveBeenCalledWith(
-        'http://runner.test/jobs/nightly/runs?limit=5',
-        { method },
+      expect(fetchMock).toHaveBeenCalledExactlyOnceWith(
+        `http://runner.test${runnerPath}`,
+        { method: runnerMethod },
       );
       expect(res.statusCode).toBe(200);
       expect(res.json()).toEqual({ ok: true });
       expect(requireInsider).toHaveBeenCalledOnce();
     },
   );
-
-  it.each(['POST', 'PATCH', 'PUT'] as const)(
-    'forwards %s with its JSON body',
-    async (method) => {
-      await app.inject({
-        method,
-        url: '/api/runner/jobs/nightly/enable',
-        payload: { reason: 'test' },
-      });
-
-      expect(fetchMock).toHaveBeenCalledWith(
-        'http://runner.test/jobs/nightly/enable',
-        {
-          method,
-          body: '{"reason":"test"}',
-          headers: { 'content-type': 'application/json' },
-        },
-      );
-    },
-  );
-
-  it('forwards a missing body as {}', async () => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/runner/jobs/nightly/run',
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(fetchMock).toHaveBeenCalledWith(
-      'http://runner.test/jobs/nightly/run',
-      {
-        method: 'POST',
-        body: '{}',
-        headers: { 'content-type': 'application/json' },
-      },
-    );
-  });
 
   it('passes a runner error through', async () => {
     runnerAnswers(

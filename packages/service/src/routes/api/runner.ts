@@ -1,5 +1,5 @@
 /**
- * Runner proxy: `/api/runner/*` passes through to the local jeeves-runner API (it listens on localhost only, so the server is its authenticated gateway). Insider-only. Method, path, query (credentials removed) and body go to the runner; its status, body, `content-type` and `Retry-After` come back (#315). The runner's API isn't re-described here.
+ * Runner proxy (Decision 28): the fixed set of jeeves-runner routes the server forwards to the local runner (it listens on localhost only, so the server is its authenticated gateway). Insider-only. Each entry calls one runner route: method and path are fixed here, and only the job ID (encoded as one path segment) and the runs `limit` come from the request, never a credential or a body. The runner's status, body, `content-type` and `Retry-After` come back (#315). Any other `/api/runner/*` path is no catalog entry, so it is a 404 and never reaches the runner.
  *
  * @packageDocumentation
  */
@@ -12,41 +12,16 @@ import { RunnerUnavailable } from '../../api/errors.js';
 import type { HandlersFor } from '../../api/handlerTypes.js';
 import { requireInsider } from './scopeGuard.js';
 
-/** Methods whose body is forwarded (GET and DELETE carry none). */
-const BODY_METHODS = new Set(['POST', 'PATCH', 'PUT']);
-
-/** Query parameters that carry the caller's credential: never forwarded. */
-const CREDENTIAL_PARAMS = new Set(['k', 'key']);
-
-/** What a pass-through handler receives. */
-interface RunnerInput {
-  params: { '*': string };
-  query: Record<string, unknown>;
-  body?: Record<string, unknown>;
-}
+/** Runs listed when the caller gives no `limit` (as in 3.15.0). */
+const DEFAULT_RUNS_LIMIT = '20';
 
 /**
- * The runner URL for a proxied request: the path's segments re-encoded,
- * the query without credentials.
+ * A runner job's path.
  *
- * @param path - The runner API path (`*`, decoded).
- * @param query - The validated query.
- * @returns The runner path and query string.
+ * @param id - The job ID (decoded).
+ * @returns `/jobs/<id>`, the ID encoded as one path segment.
  */
-export function runnerTarget(
-  path: string,
-  query: Record<string, unknown>,
-): string {
-  const search = new URLSearchParams();
-  for (const [name, value] of Object.entries(query)) {
-    if (CREDENTIAL_PARAMS.has(name)) continue;
-    for (const item of Array.isArray(value) ? value : [value])
-      if (item !== undefined) search.append(name, String(item));
-  }
-  const encoded = path.split('/').map(encodeURIComponent).join('/');
-  const qs = search.toString();
-  return `/${encoded}${qs ? `?${qs}` : ''}`;
-}
+const jobPath = (id: string): string => `/jobs/${encodeURIComponent(id)}`;
 
 /** The runner's body: JSON when it parses, else its text. */
 function parseBody(text: string): unknown {
@@ -70,10 +45,10 @@ function errorBody(body: unknown, text: string) {
 }
 
 /**
- * Forward a request to the runner and return its answer unchanged.
+ * Forward a request to one runner route and return its answer unchanged.
  *
- * @param method - The HTTP method.
- * @param input - The validated request.
+ * @param method - The runner route's method.
+ * @param path - The runner route's path (and query).
  * @param request - The request.
  * @returns The runner's status, body and headers.
  * @throws `SERVER_INSIDER_REQUIRED` without insider access,
@@ -81,26 +56,15 @@ function errorBody(body: unknown, text: string) {
  *   transport error is its `cause`, logged, never sent).
  */
 async function proxyToRunner(
-  method: string,
-  { params, query, body }: RunnerInput,
+  method: 'GET' | 'POST' | 'PATCH',
+  path: string,
   request: FastifyRequest,
 ) {
   requireInsider(request);
   let res: Response;
   let text: string;
   try {
-    res = await fetch(
-      `${getServiceUrl('runner')}${runnerTarget(params['*'], query)}`,
-      {
-        method,
-        ...(!BODY_METHODS.has(method) || body === undefined
-          ? {}
-          : {
-              body: JSON.stringify(body),
-              headers: { 'content-type': 'application/json' },
-            }),
-      },
-    );
+    res = await fetch(`${getServiceUrl('runner')}${path}`, { method });
     text = await res.text();
   } catch (cause) {
     throw Object.assign(new RunnerUnavailable(), { cause });
@@ -120,13 +84,34 @@ async function proxyToRunner(
     : { status: res.status as SuccessStatus, body: parsed, headers };
 }
 
-/** The runner pass-through handlers, one per method. */
+/** The runner proxy handlers: the only runner routes the server forwards. */
 export const runnerHandlers: HandlersFor<
-  'runnerGet' | 'runnerPost' | 'runnerPatch' | 'runnerPut' | 'runnerDelete'
+  | 'runnerListJobs'
+  | 'runnerGetJob'
+  | 'runnerListRuns'
+  | 'runnerRunJob'
+  | 'runnerEnableJob'
+  | 'runnerDisableJob'
+  | 'runnerStatus'
 > = {
-  runnerGet: (input, request) => proxyToRunner('GET', input, request),
-  runnerPost: (input, request) => proxyToRunner('POST', input, request),
-  runnerPatch: (input, request) => proxyToRunner('PATCH', input, request),
-  runnerPut: (input, request) => proxyToRunner('PUT', input, request),
-  runnerDelete: (input, request) => proxyToRunner('DELETE', input, request),
+  runnerListJobs: (_input, request) => proxyToRunner('GET', '/jobs', request),
+  runnerGetJob: ({ params }, request) =>
+    proxyToRunner('GET', jobPath(params.id), request),
+  runnerListRuns: ({ params, query }, request) => {
+    const search = new URLSearchParams({
+      limit: query.limit ?? DEFAULT_RUNS_LIMIT,
+    });
+    return proxyToRunner(
+      'GET',
+      `${jobPath(params.id)}/runs?${search.toString()}`,
+      request,
+    );
+  },
+  runnerRunJob: ({ params }, request) =>
+    proxyToRunner('POST', `${jobPath(params.id)}/run`, request),
+  runnerEnableJob: ({ params }, request) =>
+    proxyToRunner('PATCH', `${jobPath(params.id)}/enable`, request),
+  runnerDisableJob: ({ params }, request) =>
+    proxyToRunner('PATCH', `${jobPath(params.id)}/disable`, request),
+  runnerStatus: (_input, request) => proxyToRunner('GET', '/status', request),
 };

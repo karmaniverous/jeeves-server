@@ -49,11 +49,25 @@ const INVENTORY = [
   ['oauthStart', 'POST', '/api/oauth/start', 'write', 'insider'],
   ['oauthStatus', 'GET', '/api/oauth/status', 'read', 'insider'],
   ['oauthToken', 'GET', '/api/oauth/token', 'read', 'insider'],
-  ['runnerGet', 'GET', '/api/runner/*', 'read', 'insider'],
-  ['runnerPost', 'POST', '/api/runner/*', 'write', 'insider'],
-  ['runnerPatch', 'PATCH', '/api/runner/*', 'write', 'insider'],
-  ['runnerPut', 'PUT', '/api/runner/*', 'write', 'insider'],
-  ['runnerDelete', 'DELETE', '/api/runner/*', 'destructive', 'insider'],
+  ['runnerListJobs', 'GET', '/api/runner/jobs', 'read', 'insider'],
+  ['runnerGetJob', 'GET', '/api/runner/jobs/:id', 'read', 'insider'],
+  ['runnerListRuns', 'GET', '/api/runner/jobs/:id/runs', 'read', 'insider'],
+  ['runnerRunJob', 'POST', '/api/runner/jobs/:id/run', 'write', 'insider'],
+  [
+    'runnerEnableJob',
+    'PATCH',
+    '/api/runner/jobs/:id/enable',
+    'write',
+    'insider',
+  ],
+  [
+    'runnerDisableJob',
+    'PATCH',
+    '/api/runner/jobs/:id/disable',
+    'write',
+    'insider',
+  ],
+  ['runnerStatus', 'GET', '/api/runner/status', 'read', 'insider'],
 ] as const satisfies readonly (readonly [
   string,
   string,
@@ -75,9 +89,7 @@ const AUTH: Record<Access, AuthSpec> = {
 };
 
 /** Content and navigation entries: they take the share parameters. */
-const SHARE_QUERY_ENTRIES = INVENTORY.filter(
-  ([name, , path]) => path.endsWith('*') && !name.startsWith('runner'),
-)
+const SHARE_QUERY_ENTRIES = INVENTORY.filter(([, , path]) => path.endsWith('*'))
   .map(([name]) => name)
   .concat(['drives', 'authStatus']);
 

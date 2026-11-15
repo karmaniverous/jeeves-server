@@ -3565,10 +3565,45 @@
         }
       }
     },
-    "/api/runner/{*}": {
+    "/api/runner/jobs": {
       "get": {
-        "operationId": "runnerGet",
-        "description": "Pass-through GET to the jeeves-runner API.",
+        "operationId": "runnerListJobs",
+        "description": "List the jeeves-runner jobs (runner GET /jobs).",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runner/jobs/{id}": {
+      "get": {
+        "operationId": "runnerGetJob",
+        "description": "One jeeves-runner job (runner GET /jobs/:id).",
         "security": [
           {
             "query_k": []
@@ -3581,13 +3616,13 @@
         "parameters": [
           {
             "in": "path",
-            "name": "*",
+            "name": "id",
             "schema": {
               "type": "string",
-              "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+              "description": "Runner job ID."
             },
             "required": true,
-            "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+            "description": "Runner job ID."
           }
         ],
         "responses": {
@@ -3610,10 +3645,68 @@
             }
           }
         }
-      },
+      }
+    },
+    "/api/runner/jobs/{id}/runs": {
+      "get": {
+        "operationId": "runnerListRuns",
+        "description": "A jeeves-runner job's recent runs (runner GET /jobs/:id/runs).",
+        "security": [
+          {
+            "query_k": []
+          },
+          {
+            "cookie_jeeves_session": []
+          }
+        ],
+        "x-jeeves-insider-only": true,
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "description": "Runner job ID."
+            },
+            "required": true,
+            "description": "Runner job ID."
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "description": "Maximum number of runs (default 20).",
+              "type": "string"
+            },
+            "description": "Maximum number of runs (default 20)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runner/jobs/{id}/run": {
       "post": {
-        "operationId": "runnerPost",
-        "description": "Pass-through POST to the jeeves-runner API.",
+        "operationId": "runnerRunJob",
+        "description": "Run a jeeves-runner job now (runner POST /jobs/:id/run).",
         "security": [
           {
             "query_k": []
@@ -3626,26 +3719,15 @@
         "parameters": [
           {
             "in": "path",
-            "name": "*",
+            "name": "id",
             "schema": {
               "type": "string",
-              "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+              "description": "Runner job ID."
             },
             "required": true,
-            "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+            "description": "Runner job ID."
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": {}
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Success",
@@ -3666,10 +3748,12 @@
             }
           }
         }
-      },
+      }
+    },
+    "/api/runner/jobs/{id}/enable": {
       "patch": {
-        "operationId": "runnerPatch",
-        "description": "Pass-through PATCH to the jeeves-runner API.",
+        "operationId": "runnerEnableJob",
+        "description": "Enable a jeeves-runner job (runner PATCH /jobs/:id/enable).",
         "security": [
           {
             "query_k": []
@@ -3682,26 +3766,15 @@
         "parameters": [
           {
             "in": "path",
-            "name": "*",
+            "name": "id",
             "schema": {
               "type": "string",
-              "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+              "description": "Runner job ID."
             },
             "required": true,
-            "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+            "description": "Runner job ID."
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": {}
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Success",
@@ -3722,10 +3795,12 @@
             }
           }
         }
-      },
-      "put": {
-        "operationId": "runnerPut",
-        "description": "Pass-through PUT to the jeeves-runner API.",
+      }
+    },
+    "/api/runner/jobs/{id}/disable": {
+      "patch": {
+        "operationId": "runnerDisableJob",
+        "description": "Disable a jeeves-runner job (runner PATCH /jobs/:id/disable).",
         "security": [
           {
             "query_k": []
@@ -3738,26 +3813,15 @@
         "parameters": [
           {
             "in": "path",
-            "name": "*",
+            "name": "id",
             "schema": {
               "type": "string",
-              "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+              "description": "Runner job ID."
             },
             "required": true,
-            "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
+            "description": "Runner job ID."
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": {}
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Success",
@@ -3778,10 +3842,12 @@
             }
           }
         }
-      },
-      "delete": {
-        "operationId": "runnerDelete",
-        "description": "Pass-through DELETE to the jeeves-runner API.",
+      }
+    },
+    "/api/runner/status": {
+      "get": {
+        "operationId": "runnerStatus",
+        "description": "jeeves-runner status (runner GET /status).",
         "security": [
           {
             "query_k": []
@@ -3791,18 +3857,6 @@
           }
         ],
         "x-jeeves-insider-only": true,
-        "parameters": [
-          {
-            "in": "path",
-            "name": "*",
-            "schema": {
-              "type": "string",
-              "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
-            },
-            "required": true,
-            "description": "Runner API path (e.g. \"jobs/alpha/runs\")."
-          }
-        ],
         "responses": {
           "200": {
             "description": "Success",

@@ -1,68 +1,68 @@
 /**
- * The runner proxy entries of the server catalog: one entry per method on `/api/runner/*`, with an opaque body and response so the runner's API isn't re-described and strict response validation passes whatever the runner returns. Pure.
+ * The runner proxy entries of the server catalog (Decision 28): the fixed set of jeeves-runner routes the server forwards (the 3.15.0 set, with enable and disable as `PATCH`), each with a fixed path and an opaque response so the runner's answers aren't re-described and strict response validation passes whatever the runner returns. Any other `/api/runner/*` path is no entry, so the server answers it 404 and never forwards it. Pure.
  *
  * @packageDocumentation
  */
 
 import { z } from 'zod';
 
-import { INSIDER_ONLY, route, wildcardParams } from './route.js';
+import { INSIDER_ONLY, route } from './route.js';
 
-/** `*`: the runner API path (e.g. `jobs/alpha/runs`). */
-const runnerPath = wildcardParams('Runner API path (e.g. "jobs/alpha/runs").');
+/** `:id`: the runner job. */
+const jobParams = z.object({ id: z.string().describe('Runner job ID.') });
 
-/** Query passed through to the runner (e.g. `limit`). */
-const passThroughQuery = z.looseObject({});
-
-/** Body passed through to the runner. */
-const passThroughBody = z.looseObject({});
+/** Query of the job runs entry. */
+const runsQuery = z.object({
+  limit: z.string().optional().describe('Maximum number of runs (default 20).'),
+});
 
 /** Whatever the runner answers. */
 const runnerResponse = z.unknown();
 
+/** Fields every runner entry shares. */
+const RUNNER = { response: runnerResponse, auth: INSIDER_ONLY } as const;
+
 /** The runner proxy entries. */
 export const RUNNER_ENTRIES = [
   {
-    ...route('runnerGet', 'GET', '/api/runner/*'),
-    params: runnerPath,
-    query: passThroughQuery,
-    response: runnerResponse,
-    auth: INSIDER_ONLY,
+    ...route('runnerListJobs', 'GET', '/api/runner/jobs'),
+    ...RUNNER,
     kind: 'read',
   },
   {
-    ...route('runnerPost', 'POST', '/api/runner/*'),
-    params: runnerPath,
-    query: passThroughQuery,
-    body: passThroughBody,
-    response: runnerResponse,
-    auth: INSIDER_ONLY,
+    ...route('runnerGetJob', 'GET', '/api/runner/jobs/:id'),
+    params: jobParams,
+    ...RUNNER,
+    kind: 'read',
+  },
+  {
+    ...route('runnerListRuns', 'GET', '/api/runner/jobs/:id/runs'),
+    params: jobParams,
+    query: runsQuery,
+    ...RUNNER,
+    kind: 'read',
+  },
+  {
+    ...route('runnerRunJob', 'POST', '/api/runner/jobs/:id/run'),
+    params: jobParams,
+    ...RUNNER,
     kind: 'write',
   },
   {
-    ...route('runnerPatch', 'PATCH', '/api/runner/*'),
-    params: runnerPath,
-    query: passThroughQuery,
-    body: passThroughBody,
-    response: runnerResponse,
-    auth: INSIDER_ONLY,
+    ...route('runnerEnableJob', 'PATCH', '/api/runner/jobs/:id/enable'),
+    params: jobParams,
+    ...RUNNER,
     kind: 'write',
   },
   {
-    ...route('runnerPut', 'PUT', '/api/runner/*'),
-    params: runnerPath,
-    query: passThroughQuery,
-    body: passThroughBody,
-    response: runnerResponse,
-    auth: INSIDER_ONLY,
+    ...route('runnerDisableJob', 'PATCH', '/api/runner/jobs/:id/disable'),
+    params: jobParams,
+    ...RUNNER,
     kind: 'write',
   },
   {
-    ...route('runnerDelete', 'DELETE', '/api/runner/*'),
-    params: runnerPath,
-    query: passThroughQuery,
-    response: runnerResponse,
-    auth: INSIDER_ONLY,
-    kind: 'destructive',
+    ...route('runnerStatus', 'GET', '/api/runner/status'),
+    ...RUNNER,
+    kind: 'read',
   },
 ] as const;

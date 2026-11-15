@@ -1,15 +1,12 @@
 /**
  * The runner page's API: jeeves-runner's own API through the server's
- * runner proxy entries (`runnerGet`, `runnerPost`, `runnerPatch`) on the
- * SPA's SDK client. Unwraps runner responses and maps snake_case to
- * camelCase. The server passes `/api/runner/*` through unchanged, so methods
- * are the runner's own (enable/disable are PATCH).
+ * runner proxy entries (`runnerListJobs`, `runnerGetJob`, `runnerListRuns`,
+ * `runnerRunJob`, `runnerEnableJob`, `runnerDisableJob`, `runnerStatus`;
+ * Decision 28) on the SPA's SDK client. Unwraps runner responses and maps
+ * snake_case to camelCase.
  */
 
 import { server } from './server';
-
-/** A runner job's API path (the SDK encodes each path segment). */
-const jobPath = (id: string): string => `jobs/${id}`;
 
 // --- Raw runner API shapes (snake_case) ---
 
@@ -117,43 +114,35 @@ function mapRun(raw: RawRun): RunEntry {
 }
 
 export async function getRunnerStats(): Promise<RunnerStats> {
-  return (await server.runnerGet({ '*': 'status' })) as RawStats;
+  return (await server.runnerStatus()) as RawStats;
 }
 
 export async function getRunnerJobs(): Promise<RunnerJob[]> {
-  const raw = (await server.runnerGet({ '*': 'jobs' })) as { jobs: RawJob[] };
+  const raw = (await server.runnerListJobs()) as { jobs: RawJob[] };
   return raw.jobs.map(mapJob);
 }
 
 export async function getRunnerJob(id: string): Promise<RunnerJob> {
-  const raw = (await server.runnerGet({ '*': jobPath(id) })) as {
-    job: RawJob;
-  };
+  const raw = (await server.runnerGetJob({ id })) as { job: RawJob };
   return mapJob(raw.job);
 }
 
 export async function getJobRuns(id: string, limit = 20): Promise<RunEntry[]> {
-  const raw = (await server.runnerGet({
-    '*': `${jobPath(id)}/runs`,
+  const raw = (await server.runnerListRuns({
+    id,
     limit: String(limit),
   })) as { runs: RawRun[] };
   return raw.runs.map(mapRun);
 }
 
 export async function triggerJobRun(id: string): Promise<{ ok: boolean }> {
-  return (await server.runnerPost({ '*': `${jobPath(id)}/run` })) as {
-    ok: boolean;
-  };
+  return (await server.runnerRunJob({ id })) as { ok: boolean };
 }
 
 export async function enableJob(id: string): Promise<{ ok: boolean }> {
-  return (await server.runnerPatch({ '*': `${jobPath(id)}/enable` })) as {
-    ok: boolean;
-  };
+  return (await server.runnerEnableJob({ id })) as { ok: boolean };
 }
 
 export async function disableJob(id: string): Promise<{ ok: boolean }> {
-  return (await server.runnerPatch({ '*': `${jobPath(id)}/disable` })) as {
-    ok: boolean;
-  };
+  return (await server.runnerDisableJob({ id })) as { ok: boolean };
 }

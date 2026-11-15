@@ -54,11 +54,13 @@ Navigation and content entries also accept a share link's query parameters: `k` 
 | [`oauthStart`](#oauthstart) | `POST` | `/api/oauth/start` | insider |
 | [`oauthStatus`](#oauthstatus) | `GET` | `/api/oauth/status` | insider |
 | [`oauthToken`](#oauthtoken) | `GET` | `/api/oauth/token` | insider |
-| [`runnerGet`](#runnerget) | `GET` | `/api/runner/*` | insider |
-| [`runnerPost`](#runnerpost) | `POST` | `/api/runner/*` | insider |
-| [`runnerPatch`](#runnerpatch) | `PATCH` | `/api/runner/*` | insider |
-| [`runnerPut`](#runnerput) | `PUT` | `/api/runner/*` | insider |
-| [`runnerDelete`](#runnerdelete) | `DELETE` | `/api/runner/*` | insider |
+| [`runnerListJobs`](#runnerlistjobs) | `GET` | `/api/runner/jobs` | insider |
+| [`runnerGetJob`](#runnergetjob) | `GET` | `/api/runner/jobs/:id` | insider |
+| [`runnerListRuns`](#runnerlistruns) | `GET` | `/api/runner/jobs/:id/runs` | insider |
+| [`runnerRunJob`](#runnerrunjob) | `POST` | `/api/runner/jobs/:id/run` | insider |
+| [`runnerEnableJob`](#runnerenablejob) | `PATCH` | `/api/runner/jobs/:id/enable` | insider |
+| [`runnerDisableJob`](#runnerdisablejob) | `PATCH` | `/api/runner/jobs/:id/disable` | insider |
+| [`runnerStatus`](#runnerstatus) | `GET` | `/api/runner/status` | insider |
 
 ### status
 
@@ -769,27 +771,21 @@ Get a valid access token for a provider/account, refreshing it when expired.
 | `token_type` | `string` |  |
 | `expires_in_seconds` | `number \| null` |  |
 
-### runnerGet
+### runnerListJobs
 
-`GET /api/runner/*`
+`GET /api/runner/jobs`
 
-Pass-through GET to the jeeves-runner API.
+List the jeeves-runner jobs (runner GET /jobs).
 
 **Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
-
-**Request:**
-
-| Field | In | Type | Description |
-| --- | --- | --- | --- |
-| `*` | path | `string` | Runner API path (e.g. "jobs/alpha/runs"). |
 
 **Response:** `unknown` (JSON).
 
-### runnerPost
+### runnerGetJob
 
-`POST /api/runner/*`
+`GET /api/runner/jobs/:id`
 
-Pass-through POST to the jeeves-runner API.
+One jeeves-runner job (runner GET /jobs/:id).
 
 **Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
 
@@ -797,15 +793,15 @@ Pass-through POST to the jeeves-runner API.
 
 | Field | In | Type | Description |
 | --- | --- | --- | --- |
-| `*` | path | `string` | Runner API path (e.g. "jobs/alpha/runs"). |
+| `id` | path | `string` | Runner job ID. |
 
 **Response:** `unknown` (JSON).
 
-### runnerPatch
+### runnerListRuns
 
-`PATCH /api/runner/*`
+`GET /api/runner/jobs/:id/runs`
 
-Pass-through PATCH to the jeeves-runner API.
+A jeeves-runner job's recent runs (runner GET /jobs/:id/runs).
 
 **Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
 
@@ -813,15 +809,16 @@ Pass-through PATCH to the jeeves-runner API.
 
 | Field | In | Type | Description |
 | --- | --- | --- | --- |
-| `*` | path | `string` | Runner API path (e.g. "jobs/alpha/runs"). |
+| `id` | path | `string` | Runner job ID. |
+| `limit` | query | `string` (optional) | Maximum number of runs (default 20). |
 
 **Response:** `unknown` (JSON).
 
-### runnerPut
+### runnerRunJob
 
-`PUT /api/runner/*`
+`POST /api/runner/jobs/:id/run`
 
-Pass-through PUT to the jeeves-runner API.
+Run a jeeves-runner job now (runner POST /jobs/:id/run).
 
 **Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
 
@@ -829,15 +826,15 @@ Pass-through PUT to the jeeves-runner API.
 
 | Field | In | Type | Description |
 | --- | --- | --- | --- |
-| `*` | path | `string` | Runner API path (e.g. "jobs/alpha/runs"). |
+| `id` | path | `string` | Runner job ID. |
 
 **Response:** `unknown` (JSON).
 
-### runnerDelete
+### runnerEnableJob
 
-`DELETE /api/runner/*`
+`PATCH /api/runner/jobs/:id/enable`
 
-Pass-through DELETE to the jeeves-runner API.
+Enable a jeeves-runner job (runner PATCH /jobs/:id/enable).
 
 **Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
 
@@ -845,6 +842,32 @@ Pass-through DELETE to the jeeves-runner API.
 
 | Field | In | Type | Description |
 | --- | --- | --- | --- |
-| `*` | path | `string` | Runner API path (e.g. "jobs/alpha/runs"). |
+| `id` | path | `string` | Runner job ID. |
+
+**Response:** `unknown` (JSON).
+
+### runnerDisableJob
+
+`PATCH /api/runner/jobs/:id/disable`
+
+Disable a jeeves-runner job (runner PATCH /jobs/:id/disable).
+
+**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
+
+**Request:**
+
+| Field | In | Type | Description |
+| --- | --- | --- | --- |
+| `id` | path | `string` | Runner job ID. |
+
+**Response:** `unknown` (JSON).
+
+### runnerStatus
+
+`GET /api/runner/status`
+
+jeeves-runner status (runner GET /status).
+
+**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
 
 **Response:** `unknown` (JSON).

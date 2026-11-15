@@ -56,7 +56,7 @@ describe('toServerError', () => {
         { code: 'SERVER_RUNNER_UNAVAILABLE', message: 'down' },
         { 'retry-after': '7' },
       ),
-      'runnerGet',
+      'runnerListJobs',
       1000,
     );
     expect(fields(error)).toEqual({

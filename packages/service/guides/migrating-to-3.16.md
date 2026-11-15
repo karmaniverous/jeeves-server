@@ -86,7 +86,7 @@ The CLI's `config` and `config apply` send a key: `--key <key>` (an unscoped ins
 
 Every route is a catalog entry with one access class ([API Reference](./api-reference.md)). Identity credentials (a session, a machine key, an insider-seed insider key) are verified as identities and their scopes apply to the path; share credentials are verified against the path. Changes a client may notice:
 
-- **Scoped machine keys** may now call `POST /api/share`, `GET /api/resolve-path`, `POST /api/search`, `GET /api/search/facets`, `GET /api/drives`, the OAuth routes and the runner proxy within their scopes (3.15 answered 401), and get `403 SERVER_OUT_OF_SCOPE` instead of 401 for a path outside them.
+- **Scoped machine keys** may now call `POST /api/share`, `GET /api/resolve-path`, `POST /api/search`, `GET /api/search/facets`, `GET /api/drives`, `POST /api/oauth/start`, `GET /api/oauth/status` and the runner proxy within their scopes (3.15 answered 401), and get `403 SERVER_OUT_OF_SCOPE` instead of 401 for a path outside them. They may not fetch OAuth tokens: `GET /api/oauth/token` answers a scoped machine key `403 SERVER_FORBIDDEN` (3.15 answered 401). Sessions, scoped or not, and unscoped machine keys get tokens as before.
 - **`GET /api/resolve-path`** checks the resolved path against a scoped caller's scopes (3.15 resolved any path for a scoped session).
 - **The insider-seed insider key** authenticates `POST /api/rotate-key` as well as `POST /api/util/share-for`, and nothing else.
 - **Share keys** never authenticate insider or admin routes.
@@ -101,9 +101,21 @@ Every route is a catalog entry with one access class ([API Reference](./api-refe
 
 A webhook body must be a JSON object. An array, a scalar or a non-JSON body, which 3.15 accepted as `200 {"matched":null}`, is now `400 FST_ERR_VALIDATION`. Large objects are still accepted; only the logged preview of an unmatched body is capped at 256 KiB.
 
-## Runner proxy is a pass-through
+## Runner proxy is an allow-list
 
-`/api/runner/*` forwards every method (GET, POST, PATCH, PUT, DELETE), path, query (credentials removed) and JSON body to jeeves-runner unchanged. 3.15 proxied a fixed set of routes and took job enable/disable as `POST /api/runner/jobs/:id/enable` and `/disable` (the fix for #309 sent those upstream as `PATCH`). 3.16 rewrites no method: call the runner's own, `PATCH /api/runner/jobs/:id/enable` (and `/disable`); a `POST` there now reaches the runner as `POST`. Unknown runner paths reach the runner, which answers them. Runner errors come back with the runner's status, code, message and `Retry-After`.
+`/api/runner/*` forwards only the routes 3.15 proxied, to any insider (a session or a machine key, scoped or not):
+
+| Server route | Runner route |
+| --- | --- |
+| `GET /api/runner/jobs` | `GET /jobs` |
+| `GET /api/runner/jobs/:id` | `GET /jobs/:id` |
+| `GET /api/runner/jobs/:id/runs?limit=` | `GET /jobs/:id/runs?limit=` (default 20) |
+| `POST /api/runner/jobs/:id/run` | `POST /jobs/:id/run` |
+| `PATCH /api/runner/jobs/:id/enable` | `PATCH /jobs/:id/enable` |
+| `PATCH /api/runner/jobs/:id/disable` | `PATCH /jobs/:id/disable` |
+| `GET /api/runner/status` | `GET /status` |
+
+Enabling and disabling a job is now `PATCH`, as the runner expects: 3.15 took `POST /api/runner/jobs/:id/enable` (and `/disable`) and sent it upstream as `PATCH` (#309); 3.16 rewrites no method, so a `POST` there is `404 SERVER_NOT_FOUND`. Every other method or path under `/api/runner/`, the runner's `/config` and `/config/apply`, job creation, updates, deletion and script updates included, is `404 SERVER_NOT_FOUND` from the server for every caller, admins too, and never reaches the runner. Use jeeves-runner's own API (it listens on localhost) for those. No credential, query parameter (other than `limit`) or body is forwarded. Runner errors come back with the runner's status, code, message and `Retry-After`; an unreachable runner is `503 SERVER_RUNNER_UNAVAILABLE`.
 
 ## Export cache reset
 

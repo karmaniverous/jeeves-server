@@ -79,11 +79,13 @@ export const ROUTE_ACCESS: Readonly<Record<ServerEntryName, RouteAccessValue>> =
     oauthStart: 'insider',
     oauthStatus: 'insider',
     oauthToken: 'insider',
-    runnerGet: 'insider',
-    runnerPost: 'insider',
-    runnerPatch: 'insider',
-    runnerPut: 'insider',
-    runnerDelete: 'insider',
+    runnerListJobs: 'insider',
+    runnerGetJob: 'insider',
+    runnerListRuns: 'insider',
+    runnerRunJob: 'insider',
+    runnerEnableJob: 'insider',
+    runnerDisableJob: 'insider',
+    runnerStatus: 'insider',
   };
 
 /**

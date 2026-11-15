@@ -7,6 +7,7 @@
 import type { FastifyRequest } from 'fastify';
 
 import {
+  Forbidden,
   InvalidRequest,
   NotConfigured,
   Unauthorized,
@@ -35,6 +36,24 @@ export function requireOAuthInsider(
   if (request.accessMode !== 'insider')
     throw new Unauthorized('Insider auth required');
   return oauth;
+}
+
+/** Message of `SERVER_FORBIDDEN` for a scoped machine key on `oauthToken`. */
+export const SCOPED_MACHINE_KEY_TOKEN_ERROR =
+  'Scoped machine keys may not fetch OAuth tokens';
+
+/**
+ * Refuse a scoped machine key (Decision 28): live provider tokens reach
+ * past any path scope. Sessions, scoped or not, and unscoped machine keys
+ * pass.
+ *
+ * @param request - The request.
+ * @throws `SERVER_FORBIDDEN` (403) for a machine key with scopes.
+ */
+export function refuseScopedMachineKey(request: FastifyRequest): void {
+  const identity = request.access?.identity;
+  if (identity?.kind === 'machineKey' && identity.scopes !== null)
+    throw new Forbidden(SCOPED_MACHINE_KEY_TOKEN_ERROR);
 }
 
 /**

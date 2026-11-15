@@ -9,6 +9,7 @@ import {
   D4,
   D4_RUNNER,
   D8_INSIDER,
+  D28,
   type WireDeparture,
 } from './departuresCommon.js';
 
@@ -119,8 +120,9 @@ export const DEPARTURES_INTEGRATIONS: Readonly<Record<string, WireDeparture>> =
     },
     'oauthToken scoped machine key': {
       before: '401 {"error":"Unauthorized"}',
-      allowedBy: D8_INSIDER,
-      status: 200,
+      allowedBy: `${D8_INSIDER}; ${D28}`,
+      status: 403,
+      code: 'SERVER_FORBIDDEN',
     },
     'runner GET /api/runner/jobs': {
       before: '502 {"error":"Runner unreachable"}',
@@ -148,15 +150,15 @@ export const DEPARTURES_INTEGRATIONS: Readonly<Record<string, WireDeparture>> =
     },
     'runner POST /api/runner/jobs/alpha/enable': {
       before: '502 {"error":"Runner unreachable"}',
-      allowedBy: D4_RUNNER,
-      status: 503,
-      code: 'SERVER_RUNNER_UNAVAILABLE',
+      allowedBy: `${D28}: enable is PATCH, as the runner expects, and POST is no longer rewritten; ${D4}`,
+      status: 404,
+      code: 'SERVER_NOT_FOUND',
     },
     'runner POST /api/runner/jobs/alpha/disable': {
       before: '502 {"error":"Runner unreachable"}',
-      allowedBy: D4_RUNNER,
-      status: 503,
-      code: 'SERVER_RUNNER_UNAVAILABLE',
+      allowedBy: `${D28}: disable is PATCH, as the runner expects, and POST is no longer rewritten; ${D4}`,
+      status: 404,
+      code: 'SERVER_NOT_FOUND',
     },
     'runner GET /api/runner/status': {
       before: '502 {"error":"Runner unreachable"}',
@@ -208,8 +210,8 @@ export const DEPARTURES_INTEGRATIONS: Readonly<Record<string, WireDeparture>> =
     },
     'runner unknown route': {
       before: '404 {"error":"Not found"}',
-      allowedBy: `${D4}; the catalog's runner entries pass every /api/runner/* path through, so an unknown path is the runner's answer (here: runner unreachable)`,
-      status: 503,
-      code: 'SERVER_RUNNER_UNAVAILABLE',
+      allowedBy: `${D4}; ${D28}`,
+      status: 404,
+      code: 'SERVER_NOT_FOUND',
     },
   };

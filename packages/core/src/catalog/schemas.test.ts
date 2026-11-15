@@ -68,28 +68,28 @@ describe('receiveEvent body', () => {
   });
 });
 
-describe('runner proxy entries', () => {
-  it.each([
-    'runnerGet',
-    'runnerPost',
-    'runnerPatch',
-    'runnerPut',
-    'runnerDelete',
-  ] as const)('%s passes any response, and its query, through', (name) => {
+describe('runner proxy entries (Decision 28)', () => {
+  const runner = SERVER_CATALOG.entries.filter((e) =>
+    e.name.startsWith('runner'),
+  );
+
+  it.each(runner.map((e) => e.name))('%s passes any response', (name) => {
     const entry = SERVER_CATALOG.byName(name);
     for (const value of [{ jobs: [] }, [1], 'text', null])
       expect(entry.response.parse(value)).toEqual(value);
-    expect(entry.query.parse({ limit: '5' })).toEqual({ limit: '5' });
   });
 
-  it('sends a pass-through body only on POST, PATCH and PUT', () => {
-    const withBody = SERVER_CATALOG.entries
-      .filter((e) => e.name.startsWith('runner') && 'body' in e)
-      .map((e) => e.name);
-    expect(withBody).toEqual(['runnerPost', 'runnerPatch', 'runnerPut']);
+  it('takes no body, and a query only for the runs limit', () => {
+    expect(runner.filter((e) => 'body' in e)).toEqual([]);
+    expect(runner.filter((e) => 'query' in e).map((e) => e.name)).toEqual([
+      'runnerListRuns',
+    ]);
     expect(
-      SERVER_CATALOG.byName('runnerPost').body.parse({ any: { thing: 1 } }),
-    ).toEqual({ any: { thing: 1 } });
+      SERVER_CATALOG.byName('runnerListRuns').query.parse({
+        limit: '5',
+        k: 'secret',
+      }),
+    ).toEqual({ limit: '5' });
   });
 });
 

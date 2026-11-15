@@ -66,9 +66,14 @@ export const ENTRY_DESCRIPTIONS = {
     'Check whether valid OAuth2 credentials exist for a provider/account.',
   oauthToken:
     'Get a valid access token for a provider/account, refreshing it when expired.',
-  runnerGet: 'Pass-through GET to the jeeves-runner API.',
-  runnerPost: 'Pass-through POST to the jeeves-runner API.',
-  runnerPatch: 'Pass-through PATCH to the jeeves-runner API.',
-  runnerPut: 'Pass-through PUT to the jeeves-runner API.',
-  runnerDelete: 'Pass-through DELETE to the jeeves-runner API.',
+  runnerListJobs: 'List the jeeves-runner jobs (runner GET /jobs).',
+  runnerGetJob: 'One jeeves-runner job (runner GET /jobs/:id).',
+  runnerListRuns:
+    "A jeeves-runner job's recent runs (runner GET /jobs/:id/runs).",
+  runnerRunJob: 'Run a jeeves-runner job now (runner POST /jobs/:id/run).',
+  runnerEnableJob:
+    'Enable a jeeves-runner job (runner PATCH /jobs/:id/enable).',
+  runnerDisableJob:
+    'Disable a jeeves-runner job (runner PATCH /jobs/:id/disable).',
+  runnerStatus: 'jeeves-runner status (runner GET /status).',
 } as const;

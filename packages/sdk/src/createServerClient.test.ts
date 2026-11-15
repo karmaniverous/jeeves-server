@@ -41,14 +41,19 @@ describe('createServerClient', () => {
   });
 
   it('sends a key as k to entries that list it, never to public ones', async () => {
-    const fetch = stub();
+    const fetch = stub(() => Response.json({ ok: true, path: 'p', size: 1 }));
     const client = clientWith(fetch, { key: 'insider' });
-    await client.runnerPut({ '*': 'jobs/a b', enabled: true });
-    expect(lastUrl(fetch)).toBe(`${BASE}/api/runner/jobs/a%20b?k=insider`);
+    await client.fileWrite({ '*': 'j/a b.md', content: 'x' });
+    expect(lastUrl(fetch)).toBe(`${BASE}/api/file/j/a%20b.md?k=insider`);
     expect(fetch.mock.lastCall?.[1]).toMatchObject({
       method: 'PUT',
-      body: '{"enabled":true}',
+      body: '{"content":"x"}',
     });
+    await client.runnerEnableJob({ id: 'a b' });
+    expect(lastUrl(fetch)).toBe(
+      `${BASE}/api/runner/jobs/a%20b/enable?k=insider`,
+    );
+    expect(fetch.mock.lastCall?.[1]).toMatchObject({ method: 'PATCH' });
     expect(fetch.mock.lastCall?.[1].credentials).toBeUndefined();
     await client.health();
     expect(lastUrl(fetch)).toBe(`${BASE}/health`);
@@ -69,7 +74,7 @@ describe('createServerClient', () => {
 
   it("sends a session's cookie with credentials: 'same-origin'", async () => {
     const fetch = stub();
-    await clientWith(fetch, { session: true }).runnerGet({ '*': 'jobs' });
+    await clientWith(fetch, { session: true }).runnerListJobs();
     expect(lastUrl(fetch)).toBe(`${BASE}/api/runner/jobs`);
     expect(fetch.mock.lastCall?.[1].credentials).toBe('same-origin');
   });

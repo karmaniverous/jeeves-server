@@ -239,20 +239,24 @@ describe('SDK round trip: insider entries', () => {
     });
   });
 
-  it('runner pass-through, with the runner unreachable', async () => {
+  it('runner proxy, with the runner unreachable', async () => {
     calls(
-      'runnerGet',
-      'runnerPost',
-      'runnerPatch',
-      'runnerPut',
-      'runnerDelete',
+      'runnerListJobs',
+      'runnerGetJob',
+      'runnerListRuns',
+      'runnerRunJob',
+      'runnerEnableJob',
+      'runnerDisableJob',
+      'runnerStatus',
     );
     const runnerCalls = [
-      () => admin.runnerGet({ '*': 'jobs' }),
-      () => admin.runnerPost({ '*': 'jobs/x/trigger' }),
-      () => admin.runnerPatch({ '*': 'jobs/x' }),
-      () => admin.runnerPut({ '*': 'jobs/x' }),
-      () => admin.runnerDelete({ '*': 'jobs/x' }),
+      () => admin.runnerListJobs(),
+      () => admin.runnerGetJob({ id: 'x' }),
+      () => admin.runnerListRuns({ id: 'x', limit: '5' }),
+      () => admin.runnerRunJob({ id: 'x' }),
+      () => admin.runnerEnableJob({ id: 'x' }),
+      () => admin.runnerDisableJob({ id: 'x' }),
+      () => admin.runnerStatus(),
     ];
     for (const call of runnerCalls)
       await expect(failure(call())).resolves.toMatchObject({
