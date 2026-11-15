@@ -2,6 +2,80 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.16.0] - 2026-11-15
+
+### 🚀 Features
+
+- *(service)* Call jeeves-watcher through @karmaniverous/jeeves-watcher-sdk
+- *(service)* DefineError errors for every SERVER_* code, registerErrorHandlers for JSON routes (T7, #315)
+- *(service)* [**breaking**] Access hook enforcing each catalog entry's access class
+- *(service)* One rotation route, fileWrite under the file lock, status redirect URIs, redacted configApply (#292, D11, D15, D17, D20)
+- *(service)* Routes from the catalog (T9)
+- *(sdk)* Add @karmaniverous/jeeves-server-sdk, a typed browser-safe client from SERVER_CATALOG (T10)
+- *(service)* CLI status, config and config apply through the SDK, with --key (T11)
+- *(client)* The web client on the SDK - one ServerClient (session or page share credential), errors shown by ServerError.code, downloads fetched as bytes and named by the client, link helpers, runner proxy entries (T12)
+- *(openclaw)* [**breaking**] Build the plugin on the server SDK and catalog
+- *(service)* One Markdown document loader for file API, export and link-info
+- *(service)* Document titles - fileContent title, tab title {title} - {brand}, <title>/og:title in the gated /browse shell within a 1.5 s budget (T15, #262)
+- *(service)* Raw downloads - ?download=1 attachments with RFC 6266 file names, credentials replaced and other query kept by deep-share rewriting, linkInfo downloadUrl; deep share stack helpers split out (T16, #316)
+- *(service)* Export cache keyed by content, style, version and images (#288)
+- *(export)* Named PDF print styles (printStyles, jeeves.print, X-Print-Style)
+- *(service)* Google sign-in rejection page, auth.accessContact, SERVER_SIGN_IN_REJECTED, redirect-URI startup log, googleSignIn naming (T19, #304, #270)
+- *(service)* Event queue reliability (#302, #285)
+- *(runner,oauth)* [**breaking**] Runner proxy allow-list; oauthToken refuses scoped machine keys (D28)
+- *(service)* Refuse scoped machine keys on the runner proxy and OAuth routes (D29)
+
+### 🐛 Bug Fixes
+
+- *(runner)* Proxy enable/disable with PATCH and surface toggle errors
+- *(service)* Reject a backslash in the OAuth start origin
+- *(service)* Percent-encode deep-share stacks in generated links and read a raw '+' back
+- *(sdk)* Start the SDK at 0.1.0-0 with the server on ^0.1.0-0, so release:pre's lockfile refresh links it (T11a)
+- *(openclaw)* Server_export rejects share for directory archives (insider-only)
+- *(client)* Image and download links carry the page's share credential
+- *(access)* Resolve catalog entries from the matched route; fail closed
+- *(runner)* Refuse . and .. job IDs so the proxy stays on /jobs/<id>
+- *(share)* Encode share URL path segments, refuse %2e%2e share targets
+- *(service)* Encode insider share-for URLs, refuse control-char runner IDs and encoded dot share segments (T22 final review)
+
+### 💼 Other
+
+- Updated core
+- Updated sdk
+
+### 🚜 Refactor
+
+- *(service)* Remove the two production eslint-disable lines
+- Remove the remaining production eslint-disable lines
+- *(client)* Split SearchModal into focused components (search/), hooks (useFacets, useFacetFilters, useSearch, useOutsideClick) and pure helpers (searchFacets, resultChips), with tests; no behaviour change (T12a)
+- *(client)* Split BlockHoverControls, Header, MarkdownView and FileBrowser under 300 lines
+- *(service)* Drop configPersist's redundant re-assignment of insiders
+
+### 📚 Documentation
+
+- *(sharing)* Plain heading so the deep-shares anchor resolves in TypeDoc
+- *(service)* Event queue delivery, cursor, rotation and timeouts
+- *(service)* API reference generated from SERVER_CATALOG with a drift test; route notes replace the hand-written endpoint tables (#259)
+- [**breaking**] Migrating to 3.16 guide, READMEs and the jeeves-server skill for 3.16.0 (#274)
+
+### 🎨 Styling
+
+- Prettier-format client sources; lint runs prettier --check and CI runs lint, typecheck and knip
+
+### 🧪 Testing
+
+- *(service)* Record the wire baseline of every route from the branch base
+- *(service)* Record path traversal with encoded separators in the wire baseline
+- *(service)* Catalog response schemas reproduce every recorded wire-baseline success
+- *(service)* Cover configPersist (case-insensitive match, untouched file, lock, read and write failures)
+- *(service)* Split five test files over 300 lines by concern (pure moves)
+- Cover gaps in touched modules (deep-share key, scope refs, search grouping, link-target normalisation, block hover toolbar)
+- *(service)* Cache path index tests assume case folding only on Windows
+
+### ⚙️ Miscellaneous Tasks
+
+- Require Node >=24.22.2 in every package, CI and the CLI start-up check
+- Remove the stale packages/service/vitest.config.js; package knip configs pass
 ## [3.15.0] - 2026-10-14
 
 ### 🚀 Features
@@ -68,6 +142,7 @@ All notable changes to this project will be documented in this file.
 
 - Revert package version bumps (releases are done locally)
 - *(client)* Regenerate the client lockfile from its manifest
+- Release @karmaniverous/jeeves-server v3.15.0
 ## [3.14.1] - 2026-10-04
 
 ### 🐛 Bug Fixes
