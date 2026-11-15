@@ -96,6 +96,7 @@ Scopes apply to every authenticated identity: Google-session insiders, insider k
 - **Directory archives** — ZIP/tar export omits out-of-scope entries, and the `maxZipSizeMb` limit counts only in-scope content.
 - **Share links** — `POST /api/share` refuses targets outside the sharer's scopes (403).
 - **Insider routes** — search, sharing and `/api/resolve-path` take any identity, scoped or not, and check what they address: search shows only in-scope results, and `POST /api/share` and `/api/resolve-path` answer 403 for a path outside the caller's scopes. Share links never authenticate these routes.
+- **Runner proxy and OAuth** — `/api/runner/*` and `/api/oauth/start`, `/status` and `/token` reach past any path, so scopes can't limit them: a scoped machine key gets 403 (`SERVER_FORBIDDEN`). Sessions, scoped or not, and unscoped machine keys may use them.
 - **Admin routes** — `/config`, `/config/apply` and `/api/events` need an identity with no scopes at all (any scopes, even `/**`, get 403). `/status` is public, but only admins see event commands and the Chrome path.
 - **Identity vs share key** — an identity requesting an out-of-scope path still gets access if the URL carries a valid share key for it (the key's access then applies, as an outsider); otherwise 403.
 

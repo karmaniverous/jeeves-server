@@ -238,7 +238,7 @@ export function renderApiReference(): string {
       '',
       `**Access:** \`${access.class}\`: ${ACCESS_TEXT[access.class]}${
         access.loginSeedKey ? '; also the insider-seed insider key' : ''
-      }.`,
+      }${access.noScopedMachineKey ? '; never a machine key with scopes' : ''}.`,
       '',
       ...requestLines(op, sharesPath),
       ...responseLines(op),

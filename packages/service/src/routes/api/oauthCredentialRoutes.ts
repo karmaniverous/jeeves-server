@@ -2,8 +2,9 @@
  * OAuth2 credential routes (insider auth required).
  *
  * GET /api/oauth/status - Check credential existence / expiry
- * GET /api/oauth/token  - Retrieve valid access token (with lazy refresh);
- *   never for a scoped machine key (Decision 28)
+ * GET /api/oauth/token  - Retrieve valid access token (with lazy refresh)
+ *
+ * Neither serves a scoped machine key (`ROUTE_ACCESS`, Decisions 28, 29).
  *
  * @packageDocumentation
  */
@@ -24,7 +25,6 @@ import {
 import { credentialPath } from '../../services/oauthState.js';
 import { withFileLock } from '../../util/fileMutex.js';
 import {
-  refuseScopedMachineKey,
   requireOAuthInsider,
   requireValidCredentialNames,
 } from './oauthGuards.js';
@@ -87,7 +87,6 @@ export const oauthCredentialHandlers: HandlersFor<
   },
   oauthToken: async ({ query }, request) => {
     const filePath = resolveCredentialFile(request, query);
-    refuseScopedMachineKey(request);
 
     if (!(await credentialExists(filePath)))
       throw new NotFound('Credential file not found');

@@ -10,7 +10,9 @@
  * `machineSeed` (raw machine seed in `X-API-Key`) and `eventKey` (a machine
  * key valid for `/event`). `loginSeedKey` admits the insider-seed insider
  * key (only `shareFor` and `rotateKey`); `contentPath` fixes the content
- * path of an entry without a `*` segment (`drives`).
+ * path of an entry without a `*` segment (`drives`); `noScopedMachineKey`
+ * refuses machine keys with scopes on entries scopes can't limit (the
+ * runner proxy and OAuth, Decisions 28 and 29).
  *
  * @packageDocumentation
  */
@@ -30,7 +32,13 @@ export type AccessClass =
 
 /** An entry's access: its class plus the class's options. */
 export type RouteAccessValue =
-  AccessClass | { class: AccessClass; loginSeedKey?: true; contentPath?: '/' };
+  | AccessClass
+  | {
+      class: AccessClass;
+      loginSeedKey?: true;
+      contentPath?: '/';
+      noScopedMachineKey?: true;
+    };
 
 /** An entry's access with every option resolved. */
 export interface RouteAccess {
@@ -38,9 +46,17 @@ export interface RouteAccess {
   class: AccessClass;
   /** True when the insider-seed insider key authenticates the entry. */
   loginSeedKey: boolean;
+  /** True when machine keys with scopes are refused (`SERVER_FORBIDDEN`). */
+  noScopedMachineKey: boolean;
   /** The fixed content path, for an entry without a `*` segment. */
   contentPath?: '/';
 }
+
+/** An insider entry that scopes can't limit: no scoped machine keys. */
+const UNSCOPED_KEYS_ONLY = {
+  class: 'insider',
+  noScopedMachineKey: true,
+} as const satisfies RouteAccessValue;
 
 /** The access class of every catalog entry. */
 export const ROUTE_ACCESS: Readonly<Record<ServerEntryName, RouteAccessValue>> =
@@ -76,16 +92,16 @@ export const ROUTE_ACCESS: Readonly<Record<ServerEntryName, RouteAccessValue>> =
     rotateKey: { class: 'insider', loginSeedKey: true },
     receiveEvent: 'eventKey',
     listEvents: 'admin',
-    oauthStart: 'insider',
-    oauthStatus: 'insider',
-    oauthToken: 'insider',
-    runnerListJobs: 'insider',
-    runnerGetJob: 'insider',
-    runnerListRuns: 'insider',
-    runnerRunJob: 'insider',
-    runnerEnableJob: 'insider',
-    runnerDisableJob: 'insider',
-    runnerStatus: 'insider',
+    oauthStart: UNSCOPED_KEYS_ONLY,
+    oauthStatus: UNSCOPED_KEYS_ONLY,
+    oauthToken: UNSCOPED_KEYS_ONLY,
+    runnerListJobs: UNSCOPED_KEYS_ONLY,
+    runnerGetJob: UNSCOPED_KEYS_ONLY,
+    runnerListRuns: UNSCOPED_KEYS_ONLY,
+    runnerRunJob: UNSCOPED_KEYS_ONLY,
+    runnerEnableJob: UNSCOPED_KEYS_ONLY,
+    runnerDisableJob: UNSCOPED_KEYS_ONLY,
+    runnerStatus: UNSCOPED_KEYS_ONLY,
   };
 
 /**
@@ -96,10 +112,12 @@ export const ROUTE_ACCESS: Readonly<Record<ServerEntryName, RouteAccessValue>> =
  */
 export function routeAccess(name: ServerEntryName): RouteAccess {
   const value = ROUTE_ACCESS[name];
-  if (typeof value === 'string') return { class: value, loginSeedKey: false };
+  if (typeof value === 'string')
+    return { class: value, loginSeedKey: false, noScopedMachineKey: false };
   return {
     class: value.class,
     loginSeedKey: value.loginSeedKey ?? false,
+    noScopedMachineKey: value.noScopedMachineKey ?? false,
     ...(value.contentPath ? { contentPath: value.contentPath } : {}),
   };
 }

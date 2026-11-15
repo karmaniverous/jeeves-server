@@ -35,7 +35,28 @@ describe('ROUTE_ACCESS', () => {
     expect(routeAccess('drives')).toEqual({
       class: 'navigation',
       loginSeedKey: false,
+      noScopedMachineKey: false,
       contentPath: '/',
+    });
+  });
+
+  it('refuses scoped machine keys only on the runner proxy and OAuth', () => {
+    expect(where((n) => routeAccess(n).noScopedMachineKey)).toEqual([
+      'oauthStart',
+      'oauthStatus',
+      'oauthToken',
+      'runnerDisableJob',
+      'runnerEnableJob',
+      'runnerGetJob',
+      'runnerListJobs',
+      'runnerListRuns',
+      'runnerRunJob',
+      'runnerStatus',
+    ]);
+    expect(routeAccess('runnerStatus')).toEqual({
+      class: 'insider',
+      loginSeedKey: false,
+      noScopedMachineKey: true,
     });
   });
 

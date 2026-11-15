@@ -701,7 +701,7 @@ Recent event log entries, newest last (insiders with no scopes configured; limit
 
 Start an OAuth2 authorization code flow; returns the URL to open in a browser.
 
-**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
+**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes; never a machine key with scopes.
 
 **Request:**
 
@@ -730,7 +730,7 @@ Start an OAuth2 authorization code flow; returns the URL to open in a browser.
 
 Check whether valid OAuth2 credentials exist for a provider/account.
 
-**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
+**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes; never a machine key with scopes.
 
 **Request:**
 
@@ -754,7 +754,7 @@ Check whether valid OAuth2 credentials exist for a provider/account.
 
 Get a valid access token for a provider/account, refreshing it when expired.
 
-**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
+**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes; never a machine key with scopes.
 
 **Request:**
 
@@ -777,7 +777,7 @@ Get a valid access token for a provider/account, refreshing it when expired.
 
 List the jeeves-runner jobs (runner GET /jobs).
 
-**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
+**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes; never a machine key with scopes.
 
 **Response:** `unknown` (JSON).
 
@@ -787,7 +787,7 @@ List the jeeves-runner jobs (runner GET /jobs).
 
 One jeeves-runner job (runner GET /jobs/:id).
 
-**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
+**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes; never a machine key with scopes.
 
 **Request:**
 
@@ -803,7 +803,7 @@ One jeeves-runner job (runner GET /jobs/:id).
 
 A jeeves-runner job's recent runs (runner GET /jobs/:id/runs).
 
-**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
+**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes; never a machine key with scopes.
 
 **Request:**
 
@@ -820,7 +820,7 @@ A jeeves-runner job's recent runs (runner GET /jobs/:id/runs).
 
 Run a jeeves-runner job now (runner POST /jobs/:id/run).
 
-**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
+**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes; never a machine key with scopes.
 
 **Request:**
 
@@ -836,7 +836,7 @@ Run a jeeves-runner job now (runner POST /jobs/:id/run).
 
 Enable a jeeves-runner job (runner PATCH /jobs/:id/enable).
 
-**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
+**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes; never a machine key with scopes.
 
 **Request:**
 
@@ -852,7 +852,7 @@ Enable a jeeves-runner job (runner PATCH /jobs/:id/enable).
 
 Disable a jeeves-runner job (runner PATCH /jobs/:id/disable).
 
-**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
+**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes; never a machine key with scopes.
 
 **Request:**
 
@@ -868,6 +868,6 @@ Disable a jeeves-runner job (runner PATCH /jobs/:id/disable).
 
 jeeves-runner status (runner GET /status).
 
-**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes.
+**Access:** `insider`: an identity (session or insider/machine key); every path the request addresses must be in its scopes; never a machine key with scopes.
 
 **Response:** `unknown` (JSON).

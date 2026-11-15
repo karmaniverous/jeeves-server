@@ -8,7 +8,8 @@
  * path (either separator), then resolves an identity (a session, a machine
  * insider key, or the insider-seed insider key where `loginSeedKey`):
  * `admin` needs one with no scopes (Decision 12) that is not the `_internal`
- * machine key; on content and navigation entries an identity
+ * machine key; `noScopedMachineKey` entries refuse a machine key with scopes
+ * (Decisions 28, 29); on content and navigation entries an identity
  * outside its scopes falls back to a valid share credential (as an outsider,
  * with the signer's scopes), else `SERVER_OUT_OF_SCOPE`. Without an
  * identity, a share credential valid for the content path admits an
@@ -50,6 +51,20 @@ import { type RouteAccess, routeAccess } from './routeAccess.js';
 /** Message of `SERVER_FORBIDDEN` on `admin` entries. */
 export const UNSCOPED_INSIDER_REQUIRED_ERROR =
   'Unscoped insider access required';
+
+/** Message of `SERVER_FORBIDDEN` on `noScopedMachineKey` entries. */
+export const SCOPED_MACHINE_KEY_ERROR =
+  'Scoped machine keys may not call this route';
+
+/**
+ * True when an identity is a machine key with scopes: refused where scopes
+ * can't limit what the entry reaches (the runner proxy, OAuth).
+ *
+ * @param identity - The identity.
+ * @returns Whether it is.
+ */
+const isScopedMachineKey = (identity: Identity): boolean =>
+  identity.kind === 'machineKey' && identity.scopes !== null;
 
 /**
  * Record an identity on the request.
@@ -156,6 +171,8 @@ export function authorizeRequest(request: FastifyRequest): void {
   if (identity) {
     if (access.class === 'admin' && !isAdminIdentity(identity))
       throw new Forbidden(UNSCOPED_INSIDER_REQUIRED_ERROR);
+    if (access.noScopedMachineKey && isScopedMachineKey(identity))
+      throw new Forbidden(SCOPED_MACHINE_KEY_ERROR);
     if (
       contentPath === undefined ||
       scopesAllow(access, contentPath, identity)

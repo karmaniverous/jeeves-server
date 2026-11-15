@@ -86,7 +86,7 @@ The CLI's `config` and `config apply` send a key: `--key <key>` (an unscoped ins
 
 Every route is a catalog entry with one access class ([API Reference](./api-reference.md)). Identity credentials (a session, a machine key, an insider-seed insider key) are verified as identities and their scopes apply to the path; share credentials are verified against the path. Changes a client may notice:
 
-- **Scoped machine keys** may now call `POST /api/share`, `GET /api/resolve-path`, `POST /api/search`, `GET /api/search/facets`, `GET /api/drives`, `POST /api/oauth/start`, `GET /api/oauth/status` and the runner proxy (3.15 answered 401), and get `403 SERVER_OUT_OF_SCOPE` instead of 401 for a path outside their scopes. Scopes limit paths only: they don't limit the runner proxy, `POST /api/oauth/start` or `GET /api/oauth/status`, which a scoped machine key reaches as an unscoped one does. They may not fetch OAuth tokens: `GET /api/oauth/token` answers a scoped machine key `403 SERVER_FORBIDDEN` (3.15 answered 401). Sessions, scoped or not, and unscoped machine keys get tokens as before.
+- **Scoped machine keys** may now call `POST /api/share`, `GET /api/resolve-path`, `POST /api/search`, `GET /api/search/facets`, and `GET /api/drives` (3.15 answered 401), and get `403 SERVER_OUT_OF_SCOPE` instead of 401 for a path outside their scopes. Scopes limit paths only, so the routes they can't limit stay closed to scoped machine keys, as in 3.15: the runner proxy (`/api/runner/*`), `POST /api/oauth/start`, `GET /api/oauth/status` and `GET /api/oauth/token` answer a scoped machine key `403 SERVER_FORBIDDEN` (3.15 answered 401) and never reach the runner or a token endpoint. Sessions, scoped or not, and unscoped machine keys such as the plugin's use them as before.
 - **`GET /api/resolve-path`** checks the resolved path against a scoped caller's scopes (3.15 resolved any path for a scoped session).
 - **The insider-seed insider key** authenticates `POST /api/rotate-key` as well as `POST /api/util/share-for`, and nothing else.
 - **Share keys** never authenticate insider or admin routes.
@@ -104,7 +104,7 @@ A webhook body must be a JSON object. An array, a scalar or a non-JSON body, whi
 
 ## Runner proxy is an allow-list
 
-`/api/runner/*` forwards only the routes 3.15 proxied, to any insider (a session or a machine key, scoped or not):
+`/api/runner/*` forwards only the routes 3.15 proxied, to a session (scoped or not) or an unscoped machine key; a scoped machine key gets `403 SERVER_FORBIDDEN` (see above):
 
 | Server route | Runner route |
 | --- | --- |

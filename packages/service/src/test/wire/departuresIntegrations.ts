@@ -10,6 +10,7 @@ import {
   D4_RUNNER,
   D8_INSIDER,
   D28,
+  D29,
   type WireDeparture,
 } from './departuresCommon.js';
 
@@ -30,8 +31,9 @@ export const DEPARTURES_INTEGRATIONS: Readonly<Record<string, WireDeparture>> =
     },
     'oauthStart scoped machine key': {
       before: '401 {"error":"Unauthorized"}',
-      allowedBy: D8_INSIDER,
-      status: 200,
+      allowedBy: `${D8_INSIDER}; ${D29}`,
+      status: 403,
+      code: 'SERVER_FORBIDDEN',
     },
     'oauthStart path share': {
       before: '401 {"error":"Unauthorized"}',
@@ -120,7 +122,7 @@ export const DEPARTURES_INTEGRATIONS: Readonly<Record<string, WireDeparture>> =
     },
     'oauthToken scoped machine key': {
       before: '401 {"error":"Unauthorized"}',
-      allowedBy: `${D8_INSIDER}; ${D28}`,
+      allowedBy: `${D8_INSIDER}; ${D28}; ${D29}`,
       status: 403,
       code: 'SERVER_FORBIDDEN',
     },
@@ -198,9 +200,9 @@ export const DEPARTURES_INTEGRATIONS: Readonly<Record<string, WireDeparture>> =
     },
     'runner jobs scoped machine key': {
       before: '401 {"error":"Unauthorized"}',
-      allowedBy: D8_INSIDER,
-      status: 503,
-      code: 'SERVER_RUNNER_UNAVAILABLE',
+      allowedBy: `${D8_INSIDER}; ${D29}`,
+      status: 403,
+      code: 'SERVER_FORBIDDEN',
     },
     'runner jobs path share': {
       before: '401 {"error":"Unauthorized"}',

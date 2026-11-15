@@ -92,6 +92,10 @@ export const D4_RUNNER = d4Status(
 export const D28 =
   'Decision 28: the runner proxy forwards only the 3.15.0 runner routes (enable and disable as PATCH); any other /api/runner/* path is a 404 (SERVER_NOT_FOUND) and never reaches the runner. oauthToken refuses scoped machine keys (403 SERVER_FORBIDDEN)';
 
+/** Decision 29: scoped machine keys are refused on the runner proxy and OAuth. */
+export const D29 =
+  "Decision 29: every runner proxy entry, oauthStart, oauthStatus and oauthToken refuse scoped machine keys (403 SERVER_FORBIDDEN, ROUTE_ACCESS noScopedMachineKey); scopes can't limit what they reach";
+
 /** One notion of a Markdown document (#284, #316, Decision 2): the loader. */
 export const D_DOCUMENT =
   "#284 / #316 / Decision 2: one Markdown document loader (loadMarkdownDocument) for the file API, export and link-info; native .md and .markdown, watcher renderAs 'md'";
