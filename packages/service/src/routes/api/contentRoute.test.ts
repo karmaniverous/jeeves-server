@@ -1,70 +1,49 @@
 /**
- * Tests for API URL → content path mapping.
+ * Tests for the content path of a request to a catalog entry.
  *
  * @packageDocumentation
  */
 
+import type { ServerEntryName } from '@karmaniverous/jeeves-server-core';
 import { describe, expect, it } from 'vitest';
 
-import {
-  hasTraversalSegment,
-  isNavigationRoute,
-  keyAuthPath,
-  parseContentRoute,
-} from './contentRoute.js';
+import { routeAccess } from '../../api/routeAccess.js';
+import { hasTraversalSegment, parseContentRoute } from './contentRoute.js';
+
+/** The content path of entry `name` with (decoded) `*` value `wildcard`. */
+const contentPathOf = (name: ServerEntryName, wildcard?: string) =>
+  parseContentRoute({ name, wildcard }, routeAccess(name));
 
 describe('parseContentRoute', () => {
   it.each([
-    ['/api/path/j/a', '/api/path', '/j/a'],
-    ['/api/file/j/a.md?raw=1', '/api/file', '/j/a.md'],
-    ['/api/raw/j/a.png', '/api/raw', '/j/a.png'],
-    ['/api/export/j/a.md?format=pdf', '/api/export', '/j/a.md'],
-    ['/api/export-cache/j/a.md', '/api/export-cache', '/j/a.md'],
-    ['/api/mermaid-export/j/a.mmd', '/api/mermaid-export', '/j/a.mmd'],
-    ['/api/plantuml-export/j/a.puml', '/api/plantuml-export', '/j/a.puml'],
-    ['/api/link-info/j/a', '/api/link-info', '/j/a'],
-    ['/api/path', '/api/path', '/'],
-    ['/api/file/j/my%20doc.md', '/api/file', '/j/my doc.md'],
-  ])('%s → %s %s', (url, prefix, path) => {
-    expect(parseContentRoute(url)).toEqual({ prefix, path });
+    ['browse', 'j/a', '/j/a'],
+    ['fileContent', 'j/a.md', '/j/a.md'],
+    ['fileWrite', 'j/a.md', '/j/a.md'],
+    ['fileMutate', 'j/a.md', '/j/a.md'],
+    ['raw', 'j/a.png', '/j/a.png'],
+    ['export', 'j/a.md', '/j/a.md'],
+    ['exportCacheClear', 'j/a.md', '/j/a.md'],
+    ['exportMermaid', 'j/a.mmd', '/j/a.mmd'],
+    ['exportPlantUml', 'j/a.puml', '/j/a.puml'],
+    ['linkInfo', 'j/a', '/j/a'],
+    ['browse', '', '/'],
+    ['browse', undefined, '/'],
+    ['fileContent', 'j/my doc.md', '/j/my doc.md'],
+    ['fileContent', 'j/%25', '/j/%25'],
+    ['drives', undefined, '/'],
+  ] as const)('%s %s -> %s', (name, wildcard, path) => {
+    expect(contentPathOf(name, wildcard)).toEqual({ path });
   });
 
-  it.each(['/api/drives', '/api/search', '/api/share', '/api/paths/x'])(
-    'returns null for non-content route %s',
-    (url) => {
-      expect(parseContentRoute(url)).toBeNull();
-    },
-  );
-
-  it('falls back to the raw path on malformed encoding', () => {
-    expect(parseContentRoute('/api/raw/j/%E0%A4%A')?.path).toBe('/j/%E0%A4%A');
-  });
-});
-
-describe('keyAuthPath', () => {
-  it('uses the content path for content routes', () => {
-    const url = '/api/mermaid-export/j/a.mmd?key=k';
-    expect(keyAuthPath(url, parseContentRoute(url))).toBe('/j/a.mmd');
-  });
-
-  it('maps /api/drives to the root', () => {
-    expect(keyAuthPath('/api/drives?key=k', null)).toBe('/');
-  });
-
-  it('uses the decoded request path for other routes', () => {
-    expect(keyAuthPath('/api/search%20x?key=k', null)).toBe('/api/search x');
-  });
-});
-
-describe('isNavigationRoute', () => {
   it.each([
-    ['/api/path', true],
-    ['/api/link-info', true],
-    ['/api/file', false],
-    ['/api/raw', false],
-    ['/api/export', false],
-  ] as const)('%s → %s', (prefix, expected) => {
-    expect(isNavigationRoute({ prefix, path: '/j' })).toBe(expected);
+    'search',
+    'share',
+    'resolvePath',
+    'runnerGetJob',
+    'authStatus',
+    'config',
+  ] as const)('returns null for %s, which addresses no content', (name) => {
+    expect(contentPathOf(name)).toBeNull();
   });
 });
 
@@ -75,7 +54,7 @@ describe('hasTraversalSegment', () => {
     ['..', true],
     ['/j/a..b/c', false],
     ['/j/.hidden/x', false],
-  ])('%s → %s', (p, expected) => {
+  ])('%s -> %s', (p, expected) => {
     expect(hasTraversalSegment(p)).toBe(expected);
   });
 });

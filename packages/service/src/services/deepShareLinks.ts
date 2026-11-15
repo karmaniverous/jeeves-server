@@ -2,148 +2,80 @@
  * Deep share link rewriting for outsider access with depth traversal.
  *
  * Rewrites outgoing links in rendered HTML with computed sub-keys,
- * enabling outsiders to follow links up to N levels deep.
+ * enabling outsiders to follow links up to N levels deep. A rewritten link
+ * keeps its other query parameters (e.g. `download=1`, #316); only the
+ * credential is added or replaced. The stack helpers are in
+ * `deepShareStack.ts`.
  */
 
 import * as cheerio from 'cheerio';
-import LZString from 'lz-string';
 
 import {
   computeDeepShareKey,
   computePathKey,
   type DeepShareParams,
 } from '../util/crypto.js';
-import { deepShareQuery, pathKeyQuery } from '../util/shareQuery.js';
+import {
+  deepShareQuery,
+  pathKeyQuery,
+  withCredentialQuery,
+} from '../util/shareQuery.js';
+import {
+  type DeepShareContext,
+  encodeStack,
+  normalizeTargetPath,
+  remainingDepth,
+  stackWithCurrent,
+} from './deepShareStack.js';
 
-/**
- * Parse a compressed stack string into an array of paths.
- */
-export function decodeStack(compressed: string): string[] {
-  if (!compressed) return [];
-  const json = LZString.decompressFromEncodedURIComponent(compressed);
-  if (!json) return [];
-  try {
-    const parsed: unknown = JSON.parse(json);
-    return Array.isArray(parsed) ? (parsed as string[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Encode a path stack array into a compressed string.
- */
-export function encodeStack(stack: string[]): string {
-  return LZString.compressToEncodedURIComponent(JSON.stringify(stack));
-}
-
-/**
- * Compute the remaining depth for a given stack.
- */
-function remainingDepth(maxDepth: number, stack: string[]): number {
-  return maxDepth - (stack.length - 1);
-}
+/** The share fields a sub-link carries over from the current request. */
+type ShareFields = Omit<DeepShareContext, 'stackCompressed'>;
 
 /**
  * Compute a sub-link URL for an outgoing link target.
  * Returns null if the link should be stripped (depth exhausted or type not allowed).
+ *
+ * @param suffix - The link's query and fragment as written (`?download=1#x`);
+ *   its credential parameters are replaced, the rest kept.
  */
 function computeSubLink(
   seed: string,
   targetUrlPath: string,
   currentStack: string[],
-  maxDepth: number,
-  dirs: boolean,
-  exp: string | undefined,
+  share: ShareFields,
   isDirectory: boolean,
-  fragment?: string,
+  suffix = '',
 ): string | null {
+  const { maxDepth, dirs, exp } = share;
   // Check if directories are allowed
   if (isDirectory && !dirs) return null;
 
-  // Compute new stack
+  // Revisiting truncates the stack to that point; a new page is appended.
   const existingIndex = currentStack.indexOf(targetUrlPath);
-  let newStack: string[];
-  if (existingIndex >= 0) {
-    // Revisiting — truncate stack to that point
-    newStack = currentStack.slice(0, existingIndex + 1);
-  } else {
-    // New page — append
-    newStack = [...currentStack, targetUrlPath];
-  }
+  const newStack =
+    existingIndex >= 0
+      ? currentStack.slice(0, existingIndex + 1)
+      : [...currentStack, targetUrlPath];
+  if (remainingDepth(maxDepth, newStack) < 0) return null;
 
-  // Check remaining depth
-  const remaining = remainingDepth(maxDepth, newStack);
-  if (remaining < 0) return null;
-
-  const compressedStack = encodeStack(newStack);
-
-  // Compute key for the target
   const params: DeepShareParams = {
     depth: maxDepth,
     dirs,
-    stack: compressedStack,
+    stack: encodeStack(newStack),
     exp,
   };
   const key = computeDeepShareKey(seed, targetUrlPath, params);
 
-  // Build URL
-  // The key covers the decoded path (what the middleware verifies); the URL
+  // The key covers the decoded path (what the access hook verifies); the URL
   // carries it percent-encoded.
   const encodedPath = targetUrlPath
     .split('/')
     .map((segment) => encodeURIComponent(segment))
     .join('/');
-  let url = `/browse${encodedPath}?${deepShareQuery(key, params)}`;
-  if (fragment !== undefined) url += `#${fragment}`;
-  return url;
-}
-
-/** Deep share parameters of the current request, as received. */
-export interface DeepShareContext {
-  maxDepth: number;
-  dirs: boolean;
-  stackCompressed: string;
-  exp: string | undefined;
-}
-
-/**
- * Deep share context from the verified request params (`d`, `dirs`, `s`)
- * and the query's `exp`. A missing or non-numeric depth counts as 0.
- */
-export function toDeepShareContext(
-  params: { d: string; dirs: string; s: string },
-  exp: string | undefined,
-): DeepShareContext {
-  return {
-    maxDepth: Number.parseInt(params.d, 10) || 0,
-    dirs: params.dirs === '1',
-    stackCompressed: params.s,
-    exp,
-  };
-}
-
-/**
- * Whether a deep link may list `directoryPath`. With `dirs`, any directory
- * it reaches; without, only the shared path itself (a one-entry stack).
- */
-export function canListDirectory(
-  context: DeepShareContext,
-  directoryPath: string,
-): boolean {
-  if (context.dirs) return true;
-  const stack = decodeStack(context.stackCompressed);
-  const sharedRoot = stack.length === 1 ? stack[0] : undefined;
-  return sharedRoot?.toLowerCase() === directoryPath.toLowerCase();
-}
-
-/** Decode the stack and make sure the current path is its last entry. */
-function stackWithCurrent(stackCompressed: string, currentPath: string) {
-  const stack = decodeStack(stackCompressed);
-  if (stack.length === 0 || stack[stack.length - 1] !== currentPath) {
-    stack.push(currentPath);
-  }
-  return stack;
+  return withCredentialQuery(
+    `/browse${encodedPath}${suffix}`,
+    deepShareQuery(key, params),
+  );
 }
 
 /**
@@ -164,47 +96,37 @@ export function computeEntryLink(
   if (remainingDepth(context.maxDepth, stack) <= 0) return null;
   const target =
     directoryPath === '/' ? `/${entryName}` : `${directoryPath}/${entryName}`;
-  return computeSubLink(
-    seed,
-    target,
-    stack,
-    context.maxDepth,
-    context.dirs,
-    context.exp,
-    isDirectory,
-  );
+  return computeSubLink(seed, target, stack, context, isDirectory);
 }
 
+/** Hrefs left as written: external, protocol-relative, anchors, data, mail. */
+const UNTOUCHED_HREF = /^(?:https?:|\/\/|#|data:|mailto:)/;
+
 /**
- * Normalize a link target to a content URL path: percent-decoded, `.` and
- * `..` resolved, duplicate and trailing slashes removed. Returns null when
- * the target escapes the root or can't be decoded.
+ * The target path of an internal link (before normalisation) and its
+ * query and fragment as written.
  */
-export function normalizeTargetPath(target: string): string | null {
-  let decoded: string;
-  try {
-    decoded = decodeURIComponent(target);
-  } catch {
-    return null;
-  }
-  const out: string[] = [];
-  for (const segment of decoded.split('/')) {
-    if (segment === '' || segment === '.') continue;
-    if (segment === '..') {
-      if (out.length === 0) return null;
-      out.pop();
-      continue;
-    }
-    out.push(segment);
-  }
-  return out.length > 0 ? `/${out.join('/')}` : null;
+function linkTarget(
+  href: string,
+  currentPath: string,
+): { targetPath: string; suffix: string } {
+  const suffixIndex = href.search(/[?#]/);
+  const pathPart = suffixIndex >= 0 ? href.slice(0, suffixIndex) : href;
+  const suffix = suffixIndex >= 0 ? href.slice(suffixIndex) : '';
+  if (pathPart.startsWith('/browse/'))
+    return { targetPath: pathPart.slice('/browse'.length), suffix };
+  if (pathPart.startsWith('/')) return { targetPath: pathPart, suffix };
+  // Relative link: resolve against the current path's directory.
+  const dir = currentPath.substring(0, currentPath.lastIndexOf('/'));
+  return { targetPath: `${dir}/${pathPart}`, suffix };
 }
 
 /**
  * Rewrite outgoing links in rendered HTML for deep share access.
  *
  * For outsiders with depth \> 0:
- * - Internal links get rewritten with sub-keys
+ * - Internal links get rewritten with sub-keys, keeping their other query
+ *   parameters
  * - Links beyond depth get stripped (text preserved, link removed)
  * - External links (http/https) are left unchanged
  * - Anchor links (#) are left unchanged
@@ -225,8 +147,8 @@ export function rewriteLinksForDeepShare(
   isDirectoryPath?: (urlPath: string) => boolean,
 ): string {
   const currentStack = stackWithCurrent(stackCompressed, currentPath);
-
   const remaining = remainingDepth(maxDepth, currentStack);
+  const share: ShareFields = { maxDepth, dirs, exp };
 
   // The current page's deep params: what raw links and images carry.
   const pageParams: DeepShareParams = {
@@ -237,91 +159,52 @@ export function rewriteLinksForDeepShare(
   };
 
   const $ = cheerio.load(html, null, false);
+  const strip = ($el: ReturnType<typeof $>) => {
+    $el.replaceWith($el.html() ?? '');
+  };
 
-  // Rewrite <a> tags
   $('a').each((_i, el) => {
-    const $el = $(el);
-    const href = $el.attr('href');
-    if (!href) return;
-
-    // Skip external links, anchors, and data URLs
-    if (
-      href.startsWith('http://') ||
-      href.startsWith('https://') ||
-      href.startsWith('#') ||
-      href.startsWith('//') ||
-      href.startsWith('data:') ||
-      href.startsWith('mailto:')
-    ) {
-      return;
-    }
+    const href = $(el).attr('href');
+    if (!href || UNTOUCHED_HREF.test(href)) return;
 
     // If no remaining depth, strip the link (keep text)
     if (remaining <= 0) {
-      $el.replaceWith($el.html() ?? '');
+      strip($(el));
       return;
     }
 
     // Author-written raw links get the same deep-share auth as embedded
     // images (#269). Plain relative links are not turned into raw links.
     if (href.startsWith('/api/raw/')) {
-      $el.attr('href', authenticateRawUrl(href, seed, pageParams));
+      $(el).attr('href', authenticateRawUrl(href, seed, pageParams));
       return;
-    }
-
-    // Strip fragment before resolving path, preserve it for later
-    const hashIndex = href.indexOf('#');
-    const hrefWithoutFragment =
-      hashIndex >= 0 ? href.substring(0, hashIndex) : href;
-    const fragment = hashIndex >= 0 ? href.substring(hashIndex + 1) : undefined;
-
-    // Determine target path
-    let targetPath: string;
-    if (hrefWithoutFragment.startsWith('/browse/')) {
-      targetPath =
-        '/' + hrefWithoutFragment.replace('/browse/', '').split('?')[0];
-    } else if (hrefWithoutFragment.startsWith('/')) {
-      targetPath = hrefWithoutFragment.split('?')[0];
-    } else {
-      // Relative link — resolve against current path directory
-      const dir = currentPath.substring(0, currentPath.lastIndexOf('/'));
-      targetPath = dir
-        ? `${dir}/${hrefWithoutFragment.split('?')[0]}`
-        : `/${hrefWithoutFragment.split('?')[0]}`;
     }
 
     // Normalize (decode, resolve . and .., drop trailing slash); a target
     // that escapes the root is stripped.
-    const hadTrailingSlash = targetPath.endsWith('/');
+    const { targetPath, suffix } = linkTarget(href, currentPath);
     const normalized = normalizeTargetPath(targetPath);
     if (normalized === null) {
-      $el.replaceWith($el.html() ?? '');
+      strip($(el));
       return;
     }
 
     const isDirectory = isDirectoryPath
       ? isDirectoryPath(normalized)
-      : hadTrailingSlash;
+      : targetPath.endsWith('/');
     const subLink = computeSubLink(
       seed,
       normalized,
       currentStack,
-      maxDepth,
-      dirs,
-      exp,
+      share,
       isDirectory,
-      fragment,
+      suffix,
     );
-
-    if (subLink === null) {
-      // Strip link, keep text
-      $el.replaceWith($el.html() ?? '');
-    } else {
-      $el.attr('href', subLink);
-    }
+    if (subLink === null) strip($(el));
+    else $(el).attr('href', subLink);
   });
 
-  // Rewrite <img> src for images that use /api/raw/ — add key auth
+  // Rewrite <img> src for images that use /api/raw/: add key auth
   rewriteImageAuth($, seed, pageParams);
 
   return $.html();
@@ -349,31 +232,27 @@ export function rewriteImageAuth(
 }
 
 /**
- * Append outsider auth to an `/api/raw/...` URL: a deep share key over the
+ * Give an `/api/raw/...` URL outsider auth: a deep share key over the
  * decoded content path with the share's deep params, or a simple path key
- * when there are none. The key travels as `k` (#279).
+ * when there are none. The key travels as `k` (#279); a credential the URL
+ * carries is replaced and its other parameters (e.g. `download`) kept.
  */
 export function authenticateRawUrl(
   rawUrl: string,
   seed: string,
   deepParams?: DeepShareParams,
 ): string {
-  const hashIndex = rawUrl.indexOf('#');
-  const base = hashIndex >= 0 ? rawUrl.slice(0, hashIndex) : rawUrl;
-  const fragment = hashIndex >= 0 ? rawUrl.slice(hashIndex) : '';
-  const encodedPath = '/' + base.slice('/api/raw/'.length).split('?')[0];
+  const encodedPath = '/' + rawUrl.slice('/api/raw/'.length).split(/[?#]/)[0];
   let rawPath: string;
   try {
     rawPath = decodeURIComponent(encodedPath);
   } catch {
     rawPath = encodedPath;
   }
-  const sep = base.includes('?') ? '&' : '?';
-
   const query = deepParams
     ? deepShareQuery(computeDeepShareKey(seed, rawPath, deepParams), deepParams)
     : pathKeyQuery(computePathKey(seed, rawPath));
-  return `${base}${sep}${query}${fragment}`;
+  return withCredentialQuery(rawUrl, query);
 }
 
 /**

@@ -73,3 +73,17 @@ describe('jeeves-server config validate', { timeout: 60_000 }, () => {
     });
   });
 });
+
+describe('jeeves-server config (through the SDK)', { timeout: 60_000 }, () => {
+  it('prints <code>: <message> when nothing answers', async () => {
+    // Port 9 is fetch-blocked: the request fails at once.
+    await expect(
+      runCli(['config', '--port', '9', '--key', 'k']),
+    ).rejects.toMatchObject({
+      code: 1,
+      stderr: expect.stringMatching(
+        /^Config query failed: network_error: config request failed/,
+      ) as string,
+    });
+  });
+});

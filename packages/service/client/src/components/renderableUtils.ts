@@ -1,7 +1,7 @@
 /**
  * Utility functions for determining if a file is renderable.
  */
-import type { FileContent } from '@/lib/api';
+import type { FileContent } from '@/lib/apiTypes';
 
 const RENDERABLE_EXTENSIONS = new Set([
   '.md',

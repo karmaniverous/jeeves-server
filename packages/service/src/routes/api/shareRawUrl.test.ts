@@ -2,7 +2,7 @@
  * `POST /api/share` reports whether the target is a directory, and a file
  * share's raw URL (the page URL with `/browse/` swapped for `/api/raw/`,
  * query unchanged, as the plugin's `server_share` builds it) authenticates
- * on the raw route for that one file only. Real middleware, sharing and raw
+ * on the raw route for that one file only. Real access hook, sharing and raw
  * routes and HMAC keys over a temp tree.
  *
  * @packageDocumentation
@@ -12,10 +12,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { MACHINE_SEED, makeRuntimeConfig } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
+import { testApp } from '../../testing/testApp.js';
 import { computeInsiderKey } from '../../util/crypto.js';
 
 const config = makeRuntimeConfig();
@@ -43,18 +45,21 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
     '/' + path.relative(tmpRoot, fsPath).split(path.sep).join('/'),
 }));
 
-const { addAuthMiddleware } = await import('./middleware.js');
-const { rawRoutes } = await import('./raw.js');
-const { sharingRoutes } = await import('./sharing.js');
+const { addAccessHook } = await import('../../api/accessHook.js');
+const { rawHandlers } = await import('./raw.js');
+const { sharingHandlers } = await import('./sharing.js');
+const { shareForHandlers } = await import('./shareFor.js');
 
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  app = Fastify();
+  app = testApp();
   await app.register(async (api) => {
-    addAuthMiddleware(api);
-    await api.register(rawRoutes);
-    await api.register(sharingRoutes);
+    addAccessHook(api);
+    await api.register(catalogRoutes(rawHandlers));
+    await api.register(
+      catalogRoutes({ ...sharingHandlers, ...shareForHandlers }),
+    );
   });
   await app.ready();
 });

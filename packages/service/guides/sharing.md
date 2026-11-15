@@ -88,14 +88,17 @@ Scopes restrict which paths an insider can access. Three formats are supported:
 
 ### How scopes are enforced
 
-Scopes apply to every authenticated identity: Google-session insiders, insider keys, scoped machine keys, and share links minted by a scoped insider (which carry the issuer's scopes).
+Scopes apply to every authenticated identity: Google-session insiders, insider keys, scoped machine keys, and share links minted by a scoped insider (which carry the issuer's scopes). A session or an insider key (`?k=` with a machine key's insider key) identifies the caller wherever it is used; its scopes are then checked against the path the request addresses.
 
 - **Navigation** — directory listings (`/api/path/...`) and link info (`/api/link-info/...`) for a directory are allowed when the directory is in scope **or** is an ancestor of an allowed path, so a scoped insider can browse down to their scope from the root. Listings only show entries the insider can reach.
 - **Content** — viewing, raw download, export, export-cache, diagram export, file writes (`PUT`/`POST /api/file/...`) and file metadata require the path itself to be in scope. Out-of-scope requests return **403** (`Path is outside your access scope`).
 - **Drives** — `/api/drives` lists only roots the insider can navigate into.
 - **Directory archives** — ZIP/tar export omits out-of-scope entries, and the `maxZipSizeMb` limit counts only in-scope content.
 - **Share links** — `POST /api/share` refuses targets outside the sharer's scopes (403).
-- **Session vs key** — a session insider requesting an out-of-scope path still gets access if the URL carries a valid share key for it (the key's access then applies); otherwise 403.
+- **Insider routes** — search, sharing and `/api/resolve-path` take any identity, scoped or not, and check what they address: search shows only in-scope results, and `POST /api/share` and `/api/resolve-path` answer 403 for a path outside the caller's scopes. Share links never authenticate these routes.
+- **Runner proxy and OAuth** — `/api/runner/*` and `/api/oauth/start`, `/status` and `/token` reach past any path, so scopes can't limit them: a scoped machine key gets 403 (`SERVER_FORBIDDEN`). Sessions, scoped or not, and unscoped machine keys may use them.
+- **Admin routes** — `/config`, `/config/apply` and `/api/events` need an identity with no scopes at all (any scopes, even `/**`, get 403). `/status` is public, but only admins see event commands and the Chrome path.
+- **Identity vs share key** — an identity requesting an out-of-scope path still gets access if the URL carries a valid share key for it (the key's access then applies, as an outsider); otherwise 403.
 
 ---
 
@@ -181,6 +184,8 @@ A share with a **depth** lets the outsider follow links from the shared document
 
 A share key works on every content route for its path, so swapping `/browse/` for `/api/raw/` in a file's share URL, keeping the whole query string, gives a working raw link. This holds for deep file shares too: the deep key still opens only that one file. `POST /api/share` reports `isDirectory` in its response, and the plugin's `server_share` returns `rawUrl` for file shares (plain or deep) and no `rawUrl` for directory shares.
 
+Add `download=1` beside the share parameters (`/api/raw/<path>?download=1&k=…`) to make the link download the file, with its name, instead of opening it in the browser. `download` is not part of the credential: links in a deep-shared page that carry it keep it when the page rewrites their credentials, and the SDK's `withShareCredential` keeps it too.
+
 ### Link expiration
 
 - **"Never"** links work until the insider rotates their key
@@ -221,7 +226,7 @@ Machine keys follow the same derivation model:
 
 ### The `_internal` key
 
-Reserved for server-side operations. Puppeteer uses this key when rendering PDFs and DOCX files (it loads the page in headless Chrome and needs to authenticate). It must be unscoped — the schema enforces this.
+Reserved for server-side operations. Puppeteer uses this key when rendering PDFs and DOCX files (it loads the page in headless Chrome and needs to authenticate). Although unscoped, it is never an admin: `/config`, `/config/apply` and `/api/events` refuse it (`403 SERVER_FORBIDDEN`). It must be unscoped — the schema enforces this.
 
 ---
 

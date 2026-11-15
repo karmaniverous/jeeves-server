@@ -9,10 +9,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { NormalizedScopes } from '../../config/types.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
+import { testApp } from '../../testing/testApp.js';
 import type * as PlatformModule from '../../util/platform.js';
 
 let tmpDir = '';
@@ -42,8 +44,8 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
   breadcrumbParts: () => [],
 }));
 
-const { drivesRoutes } = await import('./drives.js');
-const { directoryRoutes } = await import('./directory.js');
+const { drivesHandlers } = await import('./drives.js');
+const { directoryHandlers } = await import('./directory.js');
 
 const husin: NormalizedScopes = {
   allow: ['/j/domains/projects/jeeves-*/**'],
@@ -53,14 +55,14 @@ const husin: NormalizedScopes = {
 };
 
 async function buildApp(scopes: NormalizedScopes | null) {
-  const app = Fastify();
+  const app = testApp();
   app.addHook('preHandler', (request, _reply, done) => {
     request.accessMode = 'insider';
     request.insiderScopes = scopes;
     done();
   });
-  await app.register(drivesRoutes);
-  await app.register(directoryRoutes);
+  await app.register(catalogRoutes(drivesHandlers));
+  await app.register(catalogRoutes(directoryHandlers));
   await app.ready();
   return app;
 }

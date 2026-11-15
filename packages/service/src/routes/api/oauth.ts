@@ -1,22 +1,14 @@
 /**
- * OAuth2 API routes (insider auth required).
+ * OAuth2 API handlers (insider auth required): `oauthStart` (POST /api/oauth/start, oauthStart.ts), `oauthStatus` and `oauthToken` (GET /api/oauth/status, /api/oauth/token, oauthCredentialRoutes.ts). Credential persistence and refresh are `services/oauthCredentialStore.ts`.
  *
- * POST /api/oauth/start  - Initiate OAuth2 authorization code flow
- * GET  /api/oauth/status - Check credential existence / expiry
- * GET  /api/oauth/token  - Retrieve valid access token (with lazy refresh)
- *
- * The start route lives in `oauthStart.ts`, the credential routes in
- * `oauthCredentialRoutes.ts`, and credential persistence and refresh in
- * `services/oauthCredentialStore.ts`.
+ * @packageDocumentation
  */
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { HandlersFor } from '../../api/handlerTypes.js';
+import { oauthCredentialHandlers } from './oauthCredentialRoutes.js';
+import { oauthStartHandlers } from './oauthStart.js';
 
-import { registerOAuthCredentialRoutes } from './oauthCredentialRoutes.js';
-import { registerOAuthStartRoute } from './oauthStart.js';
-
-export const oauthApiRoutes: FastifyPluginAsync = (fastify) => {
-  registerOAuthStartRoute(fastify);
-  registerOAuthCredentialRoutes(fastify);
-  return Promise.resolve();
-};
+/** The OAuth API handlers. */
+export const oauthApiHandlers: HandlersFor<
+  'oauthStart' | 'oauthStatus' | 'oauthToken'
+> = { ...oauthStartHandlers, ...oauthCredentialHandlers };

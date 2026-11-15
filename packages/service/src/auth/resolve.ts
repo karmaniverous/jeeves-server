@@ -2,7 +2,7 @@
  * Unified auth resolution — single function to resolve authentication
  * from any combination of key params, session cookies, and insider seeds.
  *
- * Replaces duplicated auth resolution logic across middleware, keys, sharing,
+ * Replaces duplicated auth resolution logic across the access hook, keys, sharing,
  * and auth-status routes.
  */
 
@@ -163,12 +163,16 @@ export interface AuthQuery {
 /**
  * Extract deep share params from a parsed query object.
  * Returns undefined when no deep share context is present.
+ *
+ * A stack never contains a space but its alphabet includes `+`, which a
+ * query string decodes as a space: links written before stacks were
+ * percent-encoded carry it raw, so spaces are read back as `+`.
  */
 export function extractDeepParams(
   query: AuthQuery,
 ): { d: string; dirs: string; s: string } | undefined {
   return query.d !== undefined && query.s !== undefined
-    ? { d: query.d, dirs: query.dirs ?? '0', s: query.s }
+    ? { d: query.d, dirs: query.dirs ?? '0', s: query.s.replace(/ /g, '+') }
     : undefined;
 }
 
@@ -191,25 +195,32 @@ export function findInsider(
   return insiders.find((i) => i.email.toLowerCase() === email.toLowerCase());
 }
 
+/** The SPA gate's answer: the access type and the identity's scopes. */
+export interface SpaAccess {
+  /** 'insider', 'outsider', or 'none' without valid credentials. */
+  type: 'insider' | 'outsider' | 'none';
+  /** The identity's scopes; null or absent when unrestricted. */
+  scopes?: NormalizedScopes | null;
+}
+
 /**
- * Resolve the authentication state for a request for the SPA auth gate.
+ * Resolve the SPA gate's access for a request, with the identity's scopes.
  *
  * Checks session cookie first, then falls back to key-based auth (handles
- * outsider share links). Returns the access type: 'insider', 'outsider',
- * or 'none' when the request carries no valid credentials.
+ * outsider share links).
  *
  * @param config - Current runtime configuration.
  * @param request - Incoming Fastify request.
- * @returns Object with `type` field: 'insider', 'outsider', or 'none'.
+ * @returns The access type and scopes.
  */
-export function resolveAuth(
+export function resolveSpaAccess(
   config: RuntimeConfig,
   request: FastifyRequest,
-): { type: 'insider' | 'outsider' | 'none' } {
+): SpaAccess {
   // Session cookie takes priority
   const sessionResult = resolveSessionAuth(config, request);
   if (sessionResult.valid && sessionResult.mode) {
-    return { type: sessionResult.mode };
+    return { type: sessionResult.mode, scopes: sessionResult.scopes };
   }
 
   // Key param fallback — handles outsider share links
@@ -229,7 +240,7 @@ export function resolveAuth(
     deepParams,
   );
   if (keyResult.valid && keyResult.mode) {
-    return { type: keyResult.mode };
+    return { type: keyResult.mode, scopes: keyResult.scopes };
   }
 
   return { type: 'none' };

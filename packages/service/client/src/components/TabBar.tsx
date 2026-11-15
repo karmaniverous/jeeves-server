@@ -3,7 +3,7 @@
  */
 import { Menu, Minus, Minimize2, Maximize2, Pencil, X } from 'lucide-react';
 
-import type { FileContent } from '@/lib/api';
+import type { FileContent } from '@/lib/apiTypes';
 import { isRenderable, isRenderableExt } from './renderableUtils';
 
 interface TabBarProps {

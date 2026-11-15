@@ -5,12 +5,11 @@
  *
  * @packageDocumentation
  */
-
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import {
   afterAll,
   afterEach,
@@ -26,6 +25,8 @@ import {
   MACHINE_SEED,
   makeRuntimeConfig,
 } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
+import { serverError, testApp } from '../../testing/testApp.js';
 import {
   computeDeepShareKey,
   computeInsiderKey,
@@ -66,18 +67,18 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
   urlPathToFs: () => mdFile,
 }));
 
-const { addAuthMiddleware } = await import('./middleware.js');
-const { exportRoutes } = await import('./export.js');
+const { addAccessHook } = await import('../../api/accessHook.js');
+const { exportHandlers } = await import('./export.js');
 const { RenderFailedError } = await import('../../services/puppeteer.js');
-const { encodeStack } = await import('../../services/deepShareLinks.js');
+const { encodeStack } = await import('../../services/deepShareStack.js');
 
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  app = Fastify();
+  app = testApp();
   await app.register(async (api) => {
-    addAuthMiddleware(api);
-    await api.register(exportRoutes);
+    addAccessHook(api);
+    await api.register(catalogRoutes(exportHandlers));
   });
   await app.ready();
 });
@@ -146,7 +147,13 @@ describe('export render auth (#295)', () => {
       );
 
       expect(res.statusCode).toBe(502);
-      expect(res.json<{ renderState: string }>().renderState).toBe(state);
+      expect(res.json()).toEqual(
+        serverError(
+          'SERVER_EXPORT_FAILED',
+          'PDF export failed: document did not render',
+        ),
+      );
+      expect(state).toBeTruthy();
       expect(cacheExportMock).not.toHaveBeenCalled();
     },
   );

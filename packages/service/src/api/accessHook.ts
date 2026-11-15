@@ -1,0 +1,218 @@
+/**
+ * The access hook (`onRequest`): enforces each catalog entry's access class (`ROUTE_ACCESS`, Decision 8) before the request is parsed, and stores who is calling on the request. It runs only inside the catalog scope (`api/routes.ts`): the entry comes from the route Fastify matched, never from the raw URL, and a route that is no catalog entry fails closed.
+ *
+ * @remarks
+ * Public entries resolve an identity when one is present and never fail on
+ * it. The key-exchange and webhook entries verify their machine seed or
+ * event key. Every other entry rejects a `..` segment in its decoded content
+ * path (either separator), then resolves an identity (a session, a machine
+ * insider key, or the insider-seed insider key where `loginSeedKey`):
+ * `admin` needs one with no scopes (Decision 12) that is not the `_internal`
+ * machine key; `noScopedMachineKey` entries refuse a machine key with scopes
+ * (Decisions 28, 29); on content and navigation entries an identity
+ * outside its scopes falls back to a valid share credential (as an outsider,
+ * with the signer's scopes), else `SERVER_OUT_OF_SCOPE`. Without an
+ * identity, a share credential valid for the content path admits an
+ * outsider (`content+insider`: `SERVER_INSIDER_REQUIRED`); otherwise
+ * `SERVER_UNAUTHORIZED`. Handlers of `insider` entries check the paths they
+ * address against the identity's scopes.
+ *
+ * @packageDocumentation
+ */
+
+import type { FastifyInstance, FastifyRequest } from 'fastify';
+
+import {
+  eventKeyFor,
+  type Identity,
+  machineSeedFor,
+  resolveIdentity,
+  type ShareGrant,
+  verifyShareCredential,
+} from '../auth/credentials.js';
+import type { AuthQuery } from '../auth/resolve.js';
+import { canAccessPath, canNavigatePath } from '../auth/scopeAccess.js';
+import { getConfig } from '../config/index.js';
+import { INTERNAL_KEY_NAME } from '../config/types.js';
+import {
+  parseContentRoute,
+  requireNoTraversal,
+} from '../routes/api/contentRoute.js';
+import { INSIDER_REQUIRED_ERROR } from '../routes/api/scopeGuard.js';
+import { matchCatalogRequest } from './catalogMatch.js';
+import {
+  Forbidden,
+  InsiderRequired,
+  OutOfScope,
+  Unauthorized,
+} from './errors.js';
+import { type RouteAccess, routeAccess } from './routeAccess.js';
+
+/** Message of `SERVER_FORBIDDEN` on `admin` entries. */
+export const UNSCOPED_INSIDER_REQUIRED_ERROR =
+  'Unscoped insider access required';
+
+/** Message of `SERVER_FORBIDDEN` on `noScopedMachineKey` entries. */
+export const SCOPED_MACHINE_KEY_ERROR =
+  'Scoped machine keys may not call this route';
+
+/**
+ * True when an identity is a machine key with scopes: refused where scopes
+ * can't limit what the entry reaches (the runner proxy, OAuth).
+ *
+ * @param identity - The identity.
+ * @returns Whether it is.
+ */
+const isScopedMachineKey = (identity: Identity): boolean =>
+  identity.kind === 'machineKey' && identity.scopes !== null;
+
+/**
+ * Record an identity on the request.
+ *
+ * @param request - The request.
+ * @param identity - Who is calling.
+ */
+function admitIdentity(request: FastifyRequest, identity: Identity): void {
+  if (request.access) request.access.identity = identity;
+  request.accessMode = 'insider';
+  request.authSeed = identity.seed;
+  request.insiderScopes = identity.scopes;
+  if (identity.email !== undefined) request.insiderEmail = identity.email;
+  if (identity.keyAge !== undefined) request.keyAge = identity.keyAge;
+}
+
+/**
+ * Record a share credential on the request, as an outsider.
+ *
+ * @param request - The request.
+ * @param access - The entry's access.
+ * @param grant - The verified share credential.
+ * @throws `SERVER_INSIDER_REQUIRED` (403) on `content+insider` entries.
+ */
+function admitOutsider(
+  request: FastifyRequest,
+  access: RouteAccess,
+  grant: ShareGrant,
+): void {
+  if (access.class === 'content+insider')
+    throw new InsiderRequired(INSIDER_REQUIRED_ERROR);
+  request.accessMode = 'outsider';
+  request.authSeed = grant.seed;
+  request.insiderScopes = grant.scopes;
+  request.authMatchedPath = grant.matchedPath;
+  if (grant.deepShareParams) request.deepShareParams = grant.deepShareParams;
+}
+
+/**
+ * True when `scopes` allow the entry's content path: navigation admits
+ * non-denied ancestors of allowed paths, content needs the path itself.
+ */
+function scopesAllow(
+  access: RouteAccess,
+  contentPath: string,
+  identity: Identity,
+): boolean {
+  return access.class === 'navigation'
+    ? canNavigatePath(contentPath, identity.scopes)
+    : canAccessPath(contentPath, identity.scopes);
+}
+
+/**
+ * True when an identity is an admin: no scopes configured (Decision 12),
+ * and not the server's own `_internal` machine key, which signs export
+ * renders and share links but never administers the server.
+ *
+ * @param identity - The identity.
+ * @returns Whether it is.
+ */
+const isAdminIdentity = (identity: Identity): boolean =>
+  identity.scopes === null &&
+  !(identity.kind === 'machineKey' && identity.name === INTERNAL_KEY_NAME);
+
+/**
+ * Enforce the access class of the catalog entry a request addresses.
+ *
+ * @param request - The request.
+ * @throws `SERVER_INVALID_PATH` (400), `SERVER_UNAUTHORIZED` (401),
+ *   `SERVER_FORBIDDEN`, `SERVER_OUT_OF_SCOPE` or `SERVER_INSIDER_REQUIRED`
+ *   (403), per the access model; a plain error (masked 500) when the
+ *   route is no catalog entry.
+ */
+export function authorizeRequest(request: FastifyRequest): void {
+  const match = matchCatalogRequest(request);
+  const access = routeAccess(match.name);
+  request.access = { entry: match.name, class: access.class };
+  const config = getConfig();
+  // Before validation: the query as sent. Kept for handlers that re-check
+  // a credential (authStatus); the validated query has none.
+  const query = (request.query ?? {}) as AuthQuery;
+  request.credentialQuery = query;
+
+  if (access.class === 'machineSeed') {
+    const key = machineSeedFor(config, request.headers['x-api-key']);
+    request.access.machineKey = key.name;
+    request.authSeed = key.seed;
+    return;
+  }
+  if (access.class === 'eventKey') {
+    request.access.machineKey = eventKeyFor(config, query);
+    return;
+  }
+  if (access.class === 'public') {
+    const identity = resolveIdentity(config, request, query, false);
+    if (identity) admitIdentity(request, identity);
+    return;
+  }
+
+  const contentPath = parseContentRoute(match, access)?.path;
+  if (contentPath !== undefined) requireNoTraversal(contentPath);
+
+  const identity = resolveIdentity(config, request, query, access.loginSeedKey);
+  if (identity) {
+    if (access.class === 'admin' && !isAdminIdentity(identity))
+      throw new Forbidden(UNSCOPED_INSIDER_REQUIRED_ERROR);
+    if (access.noScopedMachineKey && isScopedMachineKey(identity))
+      throw new Forbidden(SCOPED_MACHINE_KEY_ERROR);
+    if (
+      contentPath === undefined ||
+      scopesAllow(access, contentPath, identity)
+    ) {
+      admitIdentity(request, identity);
+      return;
+    }
+    const grant = verifyShareCredential(config, contentPath, query);
+    if (!grant) throw new OutOfScope();
+    admitOutsider(request, access, grant);
+    return;
+  }
+
+  const grant =
+    contentPath === undefined
+      ? undefined
+      : verifyShareCredential(config, contentPath, query);
+  if (!grant) throw new Unauthorized('Unauthorized');
+  admitOutsider(request, access, grant);
+}
+
+/**
+ * Add the access hook to an app (before its routes).
+ *
+ * @param app - The app.
+ */
+export function addAccessHook(app: FastifyInstance): void {
+  app.addHook('onRequest', (request, _reply, done) => {
+    authorizeRequest(request);
+    done();
+  });
+}
+
+/**
+ * True when the caller is an admin ({@link isAdminIdentity}).
+ *
+ * @param request - The request.
+ * @returns Whether it is.
+ */
+export const isAdmin = (request: FastifyRequest): boolean => {
+  const identity = request.access?.identity;
+  return identity !== undefined && isAdminIdentity(identity);
+};

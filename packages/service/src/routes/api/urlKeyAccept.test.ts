@@ -4,8 +4,7 @@
  *
  * @packageDocumentation
  */
-
-import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
+import { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -13,6 +12,8 @@ import {
   MACHINE_SEED,
   makeRuntimeConfig,
 } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
+import { testApp } from '../../testing/testApp.js';
 import {
   computeDeepShareKey,
   computeInsiderKey,
@@ -34,11 +35,11 @@ vi.mock('../../util/configPersist.js', () => ({
   writeInsiderSeedToConfig: vi.fn(),
 }));
 
-const { addAuthMiddleware } = await import('./middleware.js');
-const { authStatusRoutes } = await import('./auth-status.js');
-const { keysRoute } = await import('../keys.js');
-const { eventRoute } = await import('../event.js');
-const { encodeStack } = await import('../../services/deepShareLinks.js');
+const { addAccessHook } = await import('../../api/accessHook.js');
+const { authStatusHandlers } = await import('./auth-status.js');
+const { keysHandlers } = await import('../keys.js');
+const { eventHandlers } = await import('../event.js');
+const { encodeStack } = await import('../../services/deepShareStack.js');
 
 const echo = (request: FastifyRequest) => ({
   accessMode: request.accessMode ?? null,
@@ -49,7 +50,6 @@ const CONTENT_PREFIXES = [
   '/api/file',
   '/api/raw',
   '/api/export',
-  '/api/export-cache',
   '/api/mermaid-export',
   '/api/plantuml-export',
   '/api/link-info',
@@ -58,15 +58,18 @@ const CONTENT_PREFIXES = [
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  app = Fastify();
-  await app.register(async (api) => {
-    addAuthMiddleware(api);
-    for (const prefix of CONTENT_PREFIXES) api.get(`${prefix}/*`, echo);
-    api.post('/api/util/share-for', echo);
-    await api.register(authStatusRoutes);
+  app = testApp();
+  // As production: the hook guards a scope of catalog routes only, so an
+  // unknown URL reaches the root 404 handler.
+  await app.register(async (scope) => {
+    addAccessHook(scope);
+    for (const prefix of CONTENT_PREFIXES) scope.get(`${prefix}/*`, echo);
+    scope.post('/api/util/share-for', echo);
+    scope.post('/api/rotate-key', echo);
+    await scope.register(catalogRoutes(authStatusHandlers));
+    await scope.register(catalogRoutes(keysHandlers));
+    await scope.register(catalogRoutes(eventHandlers));
   });
-  await app.register(keysRoute);
-  await app.register(eventRoute);
   await app.ready();
 });
 
@@ -141,26 +144,27 @@ describe('/api/auth/status accepts k and key', () => {
   });
 });
 
-describe('GET /share accepts k and key', () => {
-  const insiderKey = computeInsiderKey(INSIDER_SEED);
-
-  it.each(variants(insiderKey))('%s', async (_label, query, status) => {
-    const res = await app.inject(`/share?path=${DOC}&${query}`);
-    expect(res.statusCode).toBe(status);
-  });
-});
-
-describe('POST /rotate-key accepts k and key', () => {
+describe('POST /api/rotate-key accepts k and key', () => {
   it.each([
     ['k', 'k'],
     ['key', 'key'],
-  ])('machine insider key via %s reaches the key check', async (_l, name) => {
+  ])('a machine insider key via %s is an identity', async (_l, name) => {
     const res = await app.inject({
       method: 'POST',
-      url: `/rotate-key?${name}=${computeInsiderKey(MACHINE_SEED)}`,
+      url: `/api/rotate-key?${name}=${computeInsiderKey(MACHINE_SEED)}`,
     });
-    // Machine-key rotation is refused with 501 once the key is recognised.
-    expect(res.statusCode).toBe(501);
+    // The handler then refuses it (rotateKey.test.ts).
+    expect(res.json()).toEqual({ accessMode: 'insider' });
+  });
+});
+
+describe('the legacy routes are gone (#292)', () => {
+  it.each([
+    ['POST', '/rotate-key'],
+    ['GET', `/share?path=${DOC}`],
+  ] as const)('%s %s is not a route', async (method, url) => {
+    const res = await app.inject({ method, url });
+    expect(res.statusCode).toBe(404);
   });
 });
 

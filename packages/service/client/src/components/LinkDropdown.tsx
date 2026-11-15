@@ -10,11 +10,12 @@ import {
   type ActionState,
 } from '@/components/ActionDropdown';
 import { useActionState } from '@/components/useActionState';
-import { getShareLink, type ShareSettings } from '@/lib/api';
+import { server } from '@/lib/server';
 import {
   deriveShareLink,
   type LinkType,
   shareDepthOptions,
+  type ShareSettings,
 } from '@/lib/shareLinks';
 
 interface LinkDropdownProps {
@@ -51,9 +52,11 @@ async function copyShareLink(
     }
   }
 
-  const { depth, dirs } = shareDepthOptions(settings, isDirectory);
-
-  const data = await getShareLink(path, expiryParam, depth, dirs);
+  const data = await server.share({
+    path,
+    ...(expiryParam === undefined ? {} : { expiry: expiryParam }),
+    ...shareDepthOptions(settings, isDirectory),
+  });
   if (!data.url) throw new Error('No URL returned');
 
   const fullUrl = deriveShareLink(window.location.origin, data.url, type);

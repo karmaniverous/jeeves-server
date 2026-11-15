@@ -2,7 +2,11 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "paths": {
-      "@karmaniverous/jeeves-server-core": ["../core/src/index.ts"]
+      "@karmaniverous/jeeves-server-core": ["../core/src/index.ts"],
+      "@karmaniverous/jeeves-server-core/catalog": [
+        "../core/src/catalog/index.ts"
+      ],
+      "@karmaniverous/jeeves-server-sdk": ["../sdk/src/index.ts"]
     },
     "types": ["node"]
   },

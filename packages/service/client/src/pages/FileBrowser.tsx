@@ -1,9 +1,6 @@
 /**
  * FileBrowser — thin composition root that wires hooks and components together.
  */
-import { useCallback, useState } from 'react';
-import { Loader2, Undo2, Redo2 } from 'lucide-react';
-
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { DirectoryTable } from '@/components/DirectoryTable';
 import { DownloadDropdown } from '@/components/DownloadDropdown';
@@ -12,9 +9,14 @@ import { FileContentView } from '@/components/FileContentView';
 import { Header } from '@/components/layout/Header';
 import { LinkDropdown } from '@/components/LinkDropdown';
 import { TabBar } from '@/components/TabBar';
+import { UndoRedoControls } from '@/components/UndoRedoControls';
 import { useFileBrowser } from '@/hooks/useFileBrowser';
-import { saveFile } from '@/lib/api';
-import { useUndo } from '@/lib/useUndo';
+import { useUndoRedo } from '@/hooks/useUndoRedo';
+
+/** A menu item's `onStateChange`: dismiss the menu shortly after `done`. */
+const dismissWhenDone = (onDismiss: () => void) => (s: string) => {
+  if (s === 'done') setTimeout(onDismiss, 800);
+};
 
 export function FileBrowser() {
   const {
@@ -54,38 +56,35 @@ export function FileBrowser() {
   } = useFileBrowser();
 
   // Undo/redo controls for header
-  const { peekUndo, peekRedo, confirmUndo, confirmRedo, canUndo, canRedo } =
-    useUndo();
-  const [undoSaving, setUndoSaving] = useState(false);
   const currentContent = (fileRaw ?? fileRendered)?.content ?? '';
-
-  const handleUndo = useCallback(async () => {
-    const restored = peekUndo(reqPath);
-    if (!restored) return;
-    setUndoSaving(true);
-    try {
-      await saveFile(reqPath, restored);
-      confirmUndo(reqPath, currentContent);
-      await refetch();
-    } finally {
-      setUndoSaving(false);
-    }
-  }, [reqPath, currentContent, peekUndo, confirmUndo, refetch]);
-
-  const handleRedo = useCallback(async () => {
-    const restored = peekRedo(reqPath);
-    if (!restored) return;
-    setUndoSaving(true);
-    try {
-      await saveFile(reqPath, restored);
-      confirmRedo(reqPath, currentContent);
-      await refetch();
-    } finally {
-      setUndoSaving(false);
-    }
-  }, [reqPath, currentContent, peekRedo, confirmRedo, refetch]);
+  const { handleUndo, handleRedo, saving, canUndo, canRedo } = useUndoRedo(
+    reqPath,
+    currentContent,
+    refetch,
+  );
 
   const showFileView = file || (loading && !!reqPath);
+
+  // What the download control exports (none while editing).
+  const download = editing
+    ? undefined
+    : file
+      ? { file }
+      : directory
+        ? { file: null, isDirectory: true }
+        : undefined;
+  // The link control's props (insiders only, none while editing).
+  const link =
+    !editing && isInsider
+      ? {
+          path: `/${reqPath}`,
+          shareSettings,
+          onShareSettingsChange: setShareSettings,
+          showEvent: true,
+          showRaw: !!file,
+          isDirectory: !file,
+        }
+      : undefined;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -101,81 +100,35 @@ export function FileBrowser() {
           keyAge={editing ? undefined : keyAge}
           onRotateKey={editing ? undefined : handleRotateKey}
           downloadDropdown={
-            editing ? undefined : file ? (
+            download && (
               <DownloadDropdown
                 reqPath={reqPath}
-                file={file}
+                {...download}
                 variant="header"
               />
-            ) : directory ? (
-              <DownloadDropdown
-                reqPath={reqPath}
-                file={null}
-                isDirectory
-                variant="header"
-              />
-            ) : undefined
+            )
           }
           downloadMenuItem={
-            editing
-              ? undefined
-              : file
-                ? (onDismiss) => (
-                    <DownloadDropdown
-                      reqPath={reqPath}
-                      file={file}
-                      variant="menuItem"
-                      onStateChange={(s) => {
-                        if (s === 'done') setTimeout(onDismiss, 800);
-                      }}
-                    />
-                  )
-                : directory
-                  ? (onDismiss) => (
-                      <DownloadDropdown
-                        reqPath={reqPath}
-                        file={null}
-                        isDirectory
-                        variant="menuItem"
-                        onStateChange={(s) => {
-                          if (s === 'done') setTimeout(onDismiss, 800);
-                        }}
-                      />
-                    )
-                  : undefined
-          }
-          linkControls={
-            editing ? undefined : isInsider ? (
-              <LinkDropdown
-                path={`/${reqPath}`}
-                shareSettings={shareSettings}
-                onShareSettingsChange={setShareSettings}
-                showEvent
-                showRaw={!!file}
-                variant="header"
-                isDirectory={!file}
+            download &&
+            ((onDismiss) => (
+              <DownloadDropdown
+                reqPath={reqPath}
+                {...download}
+                variant="menuItem"
+                onStateChange={dismissWhenDone(onDismiss)}
               />
-            ) : undefined
+            ))
           }
+          linkControls={link && <LinkDropdown {...link} variant="header" />}
           linkMenuItem={
-            editing
-              ? undefined
-              : isInsider
-                ? (onDismiss) => (
-                    <LinkDropdown
-                      path={`/${reqPath}`}
-                      shareSettings={shareSettings}
-                      onShareSettingsChange={setShareSettings}
-                      showEvent
-                      showRaw={!!file}
-                      variant="menuItem"
-                      isDirectory={!file}
-                      onStateChange={(s) => {
-                        if (s === 'done') setTimeout(onDismiss, 800);
-                      }}
-                    />
-                  )
-                : undefined
+            link &&
+            ((onDismiss) => (
+              <LinkDropdown
+                {...link}
+                variant="menuItem"
+                onStateChange={dismissWhenDone(onDismiss)}
+              />
+            ))
           }
         />
 
@@ -196,39 +149,14 @@ export function FileBrowser() {
             setMobileTocOpen={setMobileTocOpen}
             loading={loading}
             undoRedoControls={
-              !editing &&
-              isInsider &&
-              (canUndo(reqPath) || canRedo(reqPath)) ? (
-                <div className="flex items-center gap-0.5 ml-2">
-                  {canUndo(reqPath) && (
-                    <button
-                      onClick={handleUndo}
-                      disabled={undoSaving}
-                      title="Undo (Ctrl+Z)"
-                      className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-                    >
-                      {undoSaving ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Undo2 className="h-4 w-4" />
-                      )}
-                    </button>
-                  )}
-                  {canRedo(reqPath) && (
-                    <button
-                      onClick={handleRedo}
-                      disabled={undoSaving}
-                      title="Redo (Ctrl+Shift+Z)"
-                      className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-                    >
-                      {undoSaving ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Redo2 className="h-4 w-4" />
-                      )}
-                    </button>
-                  )}
-                </div>
+              !editing && isInsider && (canUndo || canRedo) ? (
+                <UndoRedoControls
+                  canUndo={canUndo}
+                  canRedo={canRedo}
+                  saving={saving}
+                  onUndo={handleUndo}
+                  onRedo={handleRedo}
+                />
               ) : undefined
             }
           />

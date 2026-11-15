@@ -4,7 +4,8 @@
 import { lazy, Suspense, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 
-import { fileMutate } from '@/lib/api';
+import { errorMessage } from '@/lib/serverErrors';
+import { server } from '@/lib/server';
 import { useUndo } from '@/lib/useUndo';
 
 const CodeEditor = lazy(() =>
@@ -60,14 +61,16 @@ export function BlockEditPopup({
     async (content: string) => {
       try {
         if (mode.kind === 'edit-block') {
-          await fileMutate(reqPath, {
+          await server.fileMutate({
+            '*': reqPath,
             action: 'edit-block',
             startLine: mode.startLine,
             endLine: mode.endLine,
             content: content + '\n',
           });
         } else if (mode.kind === 'insert-block') {
-          await fileMutate(reqPath, {
+          await server.fileMutate({
+            '*': reqPath,
             action: 'insert-block',
             atLine: mode.atLine,
             position: mode.position,
@@ -75,7 +78,8 @@ export function BlockEditPopup({
             ...(mode.context ? { context: mode.context } : {}),
           });
         } else if (mode.kind === 'edit-cell') {
-          await fileMutate(reqPath, {
+          await server.fileMutate({
+            '*': reqPath,
             action: 'edit-cell',
             line: mode.line,
             col: mode.col,
@@ -85,7 +89,7 @@ export function BlockEditPopup({
         pushUndo(reqPath, fileContent);
         onSaved();
       } catch (e: unknown) {
-        onError((e as Error).message);
+        onError(errorMessage(e));
       }
     },
     [mode, reqPath, fileContent, pushUndo, onSaved, onError],

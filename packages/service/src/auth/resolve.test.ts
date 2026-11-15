@@ -6,8 +6,8 @@ import { INSIDER_SEED, makeRuntimeConfig } from '../testing/authFixture.js';
 import { computeInsiderKey, computePathKey } from '../util/crypto.js';
 import {
   extractDeepParams,
-  resolveAuth,
   resolveKeyAuth,
+  resolveSpaAccess,
   sanitizeReturnTo,
 } from './resolve.js';
 
@@ -140,7 +140,7 @@ describe('resolveKeyAuth', () => {
   });
 });
 
-describe('resolveAuth (SPA gate)', () => {
+describe('resolveSpaAccess (SPA gate)', () => {
   const config = makeRuntimeConfig();
   const doc = '/r/docs/a.md';
   const outsiderKey = computePathKey(INSIDER_SEED, doc);
@@ -153,6 +153,24 @@ describe('resolveAuth (SPA gate)', () => {
     ['both (k wins)', { k: 'bogus', key: outsiderKey }, 'none'],
     ['neither', {}, 'none'],
   ] as const)('%s', (_label, query, type) => {
-    expect(resolveAuth(config, request(query))).toEqual({ type });
+    expect(resolveSpaAccess(config, request(query)).type).toBe(type);
+  });
+
+  it("carries a key's scopes, for the page title's scope check", () => {
+    const scoped: NormalizedScopes = {
+      allow: ['/r/docs/**'],
+      deny: [],
+      explicitAllow: [],
+      explicitDeny: [],
+    };
+    const keyed = {
+      resolvedKeys: [{ name: 'scoped', seed: 'machine-seed', scopes: scoped }],
+      resolvedInsiders: [],
+    } as unknown as RuntimeConfig;
+    const k = computeInsiderKey('machine-seed');
+    expect(resolveSpaAccess(keyed, request({ k }))).toEqual({
+      type: 'insider',
+      scopes: scoped,
+    });
   });
 });

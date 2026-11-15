@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import type { FastifyError } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { NormalizedScopes } from '../../config/types.js';
@@ -17,6 +18,11 @@ vi.mock('../../services/plantuml.js', () => ({
   getPlantUmlFormats: () => ['svg', 'png', 'pdf'],
 }));
 
+// Text files go to the watcher through the loader: no rendering here.
+vi.mock('../../services/watcherRender.js', () => ({
+  renderViaWatcher: () => Promise.resolve({ status: 'none' }),
+}));
+
 vi.mock('../../util/platform.js', () => ({
   getRoots: () => ({}),
   urlPathToFs: (reqPath: string) => {
@@ -27,7 +33,7 @@ vi.mock('../../util/platform.js', () => ({
   },
 }));
 
-const { linkInfoRoutes } = await import('./linkInfo.js');
+const { linkInfoHandlers } = await import('./linkInfo.js');
 
 describe('GET /api/link-info', () => {
   beforeEach(() => {
@@ -43,41 +49,17 @@ describe('GET /api/link-info', () => {
     accessMode = 'insider',
     insiderScopes: NormalizedScopes | null = null,
   ): Promise<Record<string, unknown>> {
-    const routes: Record<
-      string,
-      (req: unknown, reply: unknown) => Promise<unknown>
-    > = {};
-    const fakeFastify = {
-      get: (
-        routePath: string,
-        handler: (req: unknown, reply: unknown) => Promise<unknown>,
-      ) => {
-        routes[routePath] = handler;
-      },
-    };
-    linkInfoRoutes(fakeFastify as never, {}, () => {});
-    const handler = routes['/api/link-info/*'];
-
-    let result: unknown;
-    const fakeReply = {
-      code: (status: number) => ({
-        send: (d: unknown) => {
-          result = { status, ...(d as object) };
-          return d;
-        },
-      }),
-      send: (d: unknown) => {
-        result = d;
-        return d;
-      },
-    };
-    const fakeRequest = {
-      params: { '*': urlPath },
-      accessMode,
-      insiderScopes,
-    };
-    await handler(fakeRequest, fakeReply);
-    return result as Record<string, unknown>;
+    const fakeRequest = { accessMode, insiderScopes };
+    try {
+      const { body } = await linkInfoHandlers.linkInfo(
+        { params: { '*': urlPath }, query: {}, body: {} },
+        fakeRequest as never,
+      );
+      return body;
+    } catch (err) {
+      const { statusCode, code, message } = err as FastifyError;
+      return { status: statusCode, code, message };
+    }
   }
 
   describe('scoped insider', () => {
@@ -94,7 +76,8 @@ describe('GET /api/link-info', () => {
       const res = await callHandler('test/secret.md', 'insider', scopes);
       expect(res).toEqual({
         status: 403,
-        error: 'Path is outside your access scope',
+        code: 'SERVER_OUT_OF_SCOPE',
+        message: 'Path is outside your access scope',
       });
     });
 
@@ -126,6 +109,7 @@ describe('GET /api/link-info', () => {
     expect(res.exists).toBe(true);
     expect(res.isDirectory).toBe(true);
     expect(res.rawUrl).toBe(null);
+    expect(res.downloadUrl).toBe(null);
     expect(res.exportLinks).toEqual([
       { format: 'zip', url: '/api/export/test/folder?format=zip' },
     ]);
@@ -166,6 +150,7 @@ describe('GET /api/link-info', () => {
     fs.writeFileSync(path.join(tmpDir, 'data.json'), '{}');
     const res = await callHandler('test/data.json');
     expect(res.rawUrl).toBe('/api/raw/test/data.json');
+    expect(res.downloadUrl).toBe('/api/raw/test/data.json?download=1');
     expect(res.exportLinks).toEqual([]);
   });
 });

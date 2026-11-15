@@ -29,6 +29,9 @@ import register from './index.js';
 const BASE_URL = 'http://127.0.0.1:1934';
 const PUBLIC_URL = 'https://jeeves.example.com';
 
+/** A reply `server_drives` accepts, carrying a server URL to rewrite. */
+const DRIVES = [{ letter: 'j', label: `${BASE_URL}/browse/j/a.md` }];
+
 function createApi(overrides: Partial<PluginApi> = {}) {
   const tools = new Map<string, ToolDescriptor>();
   const warn = vi.fn();
@@ -78,7 +81,7 @@ describe('register', () => {
       'fetch',
       vi.fn(() =>
         Promise.resolve(
-          new Response(JSON.stringify({ url: `${BASE_URL}/browse/j/a.md` }), {
+          new Response(JSON.stringify(DRIVES), {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
           }),

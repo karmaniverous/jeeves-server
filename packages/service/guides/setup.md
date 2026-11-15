@@ -6,7 +6,7 @@ title: 'Setup & Configuration'
 
 ## Prerequisites
 
-- **Node.js** ≥ 22
+- **Node.js** ≥ 24.22.2 (the floor for every Jeeves component: the built-in SQLite in Node 24.16.0-24.18.0 left WAL files un-checkpointed)
 - **Chrome or Chromium** — required for PDF export (Puppeteer uses it headlessly)
 
 ## Installation
@@ -236,8 +236,17 @@ Users authenticate with their Google account. The server checks their email agai
 1. Create a project (or use an existing one)
 2. Go to **APIs & Services → Credentials → Create Credentials → OAuth client ID**
 3. Application type: **Web application**
-4. Authorized redirect URI: `https://your-domain.com/auth/google/callback`
+4. Authorized redirect URI: `{public origin}/auth/callback`, e.g. `https://your-domain.com/auth/callback`
 5. Copy the client ID and client secret into your config
+
+**Two callbacks, two features.** `GET /auth/callback` is Google sign-in to the portal (`auth.google`); register it in the Google OAuth client above. `GET /oauth/callback` belongs only to the generic OAuth2 credential flow (`oauth.providers`, used by tools that store provider tokens); register it in each provider's client, never in the Google sign-in client. The public origin is `publicUrl` (or, without it, the origin trusted proxy headers give when `trustProxyHeaders` is `true`). At startup the server logs the exact URI for each feature that is on, and `GET /status` reports them as `health.auth.googleRedirectUri` and `health.auth.oauthRedirectUri`:
+
+```text
+Google sign-in redirect URI (register in the Google OAuth client): https://your-domain.com/auth/callback
+OAuth provider redirect URI (provider clients only, not Google sign-in): https://your-domain.com/oauth/callback
+```
+
+**When Google sign-in is refused.** A Google account that isn't in `insiders`, or whose email Google hasn't verified, gets a `403` page in the server's branding instead of an error: it names the Google account used and why it was refused, links **Sign in with a different Google account** (Google's account chooser, back to the same page afterwards), links the email sign-in when `email` is in `auth.modes`, and says who to ask for access. Set that with `auth.accessContact` (free text, e.g. `"Jane Doe <jane@example.com>"`; an email in it becomes a `mailto:` link); without it the page says to ask the administrator of the server (`branding.name`). A client that asks for JSON (`Accept: application/json`) gets `403` with code `SERVER_SIGN_IN_REJECTED` instead. Each refusal is logged at `warn` with the email and reason (`not_insider` or `unverified`).
 
 ### Key-Based Auth (`"keys"`)
 
@@ -383,7 +392,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 | Key | Purpose | Scopes |
 | --- | --- | --- |
-| `_internal` | Puppeteer uses this to authenticate when rendering PDFs/DOCX. **Required for export.** | Must be unscoped |
+| `_internal` | Puppeteer uses this to authenticate when rendering PDFs/DOCX. **Required for export.** Never an admin (refused by `/config`). | Must be unscoped |
 | `_plugin` | OpenClaw plugin authentication. See [OpenClaw Integration](../../openclaw/guides/openclaw-integration.md). | Must be unscoped |
 
 Both reserved keys are enforced unscoped by the Zod schema.
@@ -401,6 +410,8 @@ See the [Event Gateway](event-gateway.md) guide for full configuration and usage
 ### jeeves-watcher (Semantic Search)
 
 The server proxies semantic search queries to [jeeves-watcher](https://github.com/karmaniverous/jeeves-watcher) and provides a search UI in the header, with filter facets and scope-aware result filtering. The watcher URL is resolved automatically via core service discovery (default port 1936).
+
+The server calls the watcher through [`@karmaniverous/jeeves-watcher-sdk`](https://www.npmjs.com/package/@karmaniverous/jeeves-watcher-sdk), with a budget per call: `POST /render` 5 s (text files the watcher renders, e.g. JSON through a Handlebars template), `POST /search` 30 s and `GET /search/facets` 15 s (facets are cached for a minute). The watcher is an enhancer: if it is down, slow or answers an error, files show raw and the search routes answer `502`.
 
 To override the default URL, configure it in `{configRoot}/jeeves-core/config.json`:
 
@@ -477,6 +488,49 @@ Branding is surfaced via the `/status` endpoint (no auth required) so the React 
 
 ---
 
+## Print Styles
+
+Named print styles restyle PDF exports of the documents that ask for them ([Exporting](exports.md#print-styles)):
+
+```json
+{
+  "printStyles": {
+    "bca-brief": {
+      "css": "/opt/jeeves/config/jeeves-server/print-styles/bca-brief.css",
+      "page": { "format": "Letter", "margin": "14mm 14mm 16mm 14mm" },
+      "headerTemplate": "/opt/jeeves/config/jeeves-server/print-styles/bca-brief.header.html",
+      "footerTemplate": "/opt/jeeves/config/jeeves-server/print-styles/bca-brief.footer.html",
+      "assets": "/opt/jeeves/config/jeeves-server/print-styles/assets"
+    }
+  }
+}
+```
+
+A document selects the style in its front matter:
+
+```yaml
+---
+jeeves:
+  print: bca-brief
+---
+```
+
+| Field | Type | Default | Description |
+| --- | --- | --- | --- |
+| `css` | string | _required_ | Absolute path to the stylesheet, added after the default print CSS |
+| `page.format` | string | `A4` | Paper format: `Letter`, `Legal`, `Tabloid`, `Ledger`, `A0` to `A6` (any case). Not with `width`/`height` |
+| `page.width`, `page.height` | string or number |  | Page size, both together: CSS lengths (`8.5in`) or pixels |
+| `page.margin` | string | `1cm` | CSS margin shorthand, one to four lengths |
+| `headerTemplate`, `footerTemplate` | string |  | Absolute paths to Chromium header/footer templates (HTML; `pageNumber`, `totalPages`, `date` and `title` classes are filled in) |
+| `assets` | string |  | Absolute path to a directory whose files the CSS and templates may use |
+
+- Style names are lower-case letters, digits and hyphens (`^[a-z0-9][a-z0-9-]*$`). Every path must be absolute; otherwise any location the server process can read will do. A `print-styles/` directory beside the server config is a convenient convention, not a requirement.
+- **Assets** are inlined as `data:` URIs when the style is loaded: each `url(...)` in the CSS and each `src="..."` in the templates is resolved relative to `assets`, and inlined if it names a file inside that directory. A reference outside it, a missing file or a remote URL is removed and logged. A style larger than 5 MiB once inlined is refused (default styling, with an error in the log).
+- Files are read when a document uses the style and reloaded when any of them (or the style's config) changes, so no restart is needed.
+- An unregistered name in a document never fails the export: the PDF gets default styling and the server logs a warning.
+
+---
+
 ## Config Reference
 
 | Field | Type | Default | Description |
@@ -498,8 +552,11 @@ Branding is surfaced via the `/status` endpoint (no auth required) so the React 
 | ~~`metaUrl`~~ | — | — | **Deprecated in v3.6.0.** Use core service discovery. |
 | `branding` | object | — | Instance branding (name, emoji, theme, email template) |
 | `auth.email` | object | — | Email magic link config (required when modes includes `"email"`) |
+| `auth.accessContact` | string | — | Who to ask for access, shown when Google sign-in is refused (an email in it becomes a `mailto:` link) |
 | `plantuml` | object | — | PlantUML rendering config |
 | `diagramCachePath` | string | `.diagram-cache` | Cached rendered diagram directory |
+| `exportCachePath` | string | `.export-cache` | Cached PDF/DOCX export directory |
+| `printStyles` | object | `{}` | Named PDF print styles ([Print Styles](#print-styles)) |
 | `publicUrl` | string | — | Public base URL (e.g. `https://docs.example.com`). Origin for login links, share-for links, OAuth redirects and the cookie `secure` flag; API responses include full public URLs. **Required** with email, Google or OAuth login unless `trustProxyHeaders` is `true`. |
 | `trustProxyHeaders` | boolean | `false` | Derive the public origin from forwarding/`Host` headers when `publicUrl` is unset. Only behind a proxy that sets those headers. |
 | `eventQueue` | string | `{installDir}/logs/event-queue.jsonl` | Absolute path to the durable event queue file. Cursor file is `eventQueue + '.cursor'`. |

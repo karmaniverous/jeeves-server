@@ -18,8 +18,7 @@
 
 import crypto from 'node:crypto';
 
-import type { FastifyPluginCallback } from 'fastify';
-
+import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { sanitizeReturnTo } from '../../auth/resolve.js';
 import { getConfig } from '../../config/index.js';
 import { DEFAULT_BRANDING } from '../../config/schema.js';
@@ -32,83 +31,74 @@ import {
 } from '../../util/magicToken.js';
 import {
   getPublicOrigin,
-  sendPublicOriginConfigError,
+  publicOriginConfigError,
 } from '../../util/publicOrigin.js';
 
-export const magicLinkApiRoute: FastifyPluginCallback = (
-  fastify,
-  _opts,
-  done,
-) => {
-  fastify.post<{ Body: { email?: string; returnTo?: string } }>(
-    '/api/auth/magic',
-    async (request, reply) => {
-      const config = getConfig();
+/** `sendMagicLink`: send a magic link + OTP to a configured insider. */
+export const magicLinkHandlers: HandlersFor<'sendMagicLink'> = {
+  sendMagicLink: ({ body }, request) => {
+    const config = getConfig();
 
-      // Never build login links from request headers unless trusted. With
-      // email login configured, refuse for every request (not only
-      // insiders) so the response doesn't reveal which emails are insiders.
-      const emailLoginConfigured =
-        config.authModes.includes('email') && !!config.emailAuth;
-      const origin = getPublicOrigin(config, request);
-      if (emailLoginConfigured && !origin) {
-        return sendPublicOriginConfigError(reply);
-      }
+    // Never build login links from request headers unless trusted. With
+    // email login configured, refuse for every request (not only
+    // insiders) so the response doesn't reveal which emails are insiders.
+    const emailLoginConfigured =
+      config.authModes.includes('email') && !!config.emailAuth;
+    const origin = getPublicOrigin(config, request);
+    if (emailLoginConfigured && !origin) throw publicOriginConfigError();
 
-      const email = request.body.email?.toLowerCase().trim();
-      const returnTo = request.body.returnTo
-        ? sanitizeReturnTo(request.body.returnTo)
-        : undefined;
+    const email = body.email?.toLowerCase().trim();
+    const returnTo = body.returnTo
+      ? sanitizeReturnTo(body.returnTo)
+      : undefined;
 
-      // Check if email matches a configured insider
-      const insider = config.resolvedInsiders.find(
-        (i) => i.email.toLowerCase() === (email ?? ''),
-      );
+    // Check if email matches a configured insider
+    const insider = config.resolvedInsiders.find(
+      (i) => i.email.toLowerCase() === (email ?? ''),
+    );
 
-      const sessionSecret = config.sessionSecret;
+    const sessionSecret = config.sessionSecret;
 
-      if (
-        origin &&
-        email &&
-        insider &&
-        sessionSecret &&
-        config.authModes.includes('email') &&
-        config.emailAuth
-      ) {
-        // Generate self-validating signed token
-        const token = signToken({ email, returnTo }, sessionSecret);
+    if (
+      origin &&
+      email &&
+      insider &&
+      sessionSecret &&
+      config.authModes.includes('email') &&
+      config.emailAuth
+    ) {
+      // Generate self-validating signed token
+      const token = signToken({ email, returnTo }, sessionSecret);
 
-        // Generate OTP and encrypt the token
-        const otp = generateOtp();
-        const enc = encryptToken(token, otp);
-        const verifyUrl = `/auth/magic/verify?enc=${enc}`;
+      // Generate OTP and encrypt the token
+      const otp = generateOtp();
+      const enc = encryptToken(token, otp);
+      const verifyUrl = `/auth/magic/verify?enc=${enc}`;
 
-        // Build clickable magic link on the configured public origin
-        const magicLink = `${origin}/auth/magic/callback?token=${token}`;
+      // Build clickable magic link on the configured public origin
+      const magicLink = `${origin}/auth/magic/callback?token=${token}`;
 
-        // Send email (fire-and-forget — don't block the response)
-        const branding = config.branding ?? DEFAULT_BRANDING;
+      // Send email (fire-and-forget — don't block the response)
+      const branding = config.branding ?? DEFAULT_BRANDING;
 
-        sendMagicLinkEmail(
-          email,
-          magicLink,
-          formatOtp(otp),
-          config.emailAuth.fromAddress,
-          { name: branding.name, emoji: branding.emoji },
-          config.branding?.emailTemplate,
-        ).catch((err: unknown) => {
-          fastify.log.error({ err, email }, 'Failed to send magic link email');
-        });
+      sendMagicLinkEmail(
+        email,
+        magicLink,
+        formatOtp(otp),
+        config.emailAuth.fromAddress,
+        { name: branding.name, emoji: branding.emoji },
+        config.branding?.emailTemplate,
+      ).catch((err: unknown) => {
+        request.log.error({ err, email }, 'Failed to send magic link email');
+      });
 
-        return reply.code(200).send({ verifyUrl });
-      }
+      return Promise.resolve(ok({ verifyUrl }));
+    }
 
-      // Anti-enumeration: always return a verifyUrl with a fake random blob
-      const fakeEnc = crypto.randomBytes(64).toString('base64url');
-      return reply
-        .code(200)
-        .send({ verifyUrl: `/auth/magic/verify?enc=${fakeEnc}` });
-    },
-  );
-  done();
+    // Anti-enumeration: always return a verifyUrl with a fake random blob
+    const fakeEnc = crypto.randomBytes(64).toString('base64url');
+    return Promise.resolve(
+      ok({ verifyUrl: `/auth/magic/verify?enc=${fakeEnc}` }),
+    );
+  },
 };

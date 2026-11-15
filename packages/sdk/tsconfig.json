@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "paths": {
+      "@karmaniverous/jeeves-server-core/catalog": [
+        "../core/src/catalog/index.ts"
+      ]
+    }
+  },
+  "include": ["src/**/*", "rollup.config.ts", "vitest.config.ts"],
+  "exclude": ["dist", "node_modules"]
+}

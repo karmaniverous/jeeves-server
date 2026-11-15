@@ -3,7 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { DownloadDropdown } from '@/components/DownloadDropdown';
 import { LinkDropdown } from '@/components/LinkDropdown';
-import type { DirectoryEntry, ShareSettings } from '@/lib/api';
+import type { DirectoryEntry } from '@/lib/apiTypes';
+import type { ShareSettings } from '@/lib/shareLinks';
 import { entryLinkTarget } from '@/lib/directoryEntryLink';
 
 function formatSize(bytes: number | null): string {

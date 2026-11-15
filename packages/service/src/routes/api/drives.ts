@@ -6,28 +6,21 @@
  * Scoped insiders only see roots they can navigate into.
  */
 
-import type {
-  FastifyPluginCallback,
-  FastifyReply,
-  FastifyRequest,
-} from 'fastify';
-
+import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { canNavigatePath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
 import { getRoots } from '../../util/platform.js';
 
-export const drivesRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
-  const roots = getRoots(getConfig().roots);
-
-  fastify.get(
-    '/api/drives',
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const scopes = request.insiderScopes ?? null;
-      const drives = roots
-        .filter((r) => canNavigatePath(`/${r.id}`, scopes))
-        .map((r) => ({ letter: r.id, label: r.label }));
-      return reply.send(drives);
-    },
-  );
-  done();
+/** `drives`: the roots the caller's scopes can navigate. */
+export const drivesHandlers: HandlersFor<'drives'> = {
+  drives: (_input, request) => {
+    const scopes = request.insiderScopes ?? null;
+    return Promise.resolve(
+      ok(
+        getRoots(getConfig().roots)
+          .filter((r) => canNavigatePath(`/${r.id}`, scopes))
+          .map((r) => ({ letter: r.id, label: r.label })),
+      ),
+    );
+  },
 };

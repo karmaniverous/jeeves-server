@@ -1,0 +1,71 @@
+/**
+ * Everything jeeves-server registers on its Fastify app, in order: plugins, the response-header hook, the error handler, every route and (when the client is built) the SPA. `server.ts` and the wire harness both build the app here.
+ *
+ * @packageDocumentation
+ */
+
+import cookie from '@fastify/cookie';
+import { registerErrorHandlers } from '@karmaniverous/jeeves/fastify';
+import type { FastifyInstance } from 'fastify';
+
+import { registerApiRoutes } from './api/routes.js';
+import { createServerHandlers } from './routes/api/index.js';
+import { goRoute } from './routes/go.js';
+import { googleSignInRoute } from './routes/googleSignIn.js';
+import { magicCallbackRoute } from './routes/magicCallback.js';
+import { magicVerifyRoute } from './routes/magicVerify.js';
+import { oauthRoute } from './routes/oauth.js';
+import { pathRoute } from './routes/path/index.js';
+import { registerSpa } from './routes/spa.js';
+import { staticRoutes } from './routes/static.js';
+import { serviceProbe } from './routes/status.js';
+
+/** Options for {@link registerServerApp}. */
+export interface ServerAppOptions {
+  /** Directory of the built client; the SPA is registered only when set. */
+  clientDir?: string;
+}
+
+/**
+ * Register jeeves-server's plugins, hooks, error handler and routes.
+ *
+ * @remarks
+ * Every catalog entry is registered from `SERVER_CATALOG`
+ * (`api/routes.ts`) in a child plugin whose access hook
+ * (`api/accessHook.ts`) enforces the entry's access class; browser routes
+ * keep their own gate (`resolveSpaAccess`).
+ *
+ * Errors (#315): `registerErrorHandlers` answers every JSON route with
+ * Fastify's standard error body, logging through the app's own (pino)
+ * logger: a `defineError` error (`api/errors.ts`) or a Fastify 4xx keeps
+ * its status, code and message, anything else is a masked 500. Browser
+ * routes send their own HTML pages and redirects.
+ *
+ * @param fastify - A new Fastify app.
+ * @param options - Where the built client is.
+ */
+export async function registerServerApp(
+  fastify: FastifyInstance,
+  options: ServerAppOptions = {},
+): Promise<void> {
+  await fastify.register(cookie);
+
+  // X-Robots-Tag on all responses: invisible to search engines.
+  fastify.addHook('onSend', async (_request, reply) => {
+    void reply.header('X-Robots-Tag', 'noindex, nofollow');
+  });
+
+  registerErrorHandlers(fastify, { logger: fastify.log });
+
+  await registerApiRoutes(fastify, { handlers: createServerHandlers() });
+  await fastify.register(serviceProbe);
+  await fastify.register(staticRoutes);
+  await fastify.register(googleSignInRoute);
+  await fastify.register(magicCallbackRoute);
+  await fastify.register(magicVerifyRoute);
+  await fastify.register(oauthRoute);
+  await fastify.register(goRoute);
+  await fastify.register(pathRoute);
+
+  if (options.clientDir) await registerSpa(fastify, options.clientDir);
+}

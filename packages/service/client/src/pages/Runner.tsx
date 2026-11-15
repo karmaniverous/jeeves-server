@@ -12,6 +12,7 @@ import type { SortColumn, SortState } from '@/components/runner/JobTable';
 import { StatsBar } from '@/components/runner/StatsBar';
 import { Button } from '@/components/ui/button';
 import { useAuthStatus } from '@/lib/AuthStatusContext';
+import { useDocumentTitle } from '@/lib/documentTitle';
 import type { RunnerJob, RunnerStats } from '@/lib/runner-api';
 import { getRunnerJobs, getRunnerStats, triggerJobRun } from '@/lib/runner-api';
 import { useTheme } from '@/lib/theme';
@@ -20,6 +21,7 @@ import { computeKeyAge } from '@/lib/utils';
 const REFRESH_INTERVAL = 10_000;
 
 export function Runner() {
+  useDocumentTitle(null);
   const [jobs, setJobs] = useState<RunnerJob[]>([]);
   const [stats, setStats] = useState<RunnerStats | null>(null);
   const [error, setError] = useState<string | null>(null);

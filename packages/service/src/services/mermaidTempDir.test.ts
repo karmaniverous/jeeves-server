@@ -9,15 +9,18 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Fastify from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { catalogRoutes } from '../testing/catalogRoutes.js';
+import { testApp } from '../testing/testApp.js';
 
 const runMock = vi.hoisted(() => vi.fn());
 const state = vi.hoisted(() => ({ mmdPath: '' }));
 
 vi.mock('@mermaid-js/mermaid-cli', () => ({ run: runMock }));
 vi.mock('../config/index.js', () => ({
-  getConfig: () => ({ chromePath: 'chrome', roots: {} }),
+  // Any existing file passes the Chrome check; the renderer is mocked.
+  getConfig: () => ({ chromePath: process.execPath, roots: {} }),
 }));
 vi.mock('./diagramCache.js', () => ({
   getCachedDiagramBuffer: () => null,
@@ -30,7 +33,8 @@ vi.mock('../util/platform.js', async (importOriginal) => ({
 }));
 
 const { renderMermaidToBuffer } = await import('./mermaid.js');
-const { diagramExportRoutes } = await import('../routes/api/diagramExport.js');
+const { diagramExportHandlers } =
+  await import('../routes/api/diagramExport.js');
 
 /** Fake mermaid-cli run: writes `rendered-<format>` to the output path. */
 function renderOk() {
@@ -97,8 +101,8 @@ describe('GET /api/mermaid-export (#281)', () => {
   it('leaves an existing x.svg beside x.mmd byte-identical', async () => {
     renderOk();
     const before = fs.readFileSync(path.join(srcDir, 'x.svg'));
-    const app = Fastify();
-    await app.register(diagramExportRoutes);
+    const app = testApp();
+    await app.register(catalogRoutes(diagramExportHandlers));
 
     const res = await app.inject('/api/mermaid-export/r/x.mmd?format=svg');
     await app.close();

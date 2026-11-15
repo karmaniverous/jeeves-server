@@ -1,78 +1,27 @@
 /**
  * Markdown rendering for the file content API: parses Markdown to HTML,
  * registers diagram hashes, optionally renders embedded diagrams and
- * rewrites links for outsider shares; also proxies jeeves-watcher's
- * `/render` endpoint for other text formats.
+ * rewrites links for outsider shares.
  *
  * @packageDocumentation
  */
 
-import path from 'node:path';
-
-import { getServiceUrl } from '@karmaniverous/jeeves';
 import type { FastifyRequest } from 'fastify';
 
 import { isDirectoryUrlPath } from '../../services/contentPath.js';
 import {
   rewriteLinksForDeepShare,
   rewriteSimpleImageAuth,
-  toDeepShareContext,
 } from '../../services/deepShareLinks.js';
-import {
-  renderEmbeddedDiagrams,
-  setDiagramContext,
-} from '../../services/embeddedDiagrams.js';
+import { toDeepShareContext } from '../../services/deepShareStack.js';
+import { renderEmbeddedDiagrams } from '../../services/embeddedDiagrams.js';
 import { registerDiagramHashes } from '../../services/exportCache.js';
 import { parseMarkdown } from '../../services/markdown.js';
-
-/** Watcher render response shape. */
-export interface WatcherRenderResponse {
-  renderAs: string;
-  content: string;
-  rules: string[];
-  metadata: Record<string, unknown>;
-}
 
 /** Rendered Markdown: HTML plus heading outline. */
 export interface RenderedMarkdown {
   html: string;
   headings: { level: number; text: string; slug: string }[];
-}
-
-/**
- * Try to render a file via the watcher's render endpoint.
- * Returns null if watcher is not configured, unreachable, or no rules match.
- */
-export async function tryWatcherRender(
-  fsPath: string,
-): Promise<WatcherRenderResponse | null> {
-  const watcherUrl = getServiceUrl('watcher');
-
-  try {
-    const res = await fetch(`${watcherUrl}/render`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        path: fsPath
-          .replace(/\\/g, '/')
-          .replace(
-            /^([A-Z]):/,
-            (_: string, d: string) => d.toLowerCase() + ':',
-          ),
-      }),
-      signal: AbortSignal.timeout(5000),
-    });
-
-    if (!res.ok) return null;
-
-    const data = (await res.json()) as WatcherRenderResponse;
-    if (data.rules.length === 0) return null;
-
-    return data;
-  } catch (err) {
-    console.warn('Watcher render failed for ' + fsPath + ':', err);
-    return null;
-  }
 }
 
 /**
@@ -89,8 +38,6 @@ export async function renderMarkdownContent(
   const urlDir = reqPath.includes('/')
     ? reqPath.substring(0, reqPath.lastIndexOf('/'))
     : '';
-  const fsDir = path.dirname(resolved);
-  setDiagramContext(fsDir);
   const { headings, html: parsedHtml } = parseMarkdown(markdownSource, {
     linkWindowsPaths: true,
     basePath: urlDir,
@@ -109,7 +56,7 @@ export async function renderMarkdownContent(
   }
 
   if ((request.query as { render_diagrams?: string }).render_diagrams === '1') {
-    html = await renderEmbeddedDiagrams(html, fsDir);
+    html = await renderEmbeddedDiagrams(html);
   }
 
   const deepShare = request.deepShareParams;

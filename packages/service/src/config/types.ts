@@ -61,12 +61,17 @@ export interface RuntimeConfig {
     servers: string[];
   };
   diagramCachePath?: string;
+  exportCachePath?: string;
+  /** Named PDF print styles (#316). */
+  printStyles?: JeevesConfig['printStyles'];
   outsiderPolicy: NormalizedScopes | null;
   events: JeevesConfig['events'];
   authModes: AuthMode[];
   resolvedKeys: ResolvedKey[];
   resolvedInsiders: ResolvedInsider[];
   googleAuth: { clientId: string; clientSecret: string } | null;
+  /** Who to ask for access, shown on the Google sign-in rejection page (#304). */
+  accessContact?: string;
   sessionSecret: string | null;
   internalInsiderKey: string | null;
   oauth: {
@@ -153,8 +158,11 @@ export interface EventLogEntry {
   ts: string;
   event: string | null;
   matched: boolean;
-  exitCode?: number;
+  /** Exit code; null when the command was killed by a signal. */
+  exitCode?: number | null;
   durationMs?: number;
+  /** True when the command timed out (it and its process tree were killed). */
+  timedOut?: boolean;
   /** Unmatched body as JSON, capped at {@link MAX_STORED_BODY_BYTES}. */
   bodyPreview?: string;
   /** True when `bodyPreview` was cut at the cap. */
@@ -162,6 +170,12 @@ export interface EventLogEntry {
   /** UTF-8 byte length of the full body JSON, when truncated. */
   originalBytes?: number;
 }
+
+/**
+ * Name of the machine key the server signs its own requests with (export
+ * rendering, share links). It never counts as an admin identity.
+ */
+export const INTERNAL_KEY_NAME = '_internal';
 
 /** Cap on a stored unmatched event body (256 KiB of UTF-8 JSON). */
 export const MAX_STORED_BODY_BYTES = 256 * 1024;

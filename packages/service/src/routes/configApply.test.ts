@@ -11,7 +11,9 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { clearConfig, getConfig, initConfig } from '../config/index.js';
-import { registerConfigRoute } from './config.js';
+import { catalogRoutes } from '../testing/catalogRoutes.js';
+import { redactApplyResult, sanitizeConfig } from './config.js';
+import { standardServerHandlers } from './standard.js';
 
 const VALID_CONFIG = {
   port: 9999,
@@ -54,7 +56,8 @@ describe('POST /config/apply', () => {
 
     initConfig(configPath);
     app = Fastify();
-    registerConfigRoute(app);
+    const { config, configApply } = standardServerHandlers();
+    await app.register(catalogRoutes({ config, configApply }));
     await app.ready();
   });
 
@@ -81,6 +84,32 @@ describe('POST /config/apply', () => {
     expect(getConfig().port).toBe(4321);
   });
 
+  it('redacts the config it returns like GET /config (Decision 11)', async () => {
+    const res = await apply({ patch: { port: 4321 } });
+
+    expect(res.statusCode).toBe(200);
+    const { config } = res.json<{
+      config: { port: number; resolvedKeys: { name: string; seed: string }[] };
+    }>();
+    expect(config).toEqual(
+      JSON.parse(JSON.stringify(sanitizeConfig(getConfig()))),
+    );
+    expect(config.port).toBe(4321);
+    expect(config.resolvedKeys.map((k) => k.seed)).toEqual([
+      '[REDACTED]',
+      '[REDACTED]',
+    ]);
+    expect(res.body).not.toContain('a'.repeat(64));
+    expect(res.body).not.toContain('b'.repeat(64));
+  });
+
+  it('passes a failure through unredacted', () => {
+    const failure = { status: 400, body: { message: 'bad' } };
+    expect(redactApplyResult(failure)).toBe(failure);
+    const noConfig = { status: 200, body: { applied: true } };
+    expect(redactApplyResult(noConfig)).toBe(noConfig);
+  });
+
   it('merges nested objects instead of replacing them', async () => {
     const res = await apply({
       patch: { keys: { secondary: 'c'.repeat(64) } },
@@ -99,7 +128,13 @@ describe('POST /config/apply', () => {
     const res = await apply({ patch: { port: 'not-a-port' } });
 
     expect(res.statusCode).toBe(400);
-    expect(res.json()).toMatchObject({ error: 'Config validation failed' });
+    expect(res.json()).toEqual({
+      statusCode: 400,
+      code: 'JEEVES_CONFIG_INVALID',
+      error: 'Bad Request',
+      message:
+        'Config validation failed: port: Invalid input: expected number, received string',
+    });
     expect(fs.readFileSync(configPath, 'utf8')).toBe(before);
   });
 

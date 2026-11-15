@@ -5,6 +5,8 @@
  * for the attribute and refuses to export or cache anything but `ready`.
  */
 
+import { UNAUTHORIZED_MESSAGE } from './serverErrors';
+
 /**
  * Attribute on `<html>` that carries the render state. Must match the
  * server's `RENDER_STATE_ATTR` (`src/util/renderState.ts`); the SPA is built
@@ -20,7 +22,7 @@ export interface RenderStateInput {
   /** Requested path ('' for the drive list). */
   reqPath: string;
   loading: boolean;
-  /** Load error message, if any (`Unauthorized` for a 401). */
+  /** Load error message, if any (`Unauthorized` for `SERVER_UNAUTHORIZED`). */
   error: string | null;
   /** Drive list, when the drive list was requested. */
   hasDrives: boolean;
@@ -38,9 +40,6 @@ export interface RenderStateInput {
   viewTab: 'rendered' | 'raw';
 }
 
-/** Error message the API client throws for a 401. */
-const UNAUTHORIZED = 'Unauthorized';
-
 /**
  * Decide the render state, or `null` while the view is still loading.
  * Markdown in the rendered tab is ready only once its rendered HTML has
@@ -50,7 +49,7 @@ export function computeRenderState(
   input: RenderStateInput,
 ): RenderState | null {
   if (input.error)
-    return input.error === UNAUTHORIZED ? 'auth-required' : 'error';
+    return input.error === UNAUTHORIZED_MESSAGE ? 'auth-required' : 'error';
   if (input.loading) return null;
   if (!input.reqPath) return input.hasDrives ? 'ready' : null;
   if (input.hasDirectory) return 'ready';
@@ -60,7 +59,9 @@ export function computeRenderState(
   if (needsRendered) {
     if (input.hasFileRendered) return 'ready';
     if (input.renderError)
-      return input.renderError === UNAUTHORIZED ? 'auth-required' : 'error';
+      return input.renderError === UNAUTHORIZED_MESSAGE
+        ? 'auth-required'
+        : 'error';
     return null;
   }
   return input.hasFileRaw || input.hasFileRendered ? 'ready' : null;

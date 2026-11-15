@@ -1,6 +1,6 @@
 /**
- * Directory archive export (ZIP/tar) for insiders. Streams the archive to
- * the hijacked response; entries and the size limit both honour the
+ * Directory archive export (ZIP/tar) for insiders: the archive streams as
+ * the response body; entries and the size limit both honour the
  * caller's scopes.
  *
  * @packageDocumentation
@@ -9,10 +9,13 @@
 import path from 'node:path';
 
 import { TarArchive, ZipArchive } from 'archiver';
-import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyRequest } from 'fastify';
 
+import { ArchiveTooLarge, InsiderRequired } from '../../api/errors.js';
+import { ok } from '../../api/handlerTypes.js';
 import { scopedEntryFilter } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
+import { attachmentDisposition } from '../../util/contentDisposition.js';
 import { getDirSize } from '../../util/platform.js';
 
 /** Supported directory archive formats. */
@@ -24,29 +27,35 @@ export function isArchiveFormat(format: string): format is ArchiveFormat {
 }
 
 /**
- * Send the directory at `resolved` (URL path `/${reqPath}`) as an archive.
- * Insider-only (403 otherwise); 413 when the in-scope content exceeds
- * `maxZipSizeMb`. Out-of-scope entries are omitted and not counted.
+ * The directory at `resolved` (URL path `/${reqPath}`) as an archive
+ * stream. Insider-only (`SERVER_INSIDER_REQUIRED` otherwise);
+ * `SERVER_ARCHIVE_TOO_LARGE` when the in-scope content exceeds
+ * `maxZipSizeMb`. Out-of-scope entries are omitted and not counted. A
+ * failure while streaming is logged and ends the response.
+ *
+ * @param request - The request (access mode, scopes, logger).
+ * @param resolved - The directory's filesystem path.
+ * @param reqPath - Its URL path, without the leading slash.
+ * @param format - The archive format.
+ * @returns The 200 result: the stream and its headers.
  */
-export async function sendDirectoryArchive(
+export function directoryArchive(
   request: FastifyRequest,
-  reply: FastifyReply,
   resolved: string,
   reqPath: string,
   format: ArchiveFormat,
-): Promise<unknown> {
+) {
   if (request.accessMode !== 'insider')
-    return reply
-      .code(403)
-      .send({ error: 'Archive export requires insider access' });
+    throw new InsiderRequired('Archive export requires insider access');
 
   const includeEntry = scopedEntryFilter(`/${reqPath}`, request.insiderScopes);
   const { maxZipSizeMb } = getConfig();
   const totalSize = getDirSize(resolved, (rel) => includeEntry(rel, false));
   if (totalSize > maxZipSizeMb * 1024 * 1024) {
-    return reply.code(413).send({
-      error: `Directory too large for archive export (${String(Math.round(totalSize / 1024 / 1024))}MB, max ${String(maxZipSizeMb)}MB)`,
-    });
+    throw new ArchiveTooLarge(
+      String(Math.round(totalSize / 1024 / 1024)),
+      String(maxZipSizeMb),
+    );
   }
 
   const dirName = path.basename(resolved);
@@ -54,30 +63,20 @@ export async function sendDirectoryArchive(
     format === 'tar'
       ? new TarArchive()
       : new ZipArchive({ zlib: { level: 6 } });
-
-  reply.hijack();
-  const res = reply.raw;
-  res.setHeader(
-    'Content-Type',
-    format === 'tar' ? 'application/x-tar' : 'application/zip',
-  );
-  res.setHeader(
-    'Content-Disposition',
-    `attachment; filename="${dirName}.${format}"`,
-  );
-  res.statusCode = 200;
-
-  archive.on('error', (err: unknown) => {
+  const logFailure = (err: unknown) => {
     request.log.error({ err, path: resolved, format }, 'Archive export failed');
-    res.destroy();
-  });
+  };
 
-  archive.pipe(res);
+  archive.on('error', logFailure);
   archive.directory(resolved, dirName, (entry) =>
     includeEntry(entry.name, entry.stats?.isDirectory() ?? false)
       ? entry
       : false,
   );
-  await archive.finalize();
-  return undefined;
+  // Finalizes as the response reads the stream.
+  archive.finalize().catch(logFailure);
+  return ok(archive, {
+    'content-type': format === 'tar' ? 'application/x-tar' : 'application/zip',
+    'content-disposition': attachmentDisposition(`${dirName}.${format}`),
+  });
 }

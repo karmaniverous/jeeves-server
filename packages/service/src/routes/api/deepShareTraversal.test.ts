@@ -2,7 +2,7 @@
  * Deep share traversal: deep keys are bound to one path; a directory
  * reached via a dirs=1 link lists only its immediate entries, each with
  * its own sub-key that consumes depth; nothing else is reachable.
- * Real middleware, directory route and HMAC keys over a temp tree.
+ * Real access hook, directory route and HMAC keys over a temp tree.
  *
  * @packageDocumentation
  */
@@ -12,7 +12,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import * as cheerio from 'cheerio';
-import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
+import { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -20,6 +20,8 @@ import {
   makeRuntimeConfig,
   scopes,
 } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
+import { testApp } from '../../testing/testApp.js';
 import { computeDeepShareKey } from '../../util/crypto.js';
 
 const SCOPED_SEED = 'scoped-insider-seed-0123456789';
@@ -62,10 +64,11 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
   breadcrumbParts: () => [],
 }));
 
-const { addAuthMiddleware } = await import('./middleware.js');
-const { directoryRoutes } = await import('./directory.js');
+const { addAccessHook } = await import('../../api/accessHook.js');
+const { directoryHandlers } = await import('./directory.js');
 const { isDirectoryUrlPath } = await import('../../services/contentPath.js');
-const { encodeStack, rewriteLinksForDeepShare } =
+const { encodeStack } = await import('../../services/deepShareStack.js');
+const { rewriteLinksForDeepShare } =
   await import('../../services/deepShareLinks.js');
 
 let app: FastifyInstance;
@@ -74,14 +77,14 @@ const echo = (request: FastifyRequest) => ({
 });
 
 beforeAll(async () => {
-  app = Fastify();
+  app = testApp();
   await app.register(async (api) => {
-    addAuthMiddleware(api);
+    addAccessHook(api);
     api.get('/api/file/*', echo);
     api.get('/api/raw/*', echo);
     api.get('/api/events', echo);
-    api.get('/api/search', echo);
-    await api.register(directoryRoutes);
+    api.get('/api/search/facets', echo);
+    await api.register(catalogRoutes(directoryHandlers));
   });
   await app.ready();
 });
@@ -211,7 +214,7 @@ describe('path handling', () => {
     ).toBe(400);
   });
 
-  it.each(['/api/events', '/api/search'])(
+  it.each(['/api/events', '/api/search/facets'])(
     'never authenticates the non-content route %s with a deep key',
     async (route) => {
       const q = deepQuery(route, [route], 1, true);

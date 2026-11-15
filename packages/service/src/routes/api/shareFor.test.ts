@@ -1,15 +1,21 @@
 /**
  * #282: share-for outsider links verify at every depth, including depth 0
  * (which used to omit `d`, so the deep key was never recognised).
- * Real middleware and HMAC keys end to end.
+ * Real access hook and HMAC keys end to end.
  *
  * @packageDocumentation
  */
 
-import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
+import { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { MACHINE_SEED, makeRuntimeConfig } from '../../testing/authFixture.js';
+import {
+  INSIDER_EMAIL,
+  MACHINE_SEED,
+  makeRuntimeConfig,
+} from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
+import { testApp } from '../../testing/testApp.js';
 import { computeInsiderKey } from '../../util/crypto.js';
 
 const config = makeRuntimeConfig();
@@ -22,19 +28,23 @@ vi.mock('../../util/configPersist.js', () => ({
   writeInsiderSeedToConfig: vi.fn(),
 }));
 
-const { addAuthMiddleware } = await import('./middleware.js');
-const { sharingRoutes } = await import('./sharing.js');
+const { addAccessHook } = await import('../../api/accessHook.js');
+const { sharingHandlers } = await import('./sharing.js');
+const { shareForHandlers } = await import('./shareFor.js');
 
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  app = Fastify();
+  app = testApp();
   await app.register(async (api) => {
-    addAuthMiddleware(api);
+    addAccessHook(api);
     api.get('/api/file/*', (request: FastifyRequest) => ({
       accessMode: request.accessMode ?? null,
+      path: '/' + (request.params as { '*': string })['*'],
     }));
-    await api.register(sharingRoutes);
+    await api.register(
+      catalogRoutes({ ...sharingHandlers, ...shareForHandlers }),
+    );
   });
   await app.ready();
 });
@@ -70,6 +80,32 @@ describe('share-for outsider links (#282)', () => {
 
     const res = await app.inject(`/api/file${DOC}${url.search}`);
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ accessMode: 'outsider' });
+    expect(res.json()).toEqual({ accessMode: 'outsider', path: DOC });
+  });
+});
+
+describe('share-for insider links', () => {
+  it('percent-encodes each segment and resolves to the file', async () => {
+    const target = '/r/sub dir/50% #1.md';
+    const res = await app.inject({
+      method: 'POST',
+      url: `/api/util/share-for?k=${computeInsiderKey(MACHINE_SEED)}`,
+      payload: { path: target, insiders: [INSIDER_EMAIL] },
+    });
+    expect(res.statusCode).toBe(200);
+    const json = res.json<{ url: string; type: string }>();
+    expect(json).toEqual({
+      url: '/browse/r/sub%20dir/50%25%20%231.md',
+      type: 'insider',
+    });
+
+    const url = new URL(json.url, 'http://relative.invalid');
+    expect(url.hash).toBe('');
+    const file = url.pathname.slice('/browse'.length);
+    const opened = await app.inject(
+      `/api/file${file}?k=${computeInsiderKey(MACHINE_SEED)}`,
+    );
+    expect(opened.statusCode).toBe(200);
+    expect(opened.json()).toEqual({ accessMode: 'insider', path: target });
   });
 });

@@ -4,26 +4,12 @@
  * @packageDocumentation
  */
 
-import crypto from 'node:crypto';
 import fs from 'node:fs';
-import path from 'node:path';
 
 import { withFileLock } from '@karmaniverous/jeeves';
 
 import { getConfig } from '../config/index.js';
-
-/**
- * Atomically write JSON to a file (write to tmp, then rename).
- */
-function atomicWriteJson(filePath: string, data: unknown): void {
-  const dir = path.dirname(filePath);
-  const tmpFile = path.join(
-    dir,
-    `.tmp-${crypto.randomBytes(8).toString('hex')}.json`,
-  );
-  fs.writeFileSync(tmpFile, JSON.stringify(data, null, 2), 'utf8');
-  fs.renameSync(tmpFile, filePath);
-}
+import { writeFileAtomic } from './atomicWrite.js';
 
 /**
  * Persist an insider's seed and keyCreatedAt into the config JSON file.
@@ -61,15 +47,15 @@ export async function writeInsiderSeedToConfig(
     );
     if (!matchingKey) return; // Insider not in config — skip
 
+    // In place: `insiders` is the object inside `rawConfig`.
     insiders[matchingKey] = {
       ...insiders[matchingKey],
       seed,
       keyCreatedAt: createdAt,
     };
-    rawConfig.insiders = insiders;
 
     try {
-      atomicWriteJson(configPath, rawConfig);
+      writeFileAtomic(configPath, JSON.stringify(rawConfig, null, 2));
     } catch (err) {
       console.warn('Failed to write config for insider seed update:', err);
     }

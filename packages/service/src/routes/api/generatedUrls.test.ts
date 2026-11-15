@@ -7,12 +7,13 @@
  */
 
 import * as cheerio from 'cheerio';
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import type { Page } from 'puppeteer-core';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { INSIDER_SEED, makeRuntimeConfig } from '../../testing/authFixture.js';
-import { computeInsiderKey } from '../../util/crypto.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
+import { testApp } from '../../testing/testApp.js';
 
 const config = makeRuntimeConfig();
 
@@ -25,8 +26,9 @@ vi.mock('../../util/configPersist.js', () => ({
   writeInsiderSeedToConfig: vi.fn(),
 }));
 
-const { sharingRoutes } = await import('./sharing.js');
-const { keysRoute } = await import('../keys.js');
+const { sharingHandlers } = await import('./sharing.js');
+const { shareForHandlers } = await import('./shareFor.js');
+const { keysHandlers } = await import('../keys.js');
 const { buildRenderUrl } = await import('./export.js');
 const { rewriteLinksForDeepShare, rewriteSimpleImageAuth } =
   await import('../../services/deepShareLinks.js');
@@ -92,14 +94,16 @@ function agentProblems(url: string): string[] {
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  app = Fastify();
+  app = testApp();
   app.addHook('preHandler', (request, _reply, done) => {
     request.authSeed = INSIDER_SEED;
     request.insiderScopes = null;
     done();
   });
-  await app.register(sharingRoutes);
-  await app.register(keysRoute);
+  await app.register(
+    catalogRoutes({ ...sharingHandlers, ...shareForHandlers }),
+  );
+  await app.register(catalogRoutes(keysHandlers));
   await app.ready();
 });
 
@@ -128,16 +132,6 @@ describe('generated URLs use k and no OpenClaw-sensitive names', () => {
       url: '/api/util/share-for',
       payload: { path: '/r/a.md', insiders: ['outsider@x.com'], depth },
     });
-    expect(agentProblems(res.json<{ url: string }>().url)).toEqual([]);
-  });
-
-  it.each([
-    ['plain', ''],
-    ['expiring', '&exp=9999999999999'],
-  ])('GET /share %s', async (_label, exp) => {
-    const res = await app.inject(
-      `/share?path=/r/a.md&k=${computeInsiderKey(INSIDER_SEED)}${exp}`,
-    );
     expect(agentProblems(res.json<{ url: string }>().url)).toEqual([]);
   });
 

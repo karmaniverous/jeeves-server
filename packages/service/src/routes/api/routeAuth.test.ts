@@ -1,9 +1,9 @@
 /**
- * Route auth tightening: /api/resolve-path needs a machine or insider key,
- * /api/events is only for insiders with no scopes configured, DELETE
- * /api/export-cache is insider-only, public prefixes match whole path
- * segments, and stored event bodies are capped.
- * Real middleware and HMAC keys.
+ * Route auth tightening: /api/resolve-path needs an identity whose scopes
+ * cover the resolved path (#301), /api/events is only for identities with no
+ * scopes configured, DELETE /api/export-cache is insider-only, share keys
+ * never authenticate insider or admin routes, and stored event bodies are
+ * capped. Real access hook and HMAC keys.
  *
  * @packageDocumentation
  */
@@ -13,7 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import cookie from '@fastify/cookie';
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { COOKIE_NAME, createSessionCookie } from '../../auth/session.js';
@@ -25,6 +25,8 @@ import {
   makeRuntimeConfig,
   scopes,
 } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
+import { serverError, testApp } from '../../testing/testApp.js';
 import { computeInsiderKey, computePathKey } from '../../util/crypto.js';
 import { storedBody } from '../../util/eventBody.js';
 
@@ -36,13 +38,19 @@ const SESSION_SECRET = 's'.repeat(64);
 const SCOPED_EMAIL = 'scoped@example.com';
 const ALL_SCOPED_EMAIL = 'all-scoped@example.com';
 const ALL_SCOPED_MACHINE_SEED = 'all-scoped-machine-seed-0123456789';
+const R_SCOPED_MACHINE_SEED = 'r-scoped-machine-seed-0123456789';
+const X_SCOPED_MACHINE_SEED = 'x-scoped-machine-seed-0123456789';
+/** A machine key allowing one pattern. */
+const machine = (name: string, seed: string, allow: string) => ({
+  name,
+  seed,
+  scopes: scopes([allow]),
+});
 const config = makeRuntimeConfig({
   extraKeys: [
-    {
-      name: 'all-scoped-machine',
-      seed: ALL_SCOPED_MACHINE_SEED,
-      scopes: scopes(['/**']),
-    },
+    machine('all-scoped-machine', ALL_SCOPED_MACHINE_SEED, '/**'),
+    machine('r-scoped-machine', R_SCOPED_MACHINE_SEED, '/r/**'),
+    machine('x-scoped-machine', X_SCOPED_MACHINE_SEED, '/x/**'),
   ],
   extraInsiders: [
     {
@@ -95,27 +103,26 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
   fsPathToUrl: () => '/r/a.md',
 }));
 
-const { addAuthMiddleware, isUnauthenticatedApiPath } =
-  await import('./middleware.js');
-const { resolvePathRoutes } = await import('./resolvePath.js');
-const { eventsRoutes, UNSCOPED_INSIDER_REQUIRED_ERROR } =
-  await import('./events.js');
+const { addAccessHook, UNSCOPED_INSIDER_REQUIRED_ERROR } =
+  await import('../../api/accessHook.js');
+const { resolvePathHandlers } = await import('./resolvePath.js');
+const { eventsHandlers } = await import('./events.js');
 const { INSIDER_REQUIRED_ERROR } = await import('./scopeGuard.js');
-const { exportRoutes } = await import('./export.js');
-const { eventRoute } = await import('../event.js');
+const { exportHandlers } = await import('./export.js');
+const { eventHandlers } = await import('../event.js');
 
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  app = Fastify({ bodyLimit: 4 * 1024 * 1024 });
+  app = testApp({ bodyLimit: 4 * 1024 * 1024 });
   await app.register(cookie);
+  addAccessHook(app);
   await app.register(async (api) => {
-    addAuthMiddleware(api);
-    await api.register(resolvePathRoutes);
-    await api.register(eventsRoutes);
-    await api.register(exportRoutes);
+    await api.register(catalogRoutes(resolvePathHandlers));
+    await api.register(catalogRoutes(eventsHandlers));
+    await api.register(catalogRoutes(exportHandlers));
   });
-  await app.register(eventRoute);
+  await app.register(catalogRoutes(eventHandlers));
   await app.ready();
 });
 
@@ -127,20 +134,7 @@ afterAll(async () => {
 const machineKey = computeInsiderKey(MACHINE_SEED);
 const outsiderKey = (p: string) => computePathKey(INSIDER_SEED, p);
 
-describe('public prefix matching', () => {
-  it.each([
-    ['/api/auth/status', true],
-    ['/api/auth/status?path=/x', true],
-    ['/api/diagram/abc', true],
-    ['/api/auth/statusX', false],
-    ['/api/readme-linkX', false],
-    ['/api/resolve-path', false],
-    ['/api/resolve-pathX', false],
-    ['/api/status', false],
-  ])('%s -> %s', (url, expected) => {
-    expect(isUnauthenticatedApiPath(url)).toBe(expected);
-  });
-});
+const UNAUTHORIZED = serverError('SERVER_UNAUTHORIZED', 'Unauthorized');
 
 describe('GET /api/resolve-path', () => {
   const url = `/api/resolve-path?fsPath=${encodeURIComponent(path.join(tmpRoot, 'r', 'a.md'))}`;
@@ -149,12 +143,31 @@ describe('GET /api/resolve-path', () => {
     expect((await app.inject(url)).statusCode).toBe(401);
   });
 
-  it('refuses an outsider key that verifies for the route path', async () => {
+  it.each([
+    ['the route path', '/api/resolve-path'],
+    ['the resolved path', '/r/a.md'],
+  ])('refuses a share key for %s', async (_label, sharedPath) => {
+    const res = await app.inject(`${url}&k=${outsiderKey(sharedPath)}`);
+    expect(res.statusCode).toBe(401);
+    expect(res.json()).toEqual(UNAUTHORIZED);
+  });
+
+  it('answers a machine key scoped to the resolved path (#301)', async () => {
     const res = await app.inject(
-      `${url}&k=${outsiderKey('/api/resolve-path')}`,
+      `${url}&k=${computeInsiderKey(R_SCOPED_MACHINE_SEED)}`,
+    );
+    expect(res.statusCode).toBe(200);
+    expect(res.json<{ browsePath: string }>().browsePath).toBe('r/a.md');
+  });
+
+  it('refuses a machine key scoped elsewhere', async () => {
+    const res = await app.inject(
+      `${url}&k=${computeInsiderKey(X_SCOPED_MACHINE_SEED)}`,
     );
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: INSIDER_REQUIRED_ERROR });
+    expect(res.json()).toEqual(
+      serverError('SERVER_OUT_OF_SCOPE', 'Path is outside your access scope'),
+    );
   });
 
   it('answers a machine key', async () => {
@@ -173,10 +186,10 @@ describe('GET /api/events', () => {
     expect((await app.inject('/api/events')).statusCode).toBe(401);
   });
 
-  it('refuses an outsider key that verifies for the route path', async () => {
+  it('refuses a share key that verifies for the route path', async () => {
     const res = await app.inject(`/api/events?k=${outsiderKey('/api/events')}`);
-    expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: UNSCOPED_INSIDER_REQUIRED_ERROR });
+    expect(res.statusCode).toBe(401);
+    expect(res.json()).toEqual(UNAUTHORIZED);
   });
 
   it("refuses a machine key scoped to allow '/**'", async () => {
@@ -184,7 +197,9 @@ describe('GET /api/events', () => {
       `/api/events?k=${computeInsiderKey(ALL_SCOPED_MACHINE_SEED)}`,
     );
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: UNSCOPED_INSIDER_REQUIRED_ERROR });
+    expect(res.json()).toEqual(
+      serverError('SERVER_FORBIDDEN', UNSCOPED_INSIDER_REQUIRED_ERROR),
+    );
   });
 
   it('answers an unscoped machine key', async () => {
@@ -212,7 +227,9 @@ describe('GET /api/events', () => {
   ])('refuses %s', async (_label, email) => {
     const res = await withSession(email);
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: UNSCOPED_INSIDER_REQUIRED_ERROR });
+    expect(res.json()).toEqual(
+      serverError('SERVER_FORBIDDEN', UNSCOPED_INSIDER_REQUIRED_ERROR),
+    );
   });
 });
 
@@ -223,7 +240,9 @@ describe('DELETE /api/export-cache', () => {
       url: `/api/export-cache/r/a.md?k=${outsiderKey('/r/a.md')}`,
     });
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: INSIDER_REQUIRED_ERROR });
+    expect(res.json()).toEqual(
+      serverError('SERVER_INSIDER_REQUIRED', INSIDER_REQUIRED_ERROR),
+    );
   });
 
   it('lets an insider clear the cache', async () => {

@@ -1,5 +1,5 @@
 /**
- * Search API route — proxies to jeeves-watcher for semantic search.
+ * Search API route — proxies to jeeves-watcher (through its SDK) for semantic search.
  *
  * Handles: POST /api/search, GET /api/search/facets.
  * Insider-only. Results filtered by insider's scope.
@@ -9,13 +9,43 @@
 
 import { stat } from 'node:fs/promises';
 
-import { getServiceUrl } from '@karmaniverous/jeeves';
-import type { FastifyPluginCallback } from 'fastify';
-
+import {
+  capArg,
+  InvalidRequest,
+  WatcherUnavailable,
+} from '../../api/errors.js';
+import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { canAccessPath } from '../../auth/scopeAccess.js';
 import { getConfig } from '../../config/index.js';
+import {
+  WATCHER_TIMEOUT_MS,
+  watcherAnswered,
+  watcherClient,
+} from '../../services/watcher.js';
 import { fsPathToUrl, getRoots, urlPathToFs } from '../../util/platform.js';
-import { rejectNonInsider } from './scopeGuard.js';
+import { requireInsider } from './scopeGuard.js';
+
+/** The facets manifest, as the watcher sends it. */
+type SearchFacets = Awaited<
+  ReturnType<ReturnType<typeof watcherClient>['listFacets']>
+>;
+
+/**
+ * The `SERVER_WATCHER_UNAVAILABLE` error for a failed watcher call. When
+ * the watcher answered (or the SDK refused the request), the message names
+ * the call and gives the SDK's message; when it wasn't reached, only that.
+ * The SDK error is the `cause` (logged, never sent).
+ *
+ * @param call - The call, for the message (`search`, `facets`).
+ * @param err - What the call threw.
+ * @returns The error to throw.
+ */
+export function watcherFailure(call: string, err: unknown): Error {
+  const message = !watcherAnswered(err)
+    ? 'Watcher unreachable'
+    : `Watcher ${call} failed: ${capArg(err.message)}`;
+  return Object.assign(new WatcherUnavailable(message), { cause: err });
+}
 
 interface WatcherResult {
   id: string;
@@ -40,7 +70,7 @@ interface GroupedResult {
   fileName: string;
   bestScore: number;
   mtime?: string;
-  domains?: string[];
+  domains: string[];
   title?: string;
   author?: string;
   participants?: string;
@@ -52,46 +82,47 @@ interface GroupedResult {
   }>;
 }
 
-export const searchRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
-  fastify.post<{
-    Body: {
-      query: string;
-      limit?: number;
-      filter?: Record<string, unknown>;
-    };
-  }>('/api/search', async (request, reply) => {
-    // Insider-only
-    if (rejectNonInsider(request, reply)) return reply;
+/** How long a fetched facets manifest is served from cache. */
+const FACETS_CACHE_TTL_MS = 60_000;
 
-    const config = getConfig();
-    const watcherUrl = getServiceUrl('watcher');
+/**
+ * The search handlers: `search` (scope-filtered, grouped by file) and
+ * `searchFacets` (the watcher's facets manifest, cached for a minute with
+ * one fetch in flight).
+ *
+ * @returns The handlers (each call has its own facets cache).
+ */
+export function createSearchHandlers(): HandlersFor<'search' | 'searchFacets'> {
+  let facetsCache: { data: SearchFacets; fetchedAt: number } | null = null;
+  let facetsFetchPromise: Promise<SearchFacets> | null = null;
 
-    const { query, limit = 20, filter } = request.body;
-    if (!query || typeof query !== 'string') {
-      return reply.code(400).send({ error: 'query is required' });
-    }
+  return {
+    search: async ({ body }, request) => {
+      // Insider-only
+      requireInsider(request);
 
-    const insiderScopes = request.insiderScopes;
-    const roots = getRoots(config.roots);
+      const config = getConfig();
 
-    // Over-fetch to account for scope filtering
-    const fetchLimit = Math.min(limit * 5, 200);
+      const { query, limit = 20, filter } = body;
+      // The catalog admits an empty string.
+      if (!query) throw new InvalidRequest('query is required');
 
-    try {
-      const watcherRes = await fetch(`${watcherUrl}/search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, limit: fetchLimit, filter }),
-      });
+      const insiderScopes = request.insiderScopes;
+      const roots = getRoots(config.roots);
 
-      if (!watcherRes.ok) {
-        const msg = await watcherRes.text().catch(() => '');
-        return await reply
-          .code(502)
-          .send({ error: `Watcher search failed: ${msg}` });
+      // Over-fetch to account for scope filtering
+      const fetchLimit = Math.min(limit * 5, 200);
+
+      let rawResults: WatcherResult[];
+      try {
+        rawResults = await watcherClient(WATCHER_TIMEOUT_MS.search).search({
+          query,
+          limit: fetchLimit,
+          filter,
+        });
+      } catch (err) {
+        throw watcherFailure('search', err);
       }
-
-      const rawResults = (await watcherRes.json()) as WatcherResult[];
 
       // Filter by insider scope and map paths
       const permitted: Array<WatcherResult & { browsePath: string }> = [];
@@ -186,7 +217,7 @@ export const searchRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
       // Extract distinct metadata values for filter chips
       const metadata = {
         domains: [
-          ...new Set(grouped.flatMap((g) => g.domains || []).filter(Boolean)),
+          ...new Set(grouped.flatMap((g) => g.domains).filter(Boolean)),
         ],
         authors: [...new Set(grouped.map((g) => g.author).filter(Boolean))],
         participants: [
@@ -203,58 +234,38 @@ export const searchRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
         ].filter(Boolean),
       };
 
-      return await reply.send({ results: grouped, metadata });
-    } catch (err) {
-      return await reply
-        .code(502)
-        .send({ error: `Watcher unreachable: ${String(err)}` });
-    }
-  });
+      return ok({ results: grouped, metadata });
+    },
+    searchFacets: async (_input, request) => {
+      requireInsider(request);
 
-  // Cached facets manifest
-  let facetsCache: { data: unknown; fetchedAt: number } | null = null;
-  let facetsFetchPromise: Promise<unknown> | null = null;
-  const FACETS_CACHE_TTL_MS = 60_000; // 1 minute
-
-  fastify.get('/api/search/facets', async (request, reply) => {
-    if (rejectNonInsider(request, reply)) return reply;
-
-    const watcherUrl = getServiceUrl('watcher');
-
-    // Return cached if fresh
-    if (
-      facetsCache &&
-      Date.now() - facetsCache.fetchedAt < FACETS_CACHE_TTL_MS
-    ) {
-      return reply.send(facetsCache.data);
-    }
-
-    try {
-      // Guard against cache stampede: reuse in-flight fetch
-      if (!facetsFetchPromise) {
-        facetsFetchPromise = (async () => {
-          const watcherRes = await fetch(`${watcherUrl}/search/facets`, {
-            signal: AbortSignal.timeout(15000),
-          });
-          if (!watcherRes.ok) {
-            throw new Error(`HTTP ${String(watcherRes.status)}`);
-          }
-          const data: unknown = await watcherRes.json();
-          facetsCache = { data, fetchedAt: Date.now() };
-          return data;
-        })().finally(() => {
-          facetsFetchPromise = null;
-        });
+      // Return cached if fresh
+      if (
+        facetsCache &&
+        Date.now() - facetsCache.fetchedAt < FACETS_CACHE_TTL_MS
+      ) {
+        return ok(facetsCache.data);
       }
 
-      const data = await facetsFetchPromise;
-      return await reply.send(data);
-    } catch (err) {
-      return await reply.code(502).send({
-        error: 'Failed to reach watcher',
-        detail: err instanceof Error ? err.message : String(err),
-      });
-    }
-  });
-  done();
-};
+      try {
+        // Guard against cache stampede: reuse in-flight fetch
+        if (!facetsFetchPromise) {
+          facetsFetchPromise = (async () => {
+            const data = await watcherClient(
+              WATCHER_TIMEOUT_MS.facets,
+            ).listFacets({});
+            facetsCache = { data, fetchedAt: Date.now() };
+            return data;
+          })().finally(() => {
+            facetsFetchPromise = null;
+          });
+        }
+
+        const data = await facetsFetchPromise;
+        return ok(data);
+      } catch (err) {
+        throw watcherFailure('facets', err);
+      }
+    },
+  };
+}

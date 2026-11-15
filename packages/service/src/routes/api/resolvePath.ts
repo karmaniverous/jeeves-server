@@ -1,45 +1,38 @@
 /**
  * Resolve-path API route.
  *
- * Handles: GET /api/resolve-path?fsPath=<absolute-fs-path>
+ * Handler: `resolvePath` (GET /api/resolve-path?fsPath=<absolute-fs-path>).
  *
  * Converts an absolute filesystem path to a server browse path and optional
  * public URL. Useful for tools and integrations that hold filesystem paths
  * but need server-addressable URLs.
+ *
+ * @packageDocumentation
  */
 
 import path from 'node:path';
 
-import type { FastifyPluginCallback } from 'fastify';
-
+import { InvalidPath, NotFound } from '../../api/errors.js';
+import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { getConfig } from '../../config/index.js';
 import { encodeUrlPath, fsPathToUrl, getRoots } from '../../util/platform.js';
-import { rejectNonInsider } from './scopeGuard.js';
+import { requireNoTraversal } from './contentRoute.js';
+import { requireInScope, requireInsider } from './scopeGuard.js';
 
-export const resolvePathRoutes: FastifyPluginCallback = (
-  fastify,
-  _opts,
-  done,
-) => {
-  fastify.get('/api/resolve-path', async (request, reply) => {
-    // Machine key or insider only: the answer reveals the configured roots
-    // and publicUrl.
-    if (rejectNonInsider(request, reply)) return reply;
+/** `resolvePath`: a filesystem path's browse path and URLs. */
+export const resolvePathHandlers: HandlersFor<'resolvePath'> = {
+  resolvePath: ({ query }, request) => {
+    // An `insider` entry: the answer reveals the configured roots and
+    // publicUrl. The access hook admits identities only; this is defence in
+    // depth.
+    requireInsider(request);
 
-    const { fsPath } = request.query as { fsPath?: string };
-
-    if (!fsPath) {
-      return reply
-        .status(400)
-        .send({ error: 'fsPath query parameter required' });
-    }
+    const { fsPath } = query;
 
     // Reject non-absolute paths
-    if (!path.isAbsolute(fsPath)) {
-      return reply
-        .status(400)
-        .send({ error: 'fsPath must be an absolute path' });
-    }
+    if (!path.isAbsolute(fsPath))
+      throw new InvalidPath('fsPath must be an absolute path');
+    requireNoTraversal(fsPath);
 
     const config = getConfig();
     const roots = getRoots(config.roots);
@@ -49,25 +42,22 @@ export const resolvePathRoutes: FastifyPluginCallback = (
     // fsPathToUrl returns the input path as-is on Linux when no root matches.
     const rootIds = roots.map((r) => r.id);
     const resolved = urlPath.replace(/^\//, '').split('/')[0];
-    if (!resolved || !rootIds.includes(resolved)) {
-      return reply
-        .status(404)
-        .send({ error: 'Path does not fall under any configured root' });
-    }
+    if (!resolved || !rootIds.includes(resolved))
+      throw new NotFound('Path does not fall under any configured root');
 
     // Strip leading slash to produce a browse path (drive-relative)
     const browsePath = urlPath.replace(/^\//, '');
+    // The caller's scopes cover the path it resolves to (#301).
+    requireInScope(request, browsePath);
     const browseUrl = '/browse/' + encodeUrlPath(browsePath);
 
-    const response: Record<string, string> = { browsePath, browseUrl };
-
-    if (config.publicUrl) {
-      const base = config.publicUrl.replace(/\/+$/, '');
-      response.publicUrl = base + browseUrl;
-    }
-
-    return reply.send(response);
-  });
-
-  done();
+    const base = config.publicUrl?.replace(/\/+$/, '');
+    return Promise.resolve(
+      ok({
+        browsePath,
+        browseUrl,
+        ...(base ? { publicUrl: base + browseUrl } : {}),
+      }),
+    );
+  },
 };

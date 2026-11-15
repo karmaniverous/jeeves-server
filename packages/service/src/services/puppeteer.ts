@@ -5,9 +5,12 @@
  * @packageDocumentation
  */
 
+import fs from 'node:fs';
+
 import type { Browser, Page } from 'puppeteer-core';
 import puppeteer from 'puppeteer-core';
 
+import { ChromeUnavailable } from '../api/errors.js';
 import { getConfig } from '../config/index.js';
 import {
   RENDER_STATE,
@@ -59,15 +62,34 @@ export async function assertRenderReady(page: Page): Promise<void> {
 }
 
 /**
+ * The configured Chrome executable.
+ *
+ * @returns `chromePath`.
+ * @throws `SERVER_CHROME_UNAVAILABLE` (503) when it is unset or missing.
+ */
+export function requireChrome(): string {
+  const { chromePath } = getConfig();
+  if (!chromePath || !fs.existsSync(chromePath)) throw new ChromeUnavailable();
+  return chromePath;
+}
+
+/**
  * Launch Puppeteer browser with configured Chrome path.
+ *
+ * @throws `SERVER_CHROME_UNAVAILABLE` (503) when Chrome is missing or does
+ *   not start (the launch error is its `cause`, logged, never sent).
  */
 export async function launchBrowser(): Promise<Browser> {
-  const { chromePath } = getConfig();
-  return await puppeteer.launch({
-    executablePath: chromePath,
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
+  const executablePath = requireChrome();
+  try {
+    return await puppeteer.launch({
+      executablePath,
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+  } catch (cause) {
+    throw Object.assign(new ChromeUnavailable(), { cause });
+  }
 }
 
 /** Print CSS — hides chrome, normalizes layout for clean export. */

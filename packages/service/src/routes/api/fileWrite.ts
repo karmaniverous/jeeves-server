@@ -1,67 +1,50 @@
 /**
  * Whole-file write API route for insiders.
  *
- * Handles: PUT /api/file/* (overwrites an existing file; scope-checked)
+ * Handler: `fileWrite` (PUT /api/file/*; overwrites an existing file; scope-checked)
  *
  * @packageDocumentation
  */
 
 import fs from 'node:fs';
-import path from 'node:path';
 
-import type { FastifyPluginAsync } from 'fastify';
-
+import { NotAFile, NotFound } from '../../api/errors.js';
+import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { getConfig } from '../../config/index.js';
-import { getRoots, urlPathToFs } from '../../util/platform.js';
-import { rejectNonInsider, rejectOutOfScope } from './scopeGuard.js';
+import { withFileLock } from '../../util/fileMutex.js';
+import { getRoots } from '../../util/platform.js';
+import { fsPathOf } from './routePath.js';
+import { requireInScope, requireInsider } from './scopeGuard.js';
 
-export const fileWriteRoutes: FastifyPluginAsync = (fastify) => {
-  const roots = getRoots(getConfig().roots);
+/**
+ * `fileWrite`: overwrite an existing file with `content` (insiders, in
+ * scope). The body is validated by the catalog.
+ */
+export const fileWriteHandlers: HandlersFor<'fileWrite'> = {
+  fileWrite: async ({ params, body }, request) => {
+    requireInsider(request);
 
-  fastify.put<{ Params: { '*': string }; Body: { content?: unknown } | null }>(
-    '/api/file/*',
-    async (request, reply) => {
-      if (rejectNonInsider(request, reply)) return reply;
+    const reqPath = params['*'];
+    // Defence in depth: the access hook also enforces scopes.
+    requireInScope(request, reqPath);
 
-      const reqPath = request.params['*'];
-      // Defence in depth: the auth middleware also enforces scopes.
-      if (rejectOutOfScope(request, reply, reqPath)) return reply;
+    const resolved = fsPathOf(reqPath, getRoots(getConfig().roots));
 
-      const fsPath = urlPathToFs(reqPath, roots);
-      if (!fsPath) return reply.code(404).send({ error: 'Invalid path' });
-      const resolved = path.resolve(fsPath);
+    const stat = await fs.promises.stat(resolved).catch(() => null);
+    if (!stat) throw new NotFound('File not found');
+    if (!stat.isFile()) throw new NotAFile('Can only write to files');
 
-      try {
-        const stat = await fs.promises.stat(resolved);
-        if (!stat.isFile())
-          return await reply
-            .code(400)
-            .send({ error: 'Can only write to files' });
-      } catch {
-        return reply.code(404).send({ error: 'File not found' });
-      }
-
-      const content = request.body?.content;
-      if (typeof content !== 'string') {
-        return reply
-          .code(400)
-          .send({ error: 'Request body must include "content" string' });
-      }
-
-      try {
-        await fs.promises.writeFile(resolved, content, 'utf8');
-        return await reply.send({
-          ok: true,
-          path: resolved,
-          size: Buffer.byteLength(content, 'utf8'),
-        });
-      } catch (err) {
-        return reply
-          .code(500)
-          .send({ error: `Write failed: ${(err as Error).message}` });
-      }
-    },
-  );
-
-  return Promise.resolve();
+    const { content } = body;
+    // Under the per-file lock block mutations take (Decision 15), so a
+    // full-file write (undo/redo) can't interleave with a block edit. A
+    // write failure is a logged, masked 500 (the cause names the path).
+    await withFileLock(resolved, () =>
+      fs.promises.writeFile(resolved, content, 'utf8'),
+    );
+    return ok({
+      ok: true as const,
+      path: resolved,
+      size: Buffer.byteLength(content, 'utf8'),
+    });
+  },
 };

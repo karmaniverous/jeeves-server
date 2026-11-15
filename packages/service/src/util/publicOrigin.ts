@@ -29,9 +29,23 @@ export interface OriginRequest {
 export const PUBLIC_ORIGIN_CONFIG_ERROR =
   'Server misconfigured: set publicUrl (or trustProxyHeaders behind a proxy that sets X-Forwarded-* headers) to send login links and OAuth redirects.';
 
-/** Answer a login request that has no public origin: 500 with the error. */
+/**
+ * Answer a browser sign-in request that has no public origin: 500 with the
+ * error.
+ */
 export function sendPublicOriginConfigError(reply: FastifyReply): FastifyReply {
   return reply.code(500).send({ error: PUBLIC_ORIGIN_CONFIG_ERROR });
+}
+
+/**
+ * The error a JSON route throws when it has no public origin: a plain
+ * error, so the caller gets a masked 500 and the operator's hint goes to
+ * the log.
+ *
+ * @returns The error.
+ */
+export function publicOriginConfigError(): Error {
+  return new Error(PUBLIC_ORIGIN_CONFIG_ERROR);
 }
 
 /** `url` without trailing slashes. */

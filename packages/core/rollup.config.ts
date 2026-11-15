@@ -11,14 +11,21 @@ const pkg = JSON.parse(
 ) as { dependencies?: Record<string, string> };
 
 const config: RollupOptions = {
-  input: 'src/index.ts',
+  // The main entry and the browser-safe `./catalog` sub-path.
+  input: ['src/index.ts', 'src/catalog/index.ts'],
   output: {
     dir: 'dist',
     format: 'esm',
     preserveModules: true,
     preserveModulesRoot: '.',
   },
-  external: [/^node:/, ...Object.keys(pkg.dependencies ?? {})],
+  external: [
+    /^node:/,
+    ...Object.keys(pkg.dependencies ?? {}).flatMap((dep) => [
+      dep,
+      new RegExp(`^${dep}/`),
+    ]),
+  ],
   plugins: [
     resolve({ preferBuiltins: true }),
     commonjs(),
@@ -31,6 +38,8 @@ const config: RollupOptions = {
       declarationDir: 'dist',
       declarationMap: false,
       incremental: false,
+      // Generator scripts are type-checked by tsconfig.json, not shipped.
+      exclude: ['scripts/**'],
     }),
   ],
 };

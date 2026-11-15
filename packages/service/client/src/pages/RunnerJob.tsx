@@ -11,6 +11,7 @@ import { RunHistory } from '@/components/runner/RunHistory';
 import { StatusPill } from '@/components/runner/StatusPill';
 import { Button } from '@/components/ui/button';
 import { useAuthStatus } from '@/lib/AuthStatusContext';
+import { useDocumentTitle } from '@/lib/documentTitle';
 import type { RunEntry, RunnerJob as RunnerJobType } from '@/lib/runner-api';
 import {
   disableJob,
@@ -23,6 +24,7 @@ import { useTheme } from '@/lib/theme';
 import { computeKeyAge } from '@/lib/utils';
 
 export function RunnerJob() {
+  useDocumentTitle(null);
   const { jobId } = useParams<{ jobId: string }>();
   const [job, setJob] = useState<RunnerJobType | null>(null);
   const [runs, setRuns] = useState<RunEntry[]>([]);
@@ -64,9 +66,7 @@ export function RunnerJob() {
       await fetchData();
     } catch (err) {
       await fetchData();
-      setError(
-        err instanceof Error ? err.message : 'Failed to update the job',
-      );
+      setError(err instanceof Error ? err.message : 'Failed to update the job');
     }
   }, [job, fetchData]);
 

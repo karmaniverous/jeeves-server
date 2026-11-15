@@ -1,8 +1,41 @@
 # @karmaniverous/jeeves-server-core
 
-Shared workspace package providing cryptographic utilities and API types consumed by `@karmaniverous/jeeves-server` (service) and `@karmaniverous/jeeves-server-openclaw` (plugin).
+Shared workspace package consumed by `@karmaniverous/jeeves-server` (service) and `@karmaniverous/jeeves-server-openclaw` (plugin): the endpoint catalog with its schemas and error codes, the OpenAPI document, the config schema and the key utilities.
+
+## Entry points
+
+| Import | Contents |
+| --- | --- |
+| `@karmaniverous/jeeves-server-core` | Everything below, including the Node-only key functions |
+| `@karmaniverous/jeeves-server-core/catalog` | Browser-safe: `SERVER_CATALOG`, its schemas and types, `shareQuerySchema` and the error codes. Imports only `zod` and `@karmaniverous/jeeves/catalog` (a test walks its import graph), so the SDK and the web client can bundle it |
+| `@karmaniverous/jeeves-server-core/openapi.json` | The OpenAPI 3.1 document generated from the catalog |
 
 ## Exports
+
+### Endpoint Catalog
+
+`SERVER_CATALOG` is built with `defineCatalog` from `@karmaniverous/jeeves/catalog`: jeeves' standard `status`, `config` and `configApply` entries, then one entry per machine-API route (39 in all), grouped in `src/catalog/*Entries.ts`. Each entry names its method, path, description, request schemas (`params`, `query`, `body`), response schema, `auth` and `kind`; binary entries (`raw`, `export`, `exportMermaid`, `exportPlantUml`, `diagram`) declare a `contentType`. The entry name is the SDK method, the OpenAPI `operationId` and the plugin tool's base name (`server_` + snake_case: `browse` is `server_browse`, `linkInfo` is `server_link_info`). Browser routes (the SPA, sign-in, `/oauth/callback`, `/go/:slug`) are not in the catalog.
+
+| Export | Description |
+| --- | --- |
+| `SERVER_CATALOG` | The catalog |
+| `ServerEntryName`, `ServerEntry<N>`, `ServerInput<N>`, `ServerResponse<N>` | Entry names, an entry, its request input and its success response |
+| `ServerHealth` / `serverHealthSchema` | The `health` block of `GET /status` (`cmd` and `chrome.path` optional: callers that aren't admin don't get them) |
+| `shareQuerySchema` | The share-link parameters (`exp`, `d`, `dirs`, `s`, legacy `key`), in the query of every content and navigation entry |
+| `*Schema` | Every request and response schema, e.g. `fileContentResponseSchema`, `fileMutateBodySchema`, `shareResponseSchema` |
+
+`auth` is descriptive; the service enforces access itself. Content and navigation entries list the `k` query parameter and the `jeeves_session` cookie; insider and admin entries add `insiderOnly`; public entries are `'none'`; `pathKey` and `insiderKey` take the raw machine seed in `X-API-Key`; `receiveEvent` takes an event key as `k`.
+
+### Error Codes
+
+| Export | Description |
+| --- | --- |
+| `SERVER_ERROR_CODES` | Every `SERVER_*` code an error body (`{ statusCode, code?, error, message }`) can carry |
+| `SERVER_ERROR_STATUS` | The HTTP status each code is sent with |
+
+### OpenAPI Document
+
+`openapi.json` is generated from `SERVER_CATALOG` with `buildOpenApiDocument` from `@karmaniverous/jeeves/openapi` and committed. After changing the catalog, run `npm run openapi` in `packages/core`: a test fails while the committed document differs (and checks it is valid OpenAPI 3.1). The document is also exported as `SERVER_OPENAPI_DOCUMENT`.
 
 ### Crypto Functions
 
@@ -13,6 +46,8 @@ Shared workspace package providing cryptographic utilities and API types consume
 | `computeOutsiderKeyWithExpiry(seed, path, expiry)` | HMAC-SHA256 outsider key with embedded expiration |
 | `computeDeepShareKey(seed, path, params)` | HMAC-SHA256 key for deep directory shares with depth/dirs/stack/expiry |
 | `timingSafeEqual(a, b)` | Constant-time string comparison to prevent timing attacks |
+
+`computePathKey`, `computeInsiderKey` and `computeOutsiderKeyWithExpiry` are re-exported from `@karmaniverous/jeeves`, which holds the one implementation; known-vector tests (`src/crypto.test.ts`) pin their output to what this package computed before. `computeDeepShareKey` and `timingSafeEqual` are this package's own.
 
 ### URL Key Parameter
 
@@ -29,13 +64,6 @@ Shared workspace package providing cryptographic utilities and API types consume
 | `loggingConfigSchema` | Zod schema for `logging` config block (`level`, `file`, both optional) |
 | `LoggingConfig` | Inferred TypeScript type from `loggingConfigSchema` |
 | `jeevesConfigSchema` | Full server config Zod schema (includes `logging`, `oauth`, `publicUrl`, `trustProxyHeaders` and all other fields; requires `publicUrl` or `trustProxyHeaders: true` when email, Google or OAuth login is configured) |
-
-### Endpoint Catalog
-
-| Export | Description |
-| --- | --- |
-| `EndpointEntry` | Interface describing a single API operation (method, path, description, auth flags) |
-| `serverEndpoints` | Complete declarative catalog of all jeeves-server API endpoints (39 entries) |
 
 ### API Types
 
@@ -59,14 +87,23 @@ Shared workspace package providing cryptographic utilities and API types consume
 import {
   computeInsiderKey,
   computePathKey,
-  serverEndpoints,
-  type EndpointEntry,
   type LoggingConfig,
   type ShareRequest,
 } from '@karmaniverous/jeeves-server-core';
+
+// Browser bundles: the catalog only.
+import {
+  SERVER_CATALOG,
+  type ServerResponse,
+} from '@karmaniverous/jeeves-server-core/catalog';
 ```
 
 ## How Packages Consume It
 
-- **Service** (`packages/service`) — re-exports crypto functions from `src/util/crypto.ts` and uses API types for route handlers.
-- **Plugin** (`packages/openclaw`) — imports crypto functions directly for key derivation and types for tool payloads.
+- **Service** (`packages/service`) — registers its routes from `SERVER_CATALOG`, validates config with `jeevesConfigSchema`, throws the `SERVER_*` errors and serves `openapi.json`; its [API Reference](../service/guides/api-reference.md) is generated from the catalog.
+- **SDK** (`packages/sdk`) — builds its typed client from the browser-safe `./catalog` entry.
+- **Plugin** (`packages/openclaw`) — derives its key with `computeInsiderKey` and builds its catalog tools from `SERVER_CATALOG`.
+
+## Upgrading from 0.4
+
+0.5.0 replaces the `serverEndpoints` table with `SERVER_CATALOG` (built with `defineCatalog` from `@karmaniverous/jeeves`) and adds the error codes, the OpenAPI document and the `./catalog` entry. Code that read `serverEndpoints` uses `SERVER_CATALOG`, or calls the server through `@karmaniverous/jeeves-server-sdk`. See [Migrating to 3.16](../service/guides/migrating-to-3.16.md).

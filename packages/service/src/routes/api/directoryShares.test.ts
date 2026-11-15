@@ -2,7 +2,7 @@
  * Directory shares from `POST /api/share` and `share-for`: without depth or
  * dirs they are tree shares (a plain path key opens anything below the
  * directory); with depth they are deep shares, which list only immediate
- * entries, each with its own sub-key. Real middleware, sharing and
+ * entries, each with its own sub-key. Real access hook, sharing and
  * directory routes and HMAC keys over a temp tree.
  *
  * @packageDocumentation
@@ -12,10 +12,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
+import { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { MACHINE_SEED, makeRuntimeConfig } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
+import { testApp } from '../../testing/testApp.js';
 import { computeInsiderKey } from '../../util/crypto.js';
 
 const config = makeRuntimeConfig();
@@ -49,21 +51,24 @@ vi.mock('../../util/platform.js', async (importOriginal) => ({
   breadcrumbParts: () => [],
 }));
 
-const { addAuthMiddleware } = await import('./middleware.js');
-const { directoryRoutes } = await import('./directory.js');
-const { sharingRoutes } = await import('./sharing.js');
+const { addAccessHook } = await import('../../api/accessHook.js');
+const { directoryHandlers } = await import('./directory.js');
+const { sharingHandlers } = await import('./sharing.js');
+const { shareForHandlers } = await import('./shareFor.js');
 
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  app = Fastify();
+  app = testApp();
   await app.register(async (api) => {
-    addAuthMiddleware(api);
+    addAccessHook(api);
     api.get('/api/file/*', (request: FastifyRequest) => ({
       accessMode: request.accessMode ?? null,
     }));
-    await api.register(directoryRoutes);
-    await api.register(sharingRoutes);
+    await api.register(catalogRoutes(directoryHandlers));
+    await api.register(
+      catalogRoutes({ ...sharingHandlers, ...shareForHandlers }),
+    );
   });
   await app.ready();
 });

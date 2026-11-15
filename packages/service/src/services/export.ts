@@ -7,6 +7,7 @@
 
 import HtmlToDocx from '@turbodocx/html-to-docx';
 
+import { DEFAULT_PDF_OPTIONS, type ResolvedPrintStyle } from './printStyles.js';
 import {
   addPrintStyles,
   assertRenderReady,
@@ -25,6 +26,8 @@ interface ExportOptions {
   format: ExportFormat;
   /** Internal auth key appended to `/api/raw/` sub-resource requests. */
   authKey?: string;
+  /** PDF only: the print style (default styling without one). */
+  printStyle?: Pick<ResolvedPrintStyle, 'css' | 'pdf'>;
 }
 
 // Max bounds for images in DOCX (6 inches × 8 inches at 96dpi)
@@ -45,12 +48,12 @@ async function exportPDF(options: ExportOptions): Promise<Buffer> {
     await assertRenderReady(page);
     await waitForSpaContent(page);
     await addPrintStyles(page);
+    // A named style comes after the default print CSS (Decision 9).
+    const style = options.printStyle;
+    if (style?.css !== undefined)
+      await page.addStyleTag({ content: style.css });
 
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      margin: { top: '1cm', right: '1cm', bottom: '1cm', left: '1cm' },
-      printBackground: true,
-    });
+    const pdfBuffer = await page.pdf(style?.pdf ?? DEFAULT_PDF_OPTIONS);
 
     return Buffer.from(pdfBuffer);
   } finally {

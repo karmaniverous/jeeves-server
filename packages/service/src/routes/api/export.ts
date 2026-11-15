@@ -11,8 +11,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { getBindAddress } from '@karmaniverous/jeeves';
-import type { FastifyPluginCallback } from 'fastify';
 
+import {
+  ExportFailed,
+  ExportUnsupported,
+  InternalKeyMissing,
+  NotFound,
+} from '../../api/errors.js';
+import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { getConfig } from '../../config/index.js';
 import { appendEvent } from '../../services/eventQueue.js';
 import { exportPage } from '../../services/export.js';
@@ -23,11 +29,19 @@ import {
   clearStandaloneDiagramCache,
   getCachedExport,
 } from '../../services/exportCache.js';
+import {
+  DEFAULT_PRINT_STYLE,
+  documentExportKey,
+} from '../../services/exportCacheKey.js';
+import { loadMarkdownDocument } from '../../services/markdownDocument.js';
+import { resolvePrintStyle } from '../../services/printStyles.js';
 import { RenderFailedError } from '../../services/puppeteer.js';
-import { getRoots, urlPathToFs } from '../../util/platform.js';
+import { attachmentDisposition } from '../../util/contentDisposition.js';
+import { getRoots } from '../../util/platform.js';
 import { pathKeyQuery } from '../../util/shareQuery.js';
-import { isArchiveFormat, sendDirectoryArchive } from './archiveExport.js';
-import { rejectNonInsider } from './scopeGuard.js';
+import { directoryArchive, isArchiveFormat } from './archiveExport.js';
+import { fsPathOf, NOT_FOUND_MESSAGE, requirePath } from './routePath.js';
+import { requireInsider } from './scopeGuard.js';
 
 /**
  * Build the loopback URL Puppeteer renders for a document export. The key
@@ -42,151 +56,145 @@ export function buildRenderUrl(
   return `http://${host}:${String(port)}/browse/${reqPath}?${pathKeyQuery(key)}&render_diagrams=1&plain_code=1`;
 }
 
-export const exportRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
-  const roots = getRoots(getConfig().roots);
+/**
+ * Render a PDF or DOCX export, logging a failure to the event log. A render
+ * that did not complete (sign-in page, SPA error, timeout) is
+ * `SERVER_EXPORT_FAILED`; `SERVER_CHROME_UNAVAILABLE` from the browser
+ * launch passes through; anything else is a masked 500.
+ *
+ * @param format - The export format.
+ * @param render - Renders the document.
+ * @returns The rendered bytes.
+ */
+export async function renderExport(
+  format: 'pdf' | 'docx',
+  render: () => Promise<Buffer>,
+): Promise<Buffer> {
+  try {
+    return await render();
+  } catch (err) {
+    appendEvent({ kind: `${format}_export_error`, error: String(err) });
+    // Sign-in, error or timed-out render: nothing was cached.
+    if (err instanceof RenderFailedError)
+      throw new ExportFailed(
+        `${format.toUpperCase()} export failed: document did not render`,
+      );
+    throw err;
+  }
+}
 
-  // GET /api/export/*
-  fastify.get<{ Params: { '*': string }; Querystring: { format?: string } }>(
-    '/api/export/*',
-    async (request, reply) => {
-      const reqPath = request.params['*'];
-      if (!reqPath) return reply.code(400).send({ error: 'Path required' });
+/** The export handlers: `export` (PDF/DOCX/ZIP/tar), `exportCacheClear`. */
+export const exportHandlers: HandlersFor<'export' | 'exportCacheClear'> = {
+  export: async ({ params, query }, request) => {
+    const reqPath = requirePath(params['*']);
+    const resolved = fsPathOf(reqPath, getRoots(getConfig().roots));
+    if (!fs.existsSync(resolved)) throw new NotFound(NOT_FOUND_MESSAGE);
 
-      const exportFsPath = urlPathToFs(reqPath, roots);
-      if (!exportFsPath) return reply.code(404).send({ error: 'Invalid path' });
-      const resolved = path.resolve(exportFsPath);
+    const format = query.format ?? 'pdf';
+    const stats = fs.statSync(resolved);
 
-      if (!fs.existsSync(resolved))
-        return reply.code(404).send({ error: 'Not found', path: resolved });
+    // ZIP/tar export for directories
+    if (stats.isDirectory()) {
+      if (!isArchiveFormat(format))
+        throw new ExportUnsupported(
+          'Directories only support zip or tar export',
+        );
+      return directoryArchive(request, resolved, reqPath, format);
+    }
 
-      const format = request.query.format ?? 'pdf';
-      const stats = fs.statSync(resolved);
+    // PDF/DOCX export for files
+    if (format !== 'pdf' && format !== 'docx')
+      throw new ExportUnsupported('Files support pdf or docx export');
 
-      // ZIP/tar export for directories
-      if (stats.isDirectory()) {
-        if (!isArchiveFormat(format))
-          return reply
-            .code(400)
-            .send({ error: 'Directories only support zip or tar export' });
-        return sendDirectoryArchive(request, reply, resolved, reqPath, format);
-      }
+    // A Markdown document: native, or rendered as Markdown by the watcher
+    // (unreachable watcher: SERVER_WATCHER_UNAVAILABLE, nothing cached).
+    const doc = await loadMarkdownDocument(resolved, { requireWatcher: true });
+    if (!doc)
+      throw new ExportUnsupported(
+        'Only markdown files support PDF/DOCX export',
+      );
 
-      // PDF/DOCX export for files
-      if (format !== 'pdf' && format !== 'docx') {
-        return reply
-          .code(400)
-          .send({ error: 'Files support pdf or docx export' });
-      }
+    // The access hook has already authorised the caller for this path, so
+    // render with the server's _internal key whatever link the caller
+    // used (expiring and deep keys don't verify on the render URL; #295).
+    const config = getConfig();
+    const { port } = config;
+    const exportKey = config.internalInsiderKey;
+    if (!exportKey) throw new InternalKeyMissing();
 
-      const ext = path.extname(resolved).toLowerCase();
-      if (ext !== '.md')
-        return reply
-          .code(400)
-          .send({ error: 'Only markdown files support PDF/DOCX export' });
+    const bindAddr = getBindAddress('server');
+    // Use loopback if bound to all interfaces (0.0.0.0 is not a valid request target)
+    const renderHost = bindAddr === '0.0.0.0' ? '127.0.0.1' : bindAddr;
+    const exportUrl = buildRenderUrl(renderHost, port, reqPath, exportKey);
+    const fileName = path.basename(resolved);
+    const baseName = path.parse(fileName).name;
 
-      // The middleware has already authorised the caller for this path, so
-      // render with the server's _internal key whatever link the caller
-      // used (expiring and deep keys don't verify on the render URL; #295).
-      const config = getConfig();
-      const { port } = config;
-      const exportKey = config.internalInsiderKey;
-      if (!exportKey)
-        return reply
-          .code(500)
-          .send({ error: 'Export unavailable — no internal key configured' });
+    const contentType =
+      format === 'pdf'
+        ? 'application/pdf'
+        : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const fileExt = format === 'pdf' ? 'pdf' : 'docx';
 
-      const bindAddr = getBindAddress('server');
-      // Use loopback if bound to all interfaces (0.0.0.0 is not a valid request target)
-      const renderHost = bindAddr === '0.0.0.0' ? '127.0.0.1' : bindAddr;
-      const exportUrl = buildRenderUrl(renderHost, port, reqPath, exportKey);
-      const fileName = path.basename(resolved);
-      const baseName = fileName.replace(/\.md$/i, '');
+    // Print styles are PDF-only (Decision 18): DOCX ignores `jeeves.print`.
+    const style =
+      format === 'pdf'
+        ? resolvePrintStyle(doc.directives, resolved)
+        : undefined;
 
-      try {
-        const contentType =
-          format === 'pdf'
-            ? 'application/pdf'
-            : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-        const fileExt = format === 'pdf' ? 'pdf' : 'docx';
-
-        // Check export cache
-        const cached = getCachedExport(resolved, format);
-        if (cached) {
-          return await reply
-            .header('Content-Type', contentType)
-            .header(
-              'Content-Disposition',
-              `attachment; filename="${baseName}.${fileExt}"`,
-            )
-            .header('Content-Length', cached.length)
-            .send(cached);
-        }
-
-        const buffer = await exportPage({
+    // Served from the export cache when there; rendered and cached if not.
+    const key = documentExportKey(resolved, doc, format, {
+      roots: getRoots(config.roots),
+      style,
+    });
+    const cached = getCachedExport(key, format);
+    const buffer =
+      cached?.buffer ??
+      (await renderExport(format, () =>
+        exportPage({
           url: exportUrl,
           fileName,
           format: format,
           authKey: exportKey,
-        });
-
-        // Cache the result
-        cacheExport(resolved, format, buffer);
-
-        return await reply
-          .header('Content-Type', contentType)
-          .header(
-            'Content-Disposition',
-            `attachment; filename="${baseName}.${fileExt}"`,
-          )
-          .header('Content-Length', buffer.length)
-          .send(buffer);
-      } catch (err) {
-        appendEvent({ kind: `${format}_export_error`, error: String(err) });
-        if (err instanceof RenderFailedError) {
-          // Sign-in, error or timed-out render: nothing was cached.
-          return reply.code(502).send({
-            error: `${format.toUpperCase()} export failed: document did not render`,
-            renderState: err.renderState,
-          });
-        }
-        return reply.code(500).send({
-          error: `${format.toUpperCase()} export failed`,
-          details: String(err),
-        });
-      }
-    },
-  );
-
-  // DELETE /api/export-cache/* — clear all caches for a file
-  fastify.delete<{ Params: { '*': string } }>(
-    '/api/export-cache/*',
-    async (request, reply) => {
-      // Insider only: clearing caches is not something a share link grants.
-      if (rejectNonInsider(request, reply)) return reply;
-      const reqPath = request.params['*'];
-      if (!reqPath) return reply.code(400).send({ error: 'Path required' });
-
-      const fsPath = urlPathToFs(reqPath, roots);
-      if (!fsPath) return reply.code(404).send({ error: 'Invalid path' });
-      const resolved = path.resolve(fsPath);
-
-      const { getDiagramCacheDir } =
-        await import('../../services/diagramCache.js');
-      const diagCacheDir = getDiagramCacheDir();
-      const exportCount = clearExportCache(resolved);
-      const embeddedCount = clearDiagramCacheForFile(resolved, diagCacheDir);
-      const standaloneCount = clearStandaloneDiagramCache(
-        resolved,
-        diagCacheDir,
-      );
-
-      return reply.send({
-        cleared: {
-          exports: exportCount,
-          diagrams: embeddedCount + standaloneCount,
-        },
+          printStyle: style,
+        }),
+      ));
+    const printStyle = cached?.printStyle ?? style?.name;
+    if (!cached)
+      cacheExport({
+        fsPath: resolved,
+        key,
+        format,
+        buffer,
+        printStyle: style?.name ?? DEFAULT_PRINT_STYLE.name,
       });
-    },
-  );
-  done();
+
+    return ok(buffer, {
+      'content-type': contentType,
+      'content-disposition': attachmentDisposition(`${baseName}.${fileExt}`),
+      'content-length': String(buffer.length),
+      ...(printStyle !== undefined && { 'x-print-style': printStyle }),
+    });
+  },
+  exportCacheClear: async ({ params }, request) => {
+    // Insider only: clearing caches is not something a share link grants.
+    requireInsider(request);
+    const resolved = fsPathOf(
+      requirePath(params['*']),
+      getRoots(getConfig().roots),
+    );
+
+    const { getDiagramCacheDir } =
+      await import('../../services/diagramCache.js');
+    const diagCacheDir = getDiagramCacheDir();
+    const exportCount = clearExportCache(resolved);
+    const embeddedCount = clearDiagramCacheForFile(resolved, diagCacheDir);
+    const standaloneCount = clearStandaloneDiagramCache(resolved, diagCacheDir);
+
+    return ok({
+      cleared: {
+        exports: exportCount,
+        diagrams: embeddedCount + standaloneCount,
+      },
+    });
+  },
 };

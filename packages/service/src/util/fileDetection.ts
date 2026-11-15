@@ -17,6 +17,12 @@ const OVERRIDES: Record<string, string> = {
   '.jsonl': 'text/plain; charset=utf-8',
 };
 
+/** Extensions of native Markdown documents (#284). */
+export const MARKDOWN_EXTS: readonly string[] = ['.md', '.markdown'];
+
+/** PlantUML source extensions. */
+export const PLANTUML_EXTS: readonly string[] = ['.puml', '.plantuml', '.pu'];
+
 /**
  * Detect if a buffer looks like text (no null bytes in first 8KB)
  */

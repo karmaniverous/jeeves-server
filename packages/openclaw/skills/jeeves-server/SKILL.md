@@ -6,279 +6,111 @@ description: >
 
 # Jeeves Server Skill
 
-Operate and interact with a jeeves-server deployment. Use for file browsing, document sharing, export, link generation, event gateway queries, and server diagnostics.
+Operate and interact with a jeeves-server 3.16 deployment through the plugin's tools: browse, share, export links, edits, events, OAuth tokens, config and diagnostics.
 
 ## Tools
 
 | Tool | Purpose |
 | --- | --- |
-| `server_status` | Server health: version, uptime, port, Chrome availability, export formats, auth info |
-| `server_browse` | Get file/directory metadata and listings for a browse path |
-| `server_link_info` | Query available link types for a path (page URL, raw URL, export links) |
-| `server_share` | Generate share links with optional expiry, link-following depth and `dirs` |
-| `server_export` | Trigger export (PDF, DOCX, SVG, PNG, ZIP) and get download URL |
-| `server_event_status` | Query event gateway status, active schemas, and recent event log |
-| `server_config` | Query resolved server configuration (supports JSONPath) |
-| `server_config_apply` | Apply a configuration patch to the running server |
-| `server_service` | Manage the system service (install, uninstall, start, stop, restart, status) |
-| `server_file_write` | Overwrite file content (insider-only; file must already exist) |
-| `server_file_mutate` | Apply structured .md mutations: edit-block, delete-block, insert-block, edit-cell, toggle-checkbox |
-| `server_rotate_key` | Rotate the authenticated insider's API key (invalidates all share links) |
-| `server_export_cache_clear` | Clear export and diagram caches for a given path |
-| `server_drives` | List available root drives/labels configured on the server |
-| `server_auth_status` | Check current authentication status |
-| `server_resolve_path` | Convert an absolute filesystem path to a server browse path and optional public URL |
-| `oauth_authorize` | Initiate OAuth2 authorization for a provider/account |
-| `oauth_status` | Check if valid OAuth2 credentials exist for a provider/account |
-| `oauth_token` | Retrieve a valid access token (with automatic refresh) |
+| `server_status` | Version, uptime, Chrome, export formats, auth summary, events, event queue progress |
+| `server_config` | Resolved server config (JSONPath filter); admin-only route, sent with the plugin key |
+| `server_config_apply` | Apply a config patch (or `replace`); admin-only route, sent with the plugin key |
+| `server_service` | Install, uninstall, start, stop, restart or query the system service |
+| `server_drives` | Configured roots (Windows drives, Linux `roots`) |
+| `server_browse` | Directory listing or file metadata for a browse path |
+| `server_link_info` | `pageUrl`, `rawUrl`, `downloadUrl` and export links for a path |
+| `server_resolve_path` | Absolute filesystem path → browse path, browse URL and public URL |
+| `server_share` | Share link (`expiryDays`, `depth`, `dirs`, or `insiders` for an audience); `rawUrl` for file shares |
+| `server_export` | **Download URL** (not bytes) for `pdf`/`docx` (Markdown), `zip`/`tar` (directories), `svg`/`png` (Mermaid, PlantUML). Unkeyed (insider browser session) or `share: { expiryDays? }` for a URL anyone can open (files only: `share` with `zip`/`tar` is an error, archives are insider-only) |
+| `server_export_cache_clear` | Clear cached exports and diagrams of a file or a directory tree |
+| `server_file_write` | Overwrite an existing file (insider) |
+| `server_file_mutate` | `.md` edits: `edit-block`, `delete-block`, `insert-block`, `edit-cell`, `toggle-checkbox` (insider) |
+| `server_auth_status` | Who the server thinks is calling (sent without a key) |
+| `server_event_status` | Event schemas and recent event log entries (`limit`, default 20) |
+| `oauth_authorize` / `oauth_status` / `oauth_token` | OAuth2 credentials: start authorization, check, get a (refreshed) access token |
 
-## Browse Paths
+No tool returns a URL carrying the plugin key. `server_rotate_key` no longer exists (machine keys can't rotate). URLs are rewritten to the server's `publicUrl` (read from `{configRoot}/jeeves-server/config.json` or `JEEVES_SERVER_PUBLIC_URL`; it is not a plugin setting).
 
-All paths use the jeeves-server browse path format: `{drive}/{path}` (e.g., `j/domains/projects/readme.md`).
+## Paths and routes
 
-To convert a Windows file path to a browse path:
-
-- `J:\domains\projects\readme.md` → `j/domains/projects/readme.md`
-- Strip the colon, lowercase the drive letter, use forward slashes
-
-## Public URL Rewriting
-
-When `publicUrl` is configured in the server's own config (`{configRoot}/jeeves-server/config.json`), all URLs returned by server tools are automatically rewritten to use the public domain instead of the internal `apiUrl`. No manual URL rewriting is needed.
-
-## Inline Editing
-
-Insiders can edit rendered Markdown pages via the web UI:
-
-- **Block editing:** Hover controls on rendered blocks (paragraphs, headings, lists, tables, code, diagrams) for edit, copy, insert, and delete
-- **Cell editing:** Direct table cell editing
-- **Checkbox toggling:** Interactive task-list checkboxes via `POST /api/file/*` with `action: 'toggle-checkbox'` (fire-and-forget, last-write-wins)
-- **Full-document editing:** Edit button in the tab bar (visible on both rendered and raw tabs for insiders)
-
-All mutations go through `POST /api/file/*` (unified mutation endpoint). The `server_file_mutate` tool provides agent access to the same mutations.
-
-## Auth Gate
-
-Unauthenticated browser access to SPA routes (`/`, `/browse/*`, `/runner/*`) returns a branded sign-in page instead of the SPA. The sign-in page shows an email login form (when email auth is configured) as the primary action, with a "Sign in with Google" button below (when Google auth is also configured). When only Google auth is active, the Google button is shown alone. When only key auth is active, an API key required message is displayed. The page reflects instance branding (name, emoji) when configured. After sign-in, the user is redirected back to the originally requested page. API routes continue returning JSON 401 for programmatic clients.
-
-## Browse Features
-
-- **Directory item counts:** Subdirectory rows display a nonrecursive item count in the Size column.
-- **CSV table rendering:** `.csv` files render as HTML tables (Rendered tab) with raw source in the Raw tab.
-- **Collapsible frontmatter:** YAML frontmatter blocks exceeding 10 lines are collapsed by default with a "Show all" toggle.
-- **Collapsible TOC:** The table of contents sidebar uses a tree structure with expand/collapse chevrons on headings that have children. Active headings auto-expand their ancestor chain.
-
-## Sharing
-
-- **Insiders** authenticate via Google OAuth, email magic link, or key-based auth — bare URLs work for them
-- **Outsiders** need HMAC share links — use `server_share` to generate them
-- Share links can expire: `server_share` takes `expiryDays`; without it no expiry is sent and the link never expires
-- A plain directory share covers the whole tree below it; depth and `dirs` make a deep share instead (see **Deep shares** below). The web UI only makes plain directory shares (it hides depth and `dirs` for directories); for a deep directory share use `server_share` with `depth` or `dirs`
-- An `outsiderPolicy` can constrain which paths are eligible for outsider sharing
-- **Scoped insiders** (sessions, insider keys, scoped machine keys) only reach paths within their scopes: directories above an allowed path can be browsed for navigation, but viewing, exporting, writing or sharing anything outside scope returns 403, and directory archives omit out-of-scope entries. Scope globs follow picomatch: use `/**` to grant a whole tree (`/*` matches direct children only)
-
-## Route Prefixes
+Browse paths are `{root}/{path}`: `J:\domains\readme.md` → `j/domains/readme.md` (drop the colon, lowercase the drive, forward slashes).
 
 | Prefix | Serves |
 | --- | --- |
-| `/browse/<path>` | Web UI (what humans open) |
-| `/api/raw/<path>` | Raw file bytes |
-| `/api/export/<path>?format=…` | PDF / DOCX (Markdown), ZIP / tar (directories) |
-| `/api/mermaid-export/<path>?format=…` | Mermaid SVG / PNG / PDF |
-| `/api/plantuml-export/<path>?format=…` | PlantUML exports |
-| `/api/link-info/<path>` | Available link types and export formats |
-| `/health` | Unauthenticated liveness check (`{ "ok": true }`) |
-| `/status` | Unauthenticated server status |
+| `/browse/<path>` | Web UI: the link to give people |
+| `/api/raw/<path>` | File bytes; `?download=1` always downloads, with the file's name |
+| `/api/export/<path>?format=…` | PDF/DOCX (Markdown), ZIP/tar (directories, insiders only) |
+| `/api/mermaid-export/<path>`, `/api/plantuml-export/<path>` | Diagram exports (formats in link info) |
+| `/api/link-info/<path>` | Available links and export formats |
+| `/health`, `/status`, `/openapi.json` | No credentials needed |
 
-**Raw and export links from a share link.** Content routes check the key against the path after their prefix, so swapping `/browse/` for `/api/raw/` or `/api/export/` in a share URL, keeping its whole query string (`?k=…` and any `exp`, `d`, `dirs`, `s`), gives a working raw or export link. `server_share` already returns `rawUrl` for file shares, plain or deep (a deep file key opens that one file on `/api/raw/` too, nothing else); directory shares, plain or deep, have no `rawUrl` key.
+**Raw and export links from a share link:** content routes verify the key against the path after the prefix, so replacing `/browse/` with `/api/raw/` or `/api/export/` in a share URL, keeping the whole query (`k`, and `exp`, `d`, `dirs`, `s` when present), gives a working link. Add `download=1` beside them to force a download. Links carry the key as `k` (the old `key` still works; `k` wins).
 
-**Auth parameter name.** Generated links carry the key as `k`. The old name `key` is still accepted (if both are present, `k` wins).
+## Access model
 
-**Deep shares.** A deep share key opens exactly the path it was issued for. Links in a shared document, and entries of a directory reached through one (only with `dirs`), carry their own keys; each step uses one level of depth. A plain directory share (no depth and no `dirs`, including `server_share` with `insiders`) still covers the whole tree below it.
+- **Insiders** sign in (Google, email magic link) or use an insider/machine key; **outsiders** need a share link. Identities carry scopes (picomatch globs: `/**` for a tree, `/*` for direct children).
+- **Navigation** routes (listings, link info, drives) admit an in-scope path or an ancestor of one; **content** routes (file, raw, export, diagram exports) need the path itself in scope; both accept share credentials for that path.
+- **Insider** routes (share, share-for, resolve-path, search, OAuth, runner proxy, writes, mutations, cache clear, archives) need an identity; share keys get `403 SERVER_INSIDER_REQUIRED`. Paths they address must be in the caller's scopes. Scoped machine keys get no OAuth tokens (`403 SERVER_FORBIDDEN`). The runner proxy forwards only list/read jobs and runs, run, `PATCH` enable/disable and status; any other `/api/runner/*` path (the runner's `/config` included) is `404 SERVER_NOT_FOUND` for everyone.
+- **Admin** routes (`/config`, `/config/apply`, `/api/events`) need an identity with **no scopes configured**: an unscoped insider or machine key such as the plugin's `_plugin`. Any scope, even `allow: ['/**']`, gets `403 SERVER_FORBIDDEN`.
+- `/status` is public but hides `health.events[].cmd` and `health.chrome.path` from non-admin callers.
+- Share links: plain links never expire unless `expiryDays` is given. A plain directory share covers the whole tree; `depth`/`dirs` make a deep share (each followed link or opened directory costs one level). An `outsiderPolicy` can restrict what may be shared outside.
 
-**Insider scope rules.** Content routes (`/api/raw`, `/api/export`, `/api/file`, …) require the path itself to be in scope; navigation routes (directory listings) also admit ancestors of an allowed path. This applies to sessions as well as keys.
+## Errors
 
-## Configuration Notes
+Every API error is `{ statusCode, code?, error, message }`. Branch on `code`:
 
-- **State lives in `config.json`.** Insider seeds are stored in the server's `config.json` (`state.json` no longer exists).
-- **Back up** `config.json` and the event queue (`logs/event-queue.jsonl` plus its `.cursor` file). Neither is part of the npm package.
-- `roots` (Linux only) maps root ids to filesystem paths for the file browser; Windows discovers drives automatically.
-- `events` maps event names to a JSON Schema and a command; see the event gateway below.
-- `oauth` configures OAuth2 credential management (`credentialDir` plus `providers`) used by the `oauth_*` tools.
-- `go` maps shortlink slugs to redirect targets, served unauthenticated at `/go/<slug>`.
-- Mermaid needs no extra config: `@mermaid-js/mermaid-cli` is bundled (`mermaidCliPath` is ignored).
-- `publicUrl` is read from the server's own `config.json` (or `JEEVES_SERVER_PUBLIC_URL`), not from the plugin entry. The server also builds login links, `share-for` links and OAuth redirects on it; it's required (unless `trustProxyHeaders: true`) whenever email, Google or OAuth login is configured, and the server refuses to start without it. In key-only configs without it, `share-for` returns relative URLs.
-- `server_resolve_path` and `server_event_status` need the plugin key (insider access). `/api/events` (behind `server_event_status`) answers only insiders with no scopes configured (any `scopes`, even `allow: ['/**']`, are refused); it keeps unmatched webhook bodies up to 256 KiB each (`truncated` marks cut ones).
+| Code | Status | Meaning |
+| --- | --- | --- |
+| `SERVER_UNAUTHORIZED` | 401 | No valid credential |
+| `SERVER_OUT_OF_SCOPE` / `SERVER_FORBIDDEN` / `SERVER_INSIDER_REQUIRED` | 403 | Outside scopes / scoped caller on an admin route / share key on an insider route |
+| `SERVER_NOT_FOUND` | 404 | Nothing there (or a path under no root) |
+| `SERVER_INVALID_PATH`, `SERVER_INVALID_REQUEST`, `FST_ERR_VALIDATION` | 400 | Bad path, bad value, field failed the schema |
+| `SERVER_NOT_A_FILE` / `SERVER_NOT_A_DIRECTORY` / `SERVER_EXPORT_UNSUPPORTED` | 400 | Wrong kind of path or format |
+| `SERVER_EXPORT_FAILED` / `SERVER_WATCHER_UNAVAILABLE` | 502 | Render failed / watcher down (also for watcher-rendered exports) |
+| `SERVER_CHROME_UNAVAILABLE` / `SERVER_RUNNER_UNAVAILABLE` | 503 | No Chrome for PDF / runner unreachable |
+| `SERVER_CONFLICT` / `SERVER_ARCHIVE_TOO_LARGE` | 409 / 413 | Edit raced another change / directory over `maxZipSizeMb` |
+| `SERVER_OAUTH_REFRESH_FAILED` / `SERVER_NOT_CONFIGURED` | 401 / 501 | Re-authorize / OAuth not configured |
 
-## Event Gateway
+Other codes (`SERVER_MACHINE_KEY_NOT_ROTATABLE`, `SERVER_SIGN_IN_REJECTED`, `SERVER_EMAIL_UNAVAILABLE`, `SERVER_INTERNAL_KEY_MISSING`) and every route are in the API Reference and API & Integration guides. A 500 with no `code` is masked; the detail is in the server log.
 
-`POST /event?k=<key>` with a JSON body. The body is matched against each configured event's JSON Schema (ajv); the first match wins. An optional JsonMap transform reshapes the payload, and matched events go to a durable JSONL queue that is processed in order. `server_event_status` shows schemas and recent log entries.
+## Documents and exports
 
-## Agent Guidance
+- Markdown is `.md`, `.markdown`, or any file jeeves-watcher renders as Markdown; all render and export (PDF needs Chrome; DOCX too). Title: front-matter `title`, else the file name.
+- **`jeeves:` front matter** is the platform's reserved directive namespace and is hidden from displayed front matter. `jeeves: { print: <name> }` picks a print style from server config `printStyles` for the PDF (not DOCX); the response header `X-Print-Style` names it, or `default` for an unknown name (never an error).
+- Exports are cached by content, style, server version and referenced images; `server_export_cache_clear` forces a re-render.
+- Check formats with `server_link_info` before exporting. When handing documents to people, prefer share links over file uploads, and Markdown over DOCX/PDF unless they need a file.
 
-When handing documents to people, prefer share links over file uploads, and Markdown over DOCX/PDF unless they need a file.
+## Event gateway
 
-## Export
+`POST /event?k=<key>` with a JSON **object** (anything else is `400 FST_ERR_VALIDATION`). The first configured event whose JSON Schema matches wins; an optional JsonMap transform reshapes it; it is queued in `logs/event-queue.jsonl` and run by up to `eventQueueConcurrency` commands at a time. Delivery is at least once (make commands idempotent); timed-out commands are killed with their process tree. `server_status` shows queue progress in `health.eventQueue` (`offset`, `size`, `pendingBytes`, `parseErrors`, `lastCursorReset`, `lastRewind`); `server_event_status` shows schemas and the log (`queue_parse_error`, `queue_cursor_reset`, `queue_rewound` mark queue incidents; unmatched bodies are kept up to 256 KiB, `truncated` marks cut ones).
 
-Available formats depend on file type and server capabilities:
+## Configuration notes
 
-- **Markdown files:** PDF (requires Chrome), DOCX
-- **CSV files:** rendered as HTML tables (no additional export formats)
-- **Mermaid diagrams:** SVG, PNG, PDF (Mermaid CLI is bundled)
-- **PlantUML diagrams:** Formats depend on server configuration (jar downloaded automatically via postinstall)
-- **Directories:** ZIP, Tar (insider-only)
+- Config is `{configRoot}/jeeves-server/config.json` (JSON, `${VAR}` substitution). Insider seeds live there too (no `state.json`). Back up `config.json` and the event queue (`logs/event-queue.jsonl` and its `.cursor`); neither is in the package.
+- `keys._internal` is required for PDF/DOCX (never an admin); `keys._plugin` (unscoped) for the plugin. Admin insiders have no `scopes`.
+- `roots` (Linux) maps root ids to paths; `events` maps names to schema + command; `oauth` (`credentialDir`, `providers`) backs the `oauth_*` tools; `go` maps `/go/<slug>` shortlinks; `printStyles` names PDF styles; `exportCachePath` moves the export cache.
+- `publicUrl` (or `trustProxyHeaders: true`) is required when email, Google or OAuth login is configured. Mermaid is bundled; PlantUML's jar downloads on install (Java optional).
+- CLI: `jeeves-server config` and `config apply` need an admin key: `--key`, `JEEVES_SERVER_KEY`, or `--config` (derives it from `keys._plugin`).
 
-Use `server_link_info` first to check which formats are available for a path.
+## Setup
 
-## Diagnostics
-
-Run `server_status` to check:
-
-- Server version and uptime
-- Chrome availability (required for PDF export)
-- Available export formats and diagram languages
-- Auth configuration (insider count, key count)
-- Event gateway schemas
-
-Service health for companion services (watcher, runner, meta) is mediated through the server's `/status` endpoint. The plugin queries the server only — never watcher or runner directly.
-
-## Bootstrap: Full Stack Setup
-
-### Prerequisites
-
-- **Node.js 22+** and npm
-- **Java 8+** (optional, for local PlantUML rendering — jar downloaded automatically)
-- **Chrome/Chromium** (required for PDF export)
-- **NSSM** (Windows) or **systemd** (Linux) for service management
-- **Caddy** (recommended) or nginx for reverse proxy with automatic TLS
-
-### 1. Install jeeves-server
+Node.js 24.22.2 or later, Chrome/Chromium for PDF, NSSM (Windows) or systemd (Linux), and a reverse proxy (Caddy recommended).
 
 ```bash
 npm install -g @karmaniverous/jeeves-server
-```
-
-### 2. Create config
-
-Generate a starter config:
-
-```bash
-jeeves-server init --config /path/to/config-dir
-```
-
-Or create `jeeves-server/config.json` manually (JSON only):
-
-```json
-{
-  "port": 1934,
-  "chromePath": "/usr/bin/chromium-browser",
-  "auth": {
-    "modes": ["keys", "google"],
-    "google": {
-      "clientId": "${GOOGLE_CLIENT_ID}",
-      "clientSecret": "${GOOGLE_CLIENT_SECRET}"
-    },
-    "sessionSecret": "${SESSION_SECRET}"
-  },
-  "scopes": {
-    "public-docs": {
-      "allow": ["/d/docs/**"]
-    }
-  },
-  "insiders": {
-    "you@example.com": {},
-    "contractor@example.com": { "scopes": "public-docs" }
-  },
-  "keys": {
-    "_internal": "random-hex-seed-for-puppeteer",
-    "_plugin": "random-hex-seed-for-openclaw-plugin",
-    "primary": "random-hex-seed-for-api-access"
-  },
-  "logging": {
-    "level": "info"
-  }
-}
-```
-
-**Key fields:**
-
-- `chromePath` — **required**, path to Chrome/Chromium executable
-- `auth.modes` — **required**, array of `"keys"`, `"google"`, and/or `"email"`
-- `scopes` — named scope definitions (allow/deny), referenced by name from insiders and keys
-- `insiders` — map of email → `{ scopes?, allow?, deny? }`
-- `keys._internal` — required for PDF/DOCX export (Puppeteer auth)
-- `keys._plugin` — required for OpenClaw plugin auth
-- `outsiderPolicy` — optional global constraints on outsider sharing
-
-**Companion service URLs** (watcher, runner, meta) are resolved via core config at `{configRoot}/jeeves-core/config.json` under `services.{name}.url`. Port defaults are: watcher 1936, runner 1937, meta 1938. The deprecated `watcherUrl`, `runnerUrl`, `metaUrl`, and `host` config properties are ignored with a deprecation warning.
-
-Environment variable substitution is supported: `${VAR_NAME}` in string values.
-
-Generate key seeds with:
-
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-### 3. Validate config
-
-```bash
-jeeves-server config validate [--config <path>]
-jeeves-server config [jsonpath] [--config <path>]
-```
-
-### 4. Register as system service
-
-Service commands execute directly (no more printing instructions):
-
-**Windows (NSSM):**
-
-```bash
-jeeves-server service install [--config <path>]
+jeeves-server init --config <config-dir>      # starter config
+jeeves-server config validate --config <path>
+jeeves-server service install --config <path>
 jeeves-server service start
-```
-
-**Linux (systemd):**
-
-```bash
-jeeves-server service install [--config <path>]
-jeeves-server service start
-```
-
-### 5. Configure Caddy reverse proxy
-
-Add to your Caddyfile:
-
-```
-your-domain.com {
-    reverse_proxy localhost:1934
-}
-```
-
-Caddy handles TLS certificate provisioning automatically. Ensure DNS A/AAAA records point to your server.
-
-### 6. Install OpenClaw plugin
-
-```bash
 npm install -g @karmaniverous/jeeves
-jeeves install server --config-root <config-root>
+jeeves install server --config-root <config-root>   # plugin + its config (apiUrl, pluginKey = keys._plugin)
 ```
 
-`jeeves install` installs the plugin with `openclaw plugins install` and writes its plugin config (`configRoot`, `apiUrl`, and a `pluginKey` kept equal to the server's `keys._plugin`).
-
-Restart the gateway (and jeeves-server, if its `keys._plugin` changed) to load the plugin.
+Restart the gateway after installing the plugin. Server and plugin versions go together: server 3.16 with plugin 0.16.
 
 ## Troubleshooting
 
-If a tool reports `configRoot not configured` (only `server_service` `install` reads it; the HTTP API tools work without it): set `plugins.entries.jeeves-server-openclaw.config.configRoot` (e.g. `jeeves install server --config-root <config-root>`) or the `JEEVES_CONFIG_ROOT` environment variable, then restart the gateway.
-
-If share links you relay arrive truncated (the key shows as `key=***` or similar): the server predates 3.15.0, whose links carry the key as `k` because OpenClaw masks the value of any query parameter named `key` in tool output. Upgrade the server and plugin together.
-
-If an export returns 502 ("document did not render"): the render page did not report a rendered document (sign-in page, error or timeout), and nothing was cached. Check the server's `_internal` key and logs.
-
-If the server is unreachable:
-
-1. Is the service running? → `jeeves-server service status`
-2. Is the apiUrl correct? → Default: `http://127.0.0.1:1934`
-3. Is the `_plugin` key configured in both server config and plugin config?
-4. Is Caddy proxying to the correct port? → Check `Caddyfile`
-5. Is the firewall allowing traffic on port 1934? → Only needed for local access; Caddy handles external traffic
+- `configRoot not configured` (only `server_service install` needs it): set `plugins.entries.jeeves-server-openclaw.config.configRoot` or `JEEVES_CONFIG_ROOT`, then restart the gateway.
+- `server_config` gets 401/403: the server's `keys._plugin` is missing, differs from the plugin's `pluginKey`, or has scopes.
+- Export `502 SERVER_EXPORT_FAILED`: the render page didn't finish (check `keys._internal` and the server log); nothing was cached. `503 SERVER_CHROME_UNAVAILABLE`: fix `chromePath`.
+- Server unreachable: `jeeves-server service status`; `apiUrl` (default `http://127.0.0.1:1934`); the proxy's upstream port.

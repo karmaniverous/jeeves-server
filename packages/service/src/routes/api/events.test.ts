@@ -36,11 +36,17 @@ const mockFastify = {
   },
 };
 
-describe('eventsRoutes', () => {
+describe('eventsHandlers.listEvents', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    const { eventsRoutes } = await import('./events.js');
-    await eventsRoutes(mockFastify as never, {});
+    const { eventsHandlers } = await import('./events.js');
+    mockFastify.get('/api/events', async (request) => {
+      const { body } = await eventsHandlers.listEvents(
+        { params: {}, query: request.query, body: {} },
+        request as never,
+      );
+      return body;
+    });
   });
 
   it('returns recent events with default limit', async () => {

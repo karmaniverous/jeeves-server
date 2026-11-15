@@ -9,7 +9,9 @@
  * The CLI's `start` command uses this same logic in-process.
  */
 
-import { checkNodeVersion, init } from '@karmaniverous/jeeves';
+import { init } from '@karmaniverous/jeeves';
+
+import { checkNodeVersion } from './checkNodeVersion.js';
 
 checkNodeVersion();
 

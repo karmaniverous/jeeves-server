@@ -8,10 +8,14 @@ Provides agents with tools for:
 - File/directory browsing, metadata, and drive listing
 - File writing and structured mutation
 - Share link generation (with insider/outsider audience support)
-- Export (PDF/DOCX/SVG/PNG/ZIP) and cache management
-- Key rotation and auth status
+- Export download URLs (PDF/DOCX/ZIP/Tar/SVG/PNG) and cache management
+- Auth status
 - Event gateway visibility
 - OAuth2 credential management (authorize, status, token retrieval)
+
+## Upgrading from 0.15
+
+0.16.0 needs jeeves-server 3.16 (install both together) and Node.js 24.22.2 or later. `server_rotate_key` is removed (the plugin's machine key can never rotate), `server_export` returns a download URL instead of fetching the export, and `server_config` / `server_config_apply` send the plugin key because `/config` is admin-only (keep the server's `keys._plugin` unscoped). See [Migrating to 3.16](../service/guides/migrating-to-3.16.md#openclaw-plugin-0160).
 
 ## Install
 
@@ -21,7 +25,16 @@ jeeves install server --config-root /path/to/config
 # Restart the OpenClaw gateway after installing
 ```
 
-`jeeves install` runs `openclaw plugins install npm:@karmaniverous/jeeves-server-openclaw@<version> --pin --accept-capabilities` and writes the plugin config below. There is no plugin-specific installer.
+`jeeves install` runs `openclaw plugins install npm:@karmaniverous/jeeves-server-openclaw@<version> --pin --accept-capabilities --force` and writes the plugin config below. There is no plugin-specific installer.
+
+### Checked against `@karmaniverous/jeeves` 0.11.0
+
+The install behaviour this plugin documents was checked against jeeves 0.11.0's `jeeves install`, `update` and `uninstall` source (jeeves-server 3.16.0). It matches: the `openclaw plugins install` command line above; the config written to `plugins.entries.jeeves-server-openclaw.config` (`configRoot` from `--config-root`, required; `apiUrl`, default `http://127.0.0.1:1934`; `pluginKey`); removal of a legacy `extensions/jeeves-server-openclaw` copy; `jeeves update server`; `jeeves uninstall` (`--dry-run`, legacy TOOLS.md block); no gateway restart. jeeves 0.11.0 adds or differs in:
+
+- **Order:** the plugin config is written (one `openclaw config set --batch-file`) _before_ `openclaw plugins install` (the 3.15.0 docs said after). The plugin still loads without `configRoot`, for an install by hand or a removed config.
+- **`pluginKey` sync:** the server's literal `keys._plugin` (in `<configRoot>/jeeves-server/config.json`) wins; with no server key the plugin's key is copied there; with neither, one is generated and written to both; if they differ, install fails before any change unless `--server-plugin-key` is passed. A `${VAR}` server key is never overwritten.
+- **Skips** `openclaw plugins install` when the plugin is already installed at the resolved version (unless `--force-reinstall`); a legacy copy is removed only after the install succeeds, and only when its `package.json` names this package.
+- **Also** renders the platform content (SOUL.md and AGENTS.md managed blocks), wires skills and runs `patch-openclaw` (skip with `--content-only` or `--skip-patch`); `jeeves update` fills in missing plugin config.
 
 ## Configuration
 
@@ -64,4 +77,5 @@ URLs returned by tools are rewritten to the server's `publicUrl`, read from `{co
 
 ## Docs
 
+- [Migrating to 3.16](../service/guides/migrating-to-3.16.md): breaking changes in the server 3.16.0 and this plugin 0.16.0
 - [OpenClaw Integration](./guides/openclaw-integration.md) — Full configuration, tool reference, architecture

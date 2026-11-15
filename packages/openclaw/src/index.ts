@@ -19,35 +19,28 @@ import {
   createPluginToolset,
   jeevesComponentDescriptorSchema,
   type PluginApi,
-  resolvePluginSetting,
   SERVER_PORT,
 } from '@karmaniverous/jeeves';
+import { SERVER_CATALOG } from '@karmaniverous/jeeves-server-core/catalog';
 import { z } from 'zod';
 
+import { createCatalogTools } from './catalogTools.js';
 import {
   type ConfigRootResolver,
   createConfigRootResolver,
   createGuardedApi,
 } from './configRoot.js';
-import { PLUGIN_ID } from './constants.js';
-import { registerServerTools } from './serverTools.js';
+import { createEventStatusTool } from './eventTools.js';
+import { getPluginInsiderKey, getServiceUrl } from './helpers.js';
+import { createOAuthTools } from './oauthTools.js';
+import { registerTools, type ToolContext } from './sdkCall.js';
+import { createShareTools } from './shareTools.js';
 
 /** Plugin version derived from package.json at runtime. */
 const require = createRequire(import.meta.url);
 const { version: PLUGIN_VERSION } = require('../package.json') as {
   version: string;
 };
-
-/** Resolve the server API base URL from plugin config or environment. */
-function getServiceUrl(api: PluginApi): string {
-  return resolvePluginSetting(
-    api,
-    PLUGIN_ID,
-    'apiUrl',
-    'JEEVES_SERVER_URL',
-    `http://127.0.0.1:${String(SERVER_PORT)}`,
-  );
-}
 
 /**
  * Resolve the public URL from the server's own config.
@@ -138,24 +131,33 @@ function createPublicUrlResolver(
  * config: a missing `configRoot` logs one warning. Only calls that read
  * `configRoot` (`server_service` `install`) return an error until it is
  * set; the HTTP API tools keep working.
+ *
+ * @remarks
+ * Every HTTP tool resolves `apiUrl` and the plugin key per call. The
+ * standard tools come from jeeves' toolset over `SERVER_CATALOG`, sending
+ * the key as `k` where the entry takes it (so `server_config` and
+ * `server_config_apply` reach the admin routes); the other tools call
+ * through the SDK.
  */
 export default function register(api: PluginApi): void {
   const configRoot = createConfigRootResolver(api);
   configRoot.warnIfUnset();
 
   const guardedApi = createGuardedApi(api, configRoot);
+  const context: ToolContext = {
+    api,
+    publicUrl: createPublicUrlResolver(configRoot),
+  };
 
-  // Standard tools resolve apiUrl per call, from the same setting as server_*.
-  const toolset = createPluginToolset(createPluginDescriptor(), {
-    apiUrl: () => getServiceUrl(api),
-  });
-  for (const tool of toolset) {
-    guardedApi.registerTool(tool, { optional: true });
-  }
-
-  registerServerTools(
-    guardedApi,
-    getServiceUrl(api),
-    createPublicUrlResolver(configRoot),
-  );
+  registerTools(guardedApi, [
+    ...createPluginToolset(createPluginDescriptor(), {
+      apiUrl: () => getServiceUrl(api),
+      catalog: SERVER_CATALOG,
+      auth: { query: { name: 'k', value: () => getPluginInsiderKey(api) } },
+    }),
+    ...createCatalogTools(context),
+    ...createShareTools(context),
+    createEventStatusTool(context),
+    ...createOAuthTools(context),
+  ]);
 }

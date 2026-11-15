@@ -6,7 +6,7 @@
  * the child URL still works when refreshed or copied.
  */
 
-import { buildAuthSuffix } from './api';
+import { buildAuthSuffix } from './pageAuth';
 
 /** Link target for a directory entry. */
 export type EntryLinkTarget =

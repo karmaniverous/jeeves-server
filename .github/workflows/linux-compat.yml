@@ -13,8 +13,35 @@ jobs:
   linux-compat:
     uses: karmaniverous/gha-workflows/.github/workflows/linux-compat.yml@main
     with:
-      node-versions: '[22, 24]'
+      node-versions: '["24.22.2", "24"]'
       install-command: npm ci
+
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 24.22.2
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.2'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Lint (ESLint and prettier --check)
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Knip
+        run: npm run knip
 
   smoke-tests:
     needs: linux-compat
@@ -23,10 +50,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js 24.22.2
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: '24.22.2'
           cache: npm
 
       - name: Install server dependencies

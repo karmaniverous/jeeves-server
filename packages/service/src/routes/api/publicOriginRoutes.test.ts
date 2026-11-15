@@ -6,7 +6,7 @@
  */
 
 import cookie from '@fastify/cookie';
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { RuntimeConfig } from '../../config/types.js';
@@ -15,6 +15,8 @@ import {
   INSIDER_SEED,
   makeRuntimeConfig,
 } from '../../testing/authFixture.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
+import { MASKED_500, testApp } from '../../testing/testApp.js';
 
 const state = vi.hoisted((): { config: unknown } => ({ config: null }));
 const sendMock = vi.hoisted(() => vi.fn(() => Promise.resolve()));
@@ -29,9 +31,10 @@ vi.mock('../../util/configPersist.js', () => ({
   writeInsiderSeedToConfig: vi.fn(),
 }));
 
-const { magicLinkApiRoute } = await import('./magicLink.js');
-const { sharingRoutes } = await import('./sharing.js');
-const { authRoute } = await import('../auth.js');
+const { magicLinkHandlers } = await import('./magicLink.js');
+const { sharingHandlers } = await import('./sharing.js');
+const { shareForHandlers } = await import('./shareFor.js');
+const { googleSignInRoute } = await import('../googleSignIn.js');
 const { setSessionCookie } = await import('../../auth/session.js');
 
 const FORGED = {
@@ -54,16 +57,18 @@ function useConfig(overrides: Partial<RuntimeConfig> = {}): void {
 }
 
 async function buildApp(): Promise<FastifyInstance> {
-  const app = Fastify();
+  const app = testApp();
   await app.register(cookie);
   app.addHook('preHandler', (request, _reply, done) => {
     request.authSeed = INSIDER_SEED;
     request.insiderScopes = null;
     done();
   });
-  await app.register(magicLinkApiRoute);
-  await app.register(sharingRoutes);
-  await app.register(authRoute);
+  await app.register(catalogRoutes(magicLinkHandlers));
+  await app.register(
+    catalogRoutes({ ...sharingHandlers, ...shareForHandlers }),
+  );
+  await app.register(googleSignInRoute);
   app.get('/set-cookie', (request, reply) => {
     setSessionCookie(reply, request, INSIDER_EMAIL, 's'.repeat(64));
     return reply.send({ ok: true });
@@ -110,7 +115,8 @@ describe('magic link origin', () => {
       await app.close();
 
       expect(res.statusCode).toBe(500);
-      expect(res.json<{ error: string }>().error).toMatch(/publicUrl/);
+      // A config error: masked for the caller, logged for the operator.
+      expect(res.json()).toEqual(MASKED_500);
       expect(sendMock).not.toHaveBeenCalled();
     },
   );
@@ -186,6 +192,7 @@ describe('Google redirect URI', () => {
     const res = await app.inject({ url: '/auth/login', headers: FORGED });
     await app.close();
 
+    // A browser sign-in route: it keeps its own reply.
     expect(res.statusCode).toBe(500);
     expect(res.json<{ error: string }>().error).toMatch(/publicUrl/);
   });

@@ -9,10 +9,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AccessMode } from '../../config/types.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
+import { testApp } from '../../testing/testApp.js';
 
 let tmpDir = '';
 
@@ -30,11 +32,13 @@ vi.mock('../../util/platform.js', () => ({
 }));
 
 const renderMarkdownContent = vi.fn();
-const tryWatcherRender = vi.fn();
 vi.mock('./fileRender.js', () => ({
   renderMarkdownContent: (...a: unknown[]): unknown =>
     renderMarkdownContent(...a),
-  tryWatcherRender: (...a: unknown[]): unknown => tryWatcherRender(...a),
+}));
+const renderViaWatcher = vi.fn();
+vi.mock('../../services/watcherRender.js', () => ({
+  renderViaWatcher: (...a: unknown[]): unknown => renderViaWatcher(...a),
 }));
 
 const getOrRenderDiagram = vi.fn();
@@ -48,16 +52,16 @@ vi.mock('../../services/plantuml.js', () => ({
   renderPlantUmlSvg: () => '<svg>plantuml</svg>',
 }));
 
-const { fileContentRoutes } = await import('./fileContent.js');
+const { fileContentHandlers } = await import('./fileContent.js');
 
 async function buildApp(accessMode: AccessMode): Promise<FastifyInstance> {
-  const app = Fastify();
+  const app = testApp();
   app.addHook('preHandler', (request, _reply, done) => {
     request.accessMode = accessMode;
     request.authMatchedPath = '/j/doc';
     done();
   });
-  await app.register(fileContentRoutes);
+  await app.register(catalogRoutes(fileContentHandlers));
   await app.ready();
   return app;
 }
@@ -74,7 +78,7 @@ describe('GET /api/file/*', () => {
     renderMarkdownContent
       .mockReset()
       .mockResolvedValue({ html: '<p>r</p>', headings: [] });
-    tryWatcherRender.mockReset().mockResolvedValue(null);
+    renderViaWatcher.mockReset().mockResolvedValue({ status: 'none' });
     // Invoke the render callback so the per-type renderer choice is observable.
     getOrRenderDiagram
       .mockReset()
@@ -179,11 +183,14 @@ describe('GET /api/file/*', () => {
 
   it('renders watcher-converted text as markdown', async () => {
     write('n.json', '{"a":1}');
-    tryWatcherRender.mockResolvedValue({
-      renderAs: 'md',
-      content: '**a**',
-      rules: ['json-rule'],
-      metadata: {},
+    renderViaWatcher.mockResolvedValue({
+      status: 'rendered',
+      data: {
+        renderAs: 'md',
+        content: '**a**',
+        rules: ['json-rule'],
+        metadata: {},
+      },
     });
     const { body } = await get('/api/file/j/n.json');
     expect(body).toMatchObject({
@@ -199,7 +206,37 @@ describe('GET /api/file/*', () => {
   it('skips the watcher in raw mode', async () => {
     write('n.json', '{}');
     await get('/api/file/j/n.json?raw=1');
-    expect(tryWatcherRender).not.toHaveBeenCalled();
+    expect(renderViaWatcher).not.toHaveBeenCalled();
+  });
+
+  it('renders .markdown natively, and returns it raw as markdown', async () => {
+    write('n.markdown', '# N');
+    const { body } = await get('/api/file/j/n.markdown');
+    expect(body).toMatchObject({ type: 'markdown', content: '# N' });
+    expect(body.renderAs).toBeUndefined();
+    expect(renderMarkdownContent.mock.calls[0][0]).toBe('# N');
+    expect((await get('/api/file/j/n.markdown?raw=1')).body).toEqual(
+      expect.objectContaining({ type: 'markdown', content: '# N' }),
+    );
+    expect(renderViaWatcher).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
+      'a non-md rendering',
+      {
+        status: 'rendered',
+        data: { renderAs: 'html', content: '<p/>', rules: ['r'], metadata: {} },
+      },
+    ],
+    ['an unreachable watcher', { status: 'unreachable', error: new Error() }],
+  ])('returns text for %s', async (_kind, outcome) => {
+    write('n.json', '{}');
+    renderViaWatcher.mockResolvedValue(outcome);
+    expect((await get('/api/file/j/n.json')).body).toMatchObject({
+      type: 'text',
+      content: '{}',
+    });
   });
 
   it('identifies images and binaries', async () => {
@@ -213,6 +250,18 @@ describe('GET /api/file/*', () => {
       type: 'binary',
       size: binary.length,
     });
+  });
+
+  it.each([
+    ['a.md', '---\ntitle: Front\n---\n# A', '', 'Front'],
+    ['a.md', '---\ntitle: Front\n---\n# A', '?raw=1', 'Front'],
+    ['b.md', '---\ntitle: ""\n---\n# B', '', 'b.md'],
+    ['d.mmd', 'graph', '', 'd.mmd'],
+    ['n.txt', 'hello', '', 'n.txt'],
+    ['p.png', 'x', '', 'p.png'],
+  ])('titles %s%s as %s (#262)', async (name, content, query, title) => {
+    write(name, content);
+    expect((await get(`/api/file/j/${name}${query}`)).body.title).toBe(title);
   });
 
   it('filters breadcrumbs for outsiders', async () => {

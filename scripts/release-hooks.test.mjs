@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import { describe, it } from 'node:test';
 import { fileURLToPath, URL } from 'node:url';
 
-const PACKAGES = ['core', 'service', 'openclaw'];
+const PACKAGES = ['core', 'sdk', 'service', 'openclaw'];
 
 /** Read a file relative to the repository root. */
 function read(relative) {

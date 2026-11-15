@@ -12,7 +12,7 @@ import {
   computeOutsiderKeyWithExpiry,
   computePathKey,
 } from '../util/crypto.js';
-import { decodeStack } from './deepShareLinks.js';
+import { decodeStack } from './deepShareStack.js';
 import { createDeepShare, createPathShare } from './shareLinks.js';
 
 const SEED = 'share-links-seed';
@@ -31,6 +31,30 @@ describe('createPathShare', () => {
     );
     expect(share.key).not.toBe(computePathKey(SEED, '/j/docs/a.md'));
     expect(share.url).toBe(`/browse/j/docs/a.md?k=${share.key}&exp=1700000000`);
+  });
+});
+
+/** A path whose segments hold `%`, `#`, `?` and a space. */
+const ODD = '/j/50% off/#1?/a b.md';
+const ODD_URL_PATH = '/browse/j/50%25%20off/%231%3F/a%20b.md';
+
+describe('odd segment names', () => {
+  it('createPathShare encodes each segment and keys the decoded path', () => {
+    const share = createPathShare(SEED, ODD);
+    const url = new URL(share.url, 'http://x');
+
+    expect(share.url).toBe(`${ODD_URL_PATH}?k=${share.key}`);
+    expect(decodeURIComponent(url.pathname)).toBe(`/browse${ODD}`);
+    expect(share.key).toBe(computePathKey(SEED, ODD));
+  });
+
+  it('createDeepShare encodes each segment and keys the decoded path', () => {
+    const share = createDeepShare(SEED, ODD, { depth: 1, dirs: false });
+    const url = new URL(share.url, 'http://x');
+
+    expect(url.pathname).toBe(ODD_URL_PATH);
+    expect(url.hash).toBe('');
+    expect(decodeStack(url.searchParams.get('s') ?? '')).toEqual([ODD]);
   });
 });
 

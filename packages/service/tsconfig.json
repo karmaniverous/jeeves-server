@@ -12,7 +12,11 @@
     "target": "ES2022",
     "types": ["node", "vitest/globals"],
     "paths": {
-      "@karmaniverous/jeeves-server-core": ["../core/src/index.ts"]
+      "@karmaniverous/jeeves-server-core": ["../core/src/index.ts"],
+      "@karmaniverous/jeeves-server-core/catalog": [
+        "../core/src/catalog/index.ts"
+      ],
+      "@karmaniverous/jeeves-server-sdk": ["../sdk/src/index.ts"]
     }
   },
   "exclude": [
@@ -23,5 +27,5 @@
     "server.js",
     "jeeves.config.template.ts"
   ],
-  "include": ["src/**/*", "*.config.ts", "rollup.config.ts"]
+  "include": ["src/**/*", "scripts/**/*.ts", "*.config.ts", "rollup.config.ts"]
 }

@@ -1,0 +1,2854 @@
+{
+  "status": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"name\":\"server\",\"version\":\"{version}\",\"uptime\":0,\"status\":\"healthy\",\"health\":{\"port\":1934,\"chrome\":{\"configured\":true,\"path\":\"{dir}/no-chrome/chrome\"},\"auth\":{\"modes\":[\"google\",\"keys\",\"email\"],\"insiderCount\":3,\"keyCount\":3},\"events\":[{\"name\":\"ping\",\"cmd\":\"node -e \\\"process.exit(0)\\\"\"}],\"exports\":{\"documents\":[\"pdf\",\"docx\"],\"directories\":[\"zip\"],\"diagrams\":[\"svg\",\"png\"],\"chromeAvailable\":true},\"diagrams\":{\"mermaid\":true,\"plantuml\":{\"localJar\":false,\"servers\":[\"https://www.plantuml.com/plantuml\"]}},\"services\":{\"watcher\":{\"url\":\"http://127.0.0.1:9\",\"reachable\":false},\"runner\":{\"url\":\"http://127.0.0.1:9\",\"reachable\":false},\"meta\":{\"url\":\"http://127.0.0.1:9\",\"reachable\":false},\"lastChecked\":\"{ts}\"},\"branding\":{\"name\":\"Wire\",\"emoji\":\"W\"}}}"
+  },
+  "status insider key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"name\":\"server\",\"version\":\"{version}\",\"uptime\":0,\"status\":\"healthy\",\"health\":{\"port\":1934,\"chrome\":{\"configured\":true,\"path\":\"{dir}/no-chrome/chrome\"},\"auth\":{\"modes\":[\"google\",\"keys\",\"email\"],\"insiderCount\":3,\"keyCount\":3},\"events\":[{\"name\":\"ping\",\"cmd\":\"node -e \\\"process.exit(0)\\\"\"}],\"exports\":{\"documents\":[\"pdf\",\"docx\"],\"directories\":[\"zip\"],\"diagrams\":[\"svg\",\"png\"],\"chromeAvailable\":true},\"diagrams\":{\"mermaid\":true,\"plantuml\":{\"localJar\":false,\"servers\":[\"https://www.plantuml.com/plantuml\"]}},\"services\":{\"watcher\":{\"url\":\"http://127.0.0.1:9\",\"reachable\":false},\"runner\":{\"url\":\"http://127.0.0.1:9\",\"reachable\":false},\"meta\":{\"url\":\"http://127.0.0.1:9\",\"reachable\":false},\"lastChecked\":\"{ts}\"},\"branding\":{\"name\":\"Wire\",\"emoji\":\"W\"}}}"
+  },
+  "status HEAD": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": ""
+  },
+  "health": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"ok\":true}"
+  },
+  "config": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"port\":1934,\"eventTimeoutMs\":30000,\"eventLogPurgeMs\":2592000000,\"maxZipSizeMb\":100,\"chromePath\":\"{dir}/no-chrome/chrome\",\"roots\":{\"{root}\":\"{dir}/content\"},\"plantuml\":{\"servers\":[\"https://www.plantuml.com/plantuml\"]},\"outsiderPolicy\":{\"allow\":[\"/**\"],\"deny\":[\"/{root}/private/**\",\"/{root}/private/**\"],\"explicitAllow\":[],\"explicitDeny\":[\"/{root}/private/**\",\"/{root}/private/**\"]},\"events\":{\"ping\":{\"schema\":{\"type\":\"object\",\"properties\":{\"kind\":{\"const\":\"ping\"}},\"required\":[\"kind\"]},\"cmd\":\"node -e \\\"process.exit(0)\\\"\"}},\"authModes\":[\"google\",\"keys\",\"email\"],\"resolvedKeys\":[{\"name\":\"_internal\",\"seed\":\"[REDACTED]\",\"scopes\":null},{\"name\":\"primary\",\"seed\":\"[REDACTED]\",\"scopes\":null},{\"name\":\"scoped\",\"seed\":\"[REDACTED]\",\"scopes\":{\"allow\":[\"/{root}/public/**\"],\"deny\":[],\"explicitAllow\":[],\"explicitDeny\":[]}}],\"resolvedInsiders\":[{\"email\":\"admin@wire.test\",\"seed\":\"[REDACTED]\",\"scopes\":null,\"keyCreatedAt\":\"{ts}\"},{\"email\":\"scoped@wire.test\",\"seed\":\"[REDACTED]\",\"scopes\":{\"allow\":[\"/{root}/public/**\"],\"deny\":[],\"explicitAllow\":[],\"explicitDeny\":[]},\"keyCreatedAt\":null},{\"email\":\"noseed@wire.test\",\"seed\":\"[REDACTED]\",\"scopes\":null,\"keyCreatedAt\":null}],\"googleAuth\":{\"clientId\":\"wire-client-id\",\"clientSecret\":\"[REDACTED]\"},\"sessionSecret\":\"[REDACTED]\",\"internalInsiderKey\":\"[REDACTED]\",\"diagramCachePath\":\"{dir}/diagram-cache\",\"oauth\":{\"credentialDir\":\"{dir}/oauth\",\"providers\":{\"wire\":{\"authUrl\":\"https://auth.wire.test/authorize\",\"tokenUrl\":\"http://127.0.0.1:9/token\",\"pkce\":true,\"defaultScopes\":[\"read\"]}}},\"go\":{\"docs\":\"/browse/docs\",\"ext\":\"https://example.com/target\"},\"branding\":{\"name\":\"Wire\",\"emoji\":\"W\"},\"emailAuth\":{\"smtpUrl\":\"[REDACTED]\",\"fromAddress\":\"jeeves@wire.test\"},\"configPath\":\"{dir}/jeeves-server/config.json\",\"publicUrl\":\"https://wire.test\",\"trustProxyHeaders\":false,\"eventQueueConcurrency\":3,\"eventsLog\":\"{dir}/events/webhook-events.jsonl\",\"eventQueuePath\":\"{dir}/events/event-queue.jsonl\",\"eventQueueCursorPath\":\"{dir}/events/event-queue.jsonl.cursor\",\"eventLogPath\":\"{dir}/events/event-log.jsonl\"}"
+  },
+  "config session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"port\":1934,\"eventTimeoutMs\":30000,\"eventLogPurgeMs\":2592000000,\"maxZipSizeMb\":100,\"chromePath\":\"{dir}/no-chrome/chrome\",\"roots\":{\"{root}\":\"{dir}/content\"},\"plantuml\":{\"servers\":[\"https://www.plantuml.com/plantuml\"]},\"outsiderPolicy\":{\"allow\":[\"/**\"],\"deny\":[\"/{root}/private/**\",\"/{root}/private/**\"],\"explicitAllow\":[],\"explicitDeny\":[\"/{root}/private/**\",\"/{root}/private/**\"]},\"events\":{\"ping\":{\"schema\":{\"type\":\"object\",\"properties\":{\"kind\":{\"const\":\"ping\"}},\"required\":[\"kind\"]},\"cmd\":\"node -e \\\"process.exit(0)\\\"\"}},\"authModes\":[\"google\",\"keys\",\"email\"],\"resolvedKeys\":[{\"name\":\"_internal\",\"seed\":\"[REDACTED]\",\"scopes\":null},{\"name\":\"primary\",\"seed\":\"[REDACTED]\",\"scopes\":null},{\"name\":\"scoped\",\"seed\":\"[REDACTED]\",\"scopes\":{\"allow\":[\"/{root}/public/**\"],\"deny\":[],\"explicitAllow\":[],\"explicitDeny\":[]}}],\"resolvedInsiders\":[{\"email\":\"admin@wire.test\",\"seed\":\"[REDACTED]\",\"scopes\":null,\"keyCreatedAt\":\"{ts}\"},{\"email\":\"scoped@wire.test\",\"seed\":\"[REDACTED]\",\"scopes\":{\"allow\":[\"/{root}/public/**\"],\"deny\":[],\"explicitAllow\":[],\"explicitDeny\":[]},\"keyCreatedAt\":null},{\"email\":\"noseed@wire.test\",\"seed\":\"[REDACTED]\",\"scopes\":null,\"keyCreatedAt\":null}],\"googleAuth\":{\"clientId\":\"wire-client-id\",\"clientSecret\":\"[REDACTED]\"},\"sessionSecret\":\"[REDACTED]\",\"internalInsiderKey\":\"[REDACTED]\",\"diagramCachePath\":\"{dir}/diagram-cache\",\"oauth\":{\"credentialDir\":\"{dir}/oauth\",\"providers\":{\"wire\":{\"authUrl\":\"https://auth.wire.test/authorize\",\"tokenUrl\":\"http://127.0.0.1:9/token\",\"pkce\":true,\"defaultScopes\":[\"read\"]}}},\"go\":{\"docs\":\"/browse/docs\",\"ext\":\"https://example.com/target\"},\"branding\":{\"name\":\"Wire\",\"emoji\":\"W\"},\"emailAuth\":{\"smtpUrl\":\"[REDACTED]\",\"fromAddress\":\"jeeves@wire.test\"},\"configPath\":\"{dir}/jeeves-server/config.json\",\"publicUrl\":\"https://wire.test\",\"trustProxyHeaders\":false,\"eventQueueConcurrency\":3,\"eventsLog\":\"{dir}/events/webhook-events.jsonl\",\"eventQueuePath\":\"{dir}/events/event-queue.jsonl\",\"eventQueueCursorPath\":\"{dir}/events/event-queue.jsonl.cursor\",\"eventLogPath\":\"{dir}/events/event-log.jsonl\"}"
+  },
+  "config jsonpath": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"result\":[1934],\"count\":1}"
+  },
+  "config jsonpath no match": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"result\":[],\"count\":0}"
+  },
+  "config invalid jsonpath": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unclosed ( at character 3\"}"
+  },
+  "configApply invalid config": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Config validation failed\",\"issues\":[{\"expected\":\"number\",\"code\":\"invalid_type\",\"path\":[\"port\"],\"message\":\"Invalid input: expected number, received string\"}]}"
+  },
+  "configApply unknown key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"applied\":true,\"config\":{\"port\":1934,\"chromePath\":\"{dir}/no-chrome/chrome\",\"auth\":{\"modes\":[\"google\",\"keys\",\"email\"],\"google\":{\"clientId\":\"wire-client-id\",\"clientSecret\":\"wire-secret\"},\"sessionSecret\":\"wire-session-secret\",\"email\":{\"smtpUrl\":\"smtp://127.0.0.1:9\",\"fromAddress\":\"jeeves@wire.test\"}},\"scopes\":{\"public\":{\"allow\":[\"/{root}/public/**\"]}},\"insiders\":{\"admin@wire.test\":{\"seed\":\"wire-seed-admin-insider\",\"keyCreatedAt\":\"{ts}\"},\"scoped@wire.test\":{\"scopes\":\"public\",\"seed\":\"wire-seed-scoped-insider\"},\"noseed@wire.test\":{}},\"keys\":{\"_internal\":\"wire-seed-internal-machine-key\",\"primary\":\"wire-seed-primary-machine-key\",\"scoped\":{\"key\":\"wire-seed-scoped-machine-key\",\"scopes\":\"public\"}},\"events\":{\"ping\":{\"schema\":{\"type\":\"object\",\"properties\":{\"kind\":{\"const\":\"ping\"}},\"required\":[\"kind\"]},\"cmd\":\"node -e \\\"process.exit(0)\\\"\"}},\"eventTimeoutMs\":30000,\"eventLogPurgeMs\":2592000000,\"maxZipSizeMb\":100,\"roots\":{\"{root}\":\"{dir}/content\"},\"diagramCachePath\":\"{dir}/diagram-cache\",\"outsiderPolicy\":{\"deny\":[\"/{root}/private/**\"]},\"oauth\":{\"credentialDir\":\"{dir}/oauth\",\"providers\":{\"wire\":{\"authUrl\":\"https://auth.wire.test/authorize\",\"tokenUrl\":\"http://127.0.0.1:9/token\",\"pkce\":true,\"defaultScopes\":[\"read\"]}}},\"go\":{\"docs\":\"/browse/docs\",\"ext\":\"https://example.com/target\"},\"branding\":{\"name\":\"Wire\",\"emoji\":\"W\"},\"eventQueue\":\"{dir}/events/event-queue.jsonl\",\"eventQueueConcurrency\":3,\"publicUrl\":\"https://wire.test\",\"trustProxyHeaders\":false}}"
+  },
+  "configApply empty body": {
+    "status": 500,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"statusCode\":500,\"error\":\"Internal Server Error\",\"message\":\"Cannot convert undefined or null to object\"}"
+  },
+  "configApply no body": {
+    "status": 500,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"statusCode\":500,\"error\":\"Internal Server Error\",\"message\":\"Cannot destructure property 'patch' of 'request' as it is undefined.\"}"
+  },
+  "configApply valid patch (temp config)": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"applied\":true,\"config\":{\"port\":1934,\"chromePath\":\"{dir}/no-chrome/chrome\",\"auth\":{\"modes\":[\"google\",\"keys\",\"email\"],\"google\":{\"clientId\":\"wire-client-id\",\"clientSecret\":\"wire-secret\"},\"sessionSecret\":\"wire-session-secret\",\"email\":{\"smtpUrl\":\"smtp://127.0.0.1:9\",\"fromAddress\":\"jeeves@wire.test\"}},\"scopes\":{\"public\":{\"allow\":[\"/{root}/public/**\"]}},\"insiders\":{\"admin@wire.test\":{\"seed\":\"wire-seed-admin-insider\",\"keyCreatedAt\":\"{ts}\"},\"scoped@wire.test\":{\"scopes\":\"public\",\"seed\":\"wire-seed-scoped-insider\"},\"noseed@wire.test\":{}},\"keys\":{\"_internal\":\"wire-seed-internal-machine-key\",\"primary\":\"wire-seed-primary-machine-key\",\"scoped\":{\"key\":\"wire-seed-scoped-machine-key\",\"scopes\":\"public\"}},\"events\":{\"ping\":{\"schema\":{\"type\":\"object\",\"properties\":{\"kind\":{\"const\":\"ping\"}},\"required\":[\"kind\"]},\"cmd\":\"node -e \\\"process.exit(0)\\\"\"}},\"eventTimeoutMs\":1000,\"eventLogPurgeMs\":2592000000,\"maxZipSizeMb\":100,\"roots\":{\"{root}\":\"{dir}/content\"},\"diagramCachePath\":\"{dir}/diagram-cache\",\"outsiderPolicy\":{\"deny\":[\"/{root}/private/**\"]},\"oauth\":{\"credentialDir\":\"{dir}/oauth\",\"providers\":{\"wire\":{\"authUrl\":\"https://auth.wire.test/authorize\",\"tokenUrl\":\"http://127.0.0.1:9/token\",\"pkce\":true,\"defaultScopes\":[\"read\"]}}},\"go\":{\"docs\":\"/browse/docs\",\"ext\":\"https://example.com/target\"},\"branding\":{\"name\":\"Wire\",\"emoji\":\"W\"},\"eventQueue\":\"{dir}/events/event-queue.jsonl\",\"eventQueueConcurrency\":3,\"publicUrl\":\"https://wire.test\",\"trustProxyHeaders\":false}}"
+  },
+  "pathKey": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"/{root}/doc.md\",\"key\":\"{key}\"}"
+  },
+  "pathKey scoped key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"/{root}/doc.md\",\"key\":\"{key}\"}"
+  },
+  "pathKey no path": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"path query param required\"}"
+  },
+  "pathKey unknown key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid API key\"}"
+  },
+  "pathKey none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"X-API-Key header required\"}"
+  },
+  "pathKey insider key in query": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"X-API-Key header required\"}"
+  },
+  "insiderKey": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"key\":\"{key}\"}"
+  },
+  "insiderKey scoped key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"key\":\"{key}\"}"
+  },
+  "insiderKey unknown key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid API key\"}"
+  },
+  "insiderKey none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"X-API-Key header required\"}"
+  },
+  "legacy rotateKey insider key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"ok\":true,\"keyName\":\"admin@wire.test\"}"
+  },
+  "legacy rotateKey session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"ok\":true,\"keyName\":\"admin@wire.test\"}"
+  },
+  "legacy rotateKey machine key": {
+    "status": 501,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Machine key rotation is not supported with TypeScript config. Update the key manually in jeeves.config.ts and restart the server.\"}"
+  },
+  "legacy rotateKey bad key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid insider key\"}"
+  },
+  "legacy rotateKey none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid insider key\"}"
+  },
+  "legacy share insider key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"/{root}/doc.md\",\"key\":\"{key}\",\"exp\":null,\"url\":\"/browse/{root}/doc.md?k={key}\"}"
+  },
+  "legacy share insider key expiring": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"/{root}/doc.md\",\"key\":\"{key}\",\"exp\":\"4102444800000\",\"url\":\"/browse/{root}/doc.md?k={key}&exp=4102444800000\"}"
+  },
+  "legacy share session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"/{root}/doc.md\",\"key\":\"{key}\",\"exp\":null,\"url\":\"/browse/{root}/doc.md?k={key}\"}"
+  },
+  "legacy share machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"/{root}/doc.md\",\"key\":\"{key}\",\"exp\":null,\"url\":\"/browse/{root}/doc.md?k={key}\"}"
+  },
+  "legacy share scoped insider key out of scope": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"/{root}/doc.md\",\"key\":\"{key}\",\"exp\":null,\"url\":\"/browse/{root}/doc.md?k={key}\"}"
+  },
+  "legacy share no path": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"path query param required\"}"
+  },
+  "legacy share bad key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid insider key\"}"
+  },
+  "legacy share none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid insider key\"}"
+  },
+  "receiveEvent matched": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"matched\":\"ping\"}"
+  },
+  "receiveEvent unmatched": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"matched\":null}"
+  },
+  "receiveEvent array body": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"matched\":null}"
+  },
+  "receiveEvent scalar body": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"matched\":null}"
+  },
+  "receiveEvent empty json body": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"statusCode\":400,\"code\":\"FST_ERR_CTP_EMPTY_JSON_BODY\",\"error\":\"Bad Request\",\"message\":\"Body cannot be empty when content-type is set to 'application/json'\"}"
+  },
+  "receiveEvent text body": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"matched\":null}"
+  },
+  "receiveEvent none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "receiveEvent bad key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "receiveEvent scoped machine key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "receiveEvent insider key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "receiveEvent path key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"matched\":\"ping\"}"
+  },
+  "robots": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/plain"
+    },
+    "body": "User-agent: *\nDisallow: /\n"
+  },
+  "favicon": {
+    "status": 200,
+    "headers": {
+      "content-type": "image/svg+xml"
+    },
+    "body": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><text y=\"0.9em\" font-size=\"90\">W</text></svg>"
+  },
+  "static lucide": {
+    "status": 500,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    }
+  },
+  "static panzoom": {
+    "status": 500,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    }
+  },
+  "auth login": {
+    "status": 302,
+    "headers": {
+      "location": "https://accounts.google.com/o/oauth2/v2/auth?client_id=wire-client-id&redirect_uri=https%3A%2F%2Fwire.test%2Fauth%2Fcallback&response_type=code&scope=openid+email+profile&access_type=offline&prompt=consent"
+    },
+    "body": ""
+  },
+  "auth login returnTo": {
+    "status": 302,
+    "headers": {
+      "location": "https://accounts.google.com/o/oauth2/v2/auth?client_id=wire-client-id&redirect_uri=https%3A%2F%2Fwire.test%2Fauth%2Fcallback&response_type=code&scope=openid+email+profile&access_type=offline&prompt=consent&state=L2Jyb3dzZS94"
+    },
+    "body": ""
+  },
+  "auth callback error": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"OAuth error: access_denied\"}"
+  },
+  "auth callback no code": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Missing authorization code\"}"
+  },
+  "auth callback code": {
+    "status": 500,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"statusCode\":500,\"error\":\"Internal Server Error\",\"message\":\"fetch failed\"}"
+  },
+  "auth logout": {
+    "status": 302,
+    "headers": {
+      "location": "/"
+    },
+    "body": ""
+  },
+  "auth magic verify": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html"
+    },
+    "body": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>W Wire — Verify Code</title>\n<script>\n// Theme: match SPA behavior — read localStorage, fall back to system preference.\n(function() {\n  var saved = localStorage.getItem('jeeves-theme');\n  var theme = saved === 'dark' || saved === 'light' ? saved\n    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');\n  if (theme === 'dark') document.documentElement.classList.add('dark');\n})();\n</script>\n<style>\n  * { box-sizing: border-box; margin: 0; padding: 0; }\n  body {\n    font-family: system-ui, -apple-system, sans-serif;\n    color: #1a1a1a;\n    background: #fff;\n  }\n  /* Header — matches SPA zinc-800 bar */\n  .header {\n    background: #27272a;\n    color: #fff;\n    padding: 0.5rem 1rem;\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n  }\n  .header-brand {\n    font-size: 1.5rem;\n    text-decoration: none;\n    color: #fff;\n    display: flex;\n    align-items: center;\n    gap: 0.25rem;\n  }\n  .header-brand-name {\n    font-size: 0.875rem;\n    font-weight: 500;\n    color: #d4d4d8;\n  }\n  .theme-btn {\n    background: transparent;\n    border: none;\n    color: #d4d4d8;\n    cursor: pointer;\n    padding: 0.375rem;\n    border-radius: 0.25rem;\n    display: flex;\n    align-items: center;\n    transition: color 0.15s, background 0.15s;\n  }\n  .theme-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }\n  .theme-btn svg { width: 1rem; height: 1rem; }\n  .icon-sun { display: none; }\n  .icon-moon { display: block; }\n  .dark .icon-sun { display: block; }\n  .dark .icon-moon { display: none; }\n  /* Content layout */\n  .content {\n    margin: 60px auto;\n    padding: 0 20px;\n    text-align: center;\n  }\n  .box {\n    max-width: 400px;\n    margin: 0 auto;\n  }\n  h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.25rem; }\n  h2 { font-size: 1rem; font-weight: 400; color: #666; margin-top: 0; margin-bottom: 1.25rem; }\n  .btn-primary {\n    display: block;\n    width: 100%;\n    padding: 10px 24px;\n    background: #4285f4;\n    color: #fff;\n    border: none;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    text-align: center;\n    transition: background 0.15s;\n  }\n  .btn-primary:hover { background: #3367d6; }\n  .error-msg {\n    margin-top: 0.5rem;\n    font-size: 0.875rem;\n    color: #d93025;\n  }\n  /* Dark mode overrides (class-based, matches SPA) */\n  .dark body { color: #e0e0e0; background: #1a1a1a; }\n  .dark h2 { color: #999; }\n  .instructions {\n    font-size: 0.875rem;\n    color: #666;\n    line-height: 1.5;\n    margin-bottom: 1.25rem;\n  }\n  .otp-input {\n    display: block;\n    width: 100%;\n    padding: 10px 12px;\n    font-size: 1.1rem;\n    letter-spacing: 0.1em;\n    text-align: center;\n    text-transform: lowercase;\n    border: 1px solid #ccc;\n    border-radius: 4px;\n    margin-bottom: 0.75rem;\n    background: #fff;\n    color: #1a1a1a;\n    outline: none;\n    transition: border-color 0.15s;\n  }\n  .otp-input:focus { border-color: #4285f4; }\n  .dark .instructions { color: #999; }\n  .dark .otp-input { background: #2a2a2a; color: #e0e0e0; border-color: #444; }\n  .dark .otp-input:focus { border-color: #4285f4; }\n</style>\n</head>\n<body>\n<header class=\"header\">\n  <span class=\"header-brand\">W <span class=\"header-brand-name\">Wire</span></span>\n  <button class=\"theme-btn\" id=\"themeToggle\" title=\"Toggle theme\">\n    <svg class=\"icon-sun\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\"/><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/></svg>\n    <svg class=\"icon-moon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z\"/></svg>\n  </button>\n</header>\n<div class=\"content\">\n<div class=\"box\">\n<h1>W Wire</h1>\n<h2>Check your email</h2>\n<p class=\"instructions\">Enter the 8-character code from your email below, or click the magic link in the email directly.</p>\n<form id=\"otpForm\" onsubmit=\"verifyOtp(); return false;\">\n  <input\n    type=\"text\"\n    id=\"otpInput\"\n    placeholder=\"e.g. a3k7 m9p2\"\n    class=\"otp-input\"\n    autocomplete=\"one-time-code\"\n    inputmode=\"text\"\n    maxlength=\"9\"\n    aria-label=\"One-time verification code\"\n    autofocus\n  >\n  <button type=\"submit\" class=\"btn-primary\">Verify Code</button>\n  <div class=\"error-msg\" id=\"otpError\" style=\"display:none;\"></div>\n</form>\n</div>\n</div>\n<script>\ndocument.getElementById('themeToggle').addEventListener('click', function() {\n  var html = document.documentElement;\n  var isDark = html.classList.toggle('dark');\n  localStorage.setItem('jeeves-theme', isDark ? 'dark' : 'light');\n});\n</script>\n<script>\nasync function verifyOtp() {\n  var raw = document.getElementById('otpInput').value;\n  var otp = raw.replace(/\\s+/g, '').toLowerCase();\n  var errorEl = document.getElementById('otpError');\n  errorEl.style.display = 'none';\n  errorEl.textContent = '';\n\n  try {\n    var params = new URLSearchParams(window.location.search);\n    var enc = params.get('enc');\n    if (!enc) { throw new Error('missing enc'); }\n\n    // base64url decode: replace URL-safe chars, restore padding\n    var b64 = enc.replace(/-/g, '+').replace(/_/g, '/');\n    var pad = (4 - b64.length % 4) % 4;\n    b64 += '==='.slice(0, pad);\n    var bytes = Uint8Array.from(atob(b64), function(c) { return c.charCodeAt(0); });\n\n    // Combined format: iv (12 bytes) | ciphertext | authTag (16 bytes)\n    // WebCrypto AES-GCM decrypt expects: ciphertext | authTag\n    var iv = bytes.slice(0, 12);\n    var data = bytes.slice(12); // ciphertext + authTag — exactly what WebCrypto needs\n\n    // Derive AES-256-GCM key: SHA-256(otp)\n    var otpBytes = new TextEncoder().encode(otp);\n    var keyData = await crypto.subtle.digest('SHA-256', otpBytes);\n    var key = await crypto.subtle.importKey('raw', keyData, { name: 'AES-GCM' }, false, ['decrypt']);\n\n    // Decrypt\n    var decryptedBuf = await crypto.subtle.decrypt(\n      { name: 'AES-GCM', iv: iv, tagLength: 128 },\n      key,\n      data\n    );\n    var token = new TextDecoder().decode(decryptedBuf);\n    window.location.href = '/auth/magic/callback?token=' + encodeURIComponent(token);\n  } catch (_) {\n    errorEl.textContent = 'Incorrect code \\u2014 please try again';\n    errorEl.style.display = 'block';\n  }\n}\n</script>\n</body>\n</html>"
+  },
+  "auth magic callback bad token": {
+    "status": 400,
+    "headers": {
+      "content-type": "text/html"
+    },
+    "body": "<!DOCTYPE html>\n<html lang=\"en\" data-render-state=\"error\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Login Link Error</title>\n<style>\n  body {\n    font-family: system-ui, -apple-system, sans-serif;\n    max-width: 480px;\n    margin: 80px auto;\n    padding: 0 20px;\n    text-align: center;\n    color: #1a1a1a;\n    background: #fff;\n  }\n  @media (prefers-color-scheme: dark) {\n    body { color: #e0e0e0; background: #1a1a1a; }\n  }\n  h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }\n  p { font-size: 0.95rem; line-height: 1.5; color: #666; }\n  @media (prefers-color-scheme: dark) { p { color: #999; } }\n  a { color: #4285f4; text-decoration: none; }\n  a:hover { text-decoration: underline; }\n</style>\n</head>\n<body>\n<h1>Login Link Error</h1>\n<p>This login link has expired or is invalid. Please request a new one.</p>\n<p><a href=\"/\">Return to sign in</a></p>\n</body>\n</html>"
+  },
+  "auth magic callback no token": {
+    "status": 400,
+    "headers": {
+      "content-type": "text/html"
+    },
+    "body": "<!DOCTYPE html>\n<html lang=\"en\" data-render-state=\"error\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Login Link Error</title>\n<style>\n  body {\n    font-family: system-ui, -apple-system, sans-serif;\n    max-width: 480px;\n    margin: 80px auto;\n    padding: 0 20px;\n    text-align: center;\n    color: #1a1a1a;\n    background: #fff;\n  }\n  @media (prefers-color-scheme: dark) {\n    body { color: #e0e0e0; background: #1a1a1a; }\n  }\n  h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }\n  p { font-size: 0.95rem; line-height: 1.5; color: #666; }\n  @media (prefers-color-scheme: dark) { p { color: #999; } }\n  a { color: #4285f4; text-decoration: none; }\n  a:hover { text-decoration: underline; }\n</style>\n</head>\n<body>\n<h1>Login Link Error</h1>\n<p>No token provided.</p>\n<p><a href=\"/\">Return to sign in</a></p>\n</body>\n</html>"
+  },
+  "oauth callback error": {
+    "status": 400,
+    "headers": {
+      "content-type": "text/html"
+    },
+    "body": "<!DOCTYPE html>\n<html lang=\"en\">\n<head><meta charset=\"utf-8\"><title>Jeeves Server — Authorization Error</title></head>\n<body style=\"font-family:system-ui,sans-serif;max-width:600px;margin:60px auto;padding:0 20px;\">\n<h1>Authorization Error</h1>\n<p>denied</p>\n</body>\n</html>"
+  },
+  "oauth callback unknown state": {
+    "status": 400,
+    "headers": {
+      "content-type": "text/html"
+    },
+    "body": "<!DOCTYPE html>\n<html lang=\"en\">\n<head><meta charset=\"utf-8\"><title>Jeeves Server — Authorization Error</title></head>\n<body style=\"font-family:system-ui,sans-serif;max-width:600px;margin:60px auto;padding:0 20px;\">\n<h1>Authorization Error</h1>\n<p>Authorization session expired or invalid.</p>\n</body>\n</html>"
+  },
+  "oauth callback no params": {
+    "status": 400,
+    "headers": {
+      "content-type": "text/html"
+    },
+    "body": "<!DOCTYPE html>\n<html lang=\"en\">\n<head><meta charset=\"utf-8\"><title>Jeeves Server — Authorization Error</title></head>\n<body style=\"font-family:system-ui,sans-serif;max-width:600px;margin:60px auto;padding:0 20px;\">\n<h1>Authorization Error</h1>\n<p>Missing code or state parameter.</p>\n</body>\n</html>"
+  },
+  "go relative": {
+    "status": 302,
+    "headers": {
+      "location": "/browse/docs"
+    },
+    "body": ""
+  },
+  "go absolute": {
+    "status": 302,
+    "headers": {
+      "location": "https://example.com/target"
+    },
+    "body": ""
+  },
+  "go unknown": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unknown shortlink\"}"
+  },
+  "path redirect": {
+    "status": 302,
+    "headers": {
+      "location": "/browse"
+    },
+    "body": ""
+  },
+  "path wildcard redirect": {
+    "status": 302,
+    "headers": {
+      "location": "/browse/{root}/doc.md"
+    },
+    "body": ""
+  },
+  "spa home none": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html"
+    },
+    "body": "<!DOCTYPE html>\n<html lang=\"en\" data-render-state=\"auth-required\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>W Wire — Sign In</title>\n<script>\n// Theme: match SPA behavior — read localStorage, fall back to system preference.\n(function() {\n  var saved = localStorage.getItem('jeeves-theme');\n  var theme = saved === 'dark' || saved === 'light' ? saved\n    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');\n  if (theme === 'dark') document.documentElement.classList.add('dark');\n})();\n</script>\n<style>\n  * { box-sizing: border-box; margin: 0; padding: 0; }\n  body {\n    font-family: system-ui, -apple-system, sans-serif;\n    color: #1a1a1a;\n    background: #fff;\n  }\n  /* Header — matches SPA zinc-800 bar */\n  .header {\n    background: #27272a;\n    color: #fff;\n    padding: 0.5rem 1rem;\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n  }\n  .header-brand {\n    font-size: 1.5rem;\n    text-decoration: none;\n    color: #fff;\n    display: flex;\n    align-items: center;\n    gap: 0.25rem;\n  }\n  .header-brand-name {\n    font-size: 0.875rem;\n    font-weight: 500;\n    color: #d4d4d8;\n  }\n  .theme-btn {\n    background: transparent;\n    border: none;\n    color: #d4d4d8;\n    cursor: pointer;\n    padding: 0.375rem;\n    border-radius: 0.25rem;\n    display: flex;\n    align-items: center;\n    transition: color 0.15s, background 0.15s;\n  }\n  .theme-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }\n  .theme-btn svg { width: 1rem; height: 1rem; }\n  .icon-sun { display: none; }\n  .icon-moon { display: block; }\n  .dark .icon-sun { display: block; }\n  .dark .icon-moon { display: none; }\n  /* Content layout */\n  .content {\n    margin: 60px auto;\n    padding: 0 20px;\n    text-align: center;\n  }\n  .box {\n    max-width: 400px;\n    margin: 0 auto;\n  }\n  h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.25rem; }\n  h2 { font-size: 1rem; font-weight: 400; color: #666; margin-top: 0; margin-bottom: 1.25rem; }\n  .btn-primary {\n    display: block;\n    width: 100%;\n    padding: 10px 24px;\n    background: #4285f4;\n    color: #fff;\n    border: none;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    text-align: center;\n    transition: background 0.15s;\n  }\n  .btn-primary:hover { background: #3367d6; }\n  .error-msg {\n    margin-top: 0.5rem;\n    font-size: 0.875rem;\n    color: #d93025;\n  }\n  /* Dark mode overrides (class-based, matches SPA) */\n  .dark body { color: #e0e0e0; background: #1a1a1a; }\n  .dark h2 { color: #999; }\n  code {\n    display: inline-block;\n    max-width: 100%;\n    overflow-wrap: break-word;\n    word-break: break-all;\n    padding: 2px 6px;\n    background: #f0f0f0;\n    border-radius: 3px;\n    font-size: 0.85rem;\n  }\n  .url-block { margin-bottom: 1.5rem; font-size: 0.9rem; color: #666; }\n  .email-input {\n    display: block;\n    width: 100%;\n    padding: 10px 12px;\n    font-size: 0.95rem;\n    border: 1px solid #ccc;\n    border-radius: 4px;\n    margin-bottom: 0.75rem;\n    background: #fff;\n    color: #1a1a1a;\n    outline: none;\n    transition: border-color 0.15s;\n  }\n  .email-input:focus { border-color: #4285f4; }\n  /* Google-branded button */\n  .btn-google {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    gap: 0.75rem;\n    padding: 10px 24px;\n    background: #fff;\n    color: #3c4043;\n    text-decoration: none;\n    border: 1px solid #dadce0;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    transition: background 0.15s, box-shadow 0.15s;\n  }\n  .btn-google:hover { background: #f7f8f8; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }\n  .google-logo { width: 18px; height: 18px; flex-shrink: 0; }\n  .divider {\n    margin: 1rem 0;\n    font-size: 0.85rem;\n    color: #999;\n  }\n  .muted { font-size: 0.95rem; color: #666; line-height: 1.5; }\n  .action { margin-top: 0.25rem; }\n  .dark code { background: #2a2a2a; }\n  .dark .url-block { color: #999; }\n  .dark .email-input { background: #2a2a2a; color: #e0e0e0; border-color: #444; }\n  .dark .email-input:focus { border-color: #4285f4; }\n  .dark .btn-google { background: #fff; color: #3c4043; border-color: #dadce0; }\n  .dark .btn-google:hover { background: #f7f8f8; }\n  .dark .muted { color: #999; }\n  .dark .divider { color: #555; }\n</style>\n</head>\n<body>\n<header class=\"header\">\n  <span class=\"header-brand\">W <span class=\"header-brand-name\">Wire</span></span>\n  <button class=\"theme-btn\" id=\"themeToggle\" title=\"Toggle theme\">\n    <svg class=\"icon-sun\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\"/><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/></svg>\n    <svg class=\"icon-moon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z\"/></svg>\n  </button>\n</header>\n<div class=\"content\">\n<div class=\"box\">\n<h1>W Wire</h1>\n<h2>Sign in to continue</h2>\n<div class=\"url-block\">Trying to access:<br><code>/</code></div>\n<form id=\"magicForm\" onsubmit=\"submitMagic(); return false;\">\n  <input\n    type=\"email\"\n    id=\"emailInput\"\n    placeholder=\"Enter your email\"\n    required\n    aria-label=\"Email address\"\n    class=\"email-input\"\n  >\n  <button type=\"submit\" class=\"btn-primary\">Send Login Link</button>\n  <div class=\"error-msg\" id=\"emailError\" style=\"display:none;\"></div>\n</form><div class=\"divider\"><span>— or —</span></div>\n<div class=\"action\"><a href=\"/auth/login?returnTo=%2F\" class=\"btn-google\"><svg class=\"google-logo\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z\" fill=\"#4285F4\"/><path d=\"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z\" fill=\"#34A853\"/><path d=\"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z\" fill=\"#FBBC05\"/><path d=\"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z\" fill=\"#EA4335\"/></svg>Sign in with Google</a></div>\n</div>\n</div>\n<script>\ndocument.getElementById('themeToggle').addEventListener('click', function() {\n  var html = document.documentElement;\n  var isDark = html.classList.toggle('dark');\n  localStorage.setItem('jeeves-theme', isDark ? 'dark' : 'light');\n});\n</script>\n<script>\nfunction submitMagic() {\n  var email = document.getElementById('emailInput').value;\n  var errorEl = document.getElementById('emailError');\n  errorEl.style.display = 'none';\n  errorEl.textContent = '';\n  fetch('/api/auth/magic', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({ email: email, returnTo: window.location.pathname + window.location.search })\n  })\n  .then(function(res) {\n    if (res.ok) { return res.json(); }\n    errorEl.textContent = 'Something went wrong. Please try again.';\n    errorEl.style.display = 'block';\n    return null;\n  })\n  .then(function(data) {\n    if (data && data.verifyUrl) { window.location.href = data.verifyUrl; }\n  })\n  .catch(function() {\n    errorEl.textContent = 'Network error. Please try again.';\n    errorEl.style.display = 'block';\n  });\n}\n</script>\n</body>\n</html>"
+  },
+  "spa home session": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "public, max-age=0"
+    },
+    "body": "<!doctype html><title>wire spa</title>\n"
+  },
+  "spa browse none": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html"
+    },
+    "body": "<!DOCTYPE html>\n<html lang=\"en\" data-render-state=\"auth-required\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>W Wire — Sign In</title>\n<script>\n// Theme: match SPA behavior — read localStorage, fall back to system preference.\n(function() {\n  var saved = localStorage.getItem('jeeves-theme');\n  var theme = saved === 'dark' || saved === 'light' ? saved\n    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');\n  if (theme === 'dark') document.documentElement.classList.add('dark');\n})();\n</script>\n<style>\n  * { box-sizing: border-box; margin: 0; padding: 0; }\n  body {\n    font-family: system-ui, -apple-system, sans-serif;\n    color: #1a1a1a;\n    background: #fff;\n  }\n  /* Header — matches SPA zinc-800 bar */\n  .header {\n    background: #27272a;\n    color: #fff;\n    padding: 0.5rem 1rem;\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n  }\n  .header-brand {\n    font-size: 1.5rem;\n    text-decoration: none;\n    color: #fff;\n    display: flex;\n    align-items: center;\n    gap: 0.25rem;\n  }\n  .header-brand-name {\n    font-size: 0.875rem;\n    font-weight: 500;\n    color: #d4d4d8;\n  }\n  .theme-btn {\n    background: transparent;\n    border: none;\n    color: #d4d4d8;\n    cursor: pointer;\n    padding: 0.375rem;\n    border-radius: 0.25rem;\n    display: flex;\n    align-items: center;\n    transition: color 0.15s, background 0.15s;\n  }\n  .theme-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }\n  .theme-btn svg { width: 1rem; height: 1rem; }\n  .icon-sun { display: none; }\n  .icon-moon { display: block; }\n  .dark .icon-sun { display: block; }\n  .dark .icon-moon { display: none; }\n  /* Content layout */\n  .content {\n    margin: 60px auto;\n    padding: 0 20px;\n    text-align: center;\n  }\n  .box {\n    max-width: 400px;\n    margin: 0 auto;\n  }\n  h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.25rem; }\n  h2 { font-size: 1rem; font-weight: 400; color: #666; margin-top: 0; margin-bottom: 1.25rem; }\n  .btn-primary {\n    display: block;\n    width: 100%;\n    padding: 10px 24px;\n    background: #4285f4;\n    color: #fff;\n    border: none;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    text-align: center;\n    transition: background 0.15s;\n  }\n  .btn-primary:hover { background: #3367d6; }\n  .error-msg {\n    margin-top: 0.5rem;\n    font-size: 0.875rem;\n    color: #d93025;\n  }\n  /* Dark mode overrides (class-based, matches SPA) */\n  .dark body { color: #e0e0e0; background: #1a1a1a; }\n  .dark h2 { color: #999; }\n  code {\n    display: inline-block;\n    max-width: 100%;\n    overflow-wrap: break-word;\n    word-break: break-all;\n    padding: 2px 6px;\n    background: #f0f0f0;\n    border-radius: 3px;\n    font-size: 0.85rem;\n  }\n  .url-block { margin-bottom: 1.5rem; font-size: 0.9rem; color: #666; }\n  .email-input {\n    display: block;\n    width: 100%;\n    padding: 10px 12px;\n    font-size: 0.95rem;\n    border: 1px solid #ccc;\n    border-radius: 4px;\n    margin-bottom: 0.75rem;\n    background: #fff;\n    color: #1a1a1a;\n    outline: none;\n    transition: border-color 0.15s;\n  }\n  .email-input:focus { border-color: #4285f4; }\n  /* Google-branded button */\n  .btn-google {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    gap: 0.75rem;\n    padding: 10px 24px;\n    background: #fff;\n    color: #3c4043;\n    text-decoration: none;\n    border: 1px solid #dadce0;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    transition: background 0.15s, box-shadow 0.15s;\n  }\n  .btn-google:hover { background: #f7f8f8; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }\n  .google-logo { width: 18px; height: 18px; flex-shrink: 0; }\n  .divider {\n    margin: 1rem 0;\n    font-size: 0.85rem;\n    color: #999;\n  }\n  .muted { font-size: 0.95rem; color: #666; line-height: 1.5; }\n  .action { margin-top: 0.25rem; }\n  .dark code { background: #2a2a2a; }\n  .dark .url-block { color: #999; }\n  .dark .email-input { background: #2a2a2a; color: #e0e0e0; border-color: #444; }\n  .dark .email-input:focus { border-color: #4285f4; }\n  .dark .btn-google { background: #fff; color: #3c4043; border-color: #dadce0; }\n  .dark .btn-google:hover { background: #f7f8f8; }\n  .dark .muted { color: #999; }\n  .dark .divider { color: #555; }\n</style>\n</head>\n<body>\n<header class=\"header\">\n  <span class=\"header-brand\">W <span class=\"header-brand-name\">Wire</span></span>\n  <button class=\"theme-btn\" id=\"themeToggle\" title=\"Toggle theme\">\n    <svg class=\"icon-sun\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\"/><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/></svg>\n    <svg class=\"icon-moon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z\"/></svg>\n  </button>\n</header>\n<div class=\"content\">\n<div class=\"box\">\n<h1>W Wire</h1>\n<h2>Sign in to continue</h2>\n<div class=\"url-block\">Trying to access:<br><code>/browse/{root}/doc.md</code></div>\n<form id=\"magicForm\" onsubmit=\"submitMagic(); return false;\">\n  <input\n    type=\"email\"\n    id=\"emailInput\"\n    placeholder=\"Enter your email\"\n    required\n    aria-label=\"Email address\"\n    class=\"email-input\"\n  >\n  <button type=\"submit\" class=\"btn-primary\">Send Login Link</button>\n  <div class=\"error-msg\" id=\"emailError\" style=\"display:none;\"></div>\n</form><div class=\"divider\"><span>— or —</span></div>\n<div class=\"action\"><a href=\"/auth/login?returnTo=%2Fbrowse%2F{root}%2Fdoc.md\" class=\"btn-google\"><svg class=\"google-logo\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z\" fill=\"#4285F4\"/><path d=\"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z\" fill=\"#34A853\"/><path d=\"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z\" fill=\"#FBBC05\"/><path d=\"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z\" fill=\"#EA4335\"/></svg>Sign in with Google</a></div>\n</div>\n</div>\n<script>\ndocument.getElementById('themeToggle').addEventListener('click', function() {\n  var html = document.documentElement;\n  var isDark = html.classList.toggle('dark');\n  localStorage.setItem('jeeves-theme', isDark ? 'dark' : 'light');\n});\n</script>\n<script>\nfunction submitMagic() {\n  var email = document.getElementById('emailInput').value;\n  var errorEl = document.getElementById('emailError');\n  errorEl.style.display = 'none';\n  errorEl.textContent = '';\n  fetch('/api/auth/magic', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({ email: email, returnTo: window.location.pathname + window.location.search })\n  })\n  .then(function(res) {\n    if (res.ok) { return res.json(); }\n    errorEl.textContent = 'Something went wrong. Please try again.';\n    errorEl.style.display = 'block';\n    return null;\n  })\n  .then(function(data) {\n    if (data && data.verifyUrl) { window.location.href = data.verifyUrl; }\n  })\n  .catch(function() {\n    errorEl.textContent = 'Network error. Please try again.';\n    errorEl.style.display = 'block';\n  });\n}\n</script>\n</body>\n</html>"
+  },
+  "spa browse session": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "public, max-age=0"
+    },
+    "body": "<!doctype html><title>wire spa</title>\n"
+  },
+  "spa browse path share": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "public, max-age=0"
+    },
+    "body": "<!doctype html><title>wire spa</title>\n"
+  },
+  "spa browse expired share": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html"
+    },
+    "body": "<!DOCTYPE html>\n<html lang=\"en\" data-render-state=\"auth-required\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>W Wire — Sign In</title>\n<script>\n// Theme: match SPA behavior — read localStorage, fall back to system preference.\n(function() {\n  var saved = localStorage.getItem('jeeves-theme');\n  var theme = saved === 'dark' || saved === 'light' ? saved\n    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');\n  if (theme === 'dark') document.documentElement.classList.add('dark');\n})();\n</script>\n<style>\n  * { box-sizing: border-box; margin: 0; padding: 0; }\n  body {\n    font-family: system-ui, -apple-system, sans-serif;\n    color: #1a1a1a;\n    background: #fff;\n  }\n  /* Header — matches SPA zinc-800 bar */\n  .header {\n    background: #27272a;\n    color: #fff;\n    padding: 0.5rem 1rem;\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n  }\n  .header-brand {\n    font-size: 1.5rem;\n    text-decoration: none;\n    color: #fff;\n    display: flex;\n    align-items: center;\n    gap: 0.25rem;\n  }\n  .header-brand-name {\n    font-size: 0.875rem;\n    font-weight: 500;\n    color: #d4d4d8;\n  }\n  .theme-btn {\n    background: transparent;\n    border: none;\n    color: #d4d4d8;\n    cursor: pointer;\n    padding: 0.375rem;\n    border-radius: 0.25rem;\n    display: flex;\n    align-items: center;\n    transition: color 0.15s, background 0.15s;\n  }\n  .theme-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }\n  .theme-btn svg { width: 1rem; height: 1rem; }\n  .icon-sun { display: none; }\n  .icon-moon { display: block; }\n  .dark .icon-sun { display: block; }\n  .dark .icon-moon { display: none; }\n  /* Content layout */\n  .content {\n    margin: 60px auto;\n    padding: 0 20px;\n    text-align: center;\n  }\n  .box {\n    max-width: 400px;\n    margin: 0 auto;\n  }\n  h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.25rem; }\n  h2 { font-size: 1rem; font-weight: 400; color: #666; margin-top: 0; margin-bottom: 1.25rem; }\n  .btn-primary {\n    display: block;\n    width: 100%;\n    padding: 10px 24px;\n    background: #4285f4;\n    color: #fff;\n    border: none;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    text-align: center;\n    transition: background 0.15s;\n  }\n  .btn-primary:hover { background: #3367d6; }\n  .error-msg {\n    margin-top: 0.5rem;\n    font-size: 0.875rem;\n    color: #d93025;\n  }\n  /* Dark mode overrides (class-based, matches SPA) */\n  .dark body { color: #e0e0e0; background: #1a1a1a; }\n  .dark h2 { color: #999; }\n  code {\n    display: inline-block;\n    max-width: 100%;\n    overflow-wrap: break-word;\n    word-break: break-all;\n    padding: 2px 6px;\n    background: #f0f0f0;\n    border-radius: 3px;\n    font-size: 0.85rem;\n  }\n  .url-block { margin-bottom: 1.5rem; font-size: 0.9rem; color: #666; }\n  .email-input {\n    display: block;\n    width: 100%;\n    padding: 10px 12px;\n    font-size: 0.95rem;\n    border: 1px solid #ccc;\n    border-radius: 4px;\n    margin-bottom: 0.75rem;\n    background: #fff;\n    color: #1a1a1a;\n    outline: none;\n    transition: border-color 0.15s;\n  }\n  .email-input:focus { border-color: #4285f4; }\n  /* Google-branded button */\n  .btn-google {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    gap: 0.75rem;\n    padding: 10px 24px;\n    background: #fff;\n    color: #3c4043;\n    text-decoration: none;\n    border: 1px solid #dadce0;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    transition: background 0.15s, box-shadow 0.15s;\n  }\n  .btn-google:hover { background: #f7f8f8; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }\n  .google-logo { width: 18px; height: 18px; flex-shrink: 0; }\n  .divider {\n    margin: 1rem 0;\n    font-size: 0.85rem;\n    color: #999;\n  }\n  .muted { font-size: 0.95rem; color: #666; line-height: 1.5; }\n  .action { margin-top: 0.25rem; }\n  .dark code { background: #2a2a2a; }\n  .dark .url-block { color: #999; }\n  .dark .email-input { background: #2a2a2a; color: #e0e0e0; border-color: #444; }\n  .dark .email-input:focus { border-color: #4285f4; }\n  .dark .btn-google { background: #fff; color: #3c4043; border-color: #dadce0; }\n  .dark .btn-google:hover { background: #f7f8f8; }\n  .dark .muted { color: #999; }\n  .dark .divider { color: #555; }\n</style>\n</head>\n<body>\n<header class=\"header\">\n  <span class=\"header-brand\">W <span class=\"header-brand-name\">Wire</span></span>\n  <button class=\"theme-btn\" id=\"themeToggle\" title=\"Toggle theme\">\n    <svg class=\"icon-sun\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\"/><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/></svg>\n    <svg class=\"icon-moon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z\"/></svg>\n  </button>\n</header>\n<div class=\"content\">\n<div class=\"box\">\n<h1>W Wire</h1>\n<h2>Sign in to continue</h2>\n<div class=\"url-block\">Trying to access:<br><code>/browse/{root}/doc.md?k={key}&amp;exp=1000</code></div>\n<form id=\"magicForm\" onsubmit=\"submitMagic(); return false;\">\n  <input\n    type=\"email\"\n    id=\"emailInput\"\n    placeholder=\"Enter your email\"\n    required\n    aria-label=\"Email address\"\n    class=\"email-input\"\n  >\n  <button type=\"submit\" class=\"btn-primary\">Send Login Link</button>\n  <div class=\"error-msg\" id=\"emailError\" style=\"display:none;\"></div>\n</form><div class=\"divider\"><span>— or —</span></div>\n<div class=\"action\"><a href=\"/auth/login?returnTo=%2Fbrowse%2F{root}%2Fdoc.md%3Fk%3D{key}%26exp%3D1000\" class=\"btn-google\"><svg class=\"google-logo\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z\" fill=\"#4285F4\"/><path d=\"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z\" fill=\"#34A853\"/><path d=\"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z\" fill=\"#FBBC05\"/><path d=\"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z\" fill=\"#EA4335\"/></svg>Sign in with Google</a></div>\n</div>\n</div>\n<script>\ndocument.getElementById('themeToggle').addEventListener('click', function() {\n  var html = document.documentElement;\n  var isDark = html.classList.toggle('dark');\n  localStorage.setItem('jeeves-theme', isDark ? 'dark' : 'light');\n});\n</script>\n<script>\nfunction submitMagic() {\n  var email = document.getElementById('emailInput').value;\n  var errorEl = document.getElementById('emailError');\n  errorEl.style.display = 'none';\n  errorEl.textContent = '';\n  fetch('/api/auth/magic', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({ email: email, returnTo: window.location.pathname + window.location.search })\n  })\n  .then(function(res) {\n    if (res.ok) { return res.json(); }\n    errorEl.textContent = 'Something went wrong. Please try again.';\n    errorEl.style.display = 'block';\n    return null;\n  })\n  .then(function(data) {\n    if (data && data.verifyUrl) { window.location.href = data.verifyUrl; }\n  })\n  .catch(function() {\n    errorEl.textContent = 'Network error. Please try again.';\n    errorEl.style.display = 'block';\n  });\n}\n</script>\n</body>\n</html>"
+  },
+  "spa browse root": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html"
+    },
+    "body": "<!DOCTYPE html>\n<html lang=\"en\" data-render-state=\"auth-required\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>W Wire — Sign In</title>\n<script>\n// Theme: match SPA behavior — read localStorage, fall back to system preference.\n(function() {\n  var saved = localStorage.getItem('jeeves-theme');\n  var theme = saved === 'dark' || saved === 'light' ? saved\n    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');\n  if (theme === 'dark') document.documentElement.classList.add('dark');\n})();\n</script>\n<style>\n  * { box-sizing: border-box; margin: 0; padding: 0; }\n  body {\n    font-family: system-ui, -apple-system, sans-serif;\n    color: #1a1a1a;\n    background: #fff;\n  }\n  /* Header — matches SPA zinc-800 bar */\n  .header {\n    background: #27272a;\n    color: #fff;\n    padding: 0.5rem 1rem;\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n  }\n  .header-brand {\n    font-size: 1.5rem;\n    text-decoration: none;\n    color: #fff;\n    display: flex;\n    align-items: center;\n    gap: 0.25rem;\n  }\n  .header-brand-name {\n    font-size: 0.875rem;\n    font-weight: 500;\n    color: #d4d4d8;\n  }\n  .theme-btn {\n    background: transparent;\n    border: none;\n    color: #d4d4d8;\n    cursor: pointer;\n    padding: 0.375rem;\n    border-radius: 0.25rem;\n    display: flex;\n    align-items: center;\n    transition: color 0.15s, background 0.15s;\n  }\n  .theme-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }\n  .theme-btn svg { width: 1rem; height: 1rem; }\n  .icon-sun { display: none; }\n  .icon-moon { display: block; }\n  .dark .icon-sun { display: block; }\n  .dark .icon-moon { display: none; }\n  /* Content layout */\n  .content {\n    margin: 60px auto;\n    padding: 0 20px;\n    text-align: center;\n  }\n  .box {\n    max-width: 400px;\n    margin: 0 auto;\n  }\n  h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.25rem; }\n  h2 { font-size: 1rem; font-weight: 400; color: #666; margin-top: 0; margin-bottom: 1.25rem; }\n  .btn-primary {\n    display: block;\n    width: 100%;\n    padding: 10px 24px;\n    background: #4285f4;\n    color: #fff;\n    border: none;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    text-align: center;\n    transition: background 0.15s;\n  }\n  .btn-primary:hover { background: #3367d6; }\n  .error-msg {\n    margin-top: 0.5rem;\n    font-size: 0.875rem;\n    color: #d93025;\n  }\n  /* Dark mode overrides (class-based, matches SPA) */\n  .dark body { color: #e0e0e0; background: #1a1a1a; }\n  .dark h2 { color: #999; }\n  code {\n    display: inline-block;\n    max-width: 100%;\n    overflow-wrap: break-word;\n    word-break: break-all;\n    padding: 2px 6px;\n    background: #f0f0f0;\n    border-radius: 3px;\n    font-size: 0.85rem;\n  }\n  .url-block { margin-bottom: 1.5rem; font-size: 0.9rem; color: #666; }\n  .email-input {\n    display: block;\n    width: 100%;\n    padding: 10px 12px;\n    font-size: 0.95rem;\n    border: 1px solid #ccc;\n    border-radius: 4px;\n    margin-bottom: 0.75rem;\n    background: #fff;\n    color: #1a1a1a;\n    outline: none;\n    transition: border-color 0.15s;\n  }\n  .email-input:focus { border-color: #4285f4; }\n  /* Google-branded button */\n  .btn-google {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    gap: 0.75rem;\n    padding: 10px 24px;\n    background: #fff;\n    color: #3c4043;\n    text-decoration: none;\n    border: 1px solid #dadce0;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    transition: background 0.15s, box-shadow 0.15s;\n  }\n  .btn-google:hover { background: #f7f8f8; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }\n  .google-logo { width: 18px; height: 18px; flex-shrink: 0; }\n  .divider {\n    margin: 1rem 0;\n    font-size: 0.85rem;\n    color: #999;\n  }\n  .muted { font-size: 0.95rem; color: #666; line-height: 1.5; }\n  .action { margin-top: 0.25rem; }\n  .dark code { background: #2a2a2a; }\n  .dark .url-block { color: #999; }\n  .dark .email-input { background: #2a2a2a; color: #e0e0e0; border-color: #444; }\n  .dark .email-input:focus { border-color: #4285f4; }\n  .dark .btn-google { background: #fff; color: #3c4043; border-color: #dadce0; }\n  .dark .btn-google:hover { background: #f7f8f8; }\n  .dark .muted { color: #999; }\n  .dark .divider { color: #555; }\n</style>\n</head>\n<body>\n<header class=\"header\">\n  <span class=\"header-brand\">W <span class=\"header-brand-name\">Wire</span></span>\n  <button class=\"theme-btn\" id=\"themeToggle\" title=\"Toggle theme\">\n    <svg class=\"icon-sun\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\"/><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/></svg>\n    <svg class=\"icon-moon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z\"/></svg>\n  </button>\n</header>\n<div class=\"content\">\n<div class=\"box\">\n<h1>W Wire</h1>\n<h2>Sign in to continue</h2>\n<div class=\"url-block\">Trying to access:<br><code>/browse?k={key}</code></div>\n<form id=\"magicForm\" onsubmit=\"submitMagic(); return false;\">\n  <input\n    type=\"email\"\n    id=\"emailInput\"\n    placeholder=\"Enter your email\"\n    required\n    aria-label=\"Email address\"\n    class=\"email-input\"\n  >\n  <button type=\"submit\" class=\"btn-primary\">Send Login Link</button>\n  <div class=\"error-msg\" id=\"emailError\" style=\"display:none;\"></div>\n</form><div class=\"divider\"><span>— or —</span></div>\n<div class=\"action\"><a href=\"/auth/login?returnTo=%2Fbrowse%3Fk%3D{key}\" class=\"btn-google\"><svg class=\"google-logo\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z\" fill=\"#4285F4\"/><path d=\"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z\" fill=\"#34A853\"/><path d=\"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z\" fill=\"#FBBC05\"/><path d=\"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z\" fill=\"#EA4335\"/></svg>Sign in with Google</a></div>\n</div>\n</div>\n<script>\ndocument.getElementById('themeToggle').addEventListener('click', function() {\n  var html = document.documentElement;\n  var isDark = html.classList.toggle('dark');\n  localStorage.setItem('jeeves-theme', isDark ? 'dark' : 'light');\n});\n</script>\n<script>\nfunction submitMagic() {\n  var email = document.getElementById('emailInput').value;\n  var errorEl = document.getElementById('emailError');\n  errorEl.style.display = 'none';\n  errorEl.textContent = '';\n  fetch('/api/auth/magic', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({ email: email, returnTo: window.location.pathname + window.location.search })\n  })\n  .then(function(res) {\n    if (res.ok) { return res.json(); }\n    errorEl.textContent = 'Something went wrong. Please try again.';\n    errorEl.style.display = 'block';\n    return null;\n  })\n  .then(function(data) {\n    if (data && data.verifyUrl) { window.location.href = data.verifyUrl; }\n  })\n  .catch(function() {\n    errorEl.textContent = 'Network error. Please try again.';\n    errorEl.style.display = 'block';\n  });\n}\n</script>\n</body>\n</html>"
+  },
+  "spa browse dotfile fallback": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "public, max-age=0"
+    },
+    "body": "<!doctype html><title>wire spa</title>\n"
+  },
+  "spa runner none": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html"
+    },
+    "body": "<!DOCTYPE html>\n<html lang=\"en\" data-render-state=\"auth-required\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>W Wire — Sign In</title>\n<script>\n// Theme: match SPA behavior — read localStorage, fall back to system preference.\n(function() {\n  var saved = localStorage.getItem('jeeves-theme');\n  var theme = saved === 'dark' || saved === 'light' ? saved\n    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');\n  if (theme === 'dark') document.documentElement.classList.add('dark');\n})();\n</script>\n<style>\n  * { box-sizing: border-box; margin: 0; padding: 0; }\n  body {\n    font-family: system-ui, -apple-system, sans-serif;\n    color: #1a1a1a;\n    background: #fff;\n  }\n  /* Header — matches SPA zinc-800 bar */\n  .header {\n    background: #27272a;\n    color: #fff;\n    padding: 0.5rem 1rem;\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n  }\n  .header-brand {\n    font-size: 1.5rem;\n    text-decoration: none;\n    color: #fff;\n    display: flex;\n    align-items: center;\n    gap: 0.25rem;\n  }\n  .header-brand-name {\n    font-size: 0.875rem;\n    font-weight: 500;\n    color: #d4d4d8;\n  }\n  .theme-btn {\n    background: transparent;\n    border: none;\n    color: #d4d4d8;\n    cursor: pointer;\n    padding: 0.375rem;\n    border-radius: 0.25rem;\n    display: flex;\n    align-items: center;\n    transition: color 0.15s, background 0.15s;\n  }\n  .theme-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }\n  .theme-btn svg { width: 1rem; height: 1rem; }\n  .icon-sun { display: none; }\n  .icon-moon { display: block; }\n  .dark .icon-sun { display: block; }\n  .dark .icon-moon { display: none; }\n  /* Content layout */\n  .content {\n    margin: 60px auto;\n    padding: 0 20px;\n    text-align: center;\n  }\n  .box {\n    max-width: 400px;\n    margin: 0 auto;\n  }\n  h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.25rem; }\n  h2 { font-size: 1rem; font-weight: 400; color: #666; margin-top: 0; margin-bottom: 1.25rem; }\n  .btn-primary {\n    display: block;\n    width: 100%;\n    padding: 10px 24px;\n    background: #4285f4;\n    color: #fff;\n    border: none;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    text-align: center;\n    transition: background 0.15s;\n  }\n  .btn-primary:hover { background: #3367d6; }\n  .error-msg {\n    margin-top: 0.5rem;\n    font-size: 0.875rem;\n    color: #d93025;\n  }\n  /* Dark mode overrides (class-based, matches SPA) */\n  .dark body { color: #e0e0e0; background: #1a1a1a; }\n  .dark h2 { color: #999; }\n  code {\n    display: inline-block;\n    max-width: 100%;\n    overflow-wrap: break-word;\n    word-break: break-all;\n    padding: 2px 6px;\n    background: #f0f0f0;\n    border-radius: 3px;\n    font-size: 0.85rem;\n  }\n  .url-block { margin-bottom: 1.5rem; font-size: 0.9rem; color: #666; }\n  .email-input {\n    display: block;\n    width: 100%;\n    padding: 10px 12px;\n    font-size: 0.95rem;\n    border: 1px solid #ccc;\n    border-radius: 4px;\n    margin-bottom: 0.75rem;\n    background: #fff;\n    color: #1a1a1a;\n    outline: none;\n    transition: border-color 0.15s;\n  }\n  .email-input:focus { border-color: #4285f4; }\n  /* Google-branded button */\n  .btn-google {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    gap: 0.75rem;\n    padding: 10px 24px;\n    background: #fff;\n    color: #3c4043;\n    text-decoration: none;\n    border: 1px solid #dadce0;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    transition: background 0.15s, box-shadow 0.15s;\n  }\n  .btn-google:hover { background: #f7f8f8; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }\n  .google-logo { width: 18px; height: 18px; flex-shrink: 0; }\n  .divider {\n    margin: 1rem 0;\n    font-size: 0.85rem;\n    color: #999;\n  }\n  .muted { font-size: 0.95rem; color: #666; line-height: 1.5; }\n  .action { margin-top: 0.25rem; }\n  .dark code { background: #2a2a2a; }\n  .dark .url-block { color: #999; }\n  .dark .email-input { background: #2a2a2a; color: #e0e0e0; border-color: #444; }\n  .dark .email-input:focus { border-color: #4285f4; }\n  .dark .btn-google { background: #fff; color: #3c4043; border-color: #dadce0; }\n  .dark .btn-google:hover { background: #f7f8f8; }\n  .dark .muted { color: #999; }\n  .dark .divider { color: #555; }\n</style>\n</head>\n<body>\n<header class=\"header\">\n  <span class=\"header-brand\">W <span class=\"header-brand-name\">Wire</span></span>\n  <button class=\"theme-btn\" id=\"themeToggle\" title=\"Toggle theme\">\n    <svg class=\"icon-sun\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\"/><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/></svg>\n    <svg class=\"icon-moon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z\"/></svg>\n  </button>\n</header>\n<div class=\"content\">\n<div class=\"box\">\n<h1>W Wire</h1>\n<h2>Sign in to continue</h2>\n<div class=\"url-block\">Trying to access:<br><code>/runner</code></div>\n<form id=\"magicForm\" onsubmit=\"submitMagic(); return false;\">\n  <input\n    type=\"email\"\n    id=\"emailInput\"\n    placeholder=\"Enter your email\"\n    required\n    aria-label=\"Email address\"\n    class=\"email-input\"\n  >\n  <button type=\"submit\" class=\"btn-primary\">Send Login Link</button>\n  <div class=\"error-msg\" id=\"emailError\" style=\"display:none;\"></div>\n</form><div class=\"divider\"><span>— or —</span></div>\n<div class=\"action\"><a href=\"/auth/login?returnTo=%2Frunner\" class=\"btn-google\"><svg class=\"google-logo\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z\" fill=\"#4285F4\"/><path d=\"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z\" fill=\"#34A853\"/><path d=\"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z\" fill=\"#FBBC05\"/><path d=\"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z\" fill=\"#EA4335\"/></svg>Sign in with Google</a></div>\n</div>\n</div>\n<script>\ndocument.getElementById('themeToggle').addEventListener('click', function() {\n  var html = document.documentElement;\n  var isDark = html.classList.toggle('dark');\n  localStorage.setItem('jeeves-theme', isDark ? 'dark' : 'light');\n});\n</script>\n<script>\nfunction submitMagic() {\n  var email = document.getElementById('emailInput').value;\n  var errorEl = document.getElementById('emailError');\n  errorEl.style.display = 'none';\n  errorEl.textContent = '';\n  fetch('/api/auth/magic', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({ email: email, returnTo: window.location.pathname + window.location.search })\n  })\n  .then(function(res) {\n    if (res.ok) { return res.json(); }\n    errorEl.textContent = 'Something went wrong. Please try again.';\n    errorEl.style.display = 'block';\n    return null;\n  })\n  .then(function(data) {\n    if (data && data.verifyUrl) { window.location.href = data.verifyUrl; }\n  })\n  .catch(function() {\n    errorEl.textContent = 'Network error. Please try again.';\n    errorEl.style.display = 'block';\n  });\n}\n</script>\n</body>\n</html>"
+  },
+  "spa runner job session": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "public, max-age=0"
+    },
+    "body": "<!doctype html><title>wire spa</title>\n"
+  },
+  "spa readme": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html"
+    },
+    "body": "<!DOCTYPE html>\n<html lang=\"en\" data-render-state=\"auth-required\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>W Wire — Sign In</title>\n<script>\n// Theme: match SPA behavior — read localStorage, fall back to system preference.\n(function() {\n  var saved = localStorage.getItem('jeeves-theme');\n  var theme = saved === 'dark' || saved === 'light' ? saved\n    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');\n  if (theme === 'dark') document.documentElement.classList.add('dark');\n})();\n</script>\n<style>\n  * { box-sizing: border-box; margin: 0; padding: 0; }\n  body {\n    font-family: system-ui, -apple-system, sans-serif;\n    color: #1a1a1a;\n    background: #fff;\n  }\n  /* Header — matches SPA zinc-800 bar */\n  .header {\n    background: #27272a;\n    color: #fff;\n    padding: 0.5rem 1rem;\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n  }\n  .header-brand {\n    font-size: 1.5rem;\n    text-decoration: none;\n    color: #fff;\n    display: flex;\n    align-items: center;\n    gap: 0.25rem;\n  }\n  .header-brand-name {\n    font-size: 0.875rem;\n    font-weight: 500;\n    color: #d4d4d8;\n  }\n  .theme-btn {\n    background: transparent;\n    border: none;\n    color: #d4d4d8;\n    cursor: pointer;\n    padding: 0.375rem;\n    border-radius: 0.25rem;\n    display: flex;\n    align-items: center;\n    transition: color 0.15s, background 0.15s;\n  }\n  .theme-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }\n  .theme-btn svg { width: 1rem; height: 1rem; }\n  .icon-sun { display: none; }\n  .icon-moon { display: block; }\n  .dark .icon-sun { display: block; }\n  .dark .icon-moon { display: none; }\n  /* Content layout */\n  .content {\n    margin: 60px auto;\n    padding: 0 20px;\n    text-align: center;\n  }\n  .box {\n    max-width: 400px;\n    margin: 0 auto;\n  }\n  h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.25rem; }\n  h2 { font-size: 1rem; font-weight: 400; color: #666; margin-top: 0; margin-bottom: 1.25rem; }\n  .btn-primary {\n    display: block;\n    width: 100%;\n    padding: 10px 24px;\n    background: #4285f4;\n    color: #fff;\n    border: none;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    text-align: center;\n    transition: background 0.15s;\n  }\n  .btn-primary:hover { background: #3367d6; }\n  .error-msg {\n    margin-top: 0.5rem;\n    font-size: 0.875rem;\n    color: #d93025;\n  }\n  /* Dark mode overrides (class-based, matches SPA) */\n  .dark body { color: #e0e0e0; background: #1a1a1a; }\n  .dark h2 { color: #999; }\n  code {\n    display: inline-block;\n    max-width: 100%;\n    overflow-wrap: break-word;\n    word-break: break-all;\n    padding: 2px 6px;\n    background: #f0f0f0;\n    border-radius: 3px;\n    font-size: 0.85rem;\n  }\n  .url-block { margin-bottom: 1.5rem; font-size: 0.9rem; color: #666; }\n  .email-input {\n    display: block;\n    width: 100%;\n    padding: 10px 12px;\n    font-size: 0.95rem;\n    border: 1px solid #ccc;\n    border-radius: 4px;\n    margin-bottom: 0.75rem;\n    background: #fff;\n    color: #1a1a1a;\n    outline: none;\n    transition: border-color 0.15s;\n  }\n  .email-input:focus { border-color: #4285f4; }\n  /* Google-branded button */\n  .btn-google {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    gap: 0.75rem;\n    padding: 10px 24px;\n    background: #fff;\n    color: #3c4043;\n    text-decoration: none;\n    border: 1px solid #dadce0;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    transition: background 0.15s, box-shadow 0.15s;\n  }\n  .btn-google:hover { background: #f7f8f8; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }\n  .google-logo { width: 18px; height: 18px; flex-shrink: 0; }\n  .divider {\n    margin: 1rem 0;\n    font-size: 0.85rem;\n    color: #999;\n  }\n  .muted { font-size: 0.95rem; color: #666; line-height: 1.5; }\n  .action { margin-top: 0.25rem; }\n  .dark code { background: #2a2a2a; }\n  .dark .url-block { color: #999; }\n  .dark .email-input { background: #2a2a2a; color: #e0e0e0; border-color: #444; }\n  .dark .email-input:focus { border-color: #4285f4; }\n  .dark .btn-google { background: #fff; color: #3c4043; border-color: #dadce0; }\n  .dark .btn-google:hover { background: #f7f8f8; }\n  .dark .muted { color: #999; }\n  .dark .divider { color: #555; }\n</style>\n</head>\n<body>\n<header class=\"header\">\n  <span class=\"header-brand\">W <span class=\"header-brand-name\">Wire</span></span>\n  <button class=\"theme-btn\" id=\"themeToggle\" title=\"Toggle theme\">\n    <svg class=\"icon-sun\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\"/><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/></svg>\n    <svg class=\"icon-moon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z\"/></svg>\n  </button>\n</header>\n<div class=\"content\">\n<div class=\"box\">\n<h1>W Wire</h1>\n<h2>Sign in to continue</h2>\n<div class=\"url-block\">Trying to access:<br><code>/readme</code></div>\n<form id=\"magicForm\" onsubmit=\"submitMagic(); return false;\">\n  <input\n    type=\"email\"\n    id=\"emailInput\"\n    placeholder=\"Enter your email\"\n    required\n    aria-label=\"Email address\"\n    class=\"email-input\"\n  >\n  <button type=\"submit\" class=\"btn-primary\">Send Login Link</button>\n  <div class=\"error-msg\" id=\"emailError\" style=\"display:none;\"></div>\n</form><div class=\"divider\"><span>— or —</span></div>\n<div class=\"action\"><a href=\"/auth/login?returnTo=%2Freadme\" class=\"btn-google\"><svg class=\"google-logo\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z\" fill=\"#4285F4\"/><path d=\"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z\" fill=\"#34A853\"/><path d=\"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z\" fill=\"#FBBC05\"/><path d=\"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z\" fill=\"#EA4335\"/></svg>Sign in with Google</a></div>\n</div>\n</div>\n<script>\ndocument.getElementById('themeToggle').addEventListener('click', function() {\n  var html = document.documentElement;\n  var isDark = html.classList.toggle('dark');\n  localStorage.setItem('jeeves-theme', isDark ? 'dark' : 'light');\n});\n</script>\n<script>\nfunction submitMagic() {\n  var email = document.getElementById('emailInput').value;\n  var errorEl = document.getElementById('emailError');\n  errorEl.style.display = 'none';\n  errorEl.textContent = '';\n  fetch('/api/auth/magic', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({ email: email, returnTo: window.location.pathname + window.location.search })\n  })\n  .then(function(res) {\n    if (res.ok) { return res.json(); }\n    errorEl.textContent = 'Something went wrong. Please try again.';\n    errorEl.style.display = 'block';\n    return null;\n  })\n  .then(function(data) {\n    if (data && data.verifyUrl) { window.location.href = data.verifyUrl; }\n  })\n  .catch(function() {\n    errorEl.textContent = 'Network error. Please try again.';\n    errorEl.style.display = 'block';\n  });\n}\n</script>\n</body>\n</html>"
+  },
+  "spa privacy": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html"
+    },
+    "body": "<!DOCTYPE html>\n<html lang=\"en\" data-render-state=\"auth-required\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>W Wire — Sign In</title>\n<script>\n// Theme: match SPA behavior — read localStorage, fall back to system preference.\n(function() {\n  var saved = localStorage.getItem('jeeves-theme');\n  var theme = saved === 'dark' || saved === 'light' ? saved\n    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');\n  if (theme === 'dark') document.documentElement.classList.add('dark');\n})();\n</script>\n<style>\n  * { box-sizing: border-box; margin: 0; padding: 0; }\n  body {\n    font-family: system-ui, -apple-system, sans-serif;\n    color: #1a1a1a;\n    background: #fff;\n  }\n  /* Header — matches SPA zinc-800 bar */\n  .header {\n    background: #27272a;\n    color: #fff;\n    padding: 0.5rem 1rem;\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n  }\n  .header-brand {\n    font-size: 1.5rem;\n    text-decoration: none;\n    color: #fff;\n    display: flex;\n    align-items: center;\n    gap: 0.25rem;\n  }\n  .header-brand-name {\n    font-size: 0.875rem;\n    font-weight: 500;\n    color: #d4d4d8;\n  }\n  .theme-btn {\n    background: transparent;\n    border: none;\n    color: #d4d4d8;\n    cursor: pointer;\n    padding: 0.375rem;\n    border-radius: 0.25rem;\n    display: flex;\n    align-items: center;\n    transition: color 0.15s, background 0.15s;\n  }\n  .theme-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }\n  .theme-btn svg { width: 1rem; height: 1rem; }\n  .icon-sun { display: none; }\n  .icon-moon { display: block; }\n  .dark .icon-sun { display: block; }\n  .dark .icon-moon { display: none; }\n  /* Content layout */\n  .content {\n    margin: 60px auto;\n    padding: 0 20px;\n    text-align: center;\n  }\n  .box {\n    max-width: 400px;\n    margin: 0 auto;\n  }\n  h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.25rem; }\n  h2 { font-size: 1rem; font-weight: 400; color: #666; margin-top: 0; margin-bottom: 1.25rem; }\n  .btn-primary {\n    display: block;\n    width: 100%;\n    padding: 10px 24px;\n    background: #4285f4;\n    color: #fff;\n    border: none;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    text-align: center;\n    transition: background 0.15s;\n  }\n  .btn-primary:hover { background: #3367d6; }\n  .error-msg {\n    margin-top: 0.5rem;\n    font-size: 0.875rem;\n    color: #d93025;\n  }\n  /* Dark mode overrides (class-based, matches SPA) */\n  .dark body { color: #e0e0e0; background: #1a1a1a; }\n  .dark h2 { color: #999; }\n  code {\n    display: inline-block;\n    max-width: 100%;\n    overflow-wrap: break-word;\n    word-break: break-all;\n    padding: 2px 6px;\n    background: #f0f0f0;\n    border-radius: 3px;\n    font-size: 0.85rem;\n  }\n  .url-block { margin-bottom: 1.5rem; font-size: 0.9rem; color: #666; }\n  .email-input {\n    display: block;\n    width: 100%;\n    padding: 10px 12px;\n    font-size: 0.95rem;\n    border: 1px solid #ccc;\n    border-radius: 4px;\n    margin-bottom: 0.75rem;\n    background: #fff;\n    color: #1a1a1a;\n    outline: none;\n    transition: border-color 0.15s;\n  }\n  .email-input:focus { border-color: #4285f4; }\n  /* Google-branded button */\n  .btn-google {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    gap: 0.75rem;\n    padding: 10px 24px;\n    background: #fff;\n    color: #3c4043;\n    text-decoration: none;\n    border: 1px solid #dadce0;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    transition: background 0.15s, box-shadow 0.15s;\n  }\n  .btn-google:hover { background: #f7f8f8; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }\n  .google-logo { width: 18px; height: 18px; flex-shrink: 0; }\n  .divider {\n    margin: 1rem 0;\n    font-size: 0.85rem;\n    color: #999;\n  }\n  .muted { font-size: 0.95rem; color: #666; line-height: 1.5; }\n  .action { margin-top: 0.25rem; }\n  .dark code { background: #2a2a2a; }\n  .dark .url-block { color: #999; }\n  .dark .email-input { background: #2a2a2a; color: #e0e0e0; border-color: #444; }\n  .dark .email-input:focus { border-color: #4285f4; }\n  .dark .btn-google { background: #fff; color: #3c4043; border-color: #dadce0; }\n  .dark .btn-google:hover { background: #f7f8f8; }\n  .dark .muted { color: #999; }\n  .dark .divider { color: #555; }\n</style>\n</head>\n<body>\n<header class=\"header\">\n  <span class=\"header-brand\">W <span class=\"header-brand-name\">Wire</span></span>\n  <button class=\"theme-btn\" id=\"themeToggle\" title=\"Toggle theme\">\n    <svg class=\"icon-sun\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\"/><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/></svg>\n    <svg class=\"icon-moon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z\"/></svg>\n  </button>\n</header>\n<div class=\"content\">\n<div class=\"box\">\n<h1>W Wire</h1>\n<h2>Sign in to continue</h2>\n<div class=\"url-block\">Trying to access:<br><code>/privacy</code></div>\n<form id=\"magicForm\" onsubmit=\"submitMagic(); return false;\">\n  <input\n    type=\"email\"\n    id=\"emailInput\"\n    placeholder=\"Enter your email\"\n    required\n    aria-label=\"Email address\"\n    class=\"email-input\"\n  >\n  <button type=\"submit\" class=\"btn-primary\">Send Login Link</button>\n  <div class=\"error-msg\" id=\"emailError\" style=\"display:none;\"></div>\n</form><div class=\"divider\"><span>— or —</span></div>\n<div class=\"action\"><a href=\"/auth/login?returnTo=%2Fprivacy\" class=\"btn-google\"><svg class=\"google-logo\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z\" fill=\"#4285F4\"/><path d=\"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z\" fill=\"#34A853\"/><path d=\"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z\" fill=\"#FBBC05\"/><path d=\"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z\" fill=\"#EA4335\"/></svg>Sign in with Google</a></div>\n</div>\n</div>\n<script>\ndocument.getElementById('themeToggle').addEventListener('click', function() {\n  var html = document.documentElement;\n  var isDark = html.classList.toggle('dark');\n  localStorage.setItem('jeeves-theme', isDark ? 'dark' : 'light');\n});\n</script>\n<script>\nfunction submitMagic() {\n  var email = document.getElementById('emailInput').value;\n  var errorEl = document.getElementById('emailError');\n  errorEl.style.display = 'none';\n  errorEl.textContent = '';\n  fetch('/api/auth/magic', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({ email: email, returnTo: window.location.pathname + window.location.search })\n  })\n  .then(function(res) {\n    if (res.ok) { return res.json(); }\n    errorEl.textContent = 'Something went wrong. Please try again.';\n    errorEl.style.display = 'block';\n    return null;\n  })\n  .then(function(data) {\n    if (data && data.verifyUrl) { window.location.href = data.verifyUrl; }\n  })\n  .catch(function() {\n    errorEl.textContent = 'Network error. Please try again.';\n    errorEl.style.display = 'block';\n  });\n}\n</script>\n</body>\n</html>"
+  },
+  "spa terms": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html"
+    },
+    "body": "<!DOCTYPE html>\n<html lang=\"en\" data-render-state=\"auth-required\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>W Wire — Sign In</title>\n<script>\n// Theme: match SPA behavior — read localStorage, fall back to system preference.\n(function() {\n  var saved = localStorage.getItem('jeeves-theme');\n  var theme = saved === 'dark' || saved === 'light' ? saved\n    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');\n  if (theme === 'dark') document.documentElement.classList.add('dark');\n})();\n</script>\n<style>\n  * { box-sizing: border-box; margin: 0; padding: 0; }\n  body {\n    font-family: system-ui, -apple-system, sans-serif;\n    color: #1a1a1a;\n    background: #fff;\n  }\n  /* Header — matches SPA zinc-800 bar */\n  .header {\n    background: #27272a;\n    color: #fff;\n    padding: 0.5rem 1rem;\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n  }\n  .header-brand {\n    font-size: 1.5rem;\n    text-decoration: none;\n    color: #fff;\n    display: flex;\n    align-items: center;\n    gap: 0.25rem;\n  }\n  .header-brand-name {\n    font-size: 0.875rem;\n    font-weight: 500;\n    color: #d4d4d8;\n  }\n  .theme-btn {\n    background: transparent;\n    border: none;\n    color: #d4d4d8;\n    cursor: pointer;\n    padding: 0.375rem;\n    border-radius: 0.25rem;\n    display: flex;\n    align-items: center;\n    transition: color 0.15s, background 0.15s;\n  }\n  .theme-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }\n  .theme-btn svg { width: 1rem; height: 1rem; }\n  .icon-sun { display: none; }\n  .icon-moon { display: block; }\n  .dark .icon-sun { display: block; }\n  .dark .icon-moon { display: none; }\n  /* Content layout */\n  .content {\n    margin: 60px auto;\n    padding: 0 20px;\n    text-align: center;\n  }\n  .box {\n    max-width: 400px;\n    margin: 0 auto;\n  }\n  h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.25rem; }\n  h2 { font-size: 1rem; font-weight: 400; color: #666; margin-top: 0; margin-bottom: 1.25rem; }\n  .btn-primary {\n    display: block;\n    width: 100%;\n    padding: 10px 24px;\n    background: #4285f4;\n    color: #fff;\n    border: none;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    text-align: center;\n    transition: background 0.15s;\n  }\n  .btn-primary:hover { background: #3367d6; }\n  .error-msg {\n    margin-top: 0.5rem;\n    font-size: 0.875rem;\n    color: #d93025;\n  }\n  /* Dark mode overrides (class-based, matches SPA) */\n  .dark body { color: #e0e0e0; background: #1a1a1a; }\n  .dark h2 { color: #999; }\n  code {\n    display: inline-block;\n    max-width: 100%;\n    overflow-wrap: break-word;\n    word-break: break-all;\n    padding: 2px 6px;\n    background: #f0f0f0;\n    border-radius: 3px;\n    font-size: 0.85rem;\n  }\n  .url-block { margin-bottom: 1.5rem; font-size: 0.9rem; color: #666; }\n  .email-input {\n    display: block;\n    width: 100%;\n    padding: 10px 12px;\n    font-size: 0.95rem;\n    border: 1px solid #ccc;\n    border-radius: 4px;\n    margin-bottom: 0.75rem;\n    background: #fff;\n    color: #1a1a1a;\n    outline: none;\n    transition: border-color 0.15s;\n  }\n  .email-input:focus { border-color: #4285f4; }\n  /* Google-branded button */\n  .btn-google {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    gap: 0.75rem;\n    padding: 10px 24px;\n    background: #fff;\n    color: #3c4043;\n    text-decoration: none;\n    border: 1px solid #dadce0;\n    border-radius: 4px;\n    font-size: 0.95rem;\n    font-weight: 500;\n    cursor: pointer;\n    transition: background 0.15s, box-shadow 0.15s;\n  }\n  .btn-google:hover { background: #f7f8f8; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }\n  .google-logo { width: 18px; height: 18px; flex-shrink: 0; }\n  .divider {\n    margin: 1rem 0;\n    font-size: 0.85rem;\n    color: #999;\n  }\n  .muted { font-size: 0.95rem; color: #666; line-height: 1.5; }\n  .action { margin-top: 0.25rem; }\n  .dark code { background: #2a2a2a; }\n  .dark .url-block { color: #999; }\n  .dark .email-input { background: #2a2a2a; color: #e0e0e0; border-color: #444; }\n  .dark .email-input:focus { border-color: #4285f4; }\n  .dark .btn-google { background: #fff; color: #3c4043; border-color: #dadce0; }\n  .dark .btn-google:hover { background: #f7f8f8; }\n  .dark .muted { color: #999; }\n  .dark .divider { color: #555; }\n</style>\n</head>\n<body>\n<header class=\"header\">\n  <span class=\"header-brand\">W <span class=\"header-brand-name\">Wire</span></span>\n  <button class=\"theme-btn\" id=\"themeToggle\" title=\"Toggle theme\">\n    <svg class=\"icon-sun\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\"/><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/></svg>\n    <svg class=\"icon-moon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z\"/></svg>\n  </button>\n</header>\n<div class=\"content\">\n<div class=\"box\">\n<h1>W Wire</h1>\n<h2>Sign in to continue</h2>\n<div class=\"url-block\">Trying to access:<br><code>/terms</code></div>\n<form id=\"magicForm\" onsubmit=\"submitMagic(); return false;\">\n  <input\n    type=\"email\"\n    id=\"emailInput\"\n    placeholder=\"Enter your email\"\n    required\n    aria-label=\"Email address\"\n    class=\"email-input\"\n  >\n  <button type=\"submit\" class=\"btn-primary\">Send Login Link</button>\n  <div class=\"error-msg\" id=\"emailError\" style=\"display:none;\"></div>\n</form><div class=\"divider\"><span>— or —</span></div>\n<div class=\"action\"><a href=\"/auth/login?returnTo=%2Fterms\" class=\"btn-google\"><svg class=\"google-logo\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z\" fill=\"#4285F4\"/><path d=\"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z\" fill=\"#34A853\"/><path d=\"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z\" fill=\"#FBBC05\"/><path d=\"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z\" fill=\"#EA4335\"/></svg>Sign in with Google</a></div>\n</div>\n</div>\n<script>\ndocument.getElementById('themeToggle').addEventListener('click', function() {\n  var html = document.documentElement;\n  var isDark = html.classList.toggle('dark');\n  localStorage.setItem('jeeves-theme', isDark ? 'dark' : 'light');\n});\n</script>\n<script>\nfunction submitMagic() {\n  var email = document.getElementById('emailInput').value;\n  var errorEl = document.getElementById('emailError');\n  errorEl.style.display = 'none';\n  errorEl.textContent = '';\n  fetch('/api/auth/magic', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({ email: email, returnTo: window.location.pathname + window.location.search })\n  })\n  .then(function(res) {\n    if (res.ok) { return res.json(); }\n    errorEl.textContent = 'Something went wrong. Please try again.';\n    errorEl.style.display = 'block';\n    return null;\n  })\n  .then(function(data) {\n    if (data && data.verifyUrl) { window.location.href = data.verifyUrl; }\n  })\n  .catch(function() {\n    errorEl.textContent = 'Network error. Please try again.';\n    errorEl.style.display = 'block';\n  });\n}\n</script>\n</body>\n</html>"
+  },
+  "spa asset": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "public, max-age=0"
+    },
+    "body": "<!doctype html><title>wire spa</title>\n"
+  },
+  "spa asset missing": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Not found\"}"
+  },
+  "unknown route": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Not found\"}"
+  },
+  "unknown route POST": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Not found\"}"
+  },
+  "unknown route POST under browse": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Not found\"}"
+  },
+  "unknown api route": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Not found\"}"
+  },
+  "unknown api route none": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Not found\"}"
+  },
+  "drives none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "drives session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "[{\"letter\":\"{root}\",\"label\":\"{dir}/content\"}]"
+  },
+  "drives scoped session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "[{\"letter\":\"{root}\",\"label\":\"{dir}/content\"}]"
+  },
+  "drives insider key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "drives machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "[{\"letter\":\"{root}\",\"label\":\"{dir}/content\"}]"
+  },
+  "drives scoped machine key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "drives bad key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "drives root path share": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "browse root none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "browse root session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"{root}\",\"entries\":[{\"name\":\"private\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":1},{\"name\":\"public\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":2},{\"name\":\"sub dir\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":2},{\"name\":\"data.csv\",\"type\":\"file\",\"ext\":\".csv\",\"size\":8,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"data.json\",\"type\":\"file\",\"ext\":\".json\",\"size\":13,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"doc.md\",\"type\":\"file\",\"ext\":\".md\",\"size\":193,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"embedded.md\",\"type\":\"file\",\"ext\":\".md\",\"size\":44,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"flow.mmd\",\"type\":\"file\",\"ext\":\".mmd\",\"size\":17,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"image.png\",\"type\":\"file\",\"ext\":\".png\",\"size\":68,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"notes.markdown\",\"type\":\"file\",\"ext\":\".markdown\",\"size\":29,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"report.pdf\",\"type\":\"file\",\"ext\":\".pdf\",\"size\":77,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"seq.puml\",\"type\":\"file\",\"ext\":\".puml\",\"size\":25,\"mtime\":\"2026-01-02\",\"itemCount\":null}],\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"}],\"isInsider\":true}"
+  },
+  "browse root scoped session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"{root}\",\"entries\":[{\"name\":\"public\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":2}],\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"}],\"isInsider\":true}"
+  },
+  "browse root insider key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "browse root scoped insider key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "browse root machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"{root}\",\"entries\":[{\"name\":\"private\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":1},{\"name\":\"public\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":2},{\"name\":\"sub dir\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":2},{\"name\":\"data.csv\",\"type\":\"file\",\"ext\":\".csv\",\"size\":8,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"data.json\",\"type\":\"file\",\"ext\":\".json\",\"size\":13,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"doc.md\",\"type\":\"file\",\"ext\":\".md\",\"size\":193,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"embedded.md\",\"type\":\"file\",\"ext\":\".md\",\"size\":44,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"flow.mmd\",\"type\":\"file\",\"ext\":\".mmd\",\"size\":17,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"image.png\",\"type\":\"file\",\"ext\":\".png\",\"size\":68,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"notes.markdown\",\"type\":\"file\",\"ext\":\".markdown\",\"size\":29,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"report.pdf\",\"type\":\"file\",\"ext\":\".pdf\",\"size\":77,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"seq.puml\",\"type\":\"file\",\"ext\":\".puml\",\"size\":25,\"mtime\":\"2026-01-02\",\"itemCount\":null}],\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"}],\"isInsider\":true}"
+  },
+  "browse root scoped machine key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "browse root bad key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "browse root path share": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"{root}\",\"entries\":[{\"name\":\"private\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":1},{\"name\":\"public\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":2},{\"name\":\"sub dir\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":2},{\"name\":\"data.csv\",\"type\":\"file\",\"ext\":\".csv\",\"size\":8,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"data.json\",\"type\":\"file\",\"ext\":\".json\",\"size\":13,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"doc.md\",\"type\":\"file\",\"ext\":\".md\",\"size\":193,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"embedded.md\",\"type\":\"file\",\"ext\":\".md\",\"size\":44,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"flow.mmd\",\"type\":\"file\",\"ext\":\".mmd\",\"size\":17,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"image.png\",\"type\":\"file\",\"ext\":\".png\",\"size\":68,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"notes.markdown\",\"type\":\"file\",\"ext\":\".markdown\",\"size\":29,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"report.pdf\",\"type\":\"file\",\"ext\":\".pdf\",\"size\":77,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"seq.puml\",\"type\":\"file\",\"ext\":\".puml\",\"size\":25,\"mtime\":\"2026-01-02\",\"itemCount\":null}],\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"}],\"isInsider\":false}"
+  },
+  "browse public scoped session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"{root}/public\",\"entries\":[{\"name\":\"deeper\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":1},{\"name\":\"shared.md\",\"type\":\"file\",\"ext\":\".md\",\"size\":9,\"mtime\":\"2026-01-02\",\"itemCount\":null}],\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"public\",\"path\":\"{root}/public\"}],\"isInsider\":true}"
+  },
+  "browse public scoped machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"{root}/public\",\"entries\":[{\"name\":\"deeper\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":1},{\"name\":\"shared.md\",\"type\":\"file\",\"ext\":\".md\",\"size\":9,\"mtime\":\"2026-01-02\",\"itemCount\":null}],\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"public\",\"path\":\"{root}/public\"}],\"isInsider\":true}"
+  },
+  "browse public path share": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"{root}/public\",\"entries\":[{\"name\":\"deeper\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":1},{\"name\":\"shared.md\",\"type\":\"file\",\"ext\":\".md\",\"size\":9,\"mtime\":\"2026-01-02\",\"itemCount\":null}],\"breadcrumbs\":[{\"label\":\"public\",\"path\":\"{root}/public\"}],\"isInsider\":false}"
+  },
+  "browse public path share by machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"{root}/public\",\"entries\":[{\"name\":\"deeper\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":1},{\"name\":\"shared.md\",\"type\":\"file\",\"ext\":\".md\",\"size\":9,\"mtime\":\"2026-01-02\",\"itemCount\":null}],\"breadcrumbs\":[{\"label\":\"public\",\"path\":\"{root}/public\"}],\"isInsider\":false}"
+  },
+  "browse public expiring share": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"{root}/public\",\"entries\":[{\"name\":\"deeper\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":1},{\"name\":\"shared.md\",\"type\":\"file\",\"ext\":\".md\",\"size\":9,\"mtime\":\"2026-01-02\",\"itemCount\":null}],\"breadcrumbs\":[{\"label\":\"public\",\"path\":\"{root}/public\"}],\"isInsider\":false}"
+  },
+  "browse public expired share": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "browse public deep share": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"{root}/public\",\"entries\":[{\"name\":\"deeper\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":1,\"shareUrl\":null},{\"name\":\"shared.md\",\"type\":\"file\",\"ext\":\".md\",\"size\":9,\"mtime\":\"2026-01-02\",\"itemCount\":null,\"shareUrl\":\"/browse/{root}/public/shared.md?k={key}&d=1&dirs=0&s={stack}\"}],\"breadcrumbs\":[{\"label\":\"public\",\"path\":\"{root}/public\"}],\"isInsider\":false}"
+  },
+  "browse public deep share with dirs": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"{root}/public\",\"entries\":[{\"name\":\"deeper\",\"type\":\"directory\",\"ext\":\"\",\"size\":null,\"mtime\":\"2026-01-02\",\"itemCount\":1,\"shareUrl\":\"/browse/{root}/public/deeper?k={key}&d=2&dirs=1&s={stack}\"},{\"name\":\"shared.md\",\"type\":\"file\",\"ext\":\".md\",\"size\":9,\"mtime\":\"2026-01-02\",\"itemCount\":null,\"shareUrl\":\"/browse/{root}/public/shared.md?k={key}&d=2&dirs=1&s={stack}\"}],\"breadcrumbs\":[{\"label\":\"public\",\"path\":\"{root}/public\"}],\"isInsider\":false}"
+  },
+  "browse public share for another path": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "browse deeper via deep share without dirs": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "browse deeper via tree share": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"{root}/public/deeper\",\"entries\":[{\"name\":\"leaf.md\",\"type\":\"file\",\"ext\":\".md\",\"size\":7,\"mtime\":\"2026-01-02\",\"itemCount\":null}],\"breadcrumbs\":[{\"label\":\"public\",\"path\":\"{root}/public\"},{\"label\":\"deeper\",\"path\":\"{root}/public/deeper\"}],\"isInsider\":false}"
+  },
+  "browse sub dir with space": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"path\":\"{root}/sub dir\",\"entries\":[{\"name\":\"100% done.md\",\"type\":\"file\",\"ext\":\".md\",\"size\":7,\"mtime\":\"2026-01-02\",\"itemCount\":null},{\"name\":\"inner.md\",\"type\":\"file\",\"ext\":\".md\",\"size\":8,\"mtime\":\"2026-01-02\",\"itemCount\":null}],\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"sub dir\",\"path\":\"{root}/sub dir\"}],\"isInsider\":true}"
+  },
+  "browse file metadata": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"file\",\"path\":\"{root}/doc.md\",\"ext\":\".md\",\"size\":193,\"mtime\":\"2026-01-02\"}"
+  },
+  "browse file metadata percent name": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"file\",\"path\":\"{root}/sub dir/100% done.md\",\"ext\":\".md\",\"size\":7,\"mtime\":\"2026-01-02\"}"
+  },
+  "browse file out of scope": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Path is outside your access scope\"}"
+  },
+  "browse missing": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Not found\",\"path\":\"{dir}/content/missing.md\"}"
+  },
+  "browse no root": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid path\"}"
+  },
+  "browse empty path": {
+    "status": 302,
+    "headers": {
+      "location": "/api/drives"
+    },
+    "body": ""
+  },
+  "browse traversal": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid path\"}"
+  },
+  "browse traversal backslash": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid path\"}"
+  },
+  "fileContent markdown": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"---\\ntitle: Wire Document\\ntags:\\n  - alpha\\n  - beta\\n---\\n\\n# Wire document\\n\\nSee [inner](sub%20dir/inner.md) and [the image](image.png).\\n\\n- [ ] first\\n- [x] second\\n\\n| A | B |\\n| --- | --- |\\n| 1 | 2 |\\n\",\"html\":\"<div class=\\\"frontmatter-block\\\"><pre><code class=\\\"language-yaml\\\">title: Wire Document\\ntags:\\n  - alpha\\n  - beta</code></pre></div>\\n<h1 id=\\\"wire-document\\\" tabindex=\\\"-1\\\" data-source-start=\\\"8\\\" data-source-end=\\\"8\\\">Wire document <a class=\\\"anchor\\\" href=\\\"#wire-document\\\">#</a></h1>\\n<p data-source-start=\\\"10\\\" data-source-end=\\\"10\\\">See <a href=\\\"sub%20dir/inner.md\\\">inner</a> and <a href=\\\"image.png\\\">the image</a>.</p>\\n<ul class=\\\"contains-task-list\\\" data-source-start=\\\"12\\\" data-source-end=\\\"14\\\">\\n<li class=\\\"task-list-item\\\" data-source-start=\\\"12\\\" data-source-end=\\\"12\\\"><input class=\\\"task-list-item-checkbox\\\" disabled=\\\"\\\" type=\\\"checkbox\\\" data-checkbox-index=\\\"0\\\"> first</li>\\n<li class=\\\"task-list-item\\\" data-source-start=\\\"13\\\" data-source-end=\\\"14\\\"><input class=\\\"task-list-item-checkbox\\\" checked=\\\"\\\" disabled=\\\"\\\" type=\\\"checkbox\\\" data-checkbox-index=\\\"1\\\"> second</li>\\n</ul>\\n<table data-source-start=\\\"15\\\" data-source-end=\\\"17\\\">\\n<thead data-source-start=\\\"15\\\" data-source-end=\\\"15\\\">\\n<tr data-source-start=\\\"15\\\" data-source-end=\\\"15\\\">\\n<th>A</th>\\n<th>B</th>\\n</tr>\\n</thead>\\n<tbody data-source-start=\\\"17\\\" data-source-end=\\\"17\\\">\\n<tr data-source-start=\\\"17\\\" data-source-end=\\\"17\\\">\\n<td>1</td>\\n<td>2</td>\\n</tr>\\n</tbody>\\n</table>\\n\",\"headings\":[{\"level\":1,\"text\":\"Wire document\",\"slug\":\"wire-document\"}],\"fileName\":\"doc.md\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"doc.md\",\"path\":\"{root}/doc.md\"}],\"isInsider\":true,\"mtime\":1767323045000}"
+  },
+  "fileContent markdown raw": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"---\\ntitle: Wire Document\\ntags:\\n  - alpha\\n  - beta\\n---\\n\\n# Wire document\\n\\nSee [inner](sub%20dir/inner.md) and [the image](image.png).\\n\\n- [ ] first\\n- [x] second\\n\\n| A | B |\\n| --- | --- |\\n| 1 | 2 |\\n\",\"fileName\":\"doc.md\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"doc.md\",\"path\":\"{root}/doc.md\"}],\"isInsider\":true}"
+  },
+  "fileContent dot-markdown": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"text\",\"content\":\"# Notes\\n\\nA `.markdown` file.\\n\",\"fileName\":\"notes.markdown\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"notes.markdown\",\"path\":\"{root}/notes.markdown\"}],\"isInsider\":true}"
+  },
+  "fileContent json": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"text\",\"content\":\"{\\n  \\\"a\\\": 1\\n}\\n\",\"fileName\":\"data.json\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"data.json\",\"path\":\"{root}/data.json\"}],\"isInsider\":true}"
+  },
+  "fileContent csv": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"csv\",\"content\":\"a,b\\n1,2\\n\",\"html\":\"<table class=\\\"csv-table\\\"><thead><tr><th>a</th><th>b</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>\",\"fileName\":\"data.csv\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"data.csv\",\"path\":\"{root}/data.csv\"}],\"isInsider\":true}"
+  },
+  "fileContent csv raw": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"text\",\"content\":\"a,b\\n1,2\\n\",\"fileName\":\"data.csv\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"data.csv\",\"path\":\"{root}/data.csv\"}],\"isInsider\":true}"
+  },
+  "fileContent png": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"image\",\"fileName\":\"image.png\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"image.png\",\"path\":\"{root}/image.png\"}],\"isInsider\":true}"
+  },
+  "fileContent pdf": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"text\",\"content\":\"%PDF-1.4\\n1 0 obj << /Type /Catalog >> endobj\\ntrailer << /Root 1 0 R >>\\n%%EOF\\n\",\"fileName\":\"report.pdf\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"report.pdf\",\"path\":\"{root}/report.pdf\"}],\"isInsider\":true}"
+  },
+  "fileContent mermaid cached": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"mermaid\",\"content\":\"graph TD\\n  A-->B\\n\",\"html\":\"<svg xmlns=\\\"http://www.w3.org/2000/svg\\\"></svg>\",\"fileName\":\"flow.mmd\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"flow.mmd\",\"path\":\"{root}/flow.mmd\"}],\"isInsider\":true}"
+  },
+  "fileContent mermaid raw": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"mermaid\",\"content\":\"graph TD\\n  A-->B\\n\",\"fileName\":\"flow.mmd\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"flow.mmd\",\"path\":\"{root}/flow.mmd\"}],\"isInsider\":true}"
+  },
+  "fileContent plantuml unrenderable": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"plantuml\",\"content\":\"@startuml\\nA -> B\\n@enduml\\n\",\"html\":null,\"fileName\":\"seq.puml\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"seq.puml\",\"path\":\"{root}/seq.puml\"}],\"isInsider\":true}"
+  },
+  "fileContent embedded diagram": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"# Embedded\\n\\n```mermaid\\ngraph LR\\n  X-->Y\\n```\\n\",\"html\":\"<h1 id=\\\"embedded\\\" tabindex=\\\"-1\\\" data-source-start=\\\"1\\\" data-source-end=\\\"1\\\">Embedded <a class=\\\"anchor\\\" href=\\\"#embedded\\\">#</a></h1>\\n<div data-source-start=\\\"3\\\" data-source-end=\\\"6\\\" class=\\\"embedded-diagram-lazy\\\" data-diagram-type=\\\"mermaid\\\" data-diagram-hash=\\\"25f69a84ad85697f828dfdcf1c481433b7ca511dd3b138f311bed42f140b252c\\\"><!--DIAGRAM:mermaid:25f69a84ad85697f828dfdcf1c481433b7ca511dd3b138f311bed42f140b252c--></div>\\n\",\"headings\":[{\"level\":1,\"text\":\"Embedded\",\"slug\":\"embedded\"}],\"fileName\":\"embedded.md\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"embedded.md\",\"path\":\"{root}/embedded.md\"}],\"isInsider\":true,\"mtime\":1767323045000}"
+  },
+  "fileContent percent name": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"# Done\\n\",\"html\":\"<h1 id=\\\"done\\\" tabindex=\\\"-1\\\" data-source-start=\\\"1\\\" data-source-end=\\\"1\\\">Done <a class=\\\"anchor\\\" href=\\\"#done\\\">#</a></h1>\\n\",\"headings\":[{\"level\":1,\"text\":\"Done\",\"slug\":\"done\"}],\"fileName\":\"100% done.md\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"sub dir\",\"path\":\"{root}/sub dir\"},{\"label\":\"100% done.md\",\"path\":\"{root}/sub dir/100% done.md\"}],\"isInsider\":true,\"mtime\":1767323045000}"
+  },
+  "fileContent directory": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Use /api/path/ for directories\"}"
+  },
+  "fileContent missing": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Not found\"}"
+  },
+  "fileContent no root": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid path\"}"
+  },
+  "fileContent traversal": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid path\"}"
+  },
+  "fileContent traversal backslash": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid path\"}"
+  },
+  "fileContent empty path": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Path required\"}"
+  },
+  "fileContent none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "fileContent insider key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "fileContent scoped insider key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "fileContent machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"---\\ntitle: Wire Document\\ntags:\\n  - alpha\\n  - beta\\n---\\n\\n# Wire document\\n\\nSee [inner](sub%20dir/inner.md) and [the image](image.png).\\n\\n- [ ] first\\n- [x] second\\n\\n| A | B |\\n| --- | --- |\\n| 1 | 2 |\\n\",\"html\":\"<div class=\\\"frontmatter-block\\\"><pre><code class=\\\"language-yaml\\\">title: Wire Document\\ntags:\\n  - alpha\\n  - beta</code></pre></div>\\n<h1 id=\\\"wire-document\\\" tabindex=\\\"-1\\\" data-source-start=\\\"8\\\" data-source-end=\\\"8\\\">Wire document <a class=\\\"anchor\\\" href=\\\"#wire-document\\\">#</a></h1>\\n<p data-source-start=\\\"10\\\" data-source-end=\\\"10\\\">See <a href=\\\"sub%20dir/inner.md\\\">inner</a> and <a href=\\\"image.png\\\">the image</a>.</p>\\n<ul class=\\\"contains-task-list\\\" data-source-start=\\\"12\\\" data-source-end=\\\"14\\\">\\n<li class=\\\"task-list-item\\\" data-source-start=\\\"12\\\" data-source-end=\\\"12\\\"><input class=\\\"task-list-item-checkbox\\\" disabled=\\\"\\\" type=\\\"checkbox\\\" data-checkbox-index=\\\"0\\\"> first</li>\\n<li class=\\\"task-list-item\\\" data-source-start=\\\"13\\\" data-source-end=\\\"14\\\"><input class=\\\"task-list-item-checkbox\\\" checked=\\\"\\\" disabled=\\\"\\\" type=\\\"checkbox\\\" data-checkbox-index=\\\"1\\\"> second</li>\\n</ul>\\n<table data-source-start=\\\"15\\\" data-source-end=\\\"17\\\">\\n<thead data-source-start=\\\"15\\\" data-source-end=\\\"15\\\">\\n<tr data-source-start=\\\"15\\\" data-source-end=\\\"15\\\">\\n<th>A</th>\\n<th>B</th>\\n</tr>\\n</thead>\\n<tbody data-source-start=\\\"17\\\" data-source-end=\\\"17\\\">\\n<tr data-source-start=\\\"17\\\" data-source-end=\\\"17\\\">\\n<td>1</td>\\n<td>2</td>\\n</tr>\\n</tbody>\\n</table>\\n\",\"headings\":[{\"level\":1,\"text\":\"Wire document\",\"slug\":\"wire-document\"}],\"fileName\":\"doc.md\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"doc.md\",\"path\":\"{root}/doc.md\"}],\"isInsider\":true,\"mtime\":1767323045000}"
+  },
+  "fileContent scoped machine key out of scope": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "fileContent scoped session out of scope": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Path is outside your access scope\"}"
+  },
+  "fileContent bad key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "fileContent path share": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"---\\ntitle: Wire Document\\ntags:\\n  - alpha\\n  - beta\\n---\\n\\n# Wire document\\n\\nSee [inner](sub%20dir/inner.md) and [the image](image.png).\\n\\n- [ ] first\\n- [x] second\\n\\n| A | B |\\n| --- | --- |\\n| 1 | 2 |\\n\",\"html\":\"<div class=\\\"frontmatter-block\\\"><pre><code class=\\\"language-yaml\\\">title: Wire Document\\ntags:\\n  - alpha\\n  - beta</code></pre></div>\\n<h1 id=\\\"wire-document\\\" tabindex=\\\"-1\\\" data-source-start=\\\"8\\\" data-source-end=\\\"8\\\">Wire document <a class=\\\"anchor\\\" href=\\\"#wire-document\\\">#</a></h1>\\n<p data-source-start=\\\"10\\\" data-source-end=\\\"10\\\">See <a href=\\\"sub%20dir/inner.md\\\">inner</a> and <a href=\\\"image.png\\\">the image</a>.</p>\\n<ul class=\\\"contains-task-list\\\" data-source-start=\\\"12\\\" data-source-end=\\\"14\\\">\\n<li class=\\\"task-list-item\\\" data-source-start=\\\"12\\\" data-source-end=\\\"12\\\"><input class=\\\"task-list-item-checkbox\\\" disabled=\\\"\\\" type=\\\"checkbox\\\" data-checkbox-index=\\\"0\\\"> first</li>\\n<li class=\\\"task-list-item\\\" data-source-start=\\\"13\\\" data-source-end=\\\"14\\\"><input class=\\\"task-list-item-checkbox\\\" checked=\\\"\\\" disabled=\\\"\\\" type=\\\"checkbox\\\" data-checkbox-index=\\\"1\\\"> second</li>\\n</ul>\\n<table data-source-start=\\\"15\\\" data-source-end=\\\"17\\\">\\n<thead data-source-start=\\\"15\\\" data-source-end=\\\"15\\\">\\n<tr data-source-start=\\\"15\\\" data-source-end=\\\"15\\\">\\n<th>A</th>\\n<th>B</th>\\n</tr>\\n</thead>\\n<tbody data-source-start=\\\"17\\\" data-source-end=\\\"17\\\">\\n<tr data-source-start=\\\"17\\\" data-source-end=\\\"17\\\">\\n<td>1</td>\\n<td>2</td>\\n</tr>\\n</tbody>\\n</table>\\n\",\"headings\":[{\"level\":1,\"text\":\"Wire document\",\"slug\":\"wire-document\"}],\"fileName\":\"doc.md\",\"breadcrumbs\":[{\"label\":\"doc.md\",\"path\":\"{root}/doc.md\"}],\"isInsider\":false,\"mtime\":1767323045000}"
+  },
+  "fileContent expiring share": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"---\\ntitle: Wire Document\\ntags:\\n  - alpha\\n  - beta\\n---\\n\\n# Wire document\\n\\nSee [inner](sub%20dir/inner.md) and [the image](image.png).\\n\\n- [ ] first\\n- [x] second\\n\\n| A | B |\\n| --- | --- |\\n| 1 | 2 |\\n\",\"html\":\"<div class=\\\"frontmatter-block\\\"><pre><code class=\\\"language-yaml\\\">title: Wire Document\\ntags:\\n  - alpha\\n  - beta</code></pre></div>\\n<h1 id=\\\"wire-document\\\" tabindex=\\\"-1\\\" data-source-start=\\\"8\\\" data-source-end=\\\"8\\\">Wire document <a class=\\\"anchor\\\" href=\\\"#wire-document\\\">#</a></h1>\\n<p data-source-start=\\\"10\\\" data-source-end=\\\"10\\\">See <a href=\\\"sub%20dir/inner.md\\\">inner</a> and <a href=\\\"image.png\\\">the image</a>.</p>\\n<ul class=\\\"contains-task-list\\\" data-source-start=\\\"12\\\" data-source-end=\\\"14\\\">\\n<li class=\\\"task-list-item\\\" data-source-start=\\\"12\\\" data-source-end=\\\"12\\\"><input class=\\\"task-list-item-checkbox\\\" disabled=\\\"\\\" type=\\\"checkbox\\\" data-checkbox-index=\\\"0\\\"> first</li>\\n<li class=\\\"task-list-item\\\" data-source-start=\\\"13\\\" data-source-end=\\\"14\\\"><input class=\\\"task-list-item-checkbox\\\" checked=\\\"\\\" disabled=\\\"\\\" type=\\\"checkbox\\\" data-checkbox-index=\\\"1\\\"> second</li>\\n</ul>\\n<table data-source-start=\\\"15\\\" data-source-end=\\\"17\\\">\\n<thead data-source-start=\\\"15\\\" data-source-end=\\\"15\\\">\\n<tr data-source-start=\\\"15\\\" data-source-end=\\\"15\\\">\\n<th>A</th>\\n<th>B</th>\\n</tr>\\n</thead>\\n<tbody data-source-start=\\\"17\\\" data-source-end=\\\"17\\\">\\n<tr data-source-start=\\\"17\\\" data-source-end=\\\"17\\\">\\n<td>1</td>\\n<td>2</td>\\n</tr>\\n</tbody>\\n</table>\\n\",\"headings\":[{\"level\":1,\"text\":\"Wire document\",\"slug\":\"wire-document\"}],\"fileName\":\"doc.md\",\"breadcrumbs\":[{\"label\":\"doc.md\",\"path\":\"{root}/doc.md\"}],\"isInsider\":false,\"mtime\":1767323045000}"
+  },
+  "fileContent expired share": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "fileContent deep share": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"---\\ntitle: Wire Document\\ntags:\\n  - alpha\\n  - beta\\n---\\n\\n# Wire document\\n\\nSee [inner](sub%20dir/inner.md) and [the image](image.png).\\n\\n- [ ] first\\n- [x] second\\n\\n| A | B |\\n| --- | --- |\\n| 1 | 2 |\\n\",\"html\":\"<div class=\\\"frontmatter-block\\\"><pre><code class=\\\"language-yaml\\\">title: Wire Document\\ntags:\\n  - alpha\\n  - beta</code></pre></div>\\n<h1 id=\\\"wire-document\\\" tabindex=\\\"-1\\\" data-source-start=\\\"8\\\" data-source-end=\\\"8\\\">Wire document <a class=\\\"anchor\\\" href=\\\"#wire-document\\\">#</a></h1>\\n<p data-source-start=\\\"10\\\" data-source-end=\\\"10\\\">See inner and the image.</p>\\n<ul class=\\\"contains-task-list\\\" data-source-start=\\\"12\\\" data-source-end=\\\"14\\\">\\n<li class=\\\"task-list-item\\\" data-source-start=\\\"12\\\" data-source-end=\\\"12\\\"><input class=\\\"task-list-item-checkbox\\\" disabled=\\\"\\\" type=\\\"checkbox\\\" data-checkbox-index=\\\"0\\\"> first</li>\\n<li class=\\\"task-list-item\\\" data-source-start=\\\"13\\\" data-source-end=\\\"14\\\"><input class=\\\"task-list-item-checkbox\\\" checked=\\\"\\\" disabled=\\\"\\\" type=\\\"checkbox\\\" data-checkbox-index=\\\"1\\\"> second</li>\\n</ul>\\n<table data-source-start=\\\"15\\\" data-source-end=\\\"17\\\">\\n<thead data-source-start=\\\"15\\\" data-source-end=\\\"15\\\">\\n<tr data-source-start=\\\"15\\\" data-source-end=\\\"15\\\">\\n<th>A</th>\\n<th>B</th>\\n</tr>\\n</thead>\\n<tbody data-source-start=\\\"17\\\" data-source-end=\\\"17\\\">\\n<tr data-source-start=\\\"17\\\" data-source-end=\\\"17\\\">\\n<td>1</td>\\n<td>2</td>\\n</tr>\\n</tbody>\\n</table>\\n\",\"headings\":[{\"level\":1,\"text\":\"Wire document\",\"slug\":\"wire-document\"}],\"fileName\":\"doc.md\",\"breadcrumbs\":[{\"label\":\"doc.md\",\"path\":\"{root}/doc.md\"}],\"isInsider\":false,\"mtime\":1767323045000}"
+  },
+  "fileContent tree share of root": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"---\\ntitle: Wire Document\\ntags:\\n  - alpha\\n  - beta\\n---\\n\\n# Wire document\\n\\nSee [inner](sub%20dir/inner.md) and [the image](image.png).\\n\\n- [ ] first\\n- [x] second\\n\\n| A | B |\\n| --- | --- |\\n| 1 | 2 |\\n\",\"html\":\"<div class=\\\"frontmatter-block\\\"><pre><code class=\\\"language-yaml\\\">title: Wire Document\\ntags:\\n  - alpha\\n  - beta</code></pre></div>\\n<h1 id=\\\"wire-document\\\" tabindex=\\\"-1\\\" data-source-start=\\\"8\\\" data-source-end=\\\"8\\\">Wire document <a class=\\\"anchor\\\" href=\\\"#wire-document\\\">#</a></h1>\\n<p data-source-start=\\\"10\\\" data-source-end=\\\"10\\\">See <a href=\\\"sub%20dir/inner.md\\\">inner</a> and <a href=\\\"image.png\\\">the image</a>.</p>\\n<ul class=\\\"contains-task-list\\\" data-source-start=\\\"12\\\" data-source-end=\\\"14\\\">\\n<li class=\\\"task-list-item\\\" data-source-start=\\\"12\\\" data-source-end=\\\"12\\\"><input class=\\\"task-list-item-checkbox\\\" disabled=\\\"\\\" type=\\\"checkbox\\\" data-checkbox-index=\\\"0\\\"> first</li>\\n<li class=\\\"task-list-item\\\" data-source-start=\\\"13\\\" data-source-end=\\\"14\\\"><input class=\\\"task-list-item-checkbox\\\" checked=\\\"\\\" disabled=\\\"\\\" type=\\\"checkbox\\\" data-checkbox-index=\\\"1\\\"> second</li>\\n</ul>\\n<table data-source-start=\\\"15\\\" data-source-end=\\\"17\\\">\\n<thead data-source-start=\\\"15\\\" data-source-end=\\\"15\\\">\\n<tr data-source-start=\\\"15\\\" data-source-end=\\\"15\\\">\\n<th>A</th>\\n<th>B</th>\\n</tr>\\n</thead>\\n<tbody data-source-start=\\\"17\\\" data-source-end=\\\"17\\\">\\n<tr data-source-start=\\\"17\\\" data-source-end=\\\"17\\\">\\n<td>1</td>\\n<td>2</td>\\n</tr>\\n</tbody>\\n</table>\\n\",\"headings\":[{\"level\":1,\"text\":\"Wire document\",\"slug\":\"wire-document\"}],\"fileName\":\"doc.md\",\"breadcrumbs\":[{\"label\":\"doc.md\",\"path\":\"{root}/doc.md\"}],\"isInsider\":false,\"mtime\":1767323045000}"
+  },
+  "fileContent share for another path": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "fileContent path share legacy key param": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"---\\ntitle: Wire Document\\ntags:\\n  - alpha\\n  - beta\\n---\\n\\n# Wire document\\n\\nSee [inner](sub%20dir/inner.md) and [the image](image.png).\\n\\n- [ ] first\\n- [x] second\\n\\n| A | B |\\n| --- | --- |\\n| 1 | 2 |\\n\",\"html\":\"<div class=\\\"frontmatter-block\\\"><pre><code class=\\\"language-yaml\\\">title: Wire Document\\ntags:\\n  - alpha\\n  - beta</code></pre></div>\\n<h1 id=\\\"wire-document\\\" tabindex=\\\"-1\\\" data-source-start=\\\"8\\\" data-source-end=\\\"8\\\">Wire document <a class=\\\"anchor\\\" href=\\\"#wire-document\\\">#</a></h1>\\n<p data-source-start=\\\"10\\\" data-source-end=\\\"10\\\">See <a href=\\\"sub%20dir/inner.md\\\">inner</a> and <a href=\\\"image.png\\\">the image</a>.</p>\\n<ul class=\\\"contains-task-list\\\" data-source-start=\\\"12\\\" data-source-end=\\\"14\\\">\\n<li class=\\\"task-list-item\\\" data-source-start=\\\"12\\\" data-source-end=\\\"12\\\"><input class=\\\"task-list-item-checkbox\\\" disabled=\\\"\\\" type=\\\"checkbox\\\" data-checkbox-index=\\\"0\\\"> first</li>\\n<li class=\\\"task-list-item\\\" data-source-start=\\\"13\\\" data-source-end=\\\"14\\\"><input class=\\\"task-list-item-checkbox\\\" checked=\\\"\\\" disabled=\\\"\\\" type=\\\"checkbox\\\" data-checkbox-index=\\\"1\\\"> second</li>\\n</ul>\\n<table data-source-start=\\\"15\\\" data-source-end=\\\"17\\\">\\n<thead data-source-start=\\\"15\\\" data-source-end=\\\"15\\\">\\n<tr data-source-start=\\\"15\\\" data-source-end=\\\"15\\\">\\n<th>A</th>\\n<th>B</th>\\n</tr>\\n</thead>\\n<tbody data-source-start=\\\"17\\\" data-source-end=\\\"17\\\">\\n<tr data-source-start=\\\"17\\\" data-source-end=\\\"17\\\">\\n<td>1</td>\\n<td>2</td>\\n</tr>\\n</tbody>\\n</table>\\n\",\"headings\":[{\"level\":1,\"text\":\"Wire document\",\"slug\":\"wire-document\"}],\"fileName\":\"doc.md\",\"breadcrumbs\":[{\"label\":\"doc.md\",\"path\":\"{root}/doc.md\"}],\"isInsider\":false,\"mtime\":1767323045000}"
+  },
+  "fileContent percent name path share": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"# Done\\n\",\"html\":\"<h1 id=\\\"done\\\" tabindex=\\\"-1\\\" data-source-start=\\\"1\\\" data-source-end=\\\"1\\\">Done <a class=\\\"anchor\\\" href=\\\"#done\\\">#</a></h1>\\n\",\"headings\":[{\"level\":1,\"text\":\"Done\",\"slug\":\"done\"}],\"fileName\":\"100% done.md\",\"breadcrumbs\":[{\"label\":\"100% done.md\",\"path\":\"{root}/sub dir/100% done.md\"}],\"isInsider\":false,\"mtime\":1767323045000}"
+  },
+  "fileContent shared scoped session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"# Shared\\n\",\"html\":\"<h1 id=\\\"shared\\\" tabindex=\\\"-1\\\" data-source-start=\\\"1\\\" data-source-end=\\\"1\\\">Shared <a class=\\\"anchor\\\" href=\\\"#shared\\\">#</a></h1>\\n\",\"headings\":[{\"level\":1,\"text\":\"Shared\",\"slug\":\"shared\"}],\"fileName\":\"shared.md\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"public\",\"path\":\"{root}/public\"},{\"label\":\"shared.md\",\"path\":\"{root}/public/shared.md\"}],\"isInsider\":true,\"mtime\":1767323045000}"
+  },
+  "fileContent shared scoped machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"# Shared\\n\",\"html\":\"<h1 id=\\\"shared\\\" tabindex=\\\"-1\\\" data-source-start=\\\"1\\\" data-source-end=\\\"1\\\">Shared <a class=\\\"anchor\\\" href=\\\"#shared\\\">#</a></h1>\\n\",\"headings\":[{\"level\":1,\"text\":\"Shared\",\"slug\":\"shared\"}],\"fileName\":\"shared.md\",\"breadcrumbs\":[{\"label\":\"{root}\",\"path\":\"{root}\"},{\"label\":\"public\",\"path\":\"{root}/public\"},{\"label\":\"shared.md\",\"path\":\"{root}/public/shared.md\"}],\"isInsider\":true,\"mtime\":1767323045000}"
+  },
+  "fileContent shared share by scoped insider": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"# Shared\\n\",\"html\":\"<h1 id=\\\"shared\\\" tabindex=\\\"-1\\\" data-source-start=\\\"1\\\" data-source-end=\\\"1\\\">Shared <a class=\\\"anchor\\\" href=\\\"#shared\\\">#</a></h1>\\n\",\"headings\":[{\"level\":1,\"text\":\"Shared\",\"slug\":\"shared\"}],\"fileName\":\"shared.md\",\"breadcrumbs\":[{\"label\":\"shared.md\",\"path\":\"{root}/public/shared.md\"}],\"isInsider\":false,\"mtime\":1767323045000}"
+  },
+  "fileContent private share": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"# Secret\\n\",\"html\":\"<h1 id=\\\"secret\\\" tabindex=\\\"-1\\\" data-source-start=\\\"1\\\" data-source-end=\\\"1\\\">Secret <a class=\\\"anchor\\\" href=\\\"#secret\\\">#</a></h1>\\n\",\"headings\":[{\"level\":1,\"text\":\"Secret\",\"slug\":\"secret\"}],\"fileName\":\"secret.md\",\"breadcrumbs\":[{\"label\":\"secret.md\",\"path\":\"{root}/private/secret.md\"}],\"isInsider\":false,\"mtime\":1767323045000}"
+  },
+  "raw markdown": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/markdown; charset=utf-8"
+    },
+    "body": "---\ntitle: Wire Document\ntags:\n  - alpha\n  - beta\n---\n\n# Wire document\n\nSee [inner](sub%20dir/inner.md) and [the image](image.png).\n\n- [ ] first\n- [x] second\n\n| A | B |\n| --- | --- |\n| 1 | 2 |\n"
+  },
+  "raw png": {
+    "status": 200,
+    "headers": {
+      "content-type": "image/png"
+    },
+    "bytes": 68,
+    "sha256": "63ef318d96b5d0d0ceba6e04a4e622b1158335cdc67c49e27839132c6f655058"
+  },
+  "raw pdf": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/pdf"
+    },
+    "bytes": 77,
+    "sha256": "56c2ac043c28d3543275a6f50b593a6beb0b6888ed8159ac02e3e7f4a32ccb26"
+  },
+  "raw json": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\n  \"a\": 1\n}\n"
+  },
+  "raw percent name": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/markdown; charset=utf-8"
+    },
+    "body": "# Done\n"
+  },
+  "raw directory": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Cannot serve directory as raw — use /api/export for ZIP\"}"
+  },
+  "raw missing": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Not found\",\"path\":\"{dir}/content/missing.md\"}"
+  },
+  "raw no root": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid path\"}"
+  },
+  "raw empty path": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Path required\"}"
+  },
+  "raw png none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "raw png path share": {
+    "status": 200,
+    "headers": {
+      "content-type": "image/png"
+    },
+    "bytes": 68,
+    "sha256": "63ef318d96b5d0d0ceba6e04a4e622b1158335cdc67c49e27839132c6f655058"
+  },
+  "raw png scoped machine key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "linkInfo none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "linkInfo session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"exists\":true,\"isDirectory\":false,\"pageUrl\":\"/browse/{root}/doc.md\",\"rawUrl\":\"/api/raw/{root}/doc.md\",\"exportLinks\":[{\"format\":\"pdf\",\"url\":\"/api/export/{root}/doc.md?format=pdf\"},{\"format\":\"docx\",\"url\":\"/api/export/{root}/doc.md?format=docx\"}]}"
+  },
+  "linkInfo machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"exists\":true,\"isDirectory\":false,\"pageUrl\":\"/browse/{root}/doc.md\",\"rawUrl\":\"/api/raw/{root}/doc.md\",\"exportLinks\":[{\"format\":\"pdf\",\"url\":\"/api/export/{root}/doc.md?format=pdf\"},{\"format\":\"docx\",\"url\":\"/api/export/{root}/doc.md?format=docx\"}]}"
+  },
+  "linkInfo path share": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"exists\":true,\"isDirectory\":false,\"pageUrl\":\"/browse/{root}/doc.md\",\"rawUrl\":\"/api/raw/{root}/doc.md\",\"exportLinks\":[{\"format\":\"pdf\",\"url\":\"/api/export/{root}/doc.md?format=pdf\"},{\"format\":\"docx\",\"url\":\"/api/export/{root}/doc.md?format=docx\"}]}"
+  },
+  "linkInfo directory": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"exists\":true,\"isDirectory\":true,\"pageUrl\":\"/browse/{root}/sub dir\",\"rawUrl\":null,\"exportLinks\":[{\"format\":\"zip\",\"url\":\"/api/export/{root}/sub dir?format=zip\"}]}"
+  },
+  "linkInfo png": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"exists\":true,\"isDirectory\":false,\"pageUrl\":\"/browse/{root}/image.png\",\"rawUrl\":\"/api/raw/{root}/image.png\",\"exportLinks\":[]}"
+  },
+  "linkInfo mermaid": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"exists\":true,\"isDirectory\":false,\"pageUrl\":\"/browse/{root}/flow.mmd\",\"rawUrl\":\"/api/raw/{root}/flow.mmd\",\"exportLinks\":[{\"format\":\"svg\",\"url\":\"/api/mermaid-export/{root}/flow.mmd?format=svg\"},{\"format\":\"png\",\"url\":\"/api/mermaid-export/{root}/flow.mmd?format=png\"},{\"format\":\"pdf\",\"url\":\"/api/mermaid-export/{root}/flow.mmd?format=pdf\"}]}"
+  },
+  "linkInfo missing": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"exists\":false}"
+  },
+  "linkInfo no root": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid path\"}"
+  },
+  "linkInfo empty path": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Path required\"}"
+  },
+  "fileWrite": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"ok\":true,\"path\":\"{dir}/content/doc.md\",\"size\":6}"
+  },
+  "fileWrite percent name": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"ok\":true,\"path\":\"{dir}/content/sub dir/100% done.md\",\"size\":1}"
+  },
+  "fileWrite machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"ok\":true,\"path\":\"{dir}/content/doc.md\",\"size\":1}"
+  },
+  "fileWrite none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "fileWrite path share": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Insider access required\"}"
+  },
+  "fileWrite scoped session out of scope": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Path is outside your access scope\"}"
+  },
+  "fileWrite scoped session in scope": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"ok\":true,\"path\":\"{dir}/content/public/shared.md\",\"size\":1}"
+  },
+  "fileWrite no content": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Request body must include \\\"content\\\" string\"}"
+  },
+  "fileWrite non-string content": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Request body must include \\\"content\\\" string\"}"
+  },
+  "fileWrite directory": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Can only write to files\"}"
+  },
+  "fileWrite missing": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"File not found\"}"
+  },
+  "fileWrite no root": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid path\"}"
+  },
+  "fileMutate toggle-checkbox": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"ok\":true}"
+  },
+  "fileMutate toggle-checkbox out of range": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Checkbox index 9 out of range\"}"
+  },
+  "fileMutate toggle-checkbox bad body": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"toggle-checkbox requires index (number) and checked (boolean)\"}"
+  },
+  "fileMutate edit-block": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"ok\":true}"
+  },
+  "fileMutate edit-block reversed": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"startLine must not exceed endLine\"}"
+  },
+  "fileMutate edit-block out of bounds": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Line range out of bounds\"}"
+  },
+  "fileMutate edit-block empty content": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"content must not be empty\"}"
+  },
+  "fileMutate edit-block missing fields": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"edit-block requires startLine, endLine, and content\"}"
+  },
+  "fileMutate delete-block": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"ok\":true}"
+  },
+  "fileMutate delete-block missing fields": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"delete-block requires startLine and endLine\"}"
+  },
+  "fileMutate insert-block": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"ok\":true}"
+  },
+  "fileMutate insert-block bad position": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"insert-block requires atLine, content, and position (before|after)\"}"
+  },
+  "fileMutate insert-block out of bounds": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"atLine out of bounds\"}"
+  },
+  "fileMutate edit-cell": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"ok\":true}"
+  },
+  "fileMutate edit-cell separator": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Cannot edit a separator row\"}"
+  },
+  "fileMutate edit-cell bad column": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Column index out of bounds\"}"
+  },
+  "fileMutate edit-cell missing fields": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"edit-cell requires line, col, and content\"}"
+  },
+  "fileMutate no action": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Missing action field\"}"
+  },
+  "fileMutate unknown action": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unknown action: explode\"}"
+  },
+  "fileMutate array body": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Missing action field\"}"
+  },
+  "fileMutate not markdown": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Only .md files are supported\"}"
+  },
+  "fileMutate missing": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"File not found\"}"
+  },
+  "fileMutate none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "fileMutate path share": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Insider access required\"}"
+  },
+  "fileMutate scoped session out of scope": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Path is outside your access scope\"}"
+  },
+  "export pdf cached": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/pdf",
+      "content-disposition": "attachment; filename=\"doc.pdf\""
+    },
+    "bytes": 19,
+    "sha256": "510b6eea30afb01cc734bed523f86b09c2608646106143c0db13157accf1ae6b"
+  },
+  "export default format cached": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/pdf",
+      "content-disposition": "attachment; filename=\"doc.pdf\""
+    },
+    "bytes": 19,
+    "sha256": "510b6eea30afb01cc734bed523f86b09c2608646106143c0db13157accf1ae6b"
+  },
+  "export docx cached": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "content-disposition": "attachment; filename=\"doc.docx\""
+    },
+    "bytes": 19,
+    "sha256": "510b6eea30afb01cc734bed523f86b09c2608646106143c0db13157accf1ae6b"
+  },
+  "export pdf without chrome": {
+    "status": 500,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"PDF export failed\",\"details\":\"Error: Browser was not found at the configured executablePath ({dir}/no-chrome/chrome)\"}"
+  },
+  "export docx without chrome": {
+    "status": 500,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"DOCX export failed\",\"details\":\"Error: Browser was not found at the configured executablePath ({dir}/no-chrome/chrome)\"}"
+  },
+  "export dot-markdown pdf": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Only markdown files support PDF/DOCX export\"}"
+  },
+  "export json pdf": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Only markdown files support PDF/DOCX export\"}"
+  },
+  "export file zip": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Files support pdf or docx export\"}"
+  },
+  "export directory zip": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/zip",
+      "content-disposition": "attachment; filename=\"sub dir.zip\""
+    },
+    "bytes": 297
+  },
+  "export directory tar": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/x-tar",
+      "content-disposition": "attachment; filename=\"sub dir.tar\""
+    },
+    "bytes": 3072
+  },
+  "export directory pdf": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Directories only support zip or tar export\"}"
+  },
+  "export missing": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Not found\",\"path\":\"{dir}/content/missing.md\"}"
+  },
+  "export no root": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid path\"}"
+  },
+  "export empty path": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Path required\"}"
+  },
+  "export pdf cached none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "export pdf cached path share": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/pdf",
+      "content-disposition": "attachment; filename=\"doc.pdf\""
+    },
+    "bytes": 19,
+    "sha256": "510b6eea30afb01cc734bed523f86b09c2608646106143c0db13157accf1ae6b"
+  },
+  "export pdf cached expiring share": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/pdf",
+      "content-disposition": "attachment; filename=\"doc.pdf\""
+    },
+    "bytes": 19,
+    "sha256": "510b6eea30afb01cc734bed523f86b09c2608646106143c0db13157accf1ae6b"
+  },
+  "export pdf cached scoped machine key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "export directory zip path share": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Archive export requires insider access\"}"
+  },
+  "exportCacheClear session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"cleared\":{\"exports\":2,\"diagrams\":0}}"
+  },
+  "exportCacheClear mermaid": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"cleared\":{\"exports\":0,\"diagrams\":1}}"
+  },
+  "exportCacheClear uncached": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"cleared\":{\"exports\":0,\"diagrams\":0}}"
+  },
+  "exportCacheClear machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"cleared\":{\"exports\":2,\"diagrams\":0}}"
+  },
+  "exportCacheClear path share": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Insider access required\"}"
+  },
+  "exportCacheClear none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "exportCacheClear no root": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid path\"}"
+  },
+  "exportCacheClear empty path": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Path required\"}"
+  },
+  "diagramExport mermaid svg cached": {
+    "status": 200,
+    "headers": {
+      "content-type": "image/svg+xml",
+      "content-disposition": "attachment; filename=\"flow.svg\""
+    },
+    "body": "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>"
+  },
+  "diagramExport mermaid default cached": {
+    "status": 200,
+    "headers": {
+      "content-type": "image/svg+xml",
+      "content-disposition": "attachment; filename=\"flow.svg\""
+    },
+    "body": "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>"
+  },
+  "diagramExport mermaid png without chrome": {
+    "status": 500,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Mermaid render failed\"}"
+  },
+  "diagramExport mermaid not mermaid": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Mermaid file not found\"}"
+  },
+  "diagramExport mermaid missing": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Mermaid file not found\"}"
+  },
+  "diagramExport mermaid no root": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid path\"}"
+  },
+  "diagramExport mermaid empty path": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Path required\"}"
+  },
+  "diagramExport plantuml unrenderable": {
+    "status": 500,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Plantuml render failed\"}"
+  },
+  "diagramExport plantuml png unrenderable": {
+    "status": 500,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Plantuml render failed\"}"
+  },
+  "diagramExport plantuml not plantuml": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"PlantUML file not found\"}"
+  },
+  "diagramExport plantuml empty path": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Path required\"}"
+  },
+  "diagramExport mermaid none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "diagramExport mermaid path share": {
+    "status": 200,
+    "headers": {
+      "content-type": "image/svg+xml",
+      "content-disposition": "attachment; filename=\"flow.svg\""
+    },
+    "body": "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>"
+  },
+  "diagram registered and cached": {
+    "status": 200,
+    "headers": {
+      "content-type": "image/svg+xml",
+      "cache-control": "public, max-age=86400, immutable"
+    },
+    "body": "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>"
+  },
+  "diagram registered svg suffix": {
+    "status": 200,
+    "headers": {
+      "content-type": "image/svg+xml",
+      "cache-control": "public, max-age=86400, immutable"
+    },
+    "body": "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>"
+  },
+  "diagram unknown hash": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Diagram source not found (may have expired)\"}"
+  },
+  "diagram invalid type": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid diagram type\"}"
+  },
+  "diagram invalid hash": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid hash\"}"
+  },
+  "publicContent readme": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"{redacted}\",\"html\":\"{redacted}\",\"headings\":\"{redacted}\",\"fileName\":\"readme.md\",\"breadcrumbs\":[],\"isInsider\":false}"
+  },
+  "publicContent privacy": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"{redacted}\",\"html\":\"{redacted}\",\"headings\":\"{redacted}\",\"fileName\":\"privacy.md\",\"breadcrumbs\":[],\"isInsider\":false}"
+  },
+  "publicContent terms": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"type\":\"markdown\",\"content\":\"{redacted}\",\"html\":\"{redacted}\",\"headings\":\"{redacted}\",\"fileName\":\"terms.md\",\"breadcrumbs\":[],\"isInsider\":false}"
+  },
+  "publicContent unknown": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Not found\"}"
+  },
+  "publicContent invalid slug": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid slug\"}"
+  },
+  "share none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "share session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"/browse/{root}/public/shared.md?k={key}\",\"path\":\"/{root}/public/shared.md\",\"exp\":null,\"depth\":0,\"dirs\":false,\"isDirectory\":false}"
+  },
+  "share scoped session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"/browse/{root}/public/shared.md?k={key}\",\"path\":\"/{root}/public/shared.md\",\"exp\":null,\"depth\":0,\"dirs\":false,\"isDirectory\":false}"
+  },
+  "share insider key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "share machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"/browse/{root}/public/shared.md?k={key}\",\"path\":\"/{root}/public/shared.md\",\"exp\":null,\"depth\":0,\"dirs\":false,\"isDirectory\":false}"
+  },
+  "share scoped machine key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "share path share": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "share file": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"/browse/{root}/doc.md?k={key}\",\"path\":\"/{root}/doc.md\",\"exp\":null,\"depth\":0,\"dirs\":false,\"isDirectory\":false}"
+  },
+  "share expiring": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"/browse/{root}/doc.md?k={key}&exp=4102444800000\",\"path\":\"/{root}/doc.md\",\"exp\":\"4102444800000\",\"depth\":0,\"dirs\":false,\"isDirectory\":false}"
+  },
+  "share deep": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"/browse/{root}/sub dir?k={key}&d=1&dirs=1&s={stack}\",\"path\":\"/{root}/sub dir\",\"exp\":null,\"depth\":1,\"dirs\":true,\"isDirectory\":true}"
+  },
+  "share directory": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"/browse/{root}/sub dir?k={key}\",\"path\":\"/{root}/sub dir\",\"exp\":null,\"depth\":0,\"dirs\":false,\"isDirectory\":true}"
+  },
+  "share directory trailing slash": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"/browse/{root}/sub dir/?k={key}\",\"path\":\"/{root}/sub dir/\",\"exp\":null,\"depth\":0,\"dirs\":false,\"isDirectory\":true}"
+  },
+  "share percent name": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"/browse/{root}/sub dir/100% done.md?k={key}\",\"path\":\"/{root}/sub dir/100% done.md\",\"exp\":null,\"depth\":0,\"dirs\":false,\"isDirectory\":false}"
+  },
+  "share missing path": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"path is required\"}"
+  },
+  "share scoped session out of scope": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Path is outside your access scope\"}"
+  },
+  "shareFor none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Insider auth required for utility endpoints\"}"
+  },
+  "shareFor session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"https://wire.test/browse/{root}/public/shared.md?k={key}&d=0&dirs=0&s={stack}\",\"type\":\"outsider-share\"}"
+  },
+  "shareFor scoped session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"https://wire.test/browse/{root}/public/shared.md?k={key}&d=0&dirs=0&s={stack}\",\"type\":\"outsider-share\"}"
+  },
+  "shareFor insider key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"https://wire.test/browse/{root}/public/shared.md?k={key}&d=0&dirs=0&s={stack}\",\"type\":\"outsider-share\"}"
+  },
+  "shareFor machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"https://wire.test/browse/{root}/public/shared.md?k={key}&d=0&dirs=0&s={stack}\",\"type\":\"outsider-share\"}"
+  },
+  "shareFor scoped machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"https://wire.test/browse/{root}/public/shared.md?k={key}&d=0&dirs=0&s={stack}\",\"type\":\"outsider-share\"}"
+  },
+  "shareFor path share": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Insider auth required for utility endpoints\"}"
+  },
+  "shareFor insiders only": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"https://wire.test/browse/{root}/public/shared.md\",\"type\":\"insider\"}"
+  },
+  "shareFor blocked insider": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":null,\"type\":\"blocked\",\"reason\":\"Insider(s) do not have access to this path\",\"blocked\":[\"scoped@wire.test\"]}"
+  },
+  "shareFor policy denied": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":null,\"type\":\"policy-denied\",\"reason\":\"Outsider policy does not allow sharing this path\"}"
+  },
+  "shareFor policy not enforced": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"https://wire.test/browse/{root}/private/secret.md?k={key}&d=0&dirs=0&s={stack}\",\"type\":\"outsider-share\",\"warning\":\"Outsider policy would deny this path\"}"
+  },
+  "shareFor directory tree": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"https://wire.test/browse/{root}/sub dir?k={key}\",\"type\":\"outsider-share\"}"
+  },
+  "shareFor deep": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"https://wire.test/browse/{root}/sub dir?k={key}&d=1&dirs=1&s={stack}\",\"type\":\"outsider-share\"}"
+  },
+  "shareFor missing path": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"path is required\"}"
+  },
+  "shareFor insiders not an array": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"insiders array is required\"}"
+  },
+  "shareFor scoped sharer out of scope": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":null,\"type\":\"blocked\",\"reason\":\"Sharer does not have access to this path\",\"blocked\":[]}"
+  },
+  "contentLink privacy": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"/browse/{pkg}/content/privacy.md?k={key}&d=0&dirs=0&s={stack}\"}"
+  },
+  "contentLink terms": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"/browse/{pkg}/content/terms.md?k={key}&d=0&dirs=0&s={stack}\"}"
+  },
+  "contentLink unknown": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"nope.md not found\"}"
+  },
+  "contentLink invalid name": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Invalid file name\"}"
+  },
+  "readmeLink": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"url\":\"/browse/{pkg}/README.md?k={key}&d=2&dirs=0&s={stack}\"}"
+  },
+  "resolvePath none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "resolvePath session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"browsePath\":\"{root}/doc.md\",\"browseUrl\":\"/browse/{root}/doc.md\",\"publicUrl\":\"https://wire.test/browse/{root}/doc.md\"}"
+  },
+  "resolvePath scoped session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"browsePath\":\"{root}/doc.md\",\"browseUrl\":\"/browse/{root}/doc.md\",\"publicUrl\":\"https://wire.test/browse/{root}/doc.md\"}"
+  },
+  "resolvePath insider key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "resolvePath machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"browsePath\":\"{root}/doc.md\",\"browseUrl\":\"/browse/{root}/doc.md\",\"publicUrl\":\"https://wire.test/browse/{root}/doc.md\"}"
+  },
+  "resolvePath scoped machine key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "resolvePath path share": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "resolvePath scoped machine key in scope": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "resolvePath percent name": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"browsePath\":\"{root}/sub dir/100% done.md\",\"browseUrl\":\"/browse/{root}/sub%20dir/100%25%20done.md\",\"publicUrl\":\"https://wire.test/browse/{root}/sub%20dir/100%25%20done.md\"}"
+  },
+  "resolvePath missing fsPath": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"fsPath query parameter required\"}"
+  },
+  "resolvePath relative": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"fsPath must be an absolute path\"}"
+  },
+  "resolvePath outside roots": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Path does not fall under any configured root\"}"
+  },
+  "rotateKey none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "rotateKey session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"ok\":true,\"keyCreatedAt\":\"{ts}\"}"
+  },
+  "rotateKey scoped session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"ok\":true,\"keyCreatedAt\":\"{ts}\"}"
+  },
+  "rotateKey insider key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "rotateKey machine key": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Insider auth required\"}"
+  },
+  "rotateKey scoped machine key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "rotateKey path share": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "authStatus none": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"authenticated\":false,\"isInsider\":false}"
+  },
+  "authStatus session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"authenticated\":true,\"email\":\"admin@wire.test\",\"isInsider\":true,\"keyCreatedAt\":\"{ts}\",\"searchEnabled\":true}"
+  },
+  "authStatus scoped session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"authenticated\":true,\"email\":\"scoped@wire.test\",\"isInsider\":true,\"keyCreatedAt\":null,\"searchEnabled\":true}"
+  },
+  "authStatus insider key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"authenticated\":false,\"isInsider\":false}"
+  },
+  "authStatus machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"authenticated\":true,\"email\":\"key:primary\",\"isInsider\":true,\"keyCreatedAt\":null}"
+  },
+  "authStatus scoped machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"authenticated\":false,\"isInsider\":false}"
+  },
+  "authStatus path share": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"authenticated\":true,\"email\":\"key:admin@wire.test\",\"isInsider\":false,\"keyCreatedAt\":null}"
+  },
+  "authStatus bad key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"authenticated\":false,\"isInsider\":false}"
+  },
+  "sendMagicLink insider": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"verifyUrl\":\"/auth/magic/verify?enc={enc}\"}"
+  },
+  "sendMagicLink unknown email": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"verifyUrl\":\"/auth/magic/verify?enc={enc}\"}"
+  },
+  "sendMagicLink insider without seed": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"verifyUrl\":\"/auth/magic/verify?enc={enc}\"}"
+  },
+  "sendMagicLink empty body": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"verifyUrl\":\"/auth/magic/verify?enc={enc}\"}"
+  },
+  "search none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "search session": {
+    "status": 502,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Watcher unreachable: TypeError: fetch failed\"}"
+  },
+  "search scoped session": {
+    "status": 502,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Watcher unreachable: TypeError: fetch failed\"}"
+  },
+  "search insider key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "search machine key": {
+    "status": 502,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Watcher unreachable: TypeError: fetch failed\"}"
+  },
+  "search scoped machine key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "search path share": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "search missing query": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"query is required\"}"
+  },
+  "searchFacets none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "searchFacets session": {
+    "status": 502,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Failed to reach watcher\",\"detail\":\"fetch failed\"}"
+  },
+  "searchFacets scoped session": {
+    "status": 502,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Failed to reach watcher\",\"detail\":\"fetch failed\"}"
+  },
+  "searchFacets insider key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "searchFacets machine key": {
+    "status": 502,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Failed to reach watcher\",\"detail\":\"fetch failed\"}"
+  },
+  "searchFacets scoped machine key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "searchFacets path share": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "listEvents none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "listEvents session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "[{\"ts\":\"{ts}\",\"event\":null,\"matched\":false,\"bodyPreview\":\"{\\\"other\\\":1}\"}]"
+  },
+  "listEvents scoped session": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unscoped insider access required\"}"
+  },
+  "listEvents insider key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "listEvents machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "[{\"ts\":\"{ts}\",\"event\":null,\"matched\":false,\"bodyPreview\":\"{\\\"other\\\":1}\"}]"
+  },
+  "listEvents scoped machine key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "listEvents path share": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "listEvents limit": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "[]"
+  },
+  "listEvents limit not a number": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "[]"
+  },
+  "oauthStart none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "oauthStart session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"authUrl\":\"https://auth.wire.test/authorize?response_type=code&client_id=c&redirect_uri=https%3A%2F%2Fwire.test%2Foauth%2Fcallback&scope=read&state={state}&code_challenge={challenge}&code_challenge_method=S256\",\"state\":\"{state}\"}"
+  },
+  "oauthStart scoped session": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"authUrl\":\"https://auth.wire.test/authorize?response_type=code&client_id=c&redirect_uri=https%3A%2F%2Fwire.test%2Foauth%2Fcallback&scope=read&state={state}&code_challenge={challenge}&code_challenge_method=S256\",\"state\":\"{state}\"}"
+  },
+  "oauthStart insider key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "oauthStart machine key": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"authUrl\":\"https://auth.wire.test/authorize?response_type=code&client_id=c&redirect_uri=https%3A%2F%2Fwire.test%2Foauth%2Fcallback&scope=read&state={state}&code_challenge={challenge}&code_challenge_method=S256\",\"state\":\"{state}\"}"
+  },
+  "oauthStart scoped machine key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "oauthStart path share": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "oauthStart no client credentials": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"provider, account, clientId, and clientSecret are required\"}"
+  },
+  "oauthStart unknown provider": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"authUrl and tokenUrl are required (either in request body or via named provider config)\"}"
+  },
+  "oauthStart missing fields": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"provider, account, clientId, and clientSecret are required\"}"
+  },
+  "oauthStart invalid name": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"provider and account may only contain letters, digits, \\\".\\\", \\\"_\\\", \\\"-\\\", \\\"@\\\" and \\\"+\\\", and may not be \\\".\\\" or \\\"..\\\"\"}"
+  },
+  "oauthStart origin": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"authUrl\":\"https://auth.wire.test/authorize?response_type=code&client_id=c&redirect_uri=https%3A%2F%2Fother.test%2Foauth%2Fcallback&scope=read&state={state}&code_challenge={challenge}&code_challenge_method=S256\",\"state\":\"{state}\"}"
+  },
+  "oauthStart bad origin": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"origin must be a valid URL\"}"
+  },
+  "oauthStatus exists": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"exists\":true,\"expired\":false,\"provider\":\"wire\",\"account\":\"me\"}"
+  },
+  "oauthToken exists": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"access_token\":\"wire-access-token\",\"token_type\":\"Bearer\",\"expires_in_seconds\":null}"
+  },
+  "oauthStatus expired": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"exists\":true,\"expired\":true,\"provider\":\"wire\",\"account\":\"old\"}"
+  },
+  "oauthToken expired": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"refresh_failed\",\"message\":\"Re-authorization required\"}"
+  },
+  "oauthStatus missing file": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"exists\":false,\"expired\":false,\"provider\":\"wire\",\"account\":\"nobody\"}"
+  },
+  "oauthToken missing file": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Credential file not found\"}"
+  },
+  "oauthStatus missing params": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"provider and account query params required\"}"
+  },
+  "oauthToken missing params": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"provider and account query params required\"}"
+  },
+  "oauthStatus invalid name": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"provider and account may only contain letters, digits, \\\".\\\", \\\"_\\\", \\\"-\\\", \\\"@\\\" and \\\"+\\\", and may not be \\\".\\\" or \\\"..\\\"\"}"
+  },
+  "oauthToken invalid name": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"provider and account may only contain letters, digits, \\\".\\\", \\\"_\\\", \\\"-\\\", \\\"@\\\" and \\\"+\\\", and may not be \\\".\\\" or \\\"..\\\"\"}"
+  },
+  "oauthStatus none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "oauthToken scoped machine key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "runner GET /api/runner/jobs": {
+    "status": 502,
+    "headers": {
+      "content-type": "text/plain; charset=utf-8"
+    },
+    "body": "{\"error\":\"Runner unreachable\"}"
+  },
+  "runner GET /api/runner/jobs/alpha": {
+    "status": 502,
+    "headers": {
+      "content-type": "text/plain; charset=utf-8"
+    },
+    "body": "{\"error\":\"Runner unreachable\"}"
+  },
+  "runner GET /api/runner/jobs/alpha/runs?limit=5": {
+    "status": 502,
+    "headers": {
+      "content-type": "text/plain; charset=utf-8"
+    },
+    "body": "{\"error\":\"Runner unreachable\"}"
+  },
+  "runner POST /api/runner/jobs/alpha/run": {
+    "status": 502,
+    "headers": {
+      "content-type": "text/plain; charset=utf-8"
+    },
+    "body": "{\"error\":\"Runner unreachable\"}"
+  },
+  "runner POST /api/runner/jobs/alpha/enable": {
+    "status": 502,
+    "headers": {
+      "content-type": "text/plain; charset=utf-8"
+    },
+    "body": "{\"error\":\"Runner unreachable\"}"
+  },
+  "runner POST /api/runner/jobs/alpha/disable": {
+    "status": 502,
+    "headers": {
+      "content-type": "text/plain; charset=utf-8"
+    },
+    "body": "{\"error\":\"Runner unreachable\"}"
+  },
+  "runner GET /api/runner/status": {
+    "status": 502,
+    "headers": {
+      "content-type": "text/plain; charset=utf-8"
+    },
+    "body": "{\"error\":\"Runner unreachable\"}"
+  },
+  "runner jobs none": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "runner jobs session": {
+    "status": 502,
+    "headers": {
+      "content-type": "text/plain; charset=utf-8"
+    },
+    "body": "{\"error\":\"Runner unreachable\"}"
+  },
+  "runner jobs scoped session": {
+    "status": 502,
+    "headers": {
+      "content-type": "text/plain; charset=utf-8"
+    },
+    "body": "{\"error\":\"Runner unreachable\"}"
+  },
+  "runner jobs insider key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "runner jobs machine key": {
+    "status": 502,
+    "headers": {
+      "content-type": "text/plain; charset=utf-8"
+    },
+    "body": "{\"error\":\"Runner unreachable\"}"
+  },
+  "runner jobs scoped machine key": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "runner jobs path share": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Unauthorized\"}"
+  },
+  "runner unknown route": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": "{\"error\":\"Not found\"}"
+  }
+}

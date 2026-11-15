@@ -4,9 +4,15 @@
       "entry": [
         "src/cli/start-server.ts",
         "src/dev-server.ts",
-        "test-docs/**/*.js"
+        "test-docs/**/*.js",
+        "scripts/capture-wire.ts",
+        "scripts/write-api-reference.ts",
+        "src/test/wire/wireRecord.record.ts"
       ],
-      "includeEntryExports": true
+      "includeEntryExports": true,
+      "vitest": {
+        "config": ["vitest.config.ts", "vitest.wire-record.config.ts"]
+      }
     },
     "packages/service/client": {
       "project": ["src/**/*.{ts,tsx,css}"],
@@ -14,7 +20,8 @@
       "includeEntryExports": true
     },
     "packages/openclaw": {},
-    "packages/core": {}
+    "packages/core": {},
+    "packages/sdk": {}
   },
   "ignoreExportsUsedInFile": true
 }

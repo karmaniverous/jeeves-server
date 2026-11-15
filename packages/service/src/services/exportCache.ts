@@ -1,17 +1,24 @@
 /**
- * Export cache for PDF/DOCX renders.
+ * Export cache for PDF/DOCX renders (#288).
  *
- * Cache key = sha256(normalizedFsPath + NUL + format).
- * Invalidation: source file mtime greater than cache file mtime = miss.
- * Also maintains a reverse index (fsPath to diagram cache hashes) so
- * "Clear Cache" can purge both export and diagram caches for a file.
+ * Entries are addressed by the export cache key (see exportCacheKey.ts): a
+ * changed document, print style, server version or referenced image is a
+ * different key, so a lookup is a plain hit or miss. A per-file index maps
+ * each source path to its keys, so "Clear Cache" removes every entry of a
+ * file, or of every file under a directory. A second index maps files to
+ * their embedded-diagram cache hashes.
  */
 
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { addToPathIndex, takeFromPathIndex } from './pathIndex.js';
+
 let cacheDir: string | null = null;
+
+/** Formats the export cache holds. */
+const EXPORT_FORMATS = ['pdf', 'docx'];
 
 /** Diagram type for a given file extension. */
 const DIAGRAM_EXT_MAP: Record<string, string> = {
@@ -21,80 +28,119 @@ const DIAGRAM_EXT_MAP: Record<string, string> = {
   '.pu': 'plantuml',
 };
 
-/** Initialize the export cache directory. Call once at startup. */
+/**
+ * Initialize the export cache directory. Call once at startup.
+ *
+ * @param dir - Cache directory (`exportCachePath`); `.export-cache` under
+ *   the working directory by default.
+ */
 export function initExportCache(dir?: string): void {
-  cacheDir = dir ?? path.resolve('.export-cache');
+  cacheDir = path.resolve(dir ?? '.export-cache');
   fs.mkdirSync(cacheDir, { recursive: true });
 }
 
-function cacheKey(fsPath: string, format: string): string {
-  const normalized = fsPath.replace(/\\/g, '/').toLowerCase();
-  return crypto
-    .createHash('sha256')
-    .update(`${normalized}\0${format}`)
-    .digest('hex');
+const exportIndexFile = (dir: string): string =>
+  path.join(dir, '_export-index.json');
+
+/** A cached export. */
+export interface CachedExport {
+  /** The rendered bytes. */
+  buffer: Buffer;
+  /** PDF: the print style it was rendered with. */
+  printStyle?: string;
 }
 
-function cacheFilePath(fsPath: string, format: string): string | null {
-  if (!cacheDir) return null;
-  return path.join(cacheDir, `${cacheKey(fsPath, format)}.${format}`);
+/** Metadata stored beside a cached PDF. */
+interface ExportMeta {
+  printStyle: string;
 }
 
 /**
- * Get a cached export buffer if it exists and is fresh.
- * Returns null on miss or stale cache.
+ * Get a cached export.
+ *
+ * @param key - Export cache key.
+ * @param format - Export format.
+ * @returns The entry, or `null` on a miss.
  */
-export function getCachedExport(fsPath: string, format: string): Buffer | null {
-  const file = cacheFilePath(fsPath, format);
-  if (!file) return null;
-
+export function getCachedExport(
+  key: string,
+  format: string,
+): CachedExport | null {
+  if (!cacheDir) return null;
+  let buffer: Buffer;
   try {
-    const sourceStat = fs.statSync(fsPath);
-    const cacheStat = fs.statSync(file);
-    if (cacheStat.mtimeMs >= sourceStat.mtimeMs) {
-      return fs.readFileSync(file);
-    }
-    // Stale
-    return null;
+    buffer = fs.readFileSync(path.join(cacheDir, `${key}.${format}`));
   } catch {
     return null;
   }
+  if (format !== 'pdf') return { buffer };
+  try {
+    const meta = JSON.parse(
+      fs.readFileSync(path.join(cacheDir, `${key}.json`), 'utf8'),
+    ) as ExportMeta;
+    return { buffer, printStyle: meta.printStyle };
+  } catch {
+    return { buffer };
+  }
 }
 
-/** Store an export buffer in the cache. */
-export function cacheExport(
-  fsPath: string,
-  format: string,
-  buffer: Buffer,
-): void {
-  const file = cacheFilePath(fsPath, format);
-  if (!file) return;
+/** What {@link cacheExport} stores. */
+export interface ExportEntry {
+  /** Source path (indexed for clearing). */
+  fsPath: string;
+  /** Export cache key. */
+  key: string;
+  /** Export format. */
+  format: string;
+  /** The rendered bytes. */
+  buffer: Buffer;
+  /** The print style it was rendered with (stored beside a PDF). */
+  printStyle: string;
+}
 
+/**
+ * Store an export, its PDF metadata and its index entry.
+ *
+ * @param entry - See {@link ExportEntry}.
+ */
+export function cacheExport(entry: ExportEntry): void {
+  if (!cacheDir) return;
+  const { fsPath, key, format, buffer, printStyle } = entry;
   try {
-    fs.writeFileSync(file, buffer);
+    fs.writeFileSync(path.join(cacheDir, `${key}.${format}`), buffer);
+    if (format === 'pdf') {
+      const meta: ExportMeta = { printStyle };
+      fs.writeFileSync(
+        path.join(cacheDir, `${key}.json`),
+        JSON.stringify(meta),
+      );
+    }
+    addToPathIndex(exportIndexFile(cacheDir), fsPath, [key]);
   } catch (err) {
     console.error('[exportCache] write failed:', (err as Error).message);
   }
 }
 
 /**
- * Clear all cached exports for a given file path.
- * Returns the number of files deleted.
+ * Clear every cached export of a file, or of every file under a directory.
+ *
+ * @param fsPath - File or directory path.
+ * @returns The number of cached exports deleted.
  */
 export function clearExportCache(fsPath: string): number {
   if (!cacheDir) return 0;
-
+  const dir = cacheDir;
   let count = 0;
-  for (const format of ['pdf', 'docx']) {
-    const file = cacheFilePath(fsPath, format);
-    if (file) {
+  for (const key of takeFromPathIndex(exportIndexFile(dir), fsPath, true)) {
+    for (const format of EXPORT_FORMATS) {
       try {
-        fs.unlinkSync(file);
+        fs.unlinkSync(path.join(dir, `${key}.${format}`));
         count++;
       } catch {
-        // Not cached, that's fine
+        // Not cached in this format
       }
     }
+    fs.rmSync(path.join(dir, `${key}.json`), { force: true });
   }
   return count;
 }
@@ -138,32 +184,10 @@ export function clearStandaloneDiagramCache(
   return count;
 }
 
-// --- Reverse index: fsPath → diagram cache hashes ---
+// --- Reverse index: fsPath to diagram cache hashes ---
 
-const reverseIndexFile = (): string | null =>
-  cacheDir ? path.join(cacheDir, '_diagram-index.json') : null;
-
-type DiagramIndex = Record<string, string[]>;
-
-function loadDiagramIndex(): DiagramIndex {
-  const file = reverseIndexFile();
-  if (!file) return {};
-  try {
-    return JSON.parse(fs.readFileSync(file, 'utf8')) as DiagramIndex;
-  } catch {
-    return {};
-  }
-}
-
-function saveDiagramIndex(index: DiagramIndex): void {
-  const file = reverseIndexFile();
-  if (!file) return;
-  try {
-    fs.writeFileSync(file, JSON.stringify(index, null, 2), 'utf8');
-  } catch (err) {
-    console.error('[exportCache] index write failed:', (err as Error).message);
-  }
-}
+const diagramIndexFile = (dir: string): string =>
+  path.join(dir, '_diagram-index.json');
 
 /**
  * Register diagram cache hashes associated with a file.
@@ -171,12 +195,7 @@ function saveDiagramIndex(index: DiagramIndex): void {
  */
 export function registerDiagramHashes(fsPath: string, hashes: string[]): void {
   if (!cacheDir || hashes.length === 0) return;
-  const key = fsPath.replace(/\\/g, '/').toLowerCase();
-  const index = loadDiagramIndex();
-  const existing = new Set(index[key] ?? []);
-  for (const h of hashes) existing.add(h);
-  index[key] = [...existing];
-  saveDiagramIndex(index);
+  addToPathIndex(diagramIndexFile(cacheDir), fsPath, hashes);
 }
 
 /**
@@ -189,12 +208,8 @@ export function clearDiagramCacheForFile(
 ): number {
   if (!cacheDir || !diagramCacheDir) return 0;
 
-  const key = fsPath.replace(/\\/g, '/').toLowerCase();
-  const index = loadDiagramIndex();
-  const hashes = index[key] as string[] | undefined;
-  if (!hashes || hashes.length === 0) return 0;
-
   let count = 0;
+  const hashes = takeFromPathIndex(diagramIndexFile(cacheDir), fsPath, false);
   for (const hash of hashes) {
     // Diagram cache files can be .svg, .png, or .pdf
     for (const ext of ['svg', 'png', 'pdf']) {
@@ -206,11 +221,5 @@ export function clearDiagramCacheForFile(
       }
     }
   }
-
-  // Remove from index
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { [key]: _removed, ...rest } = index;
-  saveDiagramIndex(rest);
-
   return count;
 }

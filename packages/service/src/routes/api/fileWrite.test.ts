@@ -9,10 +9,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Fastify, { type FastifyInstance } from 'fastify';
+import { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AccessMode, NormalizedScopes } from '../../config/types.js';
+import { catalogRoutes } from '../../testing/catalogRoutes.js';
+import { MASKED_500, serverError, testApp } from '../../testing/testApp.js';
 
 let tmpDir = '';
 
@@ -25,7 +27,8 @@ vi.mock('../../util/platform.js', () => ({
   },
 }));
 
-const { fileWriteRoutes } = await import('./fileWrite.js');
+const { fileWriteHandlers } = await import('./fileWrite.js');
+const { withFileLock } = await import('../../util/fileMutex.js');
 
 const contentScope: NormalizedScopes = {
   allow: ['/j/content/**'],
@@ -38,13 +41,13 @@ async function buildApp(
   accessMode: AccessMode,
   scopes: NormalizedScopes | null = null,
 ): Promise<FastifyInstance> {
-  const app = Fastify();
+  const app = testApp();
   app.addHook('preHandler', (request, _reply, done) => {
     request.accessMode = accessMode;
     request.insiderScopes = scopes;
     done();
   });
-  await app.register(fileWriteRoutes);
+  await app.register(catalogRoutes(fileWriteHandlers));
   await app.ready();
   return app;
 }
@@ -83,7 +86,9 @@ describe('PUT /api/file/*', () => {
       content: 'pwned',
     });
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: 'Path is outside your access scope' });
+    expect(res.json()).toEqual(
+      serverError('SERVER_OUT_OF_SCOPE', 'Path is outside your access scope'),
+    );
     expect(read('config/x.json')).toBe('secret');
   });
 
@@ -114,6 +119,27 @@ describe('PUT /api/file/*', () => {
     expect(read('content/a.md')).toBe('old');
   });
 
+  it('waits for the per-file lock block mutations hold (Decision 15)', async () => {
+    app = await buildApp('insider');
+    const file = path.resolve(tmpDir, 'content', 'a.md');
+    let release = () => {};
+    const held = withFileLock(
+      file,
+      () =>
+        new Promise<void>((resolve) => {
+          release = resolve;
+        }),
+    );
+    const pending = put(app, '/api/file/j/content/a.md', { content: 'new' });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(read('content/a.md')).toBe('old');
+
+    release();
+    await held;
+    expect((await pending).statusCode).toBe(200);
+    expect(read('content/a.md')).toBe('new');
+  });
+
   it('reports write failures with 500', async () => {
     app = await buildApp('insider');
     const spy = vi
@@ -122,6 +148,7 @@ describe('PUT /api/file/*', () => {
     const res = await put(app, '/api/file/j/content/a.md', { content: 'x' });
     spy.mockRestore();
     expect(res.statusCode).toBe(500);
-    expect(res.json()).toEqual({ error: 'Write failed: disk full' });
+    // A file system error is masked: its message names the path.
+    expect(res.json()).toEqual(MASKED_500);
   });
 });

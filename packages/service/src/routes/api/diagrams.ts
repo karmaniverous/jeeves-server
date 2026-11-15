@@ -1,53 +1,32 @@
 /**
- * Diagram rendering API route.
+ * `diagram` (`GET /api/diagram/:type/:hash`): an embedded diagram rendered to SVG from its cached source. The type is validated by the catalog; the hash (with an optional `.svg`) here.
  *
- * Handles: /api/diagram/:type/:hash
+ * @packageDocumentation
  */
 
-import type { FastifyPluginCallback } from 'fastify';
-
+import { ExportFailed, InvalidRequest, NotFound } from '../../api/errors.js';
+import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import {
   getDiagramSource,
   renderDiagramToSvg,
 } from '../../services/embeddedDiagrams.js';
 
-export const diagramsRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
-  fastify.get<{ Params: { type: string; hash: string } }>(
-    '/api/diagram/:type/:hash',
-    async (request, reply) => {
-      const { type, hash: hashWithExt } = request.params;
-      const hash = hashWithExt.replace(/\.svg$/, '');
+/** The diagram handler. */
+export const diagramsHandlers: HandlersFor<'diagram'> = {
+  diagram: async ({ params }) => {
+    const hash = params.hash.replace(/\.svg$/, '');
+    if (!/^[a-f0-9]{64}$/.test(hash)) throw new InvalidRequest('Invalid hash');
 
-      if (!['mermaid', 'plantuml'].includes(type)) {
-        return reply.code(400).send({ error: 'Invalid diagram type' });
-      }
-      if (!/^[a-f0-9]{64}$/.test(hash)) {
-        return reply.code(400).send({ error: 'Invalid hash' });
-      }
+    const entry = getDiagramSource(hash);
+    if (!entry)
+      throw new NotFound('Diagram source not found (may have expired)');
 
-      const entry = getDiagramSource(hash);
-      if (!entry) {
-        return reply
-          .code(404)
-          .send({ error: 'Diagram source not found (may have expired)' });
-      }
+    const svg = await renderDiagramToSvg(params.type, entry.source);
+    if (!svg) throw new ExportFailed('Renderer returned empty result');
 
-      const svg = await renderDiagramToSvg(
-        type,
-        entry.source,
-        entry.contextDir,
-      );
-      if (!svg) {
-        return reply
-          .code(500)
-          .send({ error: 'Renderer returned empty result' });
-      }
-
-      return reply
-        .header('Content-Type', 'image/svg+xml')
-        .header('Cache-Control', 'public, max-age=86400, immutable')
-        .send(svg);
-    },
-  );
-  done();
+    return ok(svg, {
+      'content-type': 'image/svg+xml',
+      'cache-control': 'public, max-age=86400, immutable',
+    });
+  },
 };

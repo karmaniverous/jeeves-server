@@ -8,6 +8,8 @@ children:
   - ./event-gateway.md
   - ./deployment.md
   - ./api-integration.md
+  - ./api-reference.md
+  - ./migrating-to-3.16.md
   - ../CHANGELOG.md
 ---
 
@@ -19,5 +21,7 @@ children:
 - [Exporting & Downloads](./exports.md) — PDF, DOCX, SVG, PNG, and ZIP export via Puppeteer and bundled Mermaid/PlantUML.
 - [Event Gateway](./event-gateway.md) — Webhook receiving, JSON Schema matching, JsonMap body transforms, and durable queue processing.
 - [Deployment](./deployment.md) — Running as a service (NSSM/systemd), reverse proxy setup, HTTPS, and updates.
-- [API & Integration](./api-integration.md) — Endpoint reference, Windows path conversion, share link generation, and AI assistant usage.
+- [API & Integration](./api-integration.md) — SDK usage, route behaviour, error codes, Windows path conversion, share link generation, and AI assistant usage.
+- [API Reference](./api-reference.md) — Every route of the endpoint catalog: method, path, access class, parameters and response (generated).
+- [Migrating to 3.16](./migrating-to-3.16.md) — Breaking changes in 3.16.0: error bodies and codes, removed routes, admin-only `/config`, Node 24.22.2, plugin 0.16.0.
 - [Changelog](../CHANGELOG.md) — Release history for `@karmaniverous/jeeves-server`.

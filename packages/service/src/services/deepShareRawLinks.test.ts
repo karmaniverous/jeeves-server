@@ -13,9 +13,9 @@ import { verifyKey } from '../auth/keys.js';
 import { INSIDER_SEED, makeRuntimeConfig } from '../testing/authFixture.js';
 import {
   authenticateRawUrl,
-  encodeStack,
   rewriteLinksForDeepShare,
 } from './deepShareLinks.js';
+import { encodeStack } from './deepShareStack.js';
 
 const config = makeRuntimeConfig();
 const DOC = '/r/docs/a.md';
@@ -69,6 +69,45 @@ describe('raw anchors in deep shares (#269)', () => {
     const href = rewriteHref('/api/raw/r/docs/a.pdf#page=2', 1, [DOC]);
     expect(href.endsWith('#page=2')).toBe(true);
     expect(verifies(href, '/r/docs/a.pdf')).toBe(true);
+  });
+
+  it('keeps download=1 on a raw link, before the credential (#316)', () => {
+    const href = rewriteHref('/api/raw/r/docs/a.pdf?download=1#p', 1, [DOC]);
+    expect(href.startsWith('/api/raw/r/docs/a.pdf?download=1&k=')).toBe(true);
+    expect(href.endsWith('#p')).toBe(true);
+    expect(verifies(href, '/r/docs/a.pdf')).toBe(true);
+  });
+
+  it('replaces a credential a raw link carries, keeping download', () => {
+    const href = rewriteHref(
+      '/api/raw/r/docs/a.pdf?key=old&k=old&download=1&exp=1&d=9&dirs=1&s=x',
+      1,
+      [DOC],
+    );
+    const q = new URL(href, 'http://h').searchParams;
+    expect(q.getAll('k')).toHaveLength(1);
+    expect(q.has('key')).toBe(false);
+    expect(q.get('download')).toBe('1');
+    expect(q.getAll('d')).toEqual(['1']);
+    expect(verifies(href, '/r/docs/a.pdf')).toBe(true);
+  });
+
+  it('keeps download=1 on a page link it re-keys (#316)', () => {
+    const href = rewriteHref('/browse/r/docs/b.md?download=1&k=old#h', 1, [
+      DOC,
+    ]);
+    const url = new URL(href, 'http://h');
+    expect(url.pathname).toBe('/browse/r/docs/b.md');
+    expect(url.searchParams.get('download')).toBe('1');
+    expect(url.searchParams.getAll('k')).toHaveLength(1);
+    expect(url.searchParams.get('k')).not.toBe('old');
+    expect(url.hash).toBe('#h');
+    expect(verifies(href, '/r/docs/b.md')).toBe(true);
+  });
+
+  it('keeps a relative link query too', () => {
+    const href = rewriteHref('b.md?download=true', 1, [DOC]);
+    expect(href.startsWith('/browse/r/docs/b.md?download=true&k=')).toBe(true);
   });
 
   it('strips the raw link once depth is exhausted', () => {

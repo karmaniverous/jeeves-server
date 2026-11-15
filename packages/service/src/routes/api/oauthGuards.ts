@@ -4,23 +4,50 @@
  * @packageDocumentation
  */
 
-import type { FastifyReply } from 'fastify';
+import type { FastifyRequest } from 'fastify';
 
+import {
+  InvalidRequest,
+  NotConfigured,
+  Unauthorized,
+} from '../../api/errors.js';
+import { getConfig } from '../../config/index.js';
+import type { RuntimeConfig } from '../../config/types.js';
 import {
   areValidCredentialNames,
   INVALID_CREDENTIAL_NAME_ERROR,
 } from '../../services/oauthState.js';
 
 /**
- * Send 400 and return true when the provider or account name is not a safe
- * credential file name.
+ * The OAuth config, for an insider caller: the preamble of every OAuth API
+ * route.
+ *
+ * @param request - The request.
+ * @returns The configured `oauth` block.
+ * @throws `SERVER_NOT_CONFIGURED` (501) when OAuth is not configured,
+ *   `SERVER_UNAUTHORIZED` (401) without insider access.
  */
-export function rejectInvalidCredentialNames(
-  reply: FastifyReply,
+export function requireOAuthInsider(
+  request: FastifyRequest,
+): NonNullable<RuntimeConfig['oauth']> {
+  const { oauth } = getConfig();
+  if (!oauth) throw new NotConfigured('OAuth not configured');
+  if (request.accessMode !== 'insider')
+    throw new Unauthorized('Insider auth required');
+  return oauth;
+}
+
+/**
+ * Require the provider and account names to be safe credential file names.
+ *
+ * @param provider - Provider name.
+ * @param account - Account name.
+ * @throws `SERVER_INVALID_REQUEST` (400) otherwise.
+ */
+export function requireValidCredentialNames(
   provider: string,
   account: string,
-): boolean {
-  if (areValidCredentialNames(provider, account)) return false;
-  void reply.code(400).send({ error: INVALID_CREDENTIAL_NAME_ERROR });
-  return true;
+): void {
+  if (!areValidCredentialNames(provider, account))
+    throw new InvalidRequest(INVALID_CREDENTIAL_NAME_ERROR);
 }

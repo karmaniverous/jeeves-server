@@ -3,14 +3,27 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 
-import type { DirectoryListing, DriveEntry, FileContent } from '@/lib/api';
-import {
-  getDrives,
-  getDirectory,
-  getFile,
-  getFileRaw,
-  saveFile,
-} from '@/lib/api';
+import type { DirectoryListing, DriveEntry, FileContent } from '@/lib/apiTypes';
+import { server } from '@/lib/server';
+import { errorMessage } from '@/lib/serverErrors';
+
+import { useLatestRef } from './useLatestRef';
+
+/** A file's rendered view; forwards `render_diagrams` from the page URL (PDF/DOCX export via Puppeteer). */
+function getFile(path: string): Promise<FileContent> {
+  const renderDiagrams = new URLSearchParams(window.location.search).get(
+    'render_diagrams',
+  );
+  return server.fileContent({
+    '*': path,
+    ...(renderDiagrams ? { render_diagrams: renderDiagrams } : {}),
+  });
+}
+
+/** A file's source, unrendered. */
+function getFileRaw(path: string): Promise<FileContent> {
+  return server.fileContent({ '*': path, raw: '1' });
+}
 
 export function useFileData(reqPath: string, searchParams: URLSearchParams) {
   const [drives, setDrives] = useState<DriveEntry[] | null>(null);
@@ -44,16 +57,16 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
 
       if (!path) {
         try {
-          const data = await getDrives();
+          const data = await server.drives();
           setDrives(data);
         } catch (e: unknown) {
-          setError((e as Error).message);
+          setError(errorMessage(e));
         } finally {
           setLoading(false);
         }
       } else {
         try {
-          const data = await getDirectory(path);
+          const data = await server.browse({ '*': path });
           if ('entries' in data) {
             setDirectory(data);
             setLoading(false);
@@ -67,7 +80,7 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
             getFile(path)
               .then(setFileRendered)
               .catch((e: unknown) => {
-                setRenderError((e as Error).message);
+                setRenderError(errorMessage(e));
               });
           }
         } catch {
@@ -76,14 +89,14 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
               setFileRaw(raw);
               setLoading(false);
             })
-            .catch((e: Error) => {
-              setError(e.message);
+            .catch((e: unknown) => {
+              setError(errorMessage(e));
               setLoading(false);
             });
           getFile(path)
             .then(setFileRendered)
             .catch((e: unknown) => {
-              setRenderError((e as Error).message);
+              setRenderError(errorMessage(e));
             });
         }
       }
@@ -91,13 +104,15 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
     [],
   );
 
-  // Only reload data when the path changes, not when tab params change
+  // Only reload data when the path changes, not when tab params change:
+  // the load reads the params current at that moment through a ref.
+  const searchParamsRef = useLatestRef(searchParams);
   useEffect(() => {
+    const params = searchParamsRef.current;
     queueMicrotask(() => {
-      void loadData(reqPath, searchParams);
+      void loadData(reqPath, params);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadData, reqPath]);
+  }, [loadData, reqPath, searchParamsRef]);
 
   /** Imperatively re-fetch file data without resetting editing/view state. */
   const refetch = useCallback(async () => {
@@ -117,7 +132,7 @@ export function useFileData(reqPath: string, searchParams: URLSearchParams) {
   }, [reqPath]);
 
   const handleSave = async (content: string) => {
-    await saveFile(reqPath, content);
+    await server.fileWrite({ '*': reqPath, content });
     const refreshed = await getFileRaw(reqPath);
     setFileRaw(refreshed);
     try {

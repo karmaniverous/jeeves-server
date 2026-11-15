@@ -1,225 +1,71 @@
 /**
- * Durable event queue for webhook event processing
+ * The durable event queue file and the webhook events log: appends (with append hygiene), the in-process queue mutex (the receiver appends under it; the processor takes it only to rotate), and the queue entry check.
+ *
+ * @packageDocumentation
  */
-
-import { spawn } from 'node:child_process';
-import fs from 'node:fs';
-import path from 'node:path';
 
 import { getConfig } from '../config/index.js';
 import type { QueueEntry } from '../config/types.js';
+import { withFileLock } from '../util/fileMutex.js';
 import { nowIso } from '../util/formatters.js';
-import { logEvent } from './eventLog.js';
+import { appendJsonlLine } from '../util/jsonl.js';
 
 /**
- * Ensure directory exists
- */
-function ensureDir(dirPath: string): void {
-  fs.mkdirSync(dirPath, { recursive: true });
-}
-
-/**
- * Append a JSON object as a line to the general event log (backward compatibility)
- * This is separate from the Event Gateway event log
+ * Append a JSON object as a line to the webhook events log
+ * (`webhook-events.jsonl`: exports, key rotations, queue incidents). This
+ * is separate from the Event Gateway event log.
+ *
+ * @param event - The event.
  */
 export function appendEvent(event: Record<string, unknown>): void {
-  const { eventsLog } = getConfig();
-  ensureDir(path.dirname(eventsLog));
-  const line = JSON.stringify({ at: nowIso(), ...event }) + '\n';
-  fs.appendFileSync(eventsLog, line, 'utf8');
+  appendJsonlLine(getConfig().eventsLog, { at: nowIso(), ...event });
 }
 
 /**
- * Append a queue entry to the durable queue
+ * Run `fn` holding the queue mutex (one per queue file, in-process).
+ *
+ * @param fn - The work.
+ * @returns Its result.
  */
-export function enqueue(
+export function withQueueLock<T>(fn: () => Promise<T>): Promise<T> {
+  return withFileLock(getConfig().eventQueuePath, fn);
+}
+
+/**
+ * Append a queue entry to the durable queue, under the queue mutex.
+ *
+ * @param event - Matched event name.
+ * @param cmd - Command to run.
+ * @param body - Body piped to the command.
+ * @param timeoutMs - Command timeout.
+ */
+export async function enqueue(
   event: string,
   cmd: string,
   body: Record<string, unknown>,
   timeoutMs: number,
-): void {
-  const { eventQueuePath } = getConfig();
-  ensureDir(path.dirname(eventQueuePath));
-
-  const entry: QueueEntry = {
-    ts: nowIso(),
-    event,
-    cmd,
-    body,
-    timeoutMs,
-  };
-
-  const line = JSON.stringify(entry) + '\n';
-  fs.appendFileSync(eventQueuePath, line, 'utf8');
-}
-
-/**
- * Read cursor position (byte offset of last processed entry)
- */
-function readCursor(): number {
-  const { eventQueueCursorPath } = getConfig();
-  if (!fs.existsSync(eventQueueCursorPath)) return 0;
-
-  const content = fs.readFileSync(eventQueueCursorPath, 'utf8').trim();
-  return parseInt(content, 10) || 0;
-}
-
-/**
- * Write cursor position
- */
-function writeCursor(position: number): void {
-  const { eventQueueCursorPath } = getConfig();
-  ensureDir(path.dirname(eventQueueCursorPath));
-  fs.writeFileSync(eventQueueCursorPath, position.toString(), 'utf8');
-}
-
-/**
- * Parse JSONL entries from file starting at cursor position
- */
-function readEntriesFromCursor(): {
-  entries: QueueEntry[];
-  newPosition: number;
-} {
-  const { eventQueuePath } = getConfig();
-
-  if (!fs.existsSync(eventQueuePath)) {
-    return { entries: [], newPosition: 0 };
-  }
-
-  const cursor = readCursor();
-  const buf = fs.readFileSync(eventQueuePath);
-
-  // Read from cursor position (byte-based to match writeCursor)
-  const remaining = buf.subarray(cursor).toString('utf8');
-  const lines = remaining
-    .split('\n')
-    .filter((line) => line.trim())
-    .map((line) => JSON.parse(line) as QueueEntry);
-
-  const newPosition = buf.length;
-
-  return { entries: lines, newPosition };
-}
-
-/**
- * Execute a queue entry (spawn command with body piped to stdin)
- */
-async function executeEntry(entry: QueueEntry): Promise<{
-  exitCode: number;
-  durationMs: number;
-}> {
-  const startTime = Date.now();
-
-  return new Promise((resolve) => {
-    // Parse command and args
-    const parts = entry.cmd.split(/\s+/);
-    const command = parts[0];
-    const args = parts.slice(1);
-
-    const proc = spawn(command, args, {
-      stdio: ['pipe', 'inherit', 'inherit'],
-      shell: true,
-    });
-
-    // Pipe body as JSON to stdin
-    const bodyJson = JSON.stringify(entry.body);
-    proc.stdin.write(bodyJson);
-    proc.stdin.end();
-
-    // Setup timeout
-    const timeout = setTimeout(() => {
-      proc.kill('SIGTERM');
-    }, entry.timeoutMs);
-
-    proc.on('exit', (code) => {
-      clearTimeout(timeout);
-      const exitCode = code ?? -1;
-      const durationMs = Date.now() - startTime;
-      resolve({ exitCode, durationMs });
-    });
-
-    proc.on('error', () => {
-      clearTimeout(timeout);
-      const durationMs = Date.now() - startTime;
-      resolve({ exitCode: -1, durationMs });
-    });
+): Promise<void> {
+  const entry: QueueEntry = { ts: nowIso(), event, cmd, body, timeoutMs };
+  await withQueueLock(() => {
+    appendJsonlLine(getConfig().eventQueuePath, entry);
+    return Promise.resolve();
   });
 }
 
 /**
- * Process one batch of queue entries with bounded concurrency.
+ * Whether a parsed queue line is a queue entry.
+ *
+ * @param value - The parsed line.
+ * @returns True when it has the entry's fields.
  */
-async function processBatch(): Promise<void> {
-  const { entries, newPosition } = readEntriesFromCursor();
-
-  if (entries.length === 0) {
-    // Write cursor even on empty batches to recover from stale cursors
-    // (e.g. after queue file truncation/rotation)
-    if (newPosition > 0) writeCursor(newPosition);
-    return;
-  }
-
-  const maxConcurrent = getConfig().eventQueueConcurrency;
-
-  // Process entries with concurrency limit using a simple semaphore approach
-  const executing: Promise<void>[] = [];
-
-  for (const entry of entries) {
-    const task = (async () => {
-      try {
-        const { exitCode, durationMs } = await executeEntry(entry);
-        logEvent({
-          event: entry.event,
-          matched: true,
-          exitCode,
-          durationMs,
-        });
-      } catch {
-        // Log error but continue (errors are ignored per spec)
-        logEvent({
-          event: entry.event,
-          matched: true,
-          exitCode: -1,
-          durationMs: 0,
-        });
-      }
-    })();
-
-    executing.push(task);
-
-    // When we hit the concurrency limit, wait for the oldest task to complete
-    if (executing.length >= maxConcurrent) {
-      await executing.shift();
-    }
-  }
-
-  // Wait for all remaining tasks
-  await Promise.all(executing);
-
-  writeCursor(newPosition);
-}
-
-/**
- * Self-scheduling drain loop — prevents overlapping batches.
- * Catches and logs errors so the loop never dies silently.
- */
-async function drainLoop(): Promise<void> {
-  for (;;) {
-    try {
-      await processBatch();
-    } catch (err) {
-      console.error(
-        '[event-queue] processBatch error:',
-        err instanceof Error ? err.message : err,
-      );
-    }
-    await new Promise<void>((r) => setTimeout(r, 5000));
-  }
-}
-
-/**
- * Start the queue drain loop
- */
-export function startQueueProcessor(): void {
-  void drainLoop();
+export function isQueueEntry(
+  value: Record<string, unknown>,
+): value is Record<string, unknown> & QueueEntry {
+  return (
+    typeof value.event === 'string' &&
+    typeof value.cmd === 'string' &&
+    value.body !== null &&
+    typeof value.body === 'object' &&
+    typeof value.timeoutMs === 'number'
+  );
 }

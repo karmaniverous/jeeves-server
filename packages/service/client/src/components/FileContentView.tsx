@@ -17,7 +17,9 @@ import { MarkdownView } from '@/components/MarkdownView';
 import { scrollToIdInContainer } from '@/components/scrollUtils';
 import { isRenderable } from '@/components/renderableUtils';
 import { useScrollAnchor } from '@/hooks/useScrollAnchor';
-import type { FileContent } from '@/lib/api';
+import type { FileContent } from '@/lib/apiTypes';
+import { pageRawUrl } from '@/lib/pageAuth';
+import { pageCredential } from '@/lib/server';
 
 interface FileContentViewProps {
   reqPath: string;
@@ -58,6 +60,8 @@ export function FileContentView({
   const renderable = file ? isRenderable(file) : false;
   const activeTab = renderable ? viewTab : 'raw';
   const fileLoading = !file;
+  // With the page's share credential, so it opens in a share-link view.
+  const rawUrl = pageRawUrl(reqPath, pageCredential);
 
   // Scroll to hash on file load
   useEffect(() => {
@@ -184,7 +188,7 @@ export function FileContentView({
       {file?.type === 'image' && (
         <div className="flex justify-center p-4">
           <img
-            src={`/api/raw/${reqPath}`}
+            src={rawUrl}
             alt={file.fileName}
             className="max-w-full rounded-lg shadow-md"
           />
@@ -196,7 +200,7 @@ export function FileContentView({
         <div className="text-center p-8">
           <p className="text-muted-foreground mb-4">{file.fileName}</p>
           <a
-            href={`/api/raw/${reqPath}`}
+            href={rawUrl}
             download={file.fileName}
             className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
           >

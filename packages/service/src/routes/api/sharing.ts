@@ -1,7 +1,5 @@
 /**
- * Sharing API routes.
- *
- * Handles: /api/share, /api/util/share-for, /api/readme-link, /api/rotate-key
+ * Sharing handlers: `readmeLink`, `contentLink`, `share` and `rotateKey` (the one rotation route, #292); `shareFor` is shareFor.ts.
  *
  * @packageDocumentation
  */
@@ -11,18 +9,28 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { FastifyPluginCallback, FastifyReply } from 'fastify';
 import { packageDirectorySync } from 'package-directory';
 
-import { _pathMatchesScopes } from '../../auth/keys.js';
+import {
+  capArg,
+  Forbidden,
+  InternalKeyMissing,
+  InvalidRequest,
+  MachineKeyNotRotatable,
+  NotFound,
+  Unauthorized,
+} from '../../api/errors.js';
+import { type HandlersFor, ok } from '../../api/handlerTypes.js';
 import { findInsider } from '../../auth/resolve.js';
 import { getConfig, resetConfig } from '../../config/index.js';
+import { INTERNAL_KEY_NAME } from '../../config/types.js';
 import { isDirectoryUrlPath } from '../../services/contentPath.js';
+import { appendEvent } from '../../services/eventQueue.js';
 import { createDeepShare, createPathShare } from '../../services/shareLinks.js';
 import { writeInsiderSeedToConfig } from '../../util/configPersist.js';
 import { fsPathToUrl, getRoots } from '../../util/platform.js';
-import { getPublicOrigin } from '../../util/publicOrigin.js';
-import { rejectOutOfScope } from './scopeGuard.js';
+import { requireNoShareTraversal } from './contentRoute.js';
+import { requireInScope } from './scopeGuard.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -32,64 +40,51 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  */
 const serverRoot = packageDirectorySync({ cwd: __dirname }) ?? __dirname;
 
-export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
-  const roots = getRoots(getConfig().roots);
+/** The _internal key seed (`SERVER_INTERNAL_KEY_MISSING` without one). */
+function getInternalSeed(): string {
+  const internalKey = getConfig().resolvedKeys.find(
+    (k) => k.name === INTERNAL_KEY_NAME,
+  );
+  if (!internalKey?.seed) throw new InternalKeyMissing();
+  return internalKey.seed;
+}
 
-  /** Resolve the _internal key seed, or send a 503 error. */
-  function getInternalSeed(reply: FastifyReply): string | null {
-    const internalKey = getConfig().resolvedKeys.find(
-      (k) => k.name === '_internal',
-    );
-    if (!internalKey?.seed) {
-      void reply.code(503).send({ error: 'No _internal key configured' });
-      return null;
-    }
-    return internalKey.seed;
-  }
-
-  // GET /api/readme-link
-  fastify.get('/api/readme-link', async (_request, reply) => {
-    const seed = getInternalSeed(reply);
-    if (!seed) return;
+/** The sharing handlers (`shareFor`: shareFor.ts). */
+export const sharingHandlers: HandlersFor<
+  'readmeLink' | 'contentLink' | 'share' | 'rotateKey'
+> = {
+  readmeLink: () => {
+    const seed = getInternalSeed();
 
     const readmePath = path.join(serverRoot, 'README.md');
-    if (!fs.existsSync(readmePath))
-      return reply.code(404).send({ error: 'README.md not found' });
+    if (!fs.existsSync(readmePath)) throw new NotFound('README.md not found');
 
-    const urlPath = fsPathToUrl(readmePath, roots);
+    const urlPath = fsPathToUrl(readmePath, getRoots(getConfig().roots));
     const { url } = createDeepShare(seed, urlPath, { depth: 2, dirs: false });
-    return reply.send({ url });
-  });
+    return Promise.resolve(ok({ url }));
+  },
+  contentLink: ({ params }) => {
+    const seed = getInternalSeed();
 
-  // GET /api/content-link/:file — share link for content/*.md (terms, privacy)
-  fastify.get('/api/content-link/:file', async (request, reply) => {
-    const seed = getInternalSeed(reply);
-    if (!seed) return;
-
-    const { file } = request.params as { file: string };
-    if (!/^[\w-]+$/.test(file))
-      return reply.code(400).send({ error: 'Invalid file name' });
+    const { file } = params;
+    if (!/^[\w-]+$/.test(file)) throw new InvalidRequest('Invalid file name');
 
     const contentPath = path.join(serverRoot, 'content', `${file}.md`);
     if (!fs.existsSync(contentPath))
-      return reply.code(404).send({ error: `${file}.md not found` });
+      throw new NotFound(`${capArg(file)}.md not found`);
 
-    const urlPath = fsPathToUrl(contentPath, roots);
+    const urlPath = fsPathToUrl(contentPath, getRoots(getConfig().roots));
     const { url } = createDeepShare(seed, urlPath, { depth: 0, dirs: false });
-    return reply.send({ url });
-  });
-
-  // POST /api/share
-  fastify.post<{
-    Body: { path: string; expiry?: string; depth?: number; dirs?: boolean };
-  }>('/api/share', async (request, reply) => {
+    return Promise.resolve(ok({ url }));
+  },
+  share: ({ body }, request) => {
     const seed = request.authSeed;
-    if (!seed) return reply.code(401).send({ error: 'Insider auth required' });
+    if (!seed) throw new Unauthorized('Insider auth required');
 
-    const { path: targetPath, expiry, depth, dirs } = request.body;
-    if (!targetPath) return reply.code(400).send({ error: 'path is required' });
+    const { path: targetPath, expiry, depth, dirs } = body;
+    requireNoShareTraversal(targetPath);
 
-    if (rejectOutOfScope(request, reply, targetPath)) return reply;
+    requireInScope(request, targetPath);
 
     const share =
       (depth && depth > 0) || dirs
@@ -100,147 +95,38 @@ export const sharingRoutes: FastifyPluginCallback = (fastify, _opts, done) => {
           })
         : createPathShare(seed, targetPath, expiry);
 
-    return reply.send({
-      url: share.url,
-      path: targetPath,
-      exp: expiry ?? null,
-      depth: depth ?? 0,
-      dirs: dirs ?? false,
-      isDirectory: isDirectoryUrlPath(targetPath),
-    });
-  });
-
-  // POST /api/rotate-key
-  fastify.post('/api/rotate-key', async (request, reply) => {
+    return Promise.resolve(
+      ok({
+        url: share.url,
+        path: targetPath,
+        exp: expiry ?? null,
+        depth: depth ?? 0,
+        dirs: dirs ?? false,
+        isDirectory: isDirectoryUrlPath(targetPath),
+      }),
+    );
+  },
+  rotateKey: async (_input, request) => {
     const insiderEmail = request.insiderEmail;
-    if (!insiderEmail)
-      return reply.code(403).send({ error: 'Insider auth required' });
+    // Machine keys reach here without an email: they rotate through config.
+    if (!insiderEmail) throw new MachineKeyNotRotatable();
 
     const config = getConfig();
     const insider = findInsider(config.resolvedInsiders, insiderEmail);
-    if (!insider) return reply.code(403).send({ error: 'Not an insider' });
+    if (!insider) throw new Forbidden('Not an insider');
 
     const newSeed = crypto.randomBytes(32).toString('hex');
     const now = new Date().toISOString();
     await writeInsiderSeedToConfig(insider.email, newSeed, now);
+    appendEvent({ kind: 'insider_key_rotated', email: insider.email, at: now });
     resetConfig();
 
-    return reply.send({ ok: true, keyCreatedAt: now });
-  });
-
-  // POST /api/util/share-for
-  fastify.post<{
-    Body: {
-      path: string;
-      insiders: string[];
-      depth?: number;
-      dirs?: boolean;
-      enforceOutsiderPolicy?: boolean;
-    };
-  }>('/api/util/share-for', async (request, reply) => {
-    const config = getConfig();
-    const sharerSeed = request.authSeed;
-    const sharerScopes = request.insiderScopes ?? null;
-    if (!sharerSeed)
-      return reply.code(401).send({ error: 'Authentication required' });
-
-    const {
-      path: targetPath,
-      insiders: audienceIds,
-      depth,
-      dirs,
-      enforceOutsiderPolicy,
-    } = request.body;
-    if (!targetPath) return reply.code(400).send({ error: 'path is required' });
-    if (!Array.isArray(audienceIds))
-      return reply.code(400).send({ error: 'insiders array is required' });
-
-    if (sharerScopes && !_pathMatchesScopes(targetPath, sharerScopes)) {
-      return reply.send({
-        url: null,
-        type: 'blocked',
-        reason: 'Sharer does not have access to this path',
-        blocked: [],
-      });
-    }
-
-    const blockedInsiders: string[] = [];
-    const unknownIds: string[] = [];
-
-    for (const id of audienceIds) {
-      const insider = findInsider(config.resolvedInsiders, id);
-      if (!insider || !insider.seed) {
-        unknownIds.push(id);
-        continue;
-      }
-      if (insider.scopes && !_pathMatchesScopes(targetPath, insider.scopes)) {
-        blockedInsiders.push(id);
-      }
-    }
-
-    if (blockedInsiders.length > 0) {
-      return reply.send({
-        url: null,
-        type: 'blocked',
-        reason: 'Insider(s) do not have access to this path',
-        blocked: blockedInsiders,
-      });
-    }
-
-    const hasOutsiders = unknownIds.length > 0;
-
-    // Absolute URLs only from the configured public origin; otherwise
-    // relative (never from untrusted request headers).
-    const origin = getPublicOrigin(config, request) ?? '';
-
-    if (!hasOutsiders) {
-      return reply.send({
-        url: `${origin}/browse${targetPath}`,
-        type: 'insider',
-      });
-    }
-
-    const outsiderPolicy = config.outsiderPolicy;
-    const policyEnforced = enforceOutsiderPolicy !== false;
-
-    if (outsiderPolicy && policyEnforced) {
-      if (!_pathMatchesScopes(targetPath, outsiderPolicy)) {
-        return reply.send({
-          url: null,
-          type: 'policy-denied',
-          reason: 'Outsider policy does not allow sharing this path',
-        });
-      }
-    }
-
-    const shareDepth = depth ?? 0;
-    const shareDirs = dirs ?? false;
-    // A directory shared without depth or dirs is a tree share: a plain path
-    // key covers every file below it, as the UI's directory links do.
-    // Otherwise the same deep share as POST /api/share, which always emits
-    // d (also d=0) so verification recognises a deep key (#282).
-    const share =
-      shareDepth <= 0 && !shareDirs && isDirectoryUrlPath(targetPath)
-        ? createPathShare(sharerSeed, targetPath)
-        : createDeepShare(sharerSeed, targetPath, {
-            depth: shareDepth,
-            dirs: shareDirs,
-          });
-
-    const response: Record<string, unknown> = {
-      url: `${origin}${share.url}`,
-      type: 'outsider-share',
-    };
-
-    if (
-      outsiderPolicy &&
-      !policyEnforced &&
-      !_pathMatchesScopes(targetPath, outsiderPolicy)
-    ) {
-      response.warning = 'Outsider policy would deny this path';
-    }
-
-    return reply.send(response);
-  });
-  done();
+    return ok({
+      ok: true as const,
+      keyCreatedAt: now,
+      invalidates: ['insiderKey', 'outsiderLinks'] as (
+        'insiderKey' | 'outsiderLinks'
+      )[],
+    });
+  },
 };

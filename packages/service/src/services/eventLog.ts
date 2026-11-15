@@ -3,38 +3,34 @@
  */
 
 import fs from 'node:fs';
-import path from 'node:path';
 
 import { getConfig } from '../config/index.js';
 import type { EventLogEntry } from '../config/types.js';
+import { writeFileAtomic } from '../util/atomicWrite.js';
 import { nowIso } from '../util/formatters.js';
+import { parseJsonlObjects } from '../util/jsonl.js';
 
 /**
- * Ensure directory exists
- */
-function ensureDir(dirPath: string): void {
-  fs.mkdirSync(dirPath, { recursive: true });
-}
-
-/**
- * Parse JSONL file into entries
+ * Parse the JSONL file line by line; a malformed line (torn by a full disk
+ * or a crash) is skipped, so it can't break a reader or the next write.
  */
 function parseJsonl(filePath: string): EventLogEntry[] {
   if (!fs.existsSync(filePath)) return [];
 
   const content = fs.readFileSync(filePath, 'utf8');
-  return content
-    .split('\n')
-    .filter((line) => line.trim())
-    .map((line) => JSON.parse(line) as EventLogEntry);
+  return parseJsonlObjects(content, filePath).entries.filter(
+    (entry): entry is Record<string, unknown> & EventLogEntry =>
+      typeof entry.ts === 'string',
+  );
 }
 
 /**
- * Write entries to JSONL file
+ * Replace the JSONL file atomically (temp file + rename), so a failed
+ * write leaves the previous log intact.
  */
 function writeJsonl(filePath: string, entries: EventLogEntry[]): void {
   const content = entries.map((entry) => JSON.stringify(entry)).join('\n');
-  fs.writeFileSync(filePath, content + '\n', 'utf8');
+  writeFileAtomic(filePath, content + '\n');
 }
 
 /**
@@ -52,7 +48,6 @@ function purgeOldEntries(entries: EventLogEntry[]): EventLogEntry[] {
  */
 export function logEvent(entry: Omit<EventLogEntry, 'ts'>): void {
   const { eventLogPath } = getConfig();
-  ensureDir(path.dirname(eventLogPath));
 
   // Read existing entries
   const entries = parseJsonl(eventLogPath);
