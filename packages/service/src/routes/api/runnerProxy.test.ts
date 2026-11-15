@@ -56,9 +56,9 @@ describe('runner proxy', () => {
     ['GET', '/api/runner/jobs/a%20b?key=x', 'GET', '/jobs/a%20b'],
     [
       'GET',
-      '/api/runner/jobs/a%2Fb/runs?limit=5&k=secret&tag=x',
+      '/api/runner/jobs/a%3Fb/runs?limit=5&k=secret&tag=x',
       'GET',
-      '/jobs/a%2Fb/runs?limit=5',
+      '/jobs/a%3Fb/runs?limit=5',
     ],
     [
       'GET',

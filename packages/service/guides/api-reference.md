@@ -793,7 +793,7 @@ One jeeves-runner job (runner GET /jobs/:id).
 
 | Field | In | Type | Description |
 | --- | --- | --- | --- |
-| `id` | path | `string` | Runner job ID. |
+| `id` | path | `string` | Runner job ID: not `.` or `..`, and no `/` or `\`. |
 
 **Response:** `unknown` (JSON).
 
@@ -809,7 +809,7 @@ A jeeves-runner job's recent runs (runner GET /jobs/:id/runs).
 
 | Field | In | Type | Description |
 | --- | --- | --- | --- |
-| `id` | path | `string` | Runner job ID. |
+| `id` | path | `string` | Runner job ID: not `.` or `..`, and no `/` or `\`. |
 | `limit` | query | `string` (optional) | Maximum number of runs (default 20). |
 
 **Response:** `unknown` (JSON).
@@ -826,7 +826,7 @@ Run a jeeves-runner job now (runner POST /jobs/:id/run).
 
 | Field | In | Type | Description |
 | --- | --- | --- | --- |
-| `id` | path | `string` | Runner job ID. |
+| `id` | path | `string` | Runner job ID: not `.` or `..`, and no `/` or `\`. |
 
 **Response:** `unknown` (JSON).
 
@@ -842,7 +842,7 @@ Enable a jeeves-runner job (runner PATCH /jobs/:id/enable).
 
 | Field | In | Type | Description |
 | --- | --- | --- | --- |
-| `id` | path | `string` | Runner job ID. |
+| `id` | path | `string` | Runner job ID: not `.` or `..`, and no `/` or `\`. |
 
 **Response:** `unknown` (JSON).
 
@@ -858,7 +858,7 @@ Disable a jeeves-runner job (runner PATCH /jobs/:id/disable).
 
 | Field | In | Type | Description |
 | --- | --- | --- | --- |
-| `id` | path | `string` | Runner job ID. |
+| `id` | path | `string` | Runner job ID: not `.` or `..`, and no `/` or `\`. |
 
 **Response:** `unknown` (JSON).
 

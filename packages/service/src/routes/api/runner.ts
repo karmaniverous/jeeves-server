@@ -8,7 +8,7 @@ import { getServiceUrl } from '@karmaniverous/jeeves';
 import type { ErrorStatus, SuccessStatus } from '@karmaniverous/jeeves/fastify';
 import type { FastifyRequest } from 'fastify';
 
-import { RunnerUnavailable } from '../../api/errors.js';
+import { InvalidRequest, RunnerUnavailable } from '../../api/errors.js';
 import type { HandlersFor } from '../../api/handlerTypes.js';
 import { requireInsider } from './scopeGuard.js';
 
@@ -20,8 +20,15 @@ const DEFAULT_RUNS_LIMIT = '20';
  *
  * @param id - The job ID (decoded).
  * @returns `/jobs/<id>`, the ID encoded as one path segment.
+ * @throws `SERVER_INVALID_REQUEST` when the ID is empty, `.` or `..`, or holds
+ *   a `/` or `\` (the catalog refuses these first; this is defence in depth,
+ *   since the runner would read a dot segment as a step up its own paths).
  */
-const jobPath = (id: string): string => `/jobs/${encodeURIComponent(id)}`;
+function jobPath(id: string): string {
+  if (id === '' || id === '.' || id === '..' || /[/\\]/u.test(id))
+    throw new InvalidRequest('Invalid runner job ID');
+  return `/jobs/${encodeURIComponent(id)}`;
+}
 
 /** The runner's body: JSON when it parses, else its text. */
 function parseBody(text: string): unknown {

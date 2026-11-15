@@ -8,8 +8,13 @@ import { z } from 'zod';
 
 import { INSIDER_ONLY, route } from './route.js';
 
-/** `:id`: the runner job. */
-const jobParams = z.object({ id: z.string().describe('Runner job ID.') });
+/** `:id`: the runner job; never `.`, `..` or a slash, so its runner path stays `/jobs/<id>`. */
+const jobParams = z.object({
+  id: z
+    .string()
+    .regex(/^(?!\.{1,2}$)[^/\\]+$/u)
+    .describe('Runner job ID: not `.` or `..`, and no `/` or `\\`.'),
+});
 
 /** Query of the job runs entry. */
 const runsQuery = z.object({
