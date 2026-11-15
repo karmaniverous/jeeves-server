@@ -21,11 +21,11 @@ const DEFAULT_RUNS_LIMIT = '20';
  * @param id - The job ID (decoded).
  * @returns `/jobs/<id>`, the ID encoded as one path segment.
  * @throws `SERVER_INVALID_REQUEST` when the ID is empty, `.` or `..`, or holds
- *   a `/` or `\` (the catalog refuses these first; this is defence in depth,
- *   since the runner would read a dot segment as a step up its own paths).
+ *   a `/`, a `\` or a control character (the catalog refuses these first;
+ *   this is defence in depth, since the runner would read a dot segment as a step up its own paths).
  */
 function jobPath(id: string): string {
-  if (id === '' || id === '.' || id === '..' || /[/\\]/u.test(id))
+  if (id === '' || id === '.' || id === '..' || /[/\\\p{Cc}]/u.test(id))
     throw new InvalidRequest('Invalid runner job ID');
   return `/jobs/${encodeURIComponent(id)}`;
 }

@@ -11,6 +11,7 @@ import { findInsider } from '../../auth/resolve.js';
 import { getConfig } from '../../config/index.js';
 import { isDirectoryUrlPath } from '../../services/contentPath.js';
 import { createDeepShare, createPathShare } from '../../services/shareLinks.js';
+import { encodeUrlPath } from '../../util/platform.js';
 import { getPublicOrigin } from '../../util/publicOrigin.js';
 import { requireNoShareTraversal } from './contentRoute.js';
 
@@ -76,7 +77,7 @@ export const shareForHandlers: HandlersFor<'shareFor'> = {
     if (!hasOutsiders) {
       return Promise.resolve(
         ok({
-          url: `${origin}/browse${targetPath}`,
+          url: `${origin}/browse${encodeUrlPath(targetPath)}`,
           type: 'insider' as const,
         }),
       );

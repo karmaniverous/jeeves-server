@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * Runner job IDs that would leave `/jobs/<id>` (Decision 28): `.` and `..`, plain or percent-encoded, sent over real HTTP so no client normalises them, are refused 400 on every job route and never reach the runner; the proxy's own `jobPath` check refuses them too when called past the catalog.
+ * Runner job IDs that would leave `/jobs/<id>` (Decision 28): `.` and `..`, plain or percent-encoded, and control characters such as `%00`, sent over real HTTP so no client normalises them, are refused 400 on every job route and never reach the runner; the proxy's own `jobPath` check refuses them too when called past the catalog.
  *
  * @packageDocumentation
  */
@@ -85,13 +85,13 @@ const ROUTES = [
   ['PATCH', '/disable'],
 ] as const;
 
-const IDS = ['%2e%2e', '%2E%2e', '..', '%2e', '.'];
+const IDS = ['%2e%2e', '%2E%2e', '..', '%2e', '.', '%00', 'a%00b', 'a%0Ab'];
 
 const CASES = ROUTES.flatMap(([method, tail]) =>
   IDS.map((id) => [method, `/api/runner/jobs/${id}${tail}`] as const),
 );
 
-describe('dot-segment runner job IDs over real HTTP', () => {
+describe('dot-segment and control-character runner job IDs over real HTTP', () => {
   it.each(CASES)(
     '%s %s is a 400 that never reaches the runner',
     async (method, path) => {
@@ -120,13 +120,20 @@ describe('dot-segment runner job IDs over real HTTP', () => {
 describe('jobPath past the catalog', () => {
   const request = {} as FastifyRequest;
 
-  it.each(['', '.', '..', 'a/b', 'a\\b'])(
-    'refuses job ID %j with SERVER_INVALID_REQUEST',
-    async (id) => {
-      await expect(async () =>
-        runnerHandlers.runnerGetJob({ params: { id } } as never, request),
-      ).rejects.toMatchObject({ code: 'SERVER_INVALID_REQUEST' });
-      expect(fetchMock).not.toHaveBeenCalled();
-    },
-  );
+  it.each([
+    '',
+    '.',
+    '..',
+    'a/b',
+    'a\\b',
+    '\u0000',
+    'a\u0000b',
+    'a\nb',
+    'a\u007fb',
+  ])('refuses job ID %j with SERVER_INVALID_REQUEST', async (id) => {
+    await expect(async () =>
+      runnerHandlers.runnerGetJob({ params: { id } } as never, request),
+    ).rejects.toMatchObject({ code: 'SERVER_INVALID_REQUEST' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });

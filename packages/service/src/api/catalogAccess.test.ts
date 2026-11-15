@@ -139,8 +139,9 @@ describe('.. segments', () => {
   it.each([
     ['share', '/api/share', { path: '' }],
     ['shareFor', '/api/util/share-for', { path: '', insiders: [] }],
-  ])('%s refuses a body path with .. or %2e%2e', async (_name, url, body) => {
-    for (const dots of ['..', '%2e%2e', '%2E%2e']) {
+  ])('%s refuses a body path with a dot segment', async (_name, url, body) => {
+    const dotSegments = ['..', '.', '%2e%2e', '%2E%2e', '%2e', '.%2e', '%2E.'];
+    for (const dots of dotSegments) {
       const path = `/${root()}/public/${dots}/private/secret.md`;
       const res = await wire.app.inject({
         method: 'POST',

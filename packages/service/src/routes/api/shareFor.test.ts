@@ -9,7 +9,11 @@
 import { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { MACHINE_SEED, makeRuntimeConfig } from '../../testing/authFixture.js';
+import {
+  INSIDER_EMAIL,
+  MACHINE_SEED,
+  makeRuntimeConfig,
+} from '../../testing/authFixture.js';
 import { catalogRoutes } from '../../testing/catalogRoutes.js';
 import { testApp } from '../../testing/testApp.js';
 import { computeInsiderKey } from '../../util/crypto.js';
@@ -36,6 +40,7 @@ beforeAll(async () => {
     addAccessHook(api);
     api.get('/api/file/*', (request: FastifyRequest) => ({
       accessMode: request.accessMode ?? null,
+      path: '/' + (request.params as { '*': string })['*'],
     }));
     await api.register(
       catalogRoutes({ ...sharingHandlers, ...shareForHandlers }),
@@ -75,6 +80,32 @@ describe('share-for outsider links (#282)', () => {
 
     const res = await app.inject(`/api/file${DOC}${url.search}`);
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ accessMode: 'outsider' });
+    expect(res.json()).toEqual({ accessMode: 'outsider', path: DOC });
+  });
+});
+
+describe('share-for insider links', () => {
+  it('percent-encodes each segment and resolves to the file', async () => {
+    const target = '/r/sub dir/50% #1.md';
+    const res = await app.inject({
+      method: 'POST',
+      url: `/api/util/share-for?k=${computeInsiderKey(MACHINE_SEED)}`,
+      payload: { path: target, insiders: [INSIDER_EMAIL] },
+    });
+    expect(res.statusCode).toBe(200);
+    const json = res.json<{ url: string; type: string }>();
+    expect(json).toEqual({
+      url: '/browse/r/sub%20dir/50%25%20%231.md',
+      type: 'insider',
+    });
+
+    const url = new URL(json.url, 'http://relative.invalid');
+    expect(url.hash).toBe('');
+    const file = url.pathname.slice('/browse'.length);
+    const opened = await app.inject(
+      `/api/file${file}?k=${computeInsiderKey(MACHINE_SEED)}`,
+    );
+    expect(opened.statusCode).toBe(200);
+    expect(opened.json()).toEqual({ accessMode: 'insider', path: target });
   });
 });

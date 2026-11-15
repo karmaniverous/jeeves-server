@@ -3619,11 +3619,11 @@
             "name": "id",
             "schema": {
               "type": "string",
-              "pattern": "^(?!\\.{1,2}$)[^/\\\\]+$",
-              "description": "Runner job ID: not `.` or `..`, and no `/` or `\\`."
+              "pattern": "^(?!\\.{1,2}$)[^/\\\\\\p{Cc}]+$",
+              "description": "Runner job ID: not `.` or `..`, no `/` or `\\`, and no control characters."
             },
             "required": true,
-            "description": "Runner job ID: not `.` or `..`, and no `/` or `\\`."
+            "description": "Runner job ID: not `.` or `..`, no `/` or `\\`, and no control characters."
           }
         ],
         "responses": {
@@ -3667,11 +3667,11 @@
             "name": "id",
             "schema": {
               "type": "string",
-              "pattern": "^(?!\\.{1,2}$)[^/\\\\]+$",
-              "description": "Runner job ID: not `.` or `..`, and no `/` or `\\`."
+              "pattern": "^(?!\\.{1,2}$)[^/\\\\\\p{Cc}]+$",
+              "description": "Runner job ID: not `.` or `..`, no `/` or `\\`, and no control characters."
             },
             "required": true,
-            "description": "Runner job ID: not `.` or `..`, and no `/` or `\\`."
+            "description": "Runner job ID: not `.` or `..`, no `/` or `\\`, and no control characters."
           },
           {
             "in": "query",
@@ -3724,11 +3724,11 @@
             "name": "id",
             "schema": {
               "type": "string",
-              "pattern": "^(?!\\.{1,2}$)[^/\\\\]+$",
-              "description": "Runner job ID: not `.` or `..`, and no `/` or `\\`."
+              "pattern": "^(?!\\.{1,2}$)[^/\\\\\\p{Cc}]+$",
+              "description": "Runner job ID: not `.` or `..`, no `/` or `\\`, and no control characters."
             },
             "required": true,
-            "description": "Runner job ID: not `.` or `..`, and no `/` or `\\`."
+            "description": "Runner job ID: not `.` or `..`, no `/` or `\\`, and no control characters."
           }
         ],
         "responses": {
@@ -3772,11 +3772,11 @@
             "name": "id",
             "schema": {
               "type": "string",
-              "pattern": "^(?!\\.{1,2}$)[^/\\\\]+$",
-              "description": "Runner job ID: not `.` or `..`, and no `/` or `\\`."
+              "pattern": "^(?!\\.{1,2}$)[^/\\\\\\p{Cc}]+$",
+              "description": "Runner job ID: not `.` or `..`, no `/` or `\\`, and no control characters."
             },
             "required": true,
-            "description": "Runner job ID: not `.` or `..`, and no `/` or `\\`."
+            "description": "Runner job ID: not `.` or `..`, no `/` or `\\`, and no control characters."
           }
         ],
         "responses": {
@@ -3820,11 +3820,11 @@
             "name": "id",
             "schema": {
               "type": "string",
-              "pattern": "^(?!\\.{1,2}$)[^/\\\\]+$",
-              "description": "Runner job ID: not `.` or `..`, and no `/` or `\\`."
+              "pattern": "^(?!\\.{1,2}$)[^/\\\\\\p{Cc}]+$",
+              "description": "Runner job ID: not `.` or `..`, no `/` or `\\`, and no control characters."
             },
             "required": true,
-            "description": "Runner job ID: not `.` or `..`, and no `/` or `\\`."
+            "description": "Runner job ID: not `.` or `..`, no `/` or `\\`, and no control characters."
           }
         ],
         "responses": {

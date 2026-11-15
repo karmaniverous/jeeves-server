@@ -48,20 +48,20 @@ export function requireNoTraversal(contentPath: string): void {
   if (hasTraversalSegment(contentPath)) throw new InvalidPath('Invalid path');
 }
 
+/** A dot segment, plain or with `%2e` for either dot. */
+const DOT_SEGMENT = /^(\.|%2e){1,2}$/i;
+
 /**
- * Refuse a share target with a `..` segment, or a literal `%2e%2e` one (any
- * case): the share URL carries the path to a browser, which would read the
- * encoded form as `..`.
+ * Refuse a share target with a dot segment, plain or literally encoded: one
+ * or two of `.` or `%2e` (any case), so `.`, `..`, `%2e`, `.%2e`, `%2e.` and
+ * `%2e%2e`. The share URL carries the path to a browser, which would read any
+ * of these as `.` or `..`.
  *
  * @param targetPath - The share target as the request body gives it.
- * @throws `SERVER_INVALID_PATH` (400) when it has either.
+ * @throws `SERVER_INVALID_PATH` (400) when it has one.
  */
 export function requireNoShareTraversal(targetPath: string): void {
   requireNoTraversal(targetPath);
-  if (
-    targetPath
-      .split(/[\\/]/)
-      .some((segment) => segment.toLowerCase() === '%2e%2e')
-  )
+  if (targetPath.split(/[\\/]/).some((segment) => DOT_SEGMENT.test(segment)))
     throw new InvalidPath('Invalid path');
 }
