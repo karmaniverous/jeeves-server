@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "jeeves-server",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "description": "Machine API of the jeeves-server service: the routes in its endpoint catalog (SERVER_CATALOG). Credentials: an insider, machine or share key as the k query parameter, or the jeeves_session cookie; the key-exchange routes take the raw machine seed in X-API-Key. Operations marked x-jeeves-insider-only refuse share credentials."
   },
   "paths": {

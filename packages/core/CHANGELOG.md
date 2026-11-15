@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-11-15
+
+### 🚀 Features
+
+- *(core)* SERVER_CATALOG endpoint catalog, error codes and OpenAPI document (#291, #315)
+- *(service)* DefineError errors for every SERVER_* code, registerErrorHandlers for JSON routes (T7, #315)
+- *(service)* One rotation route, fileWrite under the file lock, status redirect URIs, redacted configApply (#292, D11, D15, D17, D20)
+- *(service)* Document titles - fileContent title, tab title {title} - {brand}, <title>/og:title in the gated /browse shell within a 1.5 s budget (T15, #262)
+- *(service)* Export cache keyed by content, style, version and images (#288)
+- *(export)* Named PDF print styles (printStyles, jeeves.print, X-Print-Style)
+- *(service)* Google sign-in rejection page, auth.accessContact, SERVER_SIGN_IN_REJECTED, redirect-URI startup log, googleSignIn naming (T19, #304, #270)
+- *(service)* Event queue reliability (#302, #285)
+- *(runner,oauth)* [**breaking**] Runner proxy allow-list; oauthToken refuses scoped machine keys (D28)
+
+### 🐛 Bug Fixes
+
+- *(runner)* Refuse . and .. job IDs so the proxy stays on /jobs/<id>
+- *(service)* Encode insider share-for URLs, refuse control-char runner IDs and encoded dot share segments (T22 final review)
+
+### 🚜 Refactor
+
+- *(core)* Re-export the link-key functions from @karmaniverous/jeeves (#307)
+
+### 📚 Documentation
+
+- [**breaking**] Migrating to 3.16 guide, READMEs and the jeeves-server skill for 3.16.0 (#274)
+
+### 🧪 Testing
+
+- Cover gaps in touched modules (deep-share key, scope refs, search grouping, link-target normalisation, block hover toolbar)
+
+### ⚙️ Miscellaneous Tasks
+
+- Require Node >=24.22.2 in every package, CI and the CLI start-up check
 ## [0.4.0] - 2026-10-14
 
 ### 🚀 Features
@@ -32,6 +66,7 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - Revert package version bumps (releases are done locally)
+- Release @karmaniverous/jeeves-server-core v0.4.0
 ## [0.3.0] - 2026-09-29
 
 ### 💼 Other
