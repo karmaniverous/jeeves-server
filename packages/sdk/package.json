@@ -5,7 +5,7 @@
   },
   "dependencies": {
     "@karmaniverous/jeeves": "^0.11.0",
-    "@karmaniverous/jeeves-server-core": "^0.4.0"
+    "@karmaniverous/jeeves-server-core": "^0.5.0"
   },
   "description": "Typed TypeScript client for the jeeves-server HTTP API: browse, read, write, share, export and every other route, from the server's endpoint catalog. Browser-safe.",
   "devDependencies": {
