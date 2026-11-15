@@ -29,7 +29,7 @@ import { appendEvent } from '../../services/eventQueue.js';
 import { createDeepShare, createPathShare } from '../../services/shareLinks.js';
 import { writeInsiderSeedToConfig } from '../../util/configPersist.js';
 import { fsPathToUrl, getRoots } from '../../util/platform.js';
-import { requireNoTraversal } from './contentRoute.js';
+import { requireNoShareTraversal } from './contentRoute.js';
 import { requireInScope } from './scopeGuard.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -82,7 +82,7 @@ export const sharingHandlers: HandlersFor<
     if (!seed) throw new Unauthorized('Insider auth required');
 
     const { path: targetPath, expiry, depth, dirs } = body;
-    requireNoTraversal(targetPath);
+    requireNoShareTraversal(targetPath);
 
     requireInScope(request, targetPath);
 

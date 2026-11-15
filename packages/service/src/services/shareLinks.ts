@@ -1,6 +1,7 @@
 /**
  * Outsider share links rooted at a path: the key and the relative
- * `/browse` URL that carries it. Shared by the share routes.
+ * `/browse` URL that carries it (the key covers the decoded path; the URL
+ * carries it percent-encoded, segment by segment). Shared by the share routes.
  *
  * @packageDocumentation
  */
@@ -11,6 +12,7 @@ import {
   computePathKey,
   type DeepShareParams,
 } from '../util/crypto.js';
+import { encodeUrlPath } from '../util/platform.js';
 import { deepShareQuery, pathKeyQuery } from '../util/shareQuery.js';
 import { encodeStack } from './deepShareStack.js';
 
@@ -32,7 +34,10 @@ export function createPathShare(
   const key = exp
     ? computeOutsiderKeyWithExpiry(seed, targetPath, exp)
     : computePathKey(seed, targetPath);
-  return { key, url: `/browse${targetPath}?${pathKeyQuery(key, exp)}` };
+  return {
+    key,
+    url: `/browse${encodeUrlPath(targetPath)}?${pathKeyQuery(key, exp)}`,
+  };
 }
 
 /** Deep share whose traversal stack starts at `targetPath`. */
@@ -48,6 +53,6 @@ export function createDeepShare(
   const key = computeDeepShareKey(seed, targetPath, params);
   return {
     key,
-    url: `/browse${targetPath}?${deepShareQuery(key, params)}`,
+    url: `/browse${encodeUrlPath(targetPath)}?${deepShareQuery(key, params)}`,
   };
 }

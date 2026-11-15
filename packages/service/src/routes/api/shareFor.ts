@@ -12,7 +12,7 @@ import { getConfig } from '../../config/index.js';
 import { isDirectoryUrlPath } from '../../services/contentPath.js';
 import { createDeepShare, createPathShare } from '../../services/shareLinks.js';
 import { getPublicOrigin } from '../../util/publicOrigin.js';
-import { requireNoTraversal } from './contentRoute.js';
+import { requireNoShareTraversal } from './contentRoute.js';
 
 /** The share-for handler. */
 export const shareForHandlers: HandlersFor<'shareFor'> = {
@@ -29,7 +29,7 @@ export const shareForHandlers: HandlersFor<'shareFor'> = {
       dirs,
       enforceOutsiderPolicy,
     } = body;
-    requireNoTraversal(targetPath);
+    requireNoShareTraversal(targetPath);
 
     if (sharerScopes && !_pathMatchesScopes(targetPath, sharerScopes)) {
       return Promise.resolve(

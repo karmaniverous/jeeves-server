@@ -4,10 +4,11 @@
  * @remarks
  * Public entries resolve an identity when one is present and never fail on
  * it. The key-exchange and webhook entries verify their machine seed or
- * event key. Every other entry rejects a `..` segment in its content path,
- * (in the decoded path, either separator), then resolves an identity (session, machine insider key, and the
- * insider-seed insider key only where `loginSeedKey`): `admin` needs one with
- * no scopes (Decision 12) that is not the `_internal` machine key; on content and navigation entries an identity
+ * event key. Every other entry rejects a `..` segment in its decoded content
+ * path (either separator), then resolves an identity (a session, a machine
+ * insider key, or the insider-seed insider key where `loginSeedKey`):
+ * `admin` needs one with no scopes (Decision 12) that is not the `_internal`
+ * machine key; on content and navigation entries an identity
  * outside its scopes falls back to a valid share credential (as an outsider,
  * with the signer's scopes), else `SERVER_OUT_OF_SCOPE`. Without an
  * identity, a share credential valid for the content path admits an

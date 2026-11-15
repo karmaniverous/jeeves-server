@@ -11,6 +11,7 @@ import { DEPARTURES_EXPORT } from './departuresExport.js';
 import { DEPARTURES_INTEGRATIONS } from './departuresIntegrations.js';
 import { DEPARTURES_LEGACY } from './departuresLegacy.js';
 import { DEPARTURES_SERVICE } from './departuresService.js';
+import { DEPARTURES_SHARE_URL } from './departuresShareUrl.js';
 import { DEPARTURES_SHARING } from './departuresSharing.js';
 import { DEPARTURES_WRITE } from './departuresWrite.js';
 
@@ -24,6 +25,7 @@ export const WIRE_DEPARTURES: Readonly<Partial<Record<string, WireDeparture>>> =
     ...DEPARTURES_WRITE,
     ...DEPARTURES_EXPORT,
     ...DEPARTURES_SHARING,
+    ...DEPARTURES_SHARE_URL,
     ...DEPARTURES_INTEGRATIONS,
     ...DEPARTURES_LEGACY,
     ...DEPARTURES_DOCUMENTS,

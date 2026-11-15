@@ -47,3 +47,21 @@ export function hasTraversalSegment(contentPath: string): boolean {
 export function requireNoTraversal(contentPath: string): void {
   if (hasTraversalSegment(contentPath)) throw new InvalidPath('Invalid path');
 }
+
+/**
+ * Refuse a share target with a `..` segment, or a literal `%2e%2e` one (any
+ * case): the share URL carries the path to a browser, which would read the
+ * encoded form as `..`.
+ *
+ * @param targetPath - The share target as the request body gives it.
+ * @throws `SERVER_INVALID_PATH` (400) when it has either.
+ */
+export function requireNoShareTraversal(targetPath: string): void {
+  requireNoTraversal(targetPath);
+  if (
+    targetPath
+      .split(/[\\/]/)
+      .some((segment) => segment.toLowerCase() === '%2e%2e')
+  )
+    throw new InvalidPath('Invalid path');
+}

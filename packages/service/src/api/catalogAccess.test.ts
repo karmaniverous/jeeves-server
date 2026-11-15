@@ -139,15 +139,18 @@ describe('.. segments', () => {
   it.each([
     ['share', '/api/share', { path: '' }],
     ['shareFor', '/api/util/share-for', { path: '', insiders: [] }],
-  ])('%s refuses a body path with ..', async (_name, url, body) => {
-    const res = await wire.app.inject({
-      method: 'POST',
-      url,
-      headers: session(),
-      payload: { ...body, path: `/${root()}/public/../private/secret.md` },
-    });
-    expect(res.statusCode).toBe(400);
-    expect(res.json<{ code: string }>().code).toBe('SERVER_INVALID_PATH');
+  ])('%s refuses a body path with .. or %2e%2e', async (_name, url, body) => {
+    for (const dots of ['..', '%2e%2e', '%2E%2e']) {
+      const path = `/${root()}/public/${dots}/private/secret.md`;
+      const res = await wire.app.inject({
+        method: 'POST',
+        url,
+        headers: session(),
+        payload: { ...body, path },
+      });
+      expect([path, res.statusCode]).toEqual([path, 400]);
+      expect(res.json<{ code: string }>().code).toBe('SERVER_INVALID_PATH');
+    }
   });
 
   it('resolvePath refuses an fsPath with ..', async () => {
