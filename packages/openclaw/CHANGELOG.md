@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.16.0] - 2026-11-15
+
+### 🚀 Features
+
+- *(sdk)* Add @karmaniverous/jeeves-server-sdk, a typed browser-safe client from SERVER_CATALOG (T10)
+- *(openclaw)* [**breaking**] Build the plugin on the server SDK and catalog
+- *(service)* One Markdown document loader for file API, export and link-info
+- *(service)* Document titles - fileContent title, tab title {title} - {brand}, <title>/og:title in the gated /browse shell within a 1.5 s budget (T15, #262)
+- *(service)* Raw downloads - ?download=1 attachments with RFC 6266 file names, credentials replaced and other query kept by deep-share rewriting, linkInfo downloadUrl; deep share stack helpers split out (T16, #316)
+- *(export)* Named PDF print styles (printStyles, jeeves.print, X-Print-Style)
+- *(service)* Google sign-in rejection page, auth.accessContact, SERVER_SIGN_IN_REJECTED, redirect-URI startup log, googleSignIn naming (T19, #304, #270)
+- *(service)* Event queue reliability (#302, #285)
+- *(runner,oauth)* [**breaking**] Runner proxy allow-list; oauthToken refuses scoped machine keys (D28)
+
+### 🐛 Bug Fixes
+
+- *(openclaw)* Server_export rejects share for directory archives (insider-only)
+- *(access)* Resolve catalog entries from the matched route; fail closed
+
+### 💼 Other
+
+- Updated core
+- Updated sdk
+
+### 📚 Documentation
+
+- *(openclaw)* Record the jeeves install check against @karmaniverous/jeeves 0.11.0
+- *(service)* Event queue delivery, cursor, rotation and timeouts
+- [**breaking**] Migrating to 3.16 guide, READMEs and the jeeves-server skill for 3.16.0 (#274)
+
+### 🧪 Testing
+
+- *(openclaw)* Record the 0.15.0 tool registration snapshot
+
+### ⚙️ Miscellaneous Tasks
+
+- *(skills)* Trim jeeves-server skill description to 160 chars or less
+- Require Node >=24.22.2 in every package, CI and the CLI start-up check
+- Remove the stale packages/service/vitest.config.js; package knip configs pass
 ## [0.15.0] - 2026-10-14
 
 ### 🚀 Features
@@ -43,6 +82,7 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - Revert package version bumps (releases are done locally)
+- Release @karmaniverous/jeeves-server-openclaw v0.15.0
 ## [0.14.1] - 2026-10-04
 
 ### 🐛 Bug Fixes
