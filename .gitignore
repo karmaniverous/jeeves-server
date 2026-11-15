@@ -51,3 +51,7 @@ packages/service/vendor/
 
 # Generated docs
 docs/
+
+# Stray links to the live server config (committed by mistake in 2fb9bb8)
+jeeves-server/
+packages/jeeves-server/
