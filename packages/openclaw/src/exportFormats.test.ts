@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  exportRoutesOf,
-  exportUrlOf,
-  unavailableFormatMessage,
-} from './exportFormats.js';
+import { exportRoutesOf, unavailableFormatMessage } from './exportFormats.js';
 
 describe('exportRoutesOf', () => {
   it('takes each format and its route from the export links', () => {
@@ -15,6 +11,8 @@ describe('exportRoutesOf', () => {
           { format: 'pdf', url: '/api/mermaid-export/j/d.mmd?format=pdf' },
           { format: 'svg', url: '/api/other/j/d.mmd?format=svg' },
           { format: 'odd', url: 'https://elsewhere/x' },
+          // Not a route the SDK's toExportUrl takes: dropped, not an error later.
+          { format: 'png', url: '/api/Mermaid_Export/j/d.mmd?format=png' },
         ],
         false,
       ),
@@ -58,38 +56,4 @@ describe('unavailableFormatMessage', () => {
       /insiders only$/,
     );
   });
-});
-
-describe('exportUrlOf', () => {
-  it('moves a page URL onto the route, keeping its query and dropping the fragment', () => {
-    expect(
-      exportUrlOf(
-        'http://h.test/browse/j/a%20b.md?k=out#top',
-        '/api/export/',
-        'pdf',
-      ),
-    ).toBe('http://h.test/api/export/j/a%20b.md?k=out&format=pdf');
-    expect(
-      exportUrlOf(
-        'http://h.test/browse/j/d.mmd',
-        '/api/mermaid-export/',
-        'png',
-      ),
-    ).toBe('http://h.test/api/mermaid-export/j/d.mmd?format=png');
-  });
-
-  it('replaces only the leading /browse/, keeping a later one', () => {
-    expect(
-      exportUrlOf('http://h.test/browse/j/browse/a.md', '/api/export/', 'pdf'),
-    ).toBe('http://h.test/api/export/j/browse/a.md?format=pdf');
-  });
-
-  it.each(['http://h.test/base/browse/j/a.md', 'http://h.test/api/raw/j/a.md'])(
-    'refuses %s, whose path does not start with /browse/',
-    (pageUrl) => {
-      expect(() => exportUrlOf(pageUrl, '/api/export/', 'pdf')).toThrow(
-        `Not a page URL: ${pageUrl}`,
-      );
-    },
-  );
 });

@@ -5,11 +5,15 @@
  */
 
 import type { ToolDescriptor } from '@karmaniverous/jeeves';
-import { type ServerClient, toRawUrl } from '@karmaniverous/jeeves-server-sdk';
+import {
+  type ServerClient,
+  toExportUrl,
+  toRawUrl,
+} from '@karmaniverous/jeeves-server-sdk';
 
 import {
   exportRoutesOf,
-  exportUrlOf,
+  isExportFormat,
   unavailableFormatMessage,
 } from './exportFormats.js';
 import { runServerCall, type ToolContext } from './sdkCall.js';
@@ -113,8 +117,8 @@ function exportTool(context: ToolContext): ToolDescriptor {
         const isDirectory = info.isDirectory === true;
         // The formats and routes the server offers for this path (#320).
         const routes = exportRoutesOf(info.exportLinks, isDirectory);
-        const route = routes.get(format);
-        if (route === undefined)
+        const route = isExportFormat(format) ? routes.get(format) : undefined;
+        if (!isExportFormat(format) || route === undefined)
           throw new Error(
             unavailableFormatMessage(
               path,
@@ -132,7 +136,7 @@ function exportTool(context: ToolContext): ToolDescriptor {
           return {
             path,
             format,
-            url: exportUrlOf(pageUrl(baseUrl, path), route, format),
+            url: toExportUrl(pageUrl(baseUrl, path), format, { route }),
           };
         const shared = await signShare(client, baseUrl, {
           path: '/' + path,
@@ -141,7 +145,7 @@ function exportTool(context: ToolContext): ToolDescriptor {
         return {
           path,
           format,
-          url: exportUrlOf(shared.url, route, format),
+          url: toExportUrl(shared.url, format, { route }),
           exp: shared.exp,
         };
       }),

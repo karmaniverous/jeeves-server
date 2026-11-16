@@ -99,6 +99,12 @@ describe('server_export', () => {
       documentInfo,
       '/api/export/j/my%20notes.md?format=pdf',
     ],
+    [
+      'j/browse/a.md',
+      'pdf',
+      documentInfo,
+      '/api/export/j/browse/a.md?format=pdf',
+    ],
     ['j/docs', 'zip', directoryInfo, '/api/export/j/docs?format=zip'],
     ['j/docs', 'tar', directoryInfo, '/api/export/j/docs?format=tar'],
     ['j/d.mmd', 'svg', mermaidInfo, '/api/mermaid-export/j/d.mmd?format=svg'],
