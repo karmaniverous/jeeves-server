@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-11-16
+
+### 🚀 Features
+
+- *(sdk)* Route-aware toExportUrl, and pdf for Mermaid sources
+
+### 🧪 Testing
+
+- *(openclaw)* Shared export URLs on link-info routes; refactor route lookup; docs(sdk): route option TSDoc
 ## [0.1.0] - 2026-11-15
 
 ### 🚀 Features
@@ -20,3 +29,7 @@ All notable changes to this project will be documented in this file.
 ### 📚 Documentation
 
 - [**breaking**] Migrating to 3.16 guide, READMEs and the jeeves-server skill for 3.16.0 (#274)
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-server-sdk v0.1.0
