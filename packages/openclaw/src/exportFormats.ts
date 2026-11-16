@@ -24,15 +24,45 @@ interface ExportLink {
   url: string;
 }
 
-/** The `/api/<route>/` prefix of a server-relative export URL. */
-const ROUTE = /^\/api\/[^/?#]+\//;
+/**
+ * The `/api/<route>/` prefix of a server-relative export URL, in the form
+ * the SDK's `toExportUrl` takes as its `route` option.
+ */
+const ROUTE = /^\/api\/[a-z-]+\//;
 
-/** The pathname prefix of a page URL. */
-const BROWSE = '/browse/';
-
-/** Whether link-info's format is one the tool's `format` parameter accepts. */
-const isExportFormat = (format: string): boolean =>
+/**
+ * Whether a format is one the tool's `format` parameter accepts.
+ *
+ * @param format - Any format.
+ * @returns Whether it is one of {@link EXPORT_FORMATS}.
+ */
+const isExportFormat = (format: string): format is ExportFormat =>
   (EXPORT_FORMATS as readonly string[]).includes(format);
+
+/** A format the tool accepts, and the route link-info offers it on. */
+interface ExportTarget {
+  /** The format. */
+  format: ExportFormat;
+  /** Its `/api/<route>/` prefix. */
+  route: string;
+}
+
+/**
+ * The route a path offers a format on.
+ *
+ * @param routes - The path's routes by format ({@link exportRoutesOf}).
+ * @param format - Any format.
+ * @returns The format and its route; none when the path doesn't offer it
+ *   (or the tool doesn't accept it).
+ */
+export function routeFor(
+  routes: ReadonlyMap<ExportFormat, string>,
+  format: string,
+): ExportTarget | undefined {
+  if (!isExportFormat(format)) return undefined;
+  const route = routes.get(format);
+  return route === undefined ? undefined : { format, route };
+}
 
 /**
  * Export routes by format, from link-info's export links: each link's
@@ -47,8 +77,8 @@ const isExportFormat = (format: string): boolean =>
 export function exportRoutesOf(
   links: readonly ExportLink[] = [],
   isDirectory: boolean,
-): ReadonlyMap<string, string> {
-  const routes = new Map<string, string>();
+): ReadonlyMap<ExportFormat, string> {
+  const routes = new Map<ExportFormat, string>();
   for (const { format, url } of links) {
     const route = ROUTE.exec(url)?.[0];
     if (route !== undefined && isExportFormat(format) && !routes.has(format))
@@ -80,30 +110,4 @@ export function unavailableFormatMessage(
   return isDirectory
     ? `${path} has no export formats: the server offers directory archives (zip, tar) to insiders only`
     : `${path} has no export formats: PDF and DOCX need a Markdown document, or a file the watcher renders as Markdown (the watcher may be unreachable); svg and png need a Mermaid or PlantUML source`;
-}
-
-/**
- * The export URL of a page URL on an export route, keeping the page URL's
- * query (a share credential verifies on the export routes too) and dropping
- * the fragment. Only the pathname's leading `/browse/` is replaced; a page
- * URL served under a base path (`/base/browse/...`) is refused rather than
- * mangled.
- *
- * @param pageUrl - An absolute URL whose pathname starts `/browse/`.
- * @param route - The export route (`/api/<route>/`).
- * @param format - The format.
- * @returns The export URL, with `format` last.
- * @throws If the page URL's pathname doesn't start `/browse/`.
- */
-export function exportUrlOf(
-  pageUrl: string,
-  route: string,
-  format: string,
-): string {
-  const page = new URL(pageUrl);
-  if (!page.pathname.startsWith(BROWSE))
-    throw new Error(`Not a page URL: ${pageUrl}`);
-  const url = new URL(route + page.pathname.slice(BROWSE.length), page.origin);
-  url.search = `${page.search === '' ? '?' : `${page.search}&`}format=${encodeURIComponent(format)}`;
-  return url.toString();
 }

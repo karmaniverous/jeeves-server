@@ -12,6 +12,7 @@ export {
 } from './createServerClient.js';
 export {
   type ExportFormat,
+  type ExportUrlOptions,
   toExportUrl,
   toRawUrl,
   withShareCredential,

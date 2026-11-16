@@ -88,9 +88,25 @@ Pure functions, no I/O; they keep the URL's query exactly as written.
 | --- | --- |
 | `withShareCredential(url, share)` | Adds a share credential's parameters to any URL, keeping the parameters it already carries (e.g. `download=1`) |
 | `toRawUrl(pageUrl)` | `/browse/<path>` → `/api/raw/<path>`, keeping the query (a share credential verifies on both) |
-| `toExportUrl(pageUrl, format)` | `pdf`/`docx` (Markdown) and `zip`/`tar` (directories) → `/api/export/<path>?format=…`; `svg`/`png` of a `.mmd` → `/api/mermaid-export/…`, of a `.puml`/`.plantuml` → `/api/plantuml-export/…`. Any other combination throws `invalid_options` naming the valid formats |
+| `toExportUrl(pageUrl, format, { route }?)` | Without `route`, from the file extension: `pdf`/`docx` (Markdown) and `zip`/`tar` (directories) → `/api/export/<path>?format=…`; `svg`/`png`/`pdf` of a `.mmd` → `/api/mermaid-export/…`; `svg`/`png` of a `.puml`/`.plantuml` → `/api/plantuml-export/…`. Any other combination throws `invalid_options` naming the valid formats. With `route` (an `/api/<route>/` prefix, e.g. from link-info), the URL is built on that route and the format isn't checked; any other `route` throws `invalid_options` |
 
 Both page-URL helpers accept absolute or root-relative URLs and drop the fragment.
+
+The extension table can't know what only the server knows: whether the watcher renders a `.json` file as Markdown (PDF/DOCX), or whether a PlantUML jar adds `pdf`. The server's link-info lists the formats a path offers and the route of each; pass that route to build the URL:
+
+```ts
+const info = await server.linkInfo({ '*': 'j/docs/flow.puml' });
+const link = info.exportLinks?.find(({ format }) => format === 'pdf');
+// The link's /api/<route>/ prefix, e.g. /api/plantuml-export/.
+const route = link && /^\/api\/[a-z-]+\//.exec(link.url)?.[0];
+if (route !== undefined) {
+  const shared = await server.share({ path: '/j/docs/flow.puml' });
+  const pdfUrl = toExportUrl(`https://jeeves.example.com${shared.url}`, 'pdf', {
+    route,
+  });
+  console.log(pdfUrl);
+}
+```
 
 ## Types
 

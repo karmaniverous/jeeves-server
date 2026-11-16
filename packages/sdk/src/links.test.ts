@@ -126,17 +126,97 @@ describe('toExportUrl', () => {
     );
   });
 
+  it('addresses the Mermaid route for pdf of a Mermaid source', () => {
+    expect(toExportUrl('/browse/j/flow.mmd?k=1#x', 'pdf')).toBe(
+      '/api/mermaid-export/j/flow.mmd?k=1&format=pdf',
+    );
+  });
+
   it('refuses a format the path cannot be exported in, naming the valid ones', () => {
     expect(
-      thrown(() => toExportUrl('/browse/j/flow.mmd', 'pdf')),
+      thrown(() => toExportUrl('/browse/j/flow.mmd', 'docx')),
     ).toMatchObject({
       code: 'invalid_options',
-      message: 'Format "pdf" is not available for flow.mmd; use svg, png',
+      message: 'Format "docx" is not available for flow.mmd; use svg, png, pdf',
+    });
+    expect(
+      thrown(() => toExportUrl('/browse/j/seq.puml', 'pdf')),
+    ).toMatchObject({
+      code: 'invalid_options',
+      message: 'Format "pdf" is not available for seq.puml; use svg, png',
     });
     expect(thrown(() => toExportUrl('/browse/j/a.md', 'png'))).toMatchObject({
       code: 'invalid_options',
       message:
         'Format "png" is not available for a.md; use pdf, docx, zip, tar',
+    });
+  });
+});
+
+describe('toExportUrl with a route', () => {
+  it.each([
+    ['/api/export/', 'pdf', `${PAGE}?k=key&exp=9#top`],
+    [
+      '/api/mermaid-export/',
+      'pdf',
+      'https://jeeves.test/browse/j/d.mmd?k=key&exp=9',
+    ],
+    [
+      '/api/plantuml-export/',
+      'pdf',
+      'https://jeeves.test/browse/j/d.puml?k=key&exp=9#f',
+    ],
+  ] as const)(
+    'moves the page URL onto %s, keeping the query and dropping the fragment',
+    (route, format, pageUrl) => {
+      const path = pageUrl.slice(
+        'https://jeeves.test/browse/'.length,
+        pageUrl.indexOf('?'),
+      );
+      expect(toExportUrl(pageUrl, format, { route })).toBe(
+        `https://jeeves.test${route}${path}?k=key&exp=9&format=${format}`,
+      );
+    },
+  );
+
+  it('skips the extension table', () => {
+    // A file the watcher renders as Markdown, and a PlantUML source with a jar.
+    expect(
+      toExportUrl('/browse/j/data.json', 'docx', { route: '/api/export/' }),
+    ).toBe('/api/export/j/data.json?format=docx');
+    expect(
+      toExportUrl('/browse/j/seq.puml?download=1', 'pdf', {
+        route: '/api/plantuml-export/',
+      }),
+    ).toBe('/api/plantuml-export/j/seq.puml?download=1&format=pdf');
+  });
+
+  it.each([
+    'api/export/',
+    '/api/export',
+    '/api/',
+    '/api/Export/',
+    '/api/export/j/a.md?format=pdf',
+    '/base/api/export/',
+    'https://jeeves.test/api/export/',
+  ])('refuses the route %s', (route) => {
+    expect(
+      thrown(() => toExportUrl('/browse/j/a.md', 'pdf', { route })),
+    ).toMatchObject({
+      code: 'invalid_options',
+      status: 0,
+      message: `route must be an /api/<route>/ prefix such as /api/export/; got "${route}"`,
+    });
+  });
+
+  it('still refuses a URL that is not a page URL', () => {
+    expect(
+      thrown(() =>
+        toExportUrl('/x/browse/j/a.md', 'pdf', { route: '/api/export/' }),
+      ),
+    ).toMatchObject({
+      code: 'invalid_options',
+      message: 'pageUrl must address a /browse/<path> page',
     });
   });
 });
