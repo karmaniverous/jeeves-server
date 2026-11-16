@@ -103,4 +103,31 @@ describe('tool registration against 0.15.0', () => {
       );
     },
   );
+
+  it('describes every browse-path parameter as one (#320)', () => {
+    const described = [...tools.values()].flatMap(({ name, parameters }) => {
+      const path = (
+        parameters as { properties?: Record<string, { description?: string }> }
+      ).properties?.path;
+      return path === undefined ? [] : [[name, path.description]];
+    });
+    // server_config's path is a JSONPath expression.
+    expect(Object.fromEntries(described)).toEqual({
+      server_config: expect.stringContaining('JSONPath') as unknown,
+      ...Object.fromEntries(
+        [
+          'server_browse',
+          'server_export',
+          'server_export_cache_clear',
+          'server_file_mutate',
+          'server_file_write',
+          'server_link_info',
+          'server_share',
+        ].map((name) => [
+          name,
+          'Browse path (use server_resolve_path to convert a filesystem path)',
+        ]),
+      ),
+    });
+  });
 });

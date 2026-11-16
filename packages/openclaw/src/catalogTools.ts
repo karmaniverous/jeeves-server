@@ -12,6 +12,7 @@ import {
   shareQuerySchema,
 } from '@karmaniverous/jeeves-server-core/catalog';
 
+import { BROWSE_PATH_DESCRIPTION } from './constants.js';
 import { runServerCall, type ToolContext } from './sdkCall.js';
 
 /** Tool name prefix. */
@@ -57,7 +58,8 @@ const hasWildcard = (entry: ServerEntryName): boolean =>
 
 /**
  * Tool parameters of a catalog tool: the entry's tool definition without
- * the share-credential fields and the tool's `omit` fields.
+ * the share-credential fields and the tool's `omit` fields, its `*` path
+ * (`path`) described as a browse path (#320).
  *
  * @param config - The tool.
  * @returns Name, description and JSON Schema of the parameters.
@@ -67,20 +69,26 @@ export function catalogToolDefinitionFor(config: CatalogToolConfig): {
   description: string;
   parameters: Record<string, unknown>;
 } {
+  const wildcard = hasWildcard(config.entry);
   const { name, description, inputSchema } = catalogToolDefinition(
     SERVER_CATALOG.byName(config.entry),
     {
       prefix: PREFIX,
-      ...(hasWildcard(config.entry)
-        ? { inputAliases: { '*': PATH_ALIAS } }
-        : {}),
+      ...(wildcard ? { inputAliases: { '*': PATH_ALIAS } } : {}),
     },
   );
   const dropped = new Set([...SHARE_FIELDS, ...(config.omit ?? [])]);
   const properties = Object.fromEntries(
-    Object.entries(inputSchema['properties'] as Record<string, unknown>).filter(
-      ([field]) => !dropped.has(field),
-    ),
+    Object.entries(inputSchema['properties'] as Record<string, unknown>)
+      .filter(([field]) => !dropped.has(field))
+      .map(([field, schema]) =>
+        wildcard && field === PATH_ALIAS
+          ? [
+              field,
+              { ...(schema as object), description: BROWSE_PATH_DESCRIPTION },
+            ]
+          : [field, schema],
+      ),
   );
   const required = (
     (inputSchema['required'] as string[] | undefined) ?? []

@@ -1,18 +1,17 @@
 /**
- * The composed sharing tools on the SDK: `server_share` (`share`, or `shareFor` for named insiders; page and raw URLs from the SDK's link helpers, #278) and `server_export` (a download URL, never bytes: unkeyed, or derived from a signed share; Decisions 19 and 21).
+ * The composed sharing tools on the SDK: `server_share` (`share`, or `shareFor` for named insiders; page and raw URLs from the SDK's link helpers, #278) and `server_export` (a download URL, never bytes: unkeyed, or derived from a signed share; Decisions 19 and 21), in the formats and on the routes the server's link-info lists for the path (#320).
  *
  * @packageDocumentation
  */
 
 import type { ToolDescriptor } from '@karmaniverous/jeeves';
-import {
-  type ExportFormat,
-  type ServerClient,
-  toExportUrl,
-  toRawUrl,
-} from '@karmaniverous/jeeves-server-sdk';
+import { type ServerClient, toRawUrl } from '@karmaniverous/jeeves-server-sdk';
 
-import { exportFormatsFor } from './exportFormats.js';
+import {
+  exportRoutesOf,
+  exportUrlOf,
+  unavailableFormatMessage,
+} from './exportFormats.js';
 import { runServerCall, type ToolContext } from './sdkCall.js';
 import {
   SERVER_EXPORT_PARAMETERS,
@@ -103,23 +102,29 @@ function exportTool(context: ToolContext): ToolDescriptor {
   return {
     name: 'server_export',
     description:
-      'Get a download URL for an export of a file or directory: pdf or docx for Markdown documents, zip or tar for directories, svg or png for Mermaid (.mmd) and PlantUML (.puml, .plantuml) diagrams. The URL carries no key and opens in an insider browser session; with share, it carries a signed share (optionally expiring) so anyone with the link can download it (files only: directory archives are insider-only, so share with zip or tar is an error). Exports render when the URL is opened (Chrome for PDF).',
+      'Get a download URL for an export of a file or directory, in a format the server offers for the path (the exportLinks of server_link_info): pdf or docx for Markdown documents and for files the watcher renders as Markdown, zip or tar for directories, svg, png or pdf for Mermaid (.mmd) diagrams, svg or png for PlantUML (.puml, .plantuml) diagrams (plus pdf when a PlantUML jar is configured). The URL carries no key and opens in an insider browser session; with share, it carries a signed share (optionally expiring) so anyone with the link can download it (files only: directory archives are insider-only, so share with zip or tar is an error). Exports render when the URL is opened (Chrome for PDF).',
     parameters: SERVER_EXPORT_PARAMETERS,
     execute: (_id, params) =>
       runServerCall(context, async (client, baseUrl) => {
         const path = normalizePath(params);
-        const format = String(params.format) as ExportFormat;
+        const format = String(params.format);
         const info = await client.linkInfo({ '*': path });
         if (!info.exists) throw new Error(`Not found: ${path}`);
-        const valid = exportFormatsFor(path, info.isDirectory === true);
-        if (!valid.includes(format))
+        const isDirectory = info.isDirectory === true;
+        // The formats and routes the server offers for this path (#320).
+        const routes = exportRoutesOf(info.exportLinks, isDirectory);
+        const route = routes.get(format);
+        if (route === undefined)
           throw new Error(
-            valid.length === 0
-              ? `${path} has no export formats`
-              : `Format "${format}" is not available for ${path}; use ${valid.join(', ')}`,
+            unavailableFormatMessage(
+              path,
+              format,
+              [...routes.keys()],
+              isDirectory,
+            ),
           );
         const share = params.share as { expiryDays?: unknown } | undefined;
-        if (share !== undefined && info.isDirectory === true)
+        if (share !== undefined && isDirectory)
           throw new Error(
             `share is not available for a directory archive (${format}): archives are insider-only, so a shared URL would not open without an insider session; omit share`,
           );
@@ -127,7 +132,7 @@ function exportTool(context: ToolContext): ToolDescriptor {
           return {
             path,
             format,
-            url: toExportUrl(pageUrl(baseUrl, path), format),
+            url: exportUrlOf(pageUrl(baseUrl, path), route, format),
           };
         const shared = await signShare(client, baseUrl, {
           path: '/' + path,
@@ -136,7 +141,7 @@ function exportTool(context: ToolContext): ToolDescriptor {
         return {
           path,
           format,
-          url: toExportUrl(shared.url, format),
+          url: exportUrlOf(shared.url, route, format),
           exp: shared.exp,
         };
       }),

@@ -5,11 +5,7 @@
 
 import path from 'node:path';
 
-import type {
-  PluginApi,
-  ToolDescriptor,
-  ToolResult,
-} from '@karmaniverous/jeeves';
+import type { ToolDescriptor, ToolResult } from '@karmaniverous/jeeves';
 import {
   afterAll,
   beforeAll,
@@ -20,14 +16,17 @@ import {
   vi,
 } from 'vitest';
 
-import register from '../../../../openclaw/src/index.js';
 import { computeInsiderKey } from '../../util/crypto.js';
-import { injectFetch, SDK_BASE_URL } from '../sdk/sdkHarness.js';
+import { injectFetch } from '../sdk/sdkHarness.js';
 import { startWireApp, type WireApp } from '../wire/wireApp.js';
 import { CACHED_EXPORT, WIRE_SEEDS } from '../wire/wireFixture.js';
-
-/** The plugin's id in OpenClaw config. */
-const PLUGIN_ID = 'jeeves-server-openclaw';
+import {
+  jsonOf,
+  pluginTools,
+  routePluginFetch,
+  runTool,
+  statusOf as statusOfUrl,
+} from './pluginHarness.js';
 
 /** The key the plugin derives from its seed (the unscoped `primary` key). */
 const PLUGIN_KEY = computeInsiderKey(WIRE_SEEDS.primary);
@@ -38,34 +37,13 @@ let root: string;
 /** Every result text a tool returned, checked for the key at the end. */
 const texts: string[] = [];
 
-/**
- * Register the plugin and return its tools.
- *
- * @param pluginKey - The key seed in plugin config (none when omitted).
- */
-function pluginTools(pluginKey?: string): Map<string, ToolDescriptor> {
-  const tools = new Map<string, ToolDescriptor>();
-  const config = { apiUrl: SDK_BASE_URL, ...(pluginKey ? { pluginKey } : {}) };
-  const api: PluginApi = {
-    registerTool: (tool: ToolDescriptor) => {
-      tools.set(tool.name, tool);
-    },
-    logger: { warn: vi.fn() },
-    config: { plugins: { entries: { [PLUGIN_ID]: { config } } } },
-  };
-  register(api);
-  return tools;
-}
-
 /** Run a tool, recording its result text. */
 async function run(
   tools: Map<string, ToolDescriptor>,
   name: string,
   params: Record<string, unknown> = {},
 ): Promise<ToolResult> {
-  const tool = tools.get(name);
-  if (!tool) throw new Error(`tool not registered: ${name}`);
-  const result = await tool.execute('call-1', params);
+  const result = await runTool(tools, name, params);
   texts.push(result.content[0]?.text ?? '');
   return result;
 }
@@ -76,29 +54,17 @@ async function json(
   name: string,
   params: Record<string, unknown> = {},
 ): Promise<Record<string, unknown>> {
-  const result = await run(tools, name, params);
-  if (result.isError) throw new Error(result.content[0]?.text);
-  return JSON.parse(result.content[0]?.text ?? '') as Record<string, unknown>;
+  return jsonOf(await run(tools, name, params));
 }
 
 /** Status of a GET of `url` (optionally with the admin's session cookie). */
-async function statusOf(url: string, session = false): Promise<number> {
-  const res = await injectFetch(wire.app)(url, {
-    ...(session ? { credentials: 'same-origin' } : {}),
-  });
-  return res.status;
-}
+const statusOf = (url: string, session = false) =>
+  statusOfUrl(wire, url, session);
 
 beforeAll(async () => {
   wire = await startWireApp();
   root = wire.rootUrl.slice(1);
-  // Requests to the plugin's apiUrl go to the app; anything else to the
-  // wire app's guarded fetch.
-  const guarded = globalThis.fetch;
-  const app = injectFetch(wire.app);
-  vi.stubGlobal('fetch', (input: string, init: RequestInit = {}) =>
-    input.startsWith(SDK_BASE_URL) ? app(input, init) : guarded(input, init),
-  );
+  routePluginFetch(wire);
   vi.stubEnv('JEEVES_CONFIG_ROOT', '');
 });
 
