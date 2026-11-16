@@ -24,6 +24,20 @@ describe('exportRoutesOf', () => {
     ]);
   });
 
+  it('drops formats the tool does not accept (a PlantUML jar lists eps)', () => {
+    const routes = exportRoutesOf(
+      ['svg', 'png', 'pdf', 'eps'].map((format) => ({
+        format,
+        url: `/api/plantuml-export/j/d.puml?format=${format}`,
+      })),
+      false,
+    );
+    expect([...routes.keys()]).toEqual(['svg', 'png', 'pdf']);
+    expect(
+      unavailableFormatMessage('j/d.puml', 'eps', [...routes.keys()], false),
+    ).toBe('Format "eps" is not available for j/d.puml; use svg, png, pdf');
+  });
+
   it('adds tar beside a directory zip only', () => {
     const zip = [{ format: 'zip', url: '/api/export/j/docs?format=zip' }];
     expect([...exportRoutesOf(zip, true).keys()]).toEqual(['zip', 'tar']);
@@ -63,4 +77,19 @@ describe('exportUrlOf', () => {
       ),
     ).toBe('http://h.test/api/mermaid-export/j/d.mmd?format=png');
   });
+
+  it('replaces only the leading /browse/, keeping a later one', () => {
+    expect(
+      exportUrlOf('http://h.test/browse/j/browse/a.md', '/api/export/', 'pdf'),
+    ).toBe('http://h.test/api/export/j/browse/a.md?format=pdf');
+  });
+
+  it.each(['http://h.test/base/browse/j/a.md', 'http://h.test/api/raw/j/a.md'])(
+    'refuses %s, whose path does not start with /browse/',
+    (pageUrl) => {
+      expect(() => exportUrlOf(pageUrl, '/api/export/', 'pdf')).toThrow(
+        `Not a page URL: ${pageUrl}`,
+      );
+    },
+  );
 });

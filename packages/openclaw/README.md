@@ -13,7 +13,7 @@ Provides agents with tools for:
 - Event gateway visibility
 - OAuth2 credential management (authorize, status, token retrieval)
 
-Tools take browse paths (`<root>/<path>`), not filesystem paths: convert one with `server_resolve_path`. `server_export` offers the formats the server lists for the path (the `exportLinks` of `server_link_info`): PDF/DOCX for Markdown documents and for documents the watcher renders as Markdown, ZIP/Tar for directories, SVG/PNG for Mermaid and PlantUML sources (Mermaid also PDF).
+Tools take browse paths (`<root>/<path>`), not filesystem paths: convert one with `server_resolve_path`. `server_export` offers the formats the server lists for the path (the `exportLinks` of `server_link_info`): PDF/DOCX for Markdown documents and for documents the watcher renders as Markdown, ZIP/Tar for directories, SVG/PNG/PDF for Mermaid sources, SVG/PNG for PlantUML sources (plus PDF when a PlantUML jar is configured).
 
 ## Upgrading from 0.15
 

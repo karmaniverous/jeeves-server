@@ -1,7 +1,9 @@
 // @vitest-environment node
 /**
- * `server_export` against the real app (#320): the formats and URLs it offers are the ones link-info lists, so a file the watcher renders as Markdown exports to PDF and DOCX, a Mermaid source to PDF too, and a directory to zip and tar; a file the watcher doesn't render has none. The watcher is stubbed; everything else is the wire app.
+ * `server_export` against the real app (#320): the formats and URLs it offers are the ones link-info lists, so a file the watcher renders as Markdown exports to PDF and DOCX, a Mermaid source to PDF too, and a directory to zip and tar; a file the watcher doesn't render has none. The watcher is stubbed and the watcher-rendered PDF is seeded in the export cache (no Chrome); everything else is the wire app.
  */
+
+import path from 'node:path';
 
 import {
   afterAll,
@@ -13,10 +15,19 @@ import {
   vi,
 } from 'vitest';
 
+import { getConfig } from '../../config/index.js';
+import { cacheExport } from '../../services/exportCache.js';
+import {
+  DEFAULT_PRINT_STYLE,
+  documentExportKey,
+} from '../../services/exportCacheKey.js';
+import { loadMarkdownDocument } from '../../services/markdownDocument.js';
+import { resolvePrintStyle } from '../../services/printStyles.js';
 import type { WatcherRenderOutcome } from '../../services/watcherRender.js';
+import { getRoots } from '../../util/platform.js';
 import { SDK_BASE_URL } from '../sdk/sdkHarness.js';
 import { startWireApp, type WireApp } from '../wire/wireApp.js';
-import { WIRE_SEEDS } from '../wire/wireFixture.js';
+import { CACHED_EXPORT, WIRE_SEEDS } from '../wire/wireFixture.js';
 import {
   jsonOf,
   pluginTools,
@@ -70,6 +81,26 @@ async function linksOf(path: string): Promise<Record<string, string>> {
   );
 }
 
+/**
+ * Seed the export cache with a PDF of the watcher-rendered `data.json`, under
+ * the key the export route computes, as the wire seeds do for `doc.md`.
+ */
+async function seedDataPdf(): Promise<void> {
+  const fsPath = path.join(wire.contentDir, 'data.json');
+  const doc = await loadMarkdownDocument(fsPath);
+  if (!doc) throw new Error('data.json did not load as Markdown');
+  cacheExport({
+    fsPath,
+    key: documentExportKey(fsPath, doc, 'pdf', {
+      roots: getRoots(getConfig().roots),
+      style: resolvePrintStyle(doc.directives, fsPath),
+    }),
+    format: 'pdf',
+    buffer: CACHED_EXPORT,
+    printStyle: DEFAULT_PRINT_STYLE.name,
+  });
+}
+
 beforeAll(async () => {
   wire = await startWireApp();
   root = wire.rootUrl.slice(1);
@@ -103,12 +134,18 @@ describe('server_export on the real app', () => {
     },
   );
 
-  it('exports a watcher-rendered file and a Mermaid source to PDF', async () => {
-    expect(await linksOf(`${root}/data.json`)).toHaveProperty('docx');
-    expect(await linksOf(`${root}/flow.mmd`)).toHaveProperty('pdf');
-    const signed = jsonOf(await exportOf(`${root}/data.json`, 'pdf', {}));
-    expect(String(signed['url'])).toMatch(
-      /\/api\/export\/.*data\.json\?k=[^&]+&format=pdf$/,
+  it('a share-signed PDF of a watcher-rendered file opens without a session', async () => {
+    await seedDataPdf();
+    const url = String(
+      jsonOf(await exportOf(`${root}/data.json`, 'pdf', {}))['url'],
+    );
+    expect(url).toMatch(/\/api\/export\/.*data\.json\?k=[^&]+&format=pdf$/);
+    expect(await statusOf(wire, url)).toBe(200);
+  });
+
+  it('exports a Mermaid source to PDF on the Mermaid route', async () => {
+    expect(jsonOf(await exportOf(`${root}/flow.mmd`, 'pdf'))['url']).toBe(
+      `${SDK_BASE_URL}/api/mermaid-export/${root}/flow.mmd?format=pdf`,
     );
   });
 

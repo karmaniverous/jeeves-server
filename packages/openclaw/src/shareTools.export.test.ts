@@ -64,11 +64,12 @@ const mermaidInfo = linkInfo(false, '/api/mermaid-export/', [
   'pdf',
 ]);
 
-/** Link-info of a PlantUML source whose renderers offer svg, png and pdf. */
+/** Link-info of a PlantUML source with a jar configured (svg, png, pdf, eps). */
 const plantUmlInfo = linkInfo(false, '/api/plantuml-export/', [
   'svg',
   'png',
   'pdf',
+  'eps',
 ]);
 
 describe('server_export', () => {
@@ -152,6 +153,16 @@ describe('server_export', () => {
       expect(textOf(result)).toContain(valid);
     },
   );
+
+  it('never offers eps, which link-info lists with a PlantUML jar', async () => {
+    fakeServer({ 'GET /api/link-info/j/d.puml': plantUmlInfo });
+    const result = await runTool(pluginTools(), 'server_export', {
+      path: 'j/d.puml',
+      format: 'eps',
+    });
+    expect(result.isError).toBe(true);
+    expect(textOf(result)).toMatch(/; use svg, png, pdf$/);
+  });
 
   it('reports a path with no export formats, and a missing path', async () => {
     fakeServer({
