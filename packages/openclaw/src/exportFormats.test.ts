@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { exportRoutesOf, unavailableFormatMessage } from './exportFormats.js';
+import {
+  exportRoutesOf,
+  routeFor,
+  unavailableFormatMessage,
+} from './exportFormats.js';
 
 describe('exportRoutesOf', () => {
   it('takes each format and its route from the export links', () => {
@@ -41,6 +45,21 @@ describe('exportRoutesOf', () => {
     expect([...exportRoutesOf(zip, true).keys()]).toEqual(['zip', 'tar']);
     expect([...exportRoutesOf(zip, false).keys()]).toEqual(['zip']);
     expect([...exportRoutesOf(undefined, true).keys()]).toEqual([]);
+  });
+});
+
+describe('routeFor', () => {
+  it('finds an offered format, and nothing for one not offered or unknown', () => {
+    const routes = exportRoutesOf(
+      [{ format: 'svg', url: '/api/mermaid-export/j/d.mmd?format=svg' }],
+      false,
+    );
+    expect(routeFor(routes, 'svg')).toEqual({
+      format: 'svg',
+      route: '/api/mermaid-export/',
+    });
+    expect(routeFor(routes, 'png')).toBeUndefined();
+    expect(routeFor(routes, 'eps')).toBeUndefined();
   });
 });
 

@@ -13,7 +13,7 @@ import {
 
 import {
   exportRoutesOf,
-  isExportFormat,
+  routeFor,
   unavailableFormatMessage,
 } from './exportFormats.js';
 import { runServerCall, type ToolContext } from './sdkCall.js';
@@ -117,8 +117,8 @@ function exportTool(context: ToolContext): ToolDescriptor {
         const isDirectory = info.isDirectory === true;
         // The formats and routes the server offers for this path (#320).
         const routes = exportRoutesOf(info.exportLinks, isDirectory);
-        const route = isExportFormat(format) ? routes.get(format) : undefined;
-        if (!isExportFormat(format) || route === undefined)
+        const target = routeFor(routes, format);
+        if (target === undefined)
           throw new Error(
             unavailableFormatMessage(
               path,
@@ -136,7 +136,9 @@ function exportTool(context: ToolContext): ToolDescriptor {
           return {
             path,
             format,
-            url: toExportUrl(pageUrl(baseUrl, path), format, { route }),
+            url: toExportUrl(pageUrl(baseUrl, path), target.format, {
+              route: target.route,
+            }),
           };
         const shared = await signShare(client, baseUrl, {
           path: '/' + path,
@@ -145,7 +147,7 @@ function exportTool(context: ToolContext): ToolDescriptor {
         return {
           path,
           format,
-          url: toExportUrl(shared.url, format, { route }),
+          url: toExportUrl(shared.url, target.format, { route: target.route }),
           exp: shared.exp,
         };
       }),

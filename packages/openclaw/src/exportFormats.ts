@@ -36,8 +36,33 @@ const ROUTE = /^\/api\/[a-z-]+\//;
  * @param format - Any format.
  * @returns Whether it is one of {@link EXPORT_FORMATS}.
  */
-export const isExportFormat = (format: string): format is ExportFormat =>
+const isExportFormat = (format: string): format is ExportFormat =>
   (EXPORT_FORMATS as readonly string[]).includes(format);
+
+/** A format the tool accepts, and the route link-info offers it on. */
+interface ExportTarget {
+  /** The format. */
+  format: ExportFormat;
+  /** Its `/api/<route>/` prefix. */
+  route: string;
+}
+
+/**
+ * The route a path offers a format on.
+ *
+ * @param routes - The path's routes by format ({@link exportRoutesOf}).
+ * @param format - Any format.
+ * @returns The format and its route; none when the path doesn't offer it
+ *   (or the tool doesn't accept it).
+ */
+export function routeFor(
+  routes: ReadonlyMap<ExportFormat, string>,
+  format: string,
+): ExportTarget | undefined {
+  if (!isExportFormat(format)) return undefined;
+  const route = routes.get(format);
+  return route === undefined ? undefined : { format, route };
+}
 
 /**
  * Export routes by format, from link-info's export links: each link's

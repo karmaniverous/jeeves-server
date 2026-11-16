@@ -20,9 +20,11 @@ export type ExportFormat = 'pdf' | 'docx' | 'zip' | 'tar' | 'svg' | 'png';
 /** Options of {@link toExportUrl}. */
 export interface ExportUrlOptions {
   /**
-   * The export route as an `/api/<route>/` prefix: lowercase letters and
-   * hyphens between `/api/` and the closing `/` (e.g. `/api/mermaid-export/`,
-   * the start of a link-info export link's `url`). When given, the URL is
+   * The export route to build the URL on, as an `/api/<route>/` prefix:
+   * lowercase letters and hyphens between `/api/` and the closing `/` (an
+   * export route such as `/api/export/`, `/api/mermaid-export/` or
+   * `/api/plantuml-export/`: the start of a link-info export link's `url`).
+   * Only the form is checked, not a list of known routes. When given, the URL is
    * built on this route and the format is not checked against the file
    * extension: link-info already says which formats a path offers, and where.
    */

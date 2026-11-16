@@ -216,20 +216,29 @@ describe('server_export', () => {
     });
   });
 
-  it('with share, a Mermaid pdf is on the Mermaid route', async () => {
-    fakeServer({
-      'GET /api/link-info/j/d.mmd': mermaidInfo,
-      'POST /api/share': shareReply(false),
-    });
-    const result = await runTool(pluginTools(), 'server_export', {
-      path: 'j/d.mmd',
-      format: 'pdf',
-      share: {},
-    });
-    expect(jsonOf(result)).toMatchObject({
-      url: `${BASE_URL}/api/mermaid-export/j/d.mmd?k=out&format=pdf`,
-    });
-  });
+  // A PlantUML pdf (jar configured) is one the SDK's extension table can't
+  // route: the shared URL must carry link-info's route.
+  it.each([
+    ['j/d.mmd', 'pdf', mermaidInfo, '/api/mermaid-export/j/d.mmd'],
+    ['j/d.puml', 'pdf', plantUmlInfo, '/api/plantuml-export/j/d.puml'],
+    ['j/run/brief.json', 'docx', documentInfo, '/api/export/j/run/brief.json'],
+  ])(
+    'with share, %s as %s is on the route link-info names',
+    async (path, format, info, url) => {
+      fakeServer({
+        [`GET /api/link-info/${path}`]: info,
+        'POST /api/share': shareReply(false),
+      });
+      const result = await runTool(pluginTools(), 'server_export', {
+        path,
+        format,
+        share: {},
+      });
+      expect(jsonOf(result)).toMatchObject({
+        url: `${BASE_URL}${url}?k=out&format=${format}`,
+      });
+    },
+  );
 
   it.each(['zip', 'tar'])(
     'with share, a directory %s is an error and signs nothing (archives are insider-only)',
