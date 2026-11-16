@@ -13,9 +13,18 @@ import {
 
 const insiderKey = 'insider-key';
 
-/** Stub server: a listing, a share, PDF bytes, then a 403. */
+/** Stub server: a listing, a share, PDF bytes, link-info, then a 403. */
 const serverReply = (url: string): Response => {
   const { pathname } = new URL(url);
+  if (pathname.startsWith('/api/link-info/'))
+    return Response.json({
+      exists: true,
+      isDirectory: false,
+      exportLinks: ['svg', 'png', 'pdf'].map((format) => ({
+        format,
+        url: `/api/plantuml-export/j/docs/flow.puml?format=${format}`,
+      })),
+    });
   if (pathname.startsWith('/api/path/'))
     return Response.json({
       path: '/j/docs',
@@ -84,6 +93,37 @@ describe('README usage', () => {
     expect(log).toHaveBeenCalledWith('Path is outside your scopes (HTTP 403)');
     expect(fetch.mock.calls[0]?.[0]).toBe(
       'http://127.0.0.1:1934/api/path/j/docs?k=insider-key',
+    );
+  });
+
+  it('builds an export URL on the route link-info names', async () => {
+    const log = vi.fn();
+    const fetch = vi.fn((url: string) => Promise.resolve(serverReply(url)));
+    const server = createServerClient({
+      baseUrl: 'http://127.0.0.1:1934',
+      auth: { key: insiderKey },
+      fetch,
+    });
+
+    // --- README example ---
+    const info = await server.linkInfo({ '*': 'j/docs/flow.puml' });
+    const link = info.exportLinks?.find(({ format }) => format === 'pdf');
+    // The link's /api/<route>/ prefix, e.g. /api/plantuml-export/.
+    const route = link && /^\/api\/[a-z-]+\//.exec(link.url)?.[0];
+    if (route !== undefined) {
+      const shared = await server.share({ path: '/j/docs/flow.puml' });
+      const pdfUrl = toExportUrl(
+        `https://jeeves.example.com${shared.url}`,
+        'pdf',
+        { route },
+      );
+      log(pdfUrl);
+    }
+    // --- end ---
+
+    // The stub's share is always report.md; the route is PlantUML's.
+    expect(log).toHaveBeenCalledWith(
+      'https://jeeves.example.com/api/plantuml-export/j/docs/report.md?k=pk&format=pdf',
     );
   });
 });
