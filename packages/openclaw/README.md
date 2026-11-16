@@ -13,6 +13,8 @@ Provides agents with tools for:
 - Event gateway visibility
 - OAuth2 credential management (authorize, status, token retrieval)
 
+Tools take browse paths (`<root>/<path>`), not filesystem paths: convert one with `server_resolve_path`. `server_export` offers the formats the server lists for the path (the `exportLinks` of `server_link_info`): PDF/DOCX for Markdown documents and for documents the watcher renders as Markdown, ZIP/Tar for directories, SVG/PNG for Mermaid and PlantUML sources (Mermaid also PDF).
+
 ## Upgrading from 0.15
 
 0.16.0 needs jeeves-server 3.16 (install both together) and Node.js 24.22.2 or later. `server_rotate_key` is removed (the plugin's machine key can never rotate), `server_export` returns a download URL instead of fetching the export, and `server_config` / `server_config_apply` send the plugin key because `/config` is admin-only (keep the server's `keys._plugin` unscoped). See [Migrating to 3.16](../service/guides/migrating-to-3.16.md#openclaw-plugin-0160).

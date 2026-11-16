@@ -4,6 +4,7 @@
  * @packageDocumentation
  */
 
+import { BROWSE_PATH_DESCRIPTION } from './constants.js';
 import { EXPORT_FORMATS } from './exportFormats.js';
 
 /** `server_share` parameters (unchanged from 0.15.0). */
@@ -12,7 +13,7 @@ export const SERVER_SHARE_PARAMETERS: Record<string, unknown> = {
   properties: {
     path: {
       type: 'string',
-      description: 'Browse path to share',
+      description: BROWSE_PATH_DESCRIPTION,
     },
     expiryDays: {
       type: 'number',
@@ -49,7 +50,7 @@ export const SERVER_EXPORT_PARAMETERS: Record<string, unknown> = {
   properties: {
     path: {
       type: 'string',
-      description: 'Browse path to export',
+      description: BROWSE_PATH_DESCRIPTION,
     },
     format: {
       type: 'string',

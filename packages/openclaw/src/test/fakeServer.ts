@@ -138,3 +138,26 @@ export const textOf = (result: ToolResult): string =>
 /** The JSON of a successful result. */
 export const jsonOf = (result: ToolResult): unknown =>
   JSON.parse(textOf(result)) as unknown;
+
+/** A `share` reply for the request's path. */
+export const shareReply =
+  (isDirectory: boolean) =>
+  (req: RecordedRequest): Reply => {
+    const { path, expiry, depth, dirs } = req.body as {
+      path: string;
+      expiry?: string;
+      depth?: number;
+      dirs?: boolean;
+    };
+    const query = expiry ? `?k=out&exp=${expiry}` : '?k=out';
+    return {
+      body: {
+        url: `/browse${path}${query}`,
+        path,
+        exp: expiry ?? null,
+        depth: depth ?? 0,
+        dirs: dirs ?? false,
+        isDirectory,
+      },
+    };
+  };
