@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.16.1] - 2026-11-16
+
+### 🐛 Bug Fixes
+
+- *(openclaw)* Take server_export formats from link-info exportLinks
+- *(openclaw)* Drop export formats the tool doesn't accept, anchor export URL derivation
+
+### 💼 Other
+
+- Updated sdk
+
+### 🚜 Refactor
+
+- *(openclaw)* Server_export builds export URLs with the SDK's route-aware toExportUrl
+
+### 🧪 Testing
+
+- *(openclaw)* Shared export URLs on link-info routes; refactor route lookup; docs(sdk): route option TSDoc
 ## [0.16.0] - 2026-11-15
 
 ### 🚀 Features
@@ -41,6 +59,7 @@ All notable changes to this project will be documented in this file.
 - *(skills)* Trim jeeves-server skill description to 160 chars or less
 - Require Node >=24.22.2 in every package, CI and the CLI start-up check
 - Remove the stale packages/service/vitest.config.js; package knip configs pass
+- Release @karmaniverous/jeeves-server-openclaw v0.16.0
 ## [0.15.0] - 2026-10-14
 
 ### 🚀 Features
