@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.16.1] - 2026-11-16
+
+### 🐛 Bug Fixes
+
+- *(openclaw)* Take server_export formats from link-info exportLinks
+- *(openclaw)* Drop export formats the tool doesn't accept, anchor export URL derivation
+
+### 💼 Other
+
+- Updated sdk
 ## [3.16.0] - 2026-11-15
 
 ### 🚀 Features
@@ -76,6 +86,7 @@ All notable changes to this project will be documented in this file.
 
 - Require Node >=24.22.2 in every package, CI and the CLI start-up check
 - Remove the stale packages/service/vitest.config.js; package knip configs pass
+- Release @karmaniverous/jeeves-server v3.16.0
 ## [3.15.0] - 2026-10-14
 
 ### 🚀 Features
